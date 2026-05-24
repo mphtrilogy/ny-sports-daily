@@ -1844,12 +1844,15 @@ function SpinTab() {
       const TEAM_MAP = {
         "YANKEES":"YANKEES","METS":"METS","JETS":"JETS","GIANTS":"GIANTS",
         "KNICKS":"KNICKS","RANGERS":"RANGERS","ISLANDERS":"ISLANDERS",
-        "NETS":"NETS","LIBERTY":"LIBERTY","DEVILS":"ISLANDERS",
-        "RED BULLS":"NYCFC","GOTHAM FC":"LIBERTY",
+        "NETS":"NETS","LIBERTY":"LIBERTY",
+        // These don't have dedicated facts yet — will show random NY fact
+        "DEVILS":null,"RED BULLS":null,"GOTHAM FC":null,
       };
-      const teamKey = TEAM_MAP[team] || team;
-      const row = await sbRandom("ny_spin_facts", `team=eq.${encodeURIComponent(teamKey)}&`);
-      setFact(row || await sbRandom("ny_spin_facts") || { fact: "Spin again!", teaser: "Try again!", category: "weird", era: "" });
+      const teamKey = TEAM_MAP[team];
+      const row = teamKey
+        ? await sbRandom("ny_spin_facts", `team=eq.${encodeURIComponent(teamKey)}&`)
+        : await sbRandom("ny_spin_facts");
+      setFact(row || { fact: "Spin again for a great NY sports fact!", teaser: "Try again!", category: "weird", era: "" });
     } catch(e) {
       setFact({ fact: "Couldn't load — try spinning again!", teaser: "Spin again!", category: "weird", era: "" });
     }
@@ -1906,7 +1909,10 @@ function SpinTab() {
             <div style={styles.spinFactCard}>
               <div style={{...styles.spinTeamBanner, background: result.color}}>
                 <span style={styles.spinTeamEmoji}>{result.emoji}</span>
-                <span style={styles.spinTeamName}>NEW YORK {result.label}</span>
+                <span style={styles.spinTeamName}>
+                  {["DEVILS","RED BULLS","GOTHAM FC"].includes(result.label) ? "NJ/NY " : "NEW YORK "}
+                  {result.label}
+                </span>
               </div>
               {loading ? (
                 <div style={styles.spinFactLoading}>
