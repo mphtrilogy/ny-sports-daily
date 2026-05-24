@@ -23,14 +23,14 @@ const SPORT_ENDPOINTS = [
   { sport: "soccer",     league: "nwsl",   label: "NWSL" },
 ];
 
-// RSS FEEDS (NY sports focused — proxied via allorigins)
+// RSS FEEDS (NY sports focused — via rss2json free API)
 const RSS_FEEDS = [
-  { name: "NY Post Sports",    url: "https://nypost.com/sports/feed/" },
-  { name: "NY Daily News",     url: "https://www.nydailynews.com/sports/feed/" },
-  { name: "ESPN NY",           url: "https://www.espn.com/espn/rss/news" },
+  { name: "NY Post Sports",  url: "https://nypost.com/sports/feed/" },
+  { name: "ESPN NY",         url: "https://www.espn.com/espn/rss/news" },
+  { name: "CBS Sports",      url: "https://www.cbssports.com/rss/headlines/" },
 ];
 
-const PROXY = (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+const RSS2JSON = (url) => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=20`;
 
 // ─── DATE HELPERS ──────────────────────────────────────────────────────────
 function getDateLabel(d) {
@@ -286,25 +286,44 @@ const NY_TEAM_NAMES = ["yankees","mets","jets","giants","knicks","nets","rangers
 
 async function fetchLeagueLeaders(sport, league) {
   try {
-    const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders?limit=20`;
+    // Primary endpoint
+    const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders`;
     const res  = await fetch(url);
     const json = await res.json();
-    return json.categories || [];
-  } catch { return []; }
+
+    // Walk all possible response shapes ESPN uses
+    const cats =
+      json.categories ||
+      json.leaders ||
+      json.statistics?.categories ||
+      json.results?.categories ||
+      [];
+
+    if (cats.length) return cats;
+
+    // Some sports return nested under seasons
+    const seasonal =
+      json.seasons?.[0]?.types?.[0]?.classes?.[0]?.categories ||
+      json.season?.types?.[0]?.classes?.[0]?.categories ||
+      [];
+
+    return seasonal;
+  } catch(e) {
+    console.log('leaders error', league, e);
+    return [];
+  }
 }
 
 async function fetchRSSFeed(feed) {
   try {
-    const res = await fetch(PROXY(feed.url));
+    const res  = await fetch(RSS2JSON(feed.url));
     const json = await res.json();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(json.contents, "text/xml");
-    const items = Array.from(doc.querySelectorAll("item")).slice(0, 15);
-    return items.map(item => ({
-      title: item.querySelector("title")?.textContent?.trim() || "",
-      link:  item.querySelector("link")?.textContent?.trim() || "",
-      desc:  item.querySelector("description")?.textContent?.replace(/<[^>]*>/g,"").trim().slice(0,180) || "",
-      pub:   item.querySelector("pubDate")?.textContent?.trim() || "",
+    if (json.status !== "ok") return [];
+    return (json.items || []).map(item => ({
+      title:  item.title?.trim() || "",
+      link:   item.link || "",
+      desc:   item.description?.replace(/<[^>]*>/g, "").trim().slice(0, 180) || "",
+      pub:    item.pubDate || "",
       source: feed.name,
     })).filter(i => i.title && i.link);
   } catch(e) { return []; }
