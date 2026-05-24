@@ -1,5 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
+// ─── SUPABASE CONFIG ───────────────────────────────────────────────────────
+const SUPABASE_URL = "https://fnxoucliekhotvartyfu.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZueG91Y2xpZWtob3R2YXJ0eWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTI3MzEsImV4cCI6MjA4OTUyODczMX0.V4A75JO9s-7MbDRY7VMydwydOvdkU4SNSz_BRoVAoqA";
+
+async function sbFetch(table, params = "") {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${params}`, {
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+    }
+  });
+  return res.json();
+}
+
 // ─── NY TEAMS CONFIG ───────────────────────────────────────────────────────
 const NY_TEAMS = {
   NFL:  [{ name: "Jets",    espnId: "20", color: "#125740" }, { name: "Giants", espnId: "19", color: "#0B2265" }],
@@ -618,7 +632,7 @@ export default function NYSportsDaily() {
         <div style={styles.footerRule} />
         <p style={styles.footerText}>NY SPORTS DAILY · SCORES VIA ESPN · NEWS VIA RSS</p>
         <p style={styles.footerSub}>Free. Always. Built for New York.</p>
-        <a href="https://buymeacoffee.com" target="_blank" rel="noopener noreferrer" style={styles.bmcBtn}>
+        <a href="https://buymeacoffee.com/mhughes65v" target="_blank" rel="noopener noreferrer" style={styles.bmcBtn}>
           ☕ Buy Me a Coffee
         </a>
         <p style={styles.bmcSub}>Enjoying NY Sports Daily? A coffee keeps the lights on!</p>
@@ -1795,24 +1809,19 @@ function SpinTab() {
   async function fetchFact(team) {
     setLoading(true);
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: "You are a NY/NJ metro sports historian. When given a team name, respond ONLY with valid JSON — no markdown, no preamble.",
-          messages: [{
-            role: "user",
-            content: `Give me one genuinely surprising, specific, and fascinating fun fact about the New York ${team}. Make it feel like something a die-hard fan might not even know — an obscure stat, a wild historical moment, a record, a strange coincidence, something vivid and memorable. Return JSON: { "fact": string, "era": string, "category": "stat"|"moment"|"record"|"legend"|"weird", "teaser": string }. The teaser should be a short punchy 6-8 word hook. The fact should be 2-4 sentences.`
-          }],
-        }),
-      });
-      const data = await res.json();
-      const text = data.content?.find(b => b.type === "text")?.text || "{}";
-      const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
-      setFact(parsed);
-    } catch(e) { setFact({ fact: "Couldn't load fact — try spinning again!", teaser: "Spin again!", category: "weird", era: "" }); }
+      // Normalize team label to match Supabase data
+      const teamKey = team.replace("NJ ","").replace(" FC","").toUpperCase();
+      const data = await sbFetch("ny_spin_facts", `?team=eq.${encodeURIComponent(teamKey)}&order=random()&limit=1`);
+      if (data && data.length > 0) {
+        setFact(data[0]);
+      } else {
+        // Fallback — try any team fact
+        const fallback = await sbFetch("ny_spin_facts", `?order=random()&limit=1`);
+        setFact(fallback?.[0] || { fact: "Spin again for a great NY sports fact!", teaser: "Try again!", category: "weird", era: "" });
+      }
+    } catch(e) {
+      setFact({ fact: "Couldn't load fact — try spinning again!", teaser: "Spin again!", category: "weird", era: "" });
+    }
     setLoading(false);
   }
 
@@ -1909,30 +1918,13 @@ function TriviaTab() {
   const [triviaCorrect, setTriviaCorrect]   = useState(null);
   const [newTriviaLoading, setNewTriviaLoading] = useState(false);
 
-  async function callClaude(prompt) {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        system: "You are a New York metro sports historian and trivia master. You know everything about the Yankees, Mets, Jets, Giants, Knicks, Nets, Rangers, Islanders, NJ Devils, NY Liberty, NJ/NY Gotham FC, NYCFC, NJ Red Bulls, and all NY/NJ metro sports history. Always respond ONLY with valid JSON — no preamble, no markdown fences.",
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-    const data = await res.json();
-    const text = data.content?.find(b => b.type === "text")?.text || "{}";
-    return JSON.parse(text.replace(/```json|```/g, "").trim());
-  }
-
   async function loadThisDate() {
     setLoadingDate(true);
     setThisDate(null);
     try {
-      const result = await callClaude(
-        `Give me 3 memorable "On This Date in New York Sports" moments for ${dateStr} from different years and different NY teams/sports. Return JSON: { "moments": [ { "year": number, "team": string, "sport": string, "headline": string, "detail": string } ] }`
-      );
-      setThisDate(result.moments || []);
+      const monthDay = `${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+      const data = await sbFetch("ny_on_this_date", `?month_day=eq.${monthDay}&order=year.asc`);
+      setThisDate(data && data.length > 0 ? data : []);
     } catch(e) { setThisDate([]); }
     setLoadingDate(false);
   }
@@ -1943,10 +1935,18 @@ function TriviaTab() {
     setTriviaRevealed(false);
     setTriviaCorrect(null);
     try {
-      const result = await callClaude(
-        `Generate one New York sports trivia question. Make it genuinely interesting — not too easy, not impossible. Mix up the era and sport each time. Return JSON: { "question": string, "options": ["A) ...", "B) ...", "C) ...", "D) ..."], "answer": "A" or "B" or "C" or "D", "explanation": string, "team": string, "era": string }`
-      );
-      setTrivia(result);
+      const data = await sbFetch("ny_trivia", `?order=random()&limit=1`);
+      if (data && data.length > 0) {
+        const row = data[0];
+        setTrivia({
+          question:    row.question,
+          options:     [`A) ${row.option_a}`, `B) ${row.option_b}`, `C) ${row.option_c}`, `D) ${row.option_d}`],
+          answer:      row.answer,
+          explanation: row.explanation,
+          team:        row.team,
+          era:         row.era,
+        });
+      }
     } catch(e) { setTrivia(null); }
     isNew ? setNewTriviaLoading(false) : setLoadingTrivia(false);
   }
@@ -2091,48 +2091,66 @@ function AILoadingBlock({ text }) {
 // ─── SAMPLE PUZZLE DATA (in production: fetched from Supabase by day-of-year) ──
 // Grid: '.' = black cell, letter = solution, ' ' = empty white cell
 const SAMPLE_PUZZLE = {
-  title: "NY SPORTS DAILY CROSSWORD",
-  date:  "May 23, 2026",
+  title: "NY SPORTS DAILY · SUNDAY CHALLENGE",
+  date:  new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}),
+  size:  15,
   solution: [
-    ["J","E","T","S",".","M","E","T","S",".","G"],
-    ["O",".","A",".","K","N","I","C","K","S","."],
-    ["H","O","M","E","R",".","G",".","N",".","R"],
-    [".","R",".","A",".","B","A","B","E",".","U"],
-    ["G","A","R","D","E","N",".","R",".","B","T"],
-    ["H",".","L",".","D","O","D","G","E","R","H"],
-    [".",".","I","S","L","A","N","D","E","R","S"],
-    ["L","I","B","E","R","T","Y",".","D",".","R"],
-    ["E",".","A",".","I",".","A","C","E","S","."],
-    ["N","E","T","S",".","R","N","G","R","S","."],
-    ["S","H","E","A",".","S","K","S",".",".","."],
+    ["N","A","M","A","T","H",".","B","O","S","S","Y",".","L","T"],
+    ["E",".","E",".",".","O","M","A","R",".","H",".",".","E","."],
+    ["T","R","O","T","T","I","E","R",".","P","E","A","R","L","S"],
+    ["S",".","W",".",".",".","S",".",".",".",".","N",".",".","E"],
+    [".","P","I","A","Z","Z","A",".","G","E","H","R","I","G","."],
+    ["R","A","N","G","E","R","S",".","A",".",".","K",".",".","E"],
+    ["E","R","A",".","W","I","L","L","I","S",".","E",".","J","W"],
+    ["E",".",".","S","T","A","D","I","U","M",".","R",".","E","."],
+    ["D","I","V","I","S","I","O","N",".","E","A","S","T",".","B"],
+    [".","S",".",".","T",".",".","G","O","D","E","N",".","T","A"],
+    [".","L","E","E","C","H",".","A",".",".",".",".","R","E","R"],
+    ["M","E","S","S","I","E","R",".","N","A","S","S","A","U","."],
+    ["S",".",".","T","O","M","S","E","A","V","E","R",".",".","."],
+    ["G","Y","O","G","I",".","T",".",".",".",".","E","A","S","T"],
+    [".",".","L",".",".","C","U","P",".",".",".","D",".",".","S"],
   ],
   across: [
-    { number:1,  row:0, col:0, len:4, clue:"Gang Green of the AFC East" },
-    { number:5,  row:0, col:5, len:4, clue:"Queens baseball nine" },
-    { number:7,  row:0, col:10,len:1, clue:"See 4-Down" },
-    { number:8,  row:1, col:4, len:6, clue:"NY's basketball blue-and-orange" },
-    { number:10, row:2, col:0, len:5, clue:"Long ball, Yankee Stadium staple" },
-    { number:13, row:3, col:5, len:4, clue:"The Bambino, famously" },
-    { number:14, row:4, col:0, len:6, clue:"Madison Square ___, the World's Most Famous Arena" },
-    { number:16, row:5, col:5, len:6, clue:"Brooklyn team that broke NY hearts by leaving" },
-    { number:17, row:6, col:2, len:9, clue:"NJ-based NHL team with devoted LI following" },
-    { number:18, row:7, col:0, len:7, clue:"NY's WNBA champions" },
-    { number:20, row:8, col:6, len:4, clue:"Aces, in blackjack and tennis" },
-    { number:21, row:9, col:0, len:4, clue:"Brooklyn hoops, casually" },
-    { number:22, row:10,col:0, len:4, clue:"Old Mets stadium, ___  Stadium" },
+    { number:1,  row:0,  col:0,  len:6,  clue:"Broadway QB who guaranteed it" },
+    { number:7,  row:0,  col:7,  len:5,  clue:"Islander who scored 50 in 50" },
+    { number:12, row:0,  col:13, len:2,  clue:"Giants LB initials, the greatest defender" },
+    { number:13, row:2,  col:0,  len:8,  clue:"Islanders dynasty center, Bryan ___" },
+    { number:15, row:2,  col:9,  len:6,  clue:"Monroe's nickname, also a gem" },
+    { number:16, row:4,  col:1,  len:7,  clue:"9/11 home run hero, Mike ___" },
+    { number:18, row:4,  col:9,  len:6,  clue:"Iron Horse's real surname" },
+    { number:19, row:5,  col:0,  len:7,  clue:"Broadway blue-and-red, the ___" },
+    { number:21, row:6,  col:0,  len:3,  clue:"Gooden's best stat category abbrev" },
+    { number:22, row:6,  col:4,  len:6,  clue:"___ Reed, limping hero of 1970 Finals" },
+    { number:24, row:7,  col:3,  len:7,  clue:"Where the Knicks and Rangers play" },
+    { number:25, row:8,  col:0,  len:8,  clue:"NL ___ — Mets and Yankees fight for it" },
+    { number:27, row:9,  col:7,  len:6,  clue:"Doc Gooden's nickname, reverse spelling" },
+    { number:28, row:10, col:1,  len:6,  clue:"Rangers Conn Smythe winner '94, Brian ___" },
+    { number:29, row:11, col:0,  len:7,  clue:"The Captain who ended the 54-year drought" },
+    { number:30, row:11, col:8,  len:6,  clue:"Islanders dynasty arena, ___ Coliseum" },
+    { number:31, row:12, col:0,  len:9,  clue:"Tom ___, the franchise ace, Mr. Met" },
+    { number:32, row:13, col:0,  len:5,  clue:"It ain't over — Berra's first name" },
+    { number:33, row:13, col:6,  len:1,  clue:"See 6-Down" },
+    { number:34, row:13, col:11, len:4,  clue:"AL ___ — Yankees' division" },
+    { number:35, row:14, col:7,  len:3,  clue:"What Messier hoisted in 1994" },
   ],
   down: [
-    { number:1,  row:0, col:0, len:6, clue:"Joe Willie Namath's guarantee: Super Bowl ___" },
-    { number:2,  row:0, col:2, len:4, clue:"Yankee slugger's swing goal" },
-    { number:3,  row:0, col:3, len:3, clue:"Abbreviation on a baseball cap brim" },
-    { number:4,  row:0, col:10,len:5, clue:"NY team that plays at MetLife with 1-Across" },
-    { number:5,  row:0, col:5, len:5, clue:"MSG event: ___ game" },
-    { number:6,  row:0, col:8, len:5, clue:"Knicks star of the 70s, ___ Reed" },
-    { number:9,  row:2, col:1, len:5, clue:"Orioles' ___ Robinson, Yankee nemesis" },
-    { number:11, row:4, col:1, len:4, clue:"'86 Mets: Doc, Straw, and ___ Hernandez" },
-    { number:12, row:4, col:5, len:3, clue:"Hockey surface" },
-    { number:15, row:5, col:0, len:6, clue:"Rangers: Messier led them to the ___ Cup" },
-    { number:19, row:7, col:8, len:3, clue:"Like a shutout pitcher's ERA, ideally" },
+    { number:1,  row:0,  col:0,  len:8,  clue:"Brooklyn hoops — the ___" },
+    { number:2,  row:0,  col:2,  len:4,  clue:"Mets pitcher Dwight ___ at 20" },
+    { number:3,  row:0,  col:3,  len:4,  clue:"Yankees Pennant run month, abbrev" },
+    { number:4,  row:0,  col:7,  len:4,  clue:"Orioles' ___ Robinson who tormented NY" },
+    { number:5,  row:0,  col:8,  len:4,  clue:"___ Darling, '86 Mets rotation" },
+    { number:6,  row:0,  col:9,  len:14, clue:"Seats at the Garden: sold ___" },
+    { number:7,  row:0,  col:11, len:4,  clue:"Yankee hero's HR total in 1927 season" },
+    { number:8,  row:2,  col:7,  len:5,  clue:"Ricky ___, Mets stolen base king" },
+    { number:9,  row:1,  col:6,  len:5,  clue:"The ___ Mets — 1969 nickname" },
+    { number:10, row:4,  col:8,  len:6,  clue:"Yankee Stadium used to be The ___ That Ruth Built" },
+    { number:11, row:4,  col:11, len:5,  clue:"___ King, 32.9 PPG Knick" },
+    { number:14, row:5,  col:6,  len:5,  clue:"Mookie Wilson position, outfield abbrev" },
+    { number:17, row:6,  col:13, len:5,  clue:"Jets QB who wore #12, ___ Pennington" },
+    { number:20, row:7,  col:11, len:4,  clue:"Rangers all-time points leader, Rod ___" },
+    { number:23, row:8,  col:10, len:5,  clue:"Islanders goalie Billy ___, Battlin' Billy" },
+    { number:26, row:11, col:5,  len:4,  clue:"Mets stadium after Shea: ___ Field" },
   ],
 };
 
@@ -2270,6 +2288,30 @@ function CrosswordTab() {
     setComplete(true);
   }
 
+  function handleDownload() {
+    const lines = [];
+    lines.push(puzzle.title);
+    lines.push(puzzle.date);
+    lines.push("");
+    lines.push("ACROSS");
+    puzzle.across.forEach(c => lines.push(`${c.number}. ${c.clue}`));
+    lines.push("");
+    lines.push("DOWN");
+    puzzle.down.forEach(c => lines.push(`${c.number}. ${c.clue}`));
+    lines.push("");
+    lines.push("--- GRID (for printing) ---");
+    puzzle.solution.forEach(row => {
+      lines.push(row.map(c => c === "." ? "■" : "□").join(" "));
+    });
+    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = "NYSportsDaily-Crossword.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   // Highlight logic
   function getCellStyle(r, c) {
     if (isBlack(r,c)) return {...styles.xwCell, ...styles.xwCellBlack};
@@ -2296,11 +2338,12 @@ function CrosswordTab() {
       <div style={styles.xwHeader}>
         <div>
           <h2 style={styles.xwTitle}>{puzzle.title}</h2>
-          <p style={styles.xwDate}>{puzzle.date} · 11×11 · ALL NY SPORTS</p>
+          <p style={styles.xwDate}>{puzzle.date} · 15×15 · SUNDAY CHALLENGE</p>
         </div>
         <div style={styles.xwActions}>
           <button onClick={handleCheck} style={styles.xwBtn}>CHECK</button>
           <button onClick={handleReveal} style={{...styles.xwBtn, ...styles.xwBtnReveal}}>REVEAL</button>
+          <button onClick={handleDownload} style={{...styles.xwBtn, color:"#888"}}>⬇ PRINT</button>
         </div>
       </div>
 
@@ -3232,15 +3275,15 @@ const styles = {
   xwGridWrap: { flexShrink: 0, width: "100%", overflowX: "auto" },
   xwGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(11, clamp(26px, 7.5vw, 36px))",
-    gridTemplateRows: "repeat(11, clamp(26px, 7.5vw, 36px))",
+    gridTemplateColumns: "repeat(15, clamp(20px, 5.5vw, 32px))",
+    gridTemplateRows: "repeat(15, clamp(20px, 5.5vw, 32px))",
     gap: 2, background: "#0e0e0e",
     border: "2px solid #c8201c", padding: 2,
     margin: "0 auto",
   },
   xwCell: {
-    width: "clamp(26px, 7.5vw, 36px)",
-    height: "clamp(26px, 7.5vw, 36px)",
+    width: "clamp(20px, 5.5vw, 32px)",
+    height: "clamp(20px, 5.5vw, 32px)",
     position: "relative",
     cursor: "pointer", border: "1px solid #ccc",
     display: "flex", alignItems: "center", justifyContent: "center",
