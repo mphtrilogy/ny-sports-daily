@@ -1709,9 +1709,9 @@ const WHEEL_SEGMENTS = [
   { label: "ISLANDERS", color: "#003B8E", emoji: "🏒" },
   { label: "NETS",      color: "#444",    emoji: "🏀" },
   { label: "LIBERTY",   color: "#007A5E", emoji: "🏀" },
-  { label: "NJ DEVILS",    color: "#CE1126", emoji: "🏒" },
-  { label: "NJ RED BULLS", color: "#ED1C2E", emoji: "⚽" },
-  { label: "GOTHAM FC",    color: "#0A0A2E", emoji: "⚽" },
+  { label: "DEVILS",      color: "#CE1126", emoji: "🏒" },
+  { label: "RED BULLS",   color: "#ED1C2E", emoji: "⚽" },
+  { label: "GOTHAM FC",   color: "#0A0A2E", emoji: "⚽" },
 ];
 
 function polarToCartesian(cx, cy, r, angleDeg) {
@@ -1839,14 +1839,16 @@ function SpinTab() {
   async function fetchFact(team) {
     setLoading(true);
     try {
-      const teamKey = team.replace("NJ ","").replace(" FC","").toUpperCase();
+      // Map wheel labels to Supabase team names
+      const TEAM_MAP = {
+        "YANKEES":"YANKEES","METS":"METS","JETS":"JETS","GIANTS":"GIANTS",
+        "KNICKS":"KNICKS","RANGERS":"RANGERS","ISLANDERS":"ISLANDERS",
+        "NETS":"NETS","LIBERTY":"LIBERTY","DEVILS":"ISLANDERS",
+        "RED BULLS":"NYCFC","GOTHAM FC":"LIBERTY",
+      };
+      const teamKey = TEAM_MAP[team] || team;
       const row = await sbRandom("ny_spin_facts", `team=eq.${encodeURIComponent(teamKey)}&`);
-      if (row) {
-        setFact(row);
-      } else {
-        const fallback = await sbRandom("ny_spin_facts");
-        setFact(fallback || { fact: "Spin again for a great NY sports fact!", teaser: "Try again!", category: "weird", era: "" });
-      }
+      setFact(row || await sbRandom("ny_spin_facts") || { fact: "Spin again!", teaser: "Try again!", category: "weird", era: "" });
     } catch(e) {
       setFact({ fact: "Couldn't load — try spinning again!", teaser: "Spin again!", category: "weird", era: "" });
     }
@@ -2001,56 +2003,6 @@ function TriviaTab() {
 
   return (
     <div style={styles.triviaRoot}>
-
-      {/* ── ON THIS DATE ── */}
-      <section style={styles.triviaSection}>
-        <div style={styles.triviaSectionHeader}>
-          <span style={styles.triviaSectionIcon}>📅</span>
-          <div>
-            <h2 style={styles.triviaSectionTitle}>ON THIS DATE IN NY SPORTS</h2>
-            <p style={styles.triviaSectionSub}>{dateStr.toUpperCase()} · NY SPORTS HISTORY</p>
-          </div>
-          <button onClick={() => setThisDate(STATIC_MOMENTS)} style={styles.refreshBtn}>
-            ↺
-          </button>
-        </div>
-
-        {loadingDate ? (
-          <div style={{padding:"12px 0"}}>
-            <div style={styles.loadingDots}>
-              {[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}
-            </div>
-          </div>
-        ) : !thisDate || thisDate.length === 0 ? (
-          <div style={{padding:"10px 0", fontSize:11, color:"#555"}}>
-            No moments recorded for today — more added regularly!
-          </div>
-        ) : (
-          <div style={styles.momentsList}>
-            {thisDate.map((m, i) => (
-              <div key={i} style={{...styles.momentCard, animationDelay: `${i * 0.15}s`}}>
-                <div style={styles.momentYear}>{m.year}</div>
-                <div style={styles.momentBody}>
-                  <div style={styles.momentMeta}>
-                    <span style={styles.momentTeam}>{m.team}</span>
-                    <span style={styles.momentSport}>{SPORT_ICONS[m.sport] || "🏆"} {m.sport}</span>
-                  </div>
-                  <p style={styles.momentHeadline}>{m.headline}</p>
-                  <p style={styles.momentDetail}>{m.detail}</p>
-                  <SearchLinks query={`${m.team} ${m.headline} ${m.year}`} />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ── DIVIDER ── */}
-      <div style={styles.triviaDivider}>
-        <div style={styles.triviaDividerLine} />
-        <span style={styles.triviaDividerText}>◆ TEST YOUR KNOWLEDGE ◆</span>
-        <div style={styles.triviaDividerLine} />
-      </div>
 
       {/* ── TRIVIA ── */}
       <section style={styles.triviaSection}>
