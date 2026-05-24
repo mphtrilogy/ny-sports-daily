@@ -23,14 +23,20 @@ const SPORT_ENDPOINTS = [
   { sport: "soccer",     league: "nwsl",   label: "NWSL" },
 ];
 
-// RSS FEEDS (NY sports focused — via rss2json free API)
-const RSS_FEEDS = [
-  { name: "NY Post Sports",  url: "https://nypost.com/sports/feed/" },
-  { name: "ESPN NY",         url: "https://www.espn.com/espn/rss/news" },
-  { name: "CBS Sports",      url: "https://www.cbssports.com/rss/headlines/" },
+// ─── ESPN NEWS TEAMS ──────────────────────────────────────────────────────
+const NY_NEWS_TEAMS = [
+  { sport:"baseball",   league:"mlb",   id:"10",    name:"Yankees"   },
+  { sport:"baseball",   league:"mlb",   id:"21",    name:"Mets"      },
+  { sport:"football",   league:"nfl",   id:"20",    name:"Jets"      },
+  { sport:"football",   league:"nfl",   id:"19",    name:"Giants"    },
+  { sport:"basketball", league:"nba",   id:"18",    name:"Knicks"    },
+  { sport:"basketball", league:"nba",   id:"17",    name:"Nets"      },
+  { sport:"hockey",     league:"nhl",   id:"13",    name:"Rangers"   },
+  { sport:"hockey",     league:"nhl",   id:"22",    name:"Islanders" },
+  { sport:"hockey",     league:"nhl",   id:"1",     name:"NJ Devils" },
+  { sport:"basketball", league:"wnba",  id:"20",    name:"Liberty"   },
+  { sport:"soccer",     league:"usa.1", id:"18479", name:"NYCFC"     },
 ];
-
-const RSS2JSON = (url) => `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=20`;
 
 // ─── DATE HELPERS ──────────────────────────────────────────────────────────
 function getDateLabel(d) {
@@ -285,48 +291,58 @@ const STATS_ENDPOINTS = [
 const NY_TEAM_NAMES = ["yankees","mets","jets","giants","knicks","nets","rangers","islanders","devils","liberty","gotham","nycfc","red bulls","new york","new jersey"];
 
 async function fetchLeagueLeaders(sport, league) {
-  try {
-    // Primary endpoint
-    const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders`;
-    const res  = await fetch(url);
-    const json = await res.json();
-
-    // Walk all possible response shapes ESPN uses
-    const cats =
-      json.categories ||
-      json.leaders ||
-      json.statistics?.categories ||
-      json.results?.categories ||
-      [];
-
-    if (cats.length) return cats;
-
-    // Some sports return nested under seasons
-    const seasonal =
-      json.seasons?.[0]?.types?.[0]?.classes?.[0]?.categories ||
-      json.season?.types?.[0]?.classes?.[0]?.categories ||
-      [];
-
-    return seasonal;
-  } catch(e) {
-    console.log('leaders error', league, e);
-    return [];
+  // Try multiple ESPN endpoint patterns
+  const urls = [
+    `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders`,
+    `https://site.api.espn.com/apis/v2/sports/${sport}/${league}/leaders`,
+    `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/statistics/leaders`,
+  ];
+  for (const url of urls) {
+    try {
+      const res  = await fetch(url);
+      const json = await res.json();
+      // Walk all known ESPN response shapes
+      const cats =
+        json.categories ||
+        json.leaders ||
+        json.statistics?.leaders ||
+        json.results?.leaders ||
+        json.season?.types?.[0]?.classes?.[0]?.categories ||
+        json.seasons?.[0]?.types?.[0]?.classes?.[0]?.categories ||
+        [];
+      if (cats.length) return cats;
+    } catch(e) {}
   }
+  return [];
 }
 
-async function fetchRSSFeed(feed) {
-  try {
-    const res  = await fetch(RSS2JSON(feed.url));
-    const json = await res.json();
-    if (json.status !== "ok") return [];
-    return (json.items || []).map(item => ({
-      title:  item.title?.trim() || "",
-      link:   item.link || "",
-      desc:   item.description?.replace(/<[^>]*>/g, "").trim().slice(0, 180) || "",
-      pub:    item.pubDate || "",
-      source: feed.name,
-    })).filter(i => i.title && i.link);
-  } catch(e) { return []; }
+async function fetchNYNews() {
+  const results = [];
+  await Promise.all(NY_NEWS_TEAMS.map(async ({ sport, league, id, name }) => {
+    try {
+      const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=3`;
+      const res  = await fetch(url);
+      const json = await res.json();
+      (json.articles || []).forEach(a => {
+        results.push({
+          title:  a.headline || a.title || "",
+          link:   a.links?.web?.href || "#",
+          desc:   a.description || "",
+          pub:    a.published || a.lastModified || "",
+          source: `ESPN · ${name}`,
+          team:   name,
+        });
+      });
+    } catch(e) {}
+  }));
+  const seen = new Set();
+  return results
+    .sort((a,b) => new Date(b.pub) - new Date(a.pub))
+    .filter(item => {
+      if (!item.title || seen.has(item.title)) return false;
+      seen.add(item.title);
+      return true;
+    });
 }
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
@@ -354,14 +370,8 @@ export default function NYSportsDaily() {
 
   const loadNews = useCallback(async () => {
     setLoadingNews(true);
-    const all = await Promise.all(RSS_FEEDS.map(fetchRSSFeed));
-    const merged = all.flat().sort((a,b) => new Date(b.pub) - new Date(a.pub));
-    // filter for NY teams
-    const nyKeywords = ["jets","giants","yankees","mets","knicks","nets","rangers","islanders","devils","gotham","nycfc","red bulls","new york","ny "];
-    const filtered = merged.filter(item =>
-      nyKeywords.some(kw => item.title.toLowerCase().includes(kw) || item.desc.toLowerCase().includes(kw))
-    );
-    setNews(filtered.length > 5 ? filtered : merged.slice(0, 30));
+    const data = await fetchNYNews();
+    setNews(data);
     setLoadingNews(false);
   }, []);
 
@@ -1256,6 +1266,10 @@ function HistoryTab() {
               <div style={styles.histInfo}>
                 <span style={styles.histName}>{item.name}</span>
                 <span style={styles.histYears}>{item.years}</span>
+                <div style={styles.histLinks}>
+                  <a href={googleUrl(`${item.name} ${activeGroup} New York sports`)} target="_blank" rel="noopener noreferrer" style={styles.histLink}>🔍 Google</a>
+                  <a href={wikiUrl(`${item.name} ${activeGroup}`)} target="_blank" rel="noopener noreferrer" style={styles.histLink}>📖 Wiki</a>
+                </div>
               </div>
               <div style={styles.histValue}>{item.value}</div>
             </div>
@@ -2857,7 +2871,11 @@ const styles = {
   histInfo: { flex:1, display:"flex", flexDirection:"column", gap:2 },
   histName: { fontSize:13, fontWeight:700, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
   histYears: { fontSize:9, color:"#555", letterSpacing:"0.04em" },
-  histValue: { fontSize:12, fontWeight:900, color:"#c8201c", fontFamily:"'Georgia',serif", textAlign:"right", minWidth:80 },
+  histLinks: { display:"flex", gap:8, marginTop:4 },
+  histLink: {
+    fontSize:9, color:"#c8201c", textDecoration:"none",
+    fontWeight:700, letterSpacing:"0.05em",
+  },
 
   // SEARCH LINKS
   searchLinks: {
