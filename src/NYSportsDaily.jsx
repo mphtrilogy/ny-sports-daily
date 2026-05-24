@@ -24,19 +24,16 @@ const SPORT_ENDPOINTS = [
 ];
 
 // ─── ESPN NEWS TEAMS ──────────────────────────────────────────────────────
-const NY_NEWS_TEAMS = [
-  { sport:"baseball",   league:"mlb",   id:"10",    name:"Yankees"   },
-  { sport:"baseball",   league:"mlb",   id:"21",    name:"Mets"      },
-  { sport:"football",   league:"nfl",   id:"20",    name:"Jets"      },
-  { sport:"football",   league:"nfl",   id:"19",    name:"Giants"    },
-  { sport:"basketball", league:"nba",   id:"18",    name:"Knicks"    },
-  { sport:"basketball", league:"nba",   id:"17",    name:"Nets"      },
-  { sport:"hockey",     league:"nhl",   id:"13",    name:"Rangers"   },
-  { sport:"hockey",     league:"nhl",   id:"22",    name:"Islanders" },
-  { sport:"hockey",     league:"nhl",   id:"1",     name:"NJ Devils" },
-  { sport:"basketball", league:"wnba",  id:"20",    name:"Liberty"   },
-  { sport:"soccer",     league:"usa.1", id:"18479", name:"NYCFC"     },
+const NY_NEWS_ENDPOINTS = [
+  { sport:"baseball",   league:"mlb",   name:"MLB"  },
+  { sport:"football",   league:"nfl",   name:"NFL"  },
+  { sport:"basketball", league:"nba",   name:"NBA"  },
+  { sport:"hockey",     league:"nhl",   name:"NHL"  },
+  { sport:"basketball", league:"wnba",  name:"WNBA" },
+  { sport:"soccer",     league:"usa.1", name:"MLS"  },
 ];
+
+const NY_KEYWORDS = ["jets","giants","yankees","mets","knicks","nets","rangers","islanders","devils","gotham","nycfc","red bulls","new york","liberty"];
 
 // ─── DATE HELPERS ──────────────────────────────────────────────────────────
 function getDateLabel(d) {
@@ -291,46 +288,41 @@ const STATS_ENDPOINTS = [
 const NY_TEAM_NAMES = ["yankees","mets","jets","giants","knicks","nets","rangers","islanders","devils","liberty","gotham","nycfc","red bulls","new york","new jersey"];
 
 async function fetchLeagueLeaders(sport, league) {
-  // Try multiple ESPN endpoint patterns
-  const urls = [
-    `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders`,
-    `https://site.api.espn.com/apis/v2/sports/${sport}/${league}/leaders`,
-    `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/statistics/leaders`,
-  ];
-  for (const url of urls) {
-    try {
-      const res  = await fetch(url);
-      const json = await res.json();
-      // Walk all known ESPN response shapes
-      const cats =
-        json.categories ||
-        json.leaders ||
-        json.statistics?.leaders ||
-        json.results?.leaders ||
-        json.season?.types?.[0]?.classes?.[0]?.categories ||
-        json.seasons?.[0]?.types?.[0]?.classes?.[0]?.categories ||
-        [];
-      if (cats.length) return cats;
-    } catch(e) {}
-  }
-  return [];
+  try {
+    // Use the correct ESPN core API for leaders
+    const year = new Date().getFullYear();
+    const url = `https://sports.core.api.espn.com/v2/sports/${sport}/leagues/${league}/seasons/${year}/types/2/leaders?limit=10`;
+    const res  = await fetch(url);
+    const json = await res.json();
+    const cats = json.categories || [];
+    if (cats.length) return cats;
+    // Fallback to site API
+    const url2 = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders`;
+    const res2  = await fetch(url2);
+    const json2 = await res2.json();
+    return json2.categories || json2.leaders || [];
+  } catch(e) { return []; }
 }
 
 async function fetchNYNews() {
   const results = [];
-  await Promise.all(NY_NEWS_TEAMS.map(async ({ sport, league, id, name }) => {
+  await Promise.all(NY_NEWS_ENDPOINTS.map(async ({ sport, league, name }) => {
     try {
-      const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=3`;
+      const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=20`;
       const res  = await fetch(url);
       const json = await res.json();
       (json.articles || []).forEach(a => {
+        const title = a.headline || a.title || "";
+        const desc  = a.description || "";
+        const combined = (title + " " + desc).toLowerCase();
+        const isNY = NY_KEYWORDS.some(kw => combined.includes(kw));
+        if (!isNY) return;
         results.push({
-          title:  a.headline || a.title || "",
+          title,
           link:   a.links?.web?.href || "#",
-          desc:   a.description || "",
+          desc,
           pub:    a.published || a.lastModified || "",
           source: `ESPN · ${name}`,
-          team:   name,
         });
       });
     } catch(e) {}
