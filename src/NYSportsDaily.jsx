@@ -116,12 +116,18 @@ async function fetchStandings() {
   const results = [];
   await Promise.all(STANDINGS_ENDPOINTS.map(async ({ sport, league, label, teams }) => {
     try {
-      const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/standings`;
+      const url = `https://site.api.espn.com/apis/v2/sports/${sport}/${league}/standings?level=3`;
       const res  = await fetch(url);
       const json = await res.json();
 
-      // ESPN returns standings in children (conferences/divisions)
-      const groups = json.children?.length ? json.children : [json];
+      // Walk the children tree to find division groups with entries
+      function extractGroups(node) {
+        if (node?.standings?.entries?.length) return [node];
+        if (node?.children?.length) return node.children.flatMap(extractGroups);
+        return [];
+      }
+
+      const groups = extractGroups(json);
 
       groups.forEach(group => {
         const divName = group.name || label;
@@ -131,9 +137,7 @@ async function fetchStandings() {
         const rows = entries.map(e => {
           const team = e.team?.displayName || e.team?.name || "";
           const stats = {};
-          (e.stats || []).forEach(s => {
-            stats[s.name] = s.displayValue ?? s.value;
-          });
+          (e.stats || []).forEach(s => { stats[s.name] = s.displayValue ?? s.value; });
           return {
             team,
             abbrev: e.team?.abbreviation || "",
