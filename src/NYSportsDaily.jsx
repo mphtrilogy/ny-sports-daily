@@ -1275,112 +1275,167 @@ function HistoryTab() {
 // ─── STATS TAB ────────────────────────────────────────────────────────────
 function StatsTab() {
   const [activeLeague, setActiveLeague] = useState("MLB");
-  const [leaders, setLeaders]           = useState([]);
-  const [loading, setLoading]           = useState(false);
-  const [nyOnly, setNyOnly]             = useState(false);
 
-  const endpoint = STATS_ENDPOINTS.find(e => e.label === activeLeague);
-
-  useEffect(() => {
-    if (!endpoint) return;
-    setLoading(true);
-    setLeaders([]);
-    fetchLeagueLeaders(endpoint.sport, endpoint.league).then(cats => {
-      setLeaders(cats);
-      setLoading(false);
-    });
-  }, [activeLeague]);
-
-  const DEEP_DIVE_LINKS = {
-    MLB:  "https://www.baseball-reference.com",
-    NFL:  "https://www.pro-football-reference.com",
-    NBA:  "https://www.basketball-reference.com",
-    NHL:  "https://www.hockey-reference.com",
-    WNBA: "https://www.basketball-reference.com/wnba",
-    NWSL: "https://fbref.com/en/comps/182/NWSL-Stats",
+  const STATS_REFERENCE = {
+    MLB: {
+      color: "#003087", emoji: "⚾",
+      desc: "Major League Baseball statistics — batting, pitching, fielding",
+      categories: [
+        { name:"Batting Average",  abbrev:"AVG",  url:"https://www.baseball-reference.com/leaders/batting_avg_active.shtml",   desc:"Best hitters by AVG" },
+        { name:"Home Runs",        abbrev:"HR",   url:"https://www.baseball-reference.com/leaders/HR_active.shtml",            desc:"Power hitters" },
+        { name:"RBI",              abbrev:"RBI",  url:"https://www.baseball-reference.com/leaders/RBI_active.shtml",           desc:"Runs batted in" },
+        { name:"ERA",              abbrev:"ERA",  url:"https://www.baseball-reference.com/leaders/earned_run_avg_active.shtml",desc:"Best ERA starters" },
+        { name:"Strikeouts",       abbrev:"K",    url:"https://www.baseball-reference.com/leaders/SO_p_active.shtml",          desc:"Pitching strikeouts" },
+        { name:"Stolen Bases",     abbrev:"SB",   url:"https://www.baseball-reference.com/leaders/SB_active.shtml",            desc:"Speed on the bases" },
+        { name:"OPS",              abbrev:"OPS",  url:"https://www.baseball-reference.com/leaders/onbase_plus_slugging_active.shtml", desc:"On-base + slugging" },
+        { name:"Wins",             abbrev:"W",    url:"https://www.baseball-reference.com/leaders/W_active.shtml",             desc:"Pitcher wins" },
+        { name:"WHIP",             abbrev:"WHIP", url:"https://www.baseball-reference.com/leaders/whip_active.shtml",          desc:"Walks + hits per inning" },
+        { name:"Saves",            abbrev:"SV",   url:"https://www.baseball-reference.com/leaders/SV_active.shtml",            desc:"Closer saves" },
+      ],
+      nySearch: "https://www.baseball-reference.com/teams/NYY/2026.shtml",
+      nyTeams: ["Yankees","Mets"],
+    },
+    NFL: {
+      color: "#013369", emoji: "🏈",
+      desc: "National Football League statistics — offense, defense, special teams",
+      categories: [
+        { name:"Passing Yards",    abbrev:"YDS",  url:"https://www.pro-football-reference.com/leaders/pass_yds_single_season.htm", desc:"Top QBs by yards" },
+        { name:"Touchdowns",       abbrev:"TD",   url:"https://www.pro-football-reference.com/leaders/pass_td_single_season.htm",  desc:"Passing TDs" },
+        { name:"Rushing Yards",    abbrev:"RU",   url:"https://www.pro-football-reference.com/leaders/rush_yds_single_season.htm", desc:"Ground game leaders" },
+        { name:"Receiving Yards",  abbrev:"REC",  url:"https://www.pro-football-reference.com/leaders/rec_yds_single_season.htm",  desc:"Top receivers" },
+        { name:"Receptions",       abbrev:"REC",  url:"https://www.pro-football-reference.com/leaders/rec_single_season.htm",      desc:"Most catches" },
+        { name:"Sacks",            abbrev:"SK",   url:"https://www.pro-football-reference.com/leaders/def_sacks_single_season.htm",desc:"Pass rushers" },
+        { name:"Interceptions",    abbrev:"INT",  url:"https://www.pro-football-reference.com/leaders/def_int_single_season.htm",  desc:"Ball hawks" },
+        { name:"Passer Rating",    abbrev:"RTG",  url:"https://www.pro-football-reference.com/leaders/pass_rating_single_season.htm", desc:"QB efficiency" },
+      ],
+      nyTeams: ["Jets","Giants"],
+    },
+    NBA: {
+      color: "#006BB6", emoji: "🏀",
+      desc: "National Basketball Association statistics — scoring, rebounds, assists",
+      categories: [
+        { name:"Points Per Game",  abbrev:"PPG",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Scoring leaders" },
+        { name:"Rebounds",         abbrev:"RPG",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Board men" },
+        { name:"Assists",          abbrev:"APG",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Playmakers" },
+        { name:"Steals",           abbrev:"SPG",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Defensive disruptors" },
+        { name:"Blocks",           abbrev:"BPG",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Shot blockers" },
+        { name:"3-Pointers Made",  abbrev:"3PM",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Long range shooters" },
+        { name:"Field Goal %",     abbrev:"FG%",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Efficiency inside" },
+        { name:"Win Shares",       abbrev:"WS",   url:"https://www.basketball-reference.com/leagues/NBA_2026_advanced.html",   desc:"Overall impact" },
+      ],
+      nyTeams: ["Knicks","Nets"],
+    },
+    NHL: {
+      color: "#0038A8", emoji: "🏒",
+      desc: "National Hockey League statistics — scoring, goaltending, defense",
+      categories: [
+        { name:"Points",           abbrev:"PTS",  url:"https://www.hockey-reference.com/leagues/NHL_2026_skaters.html",         desc:"Goals + assists" },
+        { name:"Goals",            abbrev:"G",    url:"https://www.hockey-reference.com/leagues/NHL_2026_skaters.html",         desc:"Goal scorers" },
+        { name:"Assists",          abbrev:"A",    url:"https://www.hockey-reference.com/leagues/NHL_2026_skaters.html",         desc:"Primary playmakers" },
+        { name:"Plus/Minus",       abbrev:"+/-",  url:"https://www.hockey-reference.com/leagues/NHL_2026_skaters.html",         desc:"Defensive impact" },
+        { name:"GAA",              abbrev:"GAA",  url:"https://www.hockey-reference.com/leagues/NHL_2026_goalies.html",         desc:"Goalie avg against" },
+        { name:"Save %",           abbrev:"SV%",  url:"https://www.hockey-reference.com/leagues/NHL_2026_goalies.html",         desc:"Goalie efficiency" },
+        { name:"Penalty Minutes",  abbrev:"PIM",  url:"https://www.hockey-reference.com/leagues/NHL_2026_skaters.html",         desc:"Tough guys" },
+        { name:"Power Play Goals", abbrev:"PPG",  url:"https://www.hockey-reference.com/leagues/NHL_2026_skaters.html",         desc:"PP specialists" },
+      ],
+      nyTeams: ["Rangers","Islanders","NJ Devils"],
+    },
+    WNBA: {
+      color: "#FF6B35", emoji: "🏀",
+      desc: "Women's National Basketball Association — NY Liberty are defending champs!",
+      categories: [
+        { name:"Points Per Game",  abbrev:"PPG",  url:"https://www.basketball-reference.com/wnba/leagues/WNBA_2026_per_game.html", desc:"Scoring leaders" },
+        { name:"Rebounds",         abbrev:"RPG",  url:"https://www.basketball-reference.com/wnba/leagues/WNBA_2026_per_game.html", desc:"Board women" },
+        { name:"Assists",          abbrev:"APG",  url:"https://www.basketball-reference.com/wnba/leagues/WNBA_2026_per_game.html", desc:"Playmakers" },
+        { name:"Field Goal %",     abbrev:"FG%",  url:"https://www.basketball-reference.com/wnba/leagues/WNBA_2026_per_game.html", desc:"Efficiency" },
+        { name:"3-Pointers",       abbrev:"3PM",  url:"https://www.basketball-reference.com/wnba/leagues/WNBA_2026_per_game.html", desc:"Long range" },
+        { name:"Win Shares",       abbrev:"WS",   url:"https://www.basketball-reference.com/wnba/leagues/WNBA_2026_advanced.html", desc:"Overall impact" },
+      ],
+      nyTeams: ["NY Liberty"],
+    },
+    MLS: {
+      color: "#1a1a2e", emoji: "⚽",
+      desc: "Major League Soccer and NWSL statistics",
+      categories: [
+        { name:"Goals",            abbrev:"G",    url:"https://fbref.com/en/comps/22/stats/MLS-Stats",    desc:"Top scorers" },
+        { name:"Assists",          abbrev:"A",    url:"https://fbref.com/en/comps/22/stats/MLS-Stats",    desc:"Playmakers" },
+        { name:"xG",               abbrev:"xG",   url:"https://fbref.com/en/comps/22/stats/MLS-Stats",    desc:"Expected goals" },
+        { name:"Clean Sheets",     abbrev:"CS",   url:"https://fbref.com/en/comps/22/keepers/MLS-Stats",  desc:"GK clean sheets" },
+        { name:"NWSL Goals",       abbrev:"G",    url:"https://fbref.com/en/comps/182/stats/NWSL-Stats",  desc:"NWSL top scorers" },
+        { name:"NWSL Assists",     abbrev:"A",    url:"https://fbref.com/en/comps/182/stats/NWSL-Stats",  desc:"NWSL playmakers" },
+      ],
+      nyTeams: ["NYCFC","NJ Red Bulls","Gotham FC"],
+    },
   };
+
+  const leagues = Object.keys(STATS_REFERENCE);
+  const active  = STATS_REFERENCE[activeLeague];
+  const year    = new Date().getFullYear();
 
   return (
     <div style={styles.statsRoot}>
       <div style={styles.stdHeader}>
-        <h2 style={styles.stdTitle}>LEAGUE LEADERS</h2>
-        <p style={styles.stdSub}>WHERE NY PLAYERS STAND · CLICK ANY NAME FOR MORE</p>
+        <h2 style={styles.stdTitle}>STATS REFERENCE</h2>
+        <p style={styles.stdSub}>KEY CATEGORIES · CLICK ANY STAT FOR FULL LEAGUE LEADERS</p>
       </div>
 
-      <div style={{...styles.filterBar, marginBottom: 20}}>
-        <div style={styles.filterGroup}>
-          {STATS_ENDPOINTS.map(e => (
-            <button key={e.label} onClick={() => setActiveLeague(e.label)}
-              style={{...styles.filterBtn, ...(activeLeague===e.label ? styles.filterBtnActive : {})}}>
-              {e.label}
-            </button>
+      {/* League selector */}
+      <div style={{...styles.filterGroup, flexWrap:"wrap", marginBottom:20}}>
+        {leagues.map(l => (
+          <button key={l} onClick={() => setActiveLeague(l)}
+            style={{...styles.filterBtn, ...(activeLeague===l ? styles.filterBtnActive : {})}}>
+            {STATS_REFERENCE[l].emoji} {l}
+          </button>
+        ))}
+      </div>
+
+      {/* League header */}
+      <div style={{...styles.statsLeagueHeader, borderLeft:`4px solid ${active.color}`}}>
+        <div>
+          <span style={styles.statsLeagueTitle}>{activeLeague}</span>
+          <p style={styles.statsLeagueDesc}>{active.desc}</p>
+          {active.nyTeams && (
+            <p style={styles.statsNYTeams}>
+              🗽 NY TEAMS: {active.nyTeams.join(" · ")}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Stat category cards */}
+      <div style={styles.statsRefGrid}>
+        {active.categories.map((cat, i) => (
+          <a key={i} href={cat.url} target="_blank" rel="noopener noreferrer"
+            style={styles.statsRefCard}>
+            <div style={{...styles.statsRefAbbrev, background: active.color}}>{cat.abbrev}</div>
+            <div style={styles.statsRefBody}>
+              <span style={styles.statsRefName}>{cat.name}</span>
+              <span style={styles.statsRefDesc}>{cat.desc}</span>
+            </div>
+            <span style={styles.statsRefArrow}>→</span>
+          </a>
+        ))}
+      </div>
+
+      {/* NY Teams quick search */}
+      <div style={styles.statsNYSection}>
+        <div style={styles.statsNYHeader}>🗽 SEARCH NY PLAYERS</div>
+        <div style={styles.statsNYCards}>
+          {active.nyTeams?.map((team, i) => (
+            <a key={i}
+              href={`https://www.google.com/search?q=${encodeURIComponent(`${team} ${year} stats roster`)}`}
+              target="_blank" rel="noopener noreferrer"
+              style={styles.statsNYCard}>
+              {team} STATS →
+            </a>
           ))}
-        </div>
-        <button onClick={() => setNyOnly(!nyOnly)}
-          style={{...styles.nyToggle, ...(nyOnly ? styles.nyToggleActive : {})}}>
-          {nyOnly ? "★ NY ONLY" : "☆ NY ONLY"}
-        </button>
-      </div>
-
-      {loading ? (
-        <div style={styles.loading}>
-          <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
-          <p style={styles.loadingText}>LOADING STATS...</p>
-        </div>
-      ) : leaders.length === 0 ? (
-        <div style={styles.empty}>
-          <span style={styles.emptyIcon}>📊</span>
-          <p style={styles.emptyText}>NO STATS AVAILABLE</p>
-        </div>
-      ) : (
-        <div style={styles.statsGrid}>
-          {leaders.map((cat, ci) => {
-            const rows = (cat.leaders || []).filter(l =>
-              !nyOnly || NY_TEAM_NAMES.some(t => (l.athlete?.team?.displayName || "").toLowerCase().includes(t))
-            ).slice(0, 10);
-            if (rows.length === 0) return null;
-            return (
-              <div key={ci} style={styles.statsCat}>
-                <div style={styles.statsCatHeader}>
-                  <span style={styles.statsCatName}>{cat.displayName || cat.name}</span>
-                  <span style={styles.statsCatAbbrev}>{cat.abbreviation}</span>
-                </div>
-                {rows.map((l, i) => {
-                  const isNY = NY_TEAM_NAMES.some(t => (l.athlete?.team?.displayName || "").toLowerCase().includes(t));
-                  const searchQ = `${l.athlete?.displayName} ${activeLeague} stats ${new Date().getFullYear()}`;
-                  return (
-                    <a key={i} href={`https://www.google.com/search?q=${encodeURIComponent(searchQ)}`}
-                      target="_blank" rel="noopener noreferrer"
-                      style={{...styles.statsRow, ...(isNY ? styles.statsRowNY : {}), ...(i%2===0?{}:styles.statsRowAlt)}}>
-                      <span style={styles.statsRank}>{i+1}</span>
-                      {l.athlete?.headshot?.href && (
-                        <img src={l.athlete.headshot.href} alt="" style={styles.statsHeadshot}
-                          onError={e=>e.target.style.display="none"} />
-                      )}
-                      <div style={styles.statsPlayerInfo}>
-                        <span style={{...styles.statsName, ...(isNY?{color:"#e8e0d0",fontWeight:900}:{})}}>{l.athlete?.displayName}</span>
-                        <span style={styles.statsTeam}>{l.athlete?.team?.displayName || l.team?.displayName || ""}</span>
-                      </div>
-                      <span style={{...styles.statsValue, ...(isNY?{color:"#c8201c"}:{})}}>{l.displayValue || l.value}</span>
-                      {isNY && <span style={styles.statsNYBadge}>NY</span>}
-                    </a>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Deep dive link */}
-      {DEEP_DIVE_LINKS[activeLeague] && (
-        <div style={styles.statsDeepDive}>
-          <span style={styles.statsDeepDiveLabel}>WANT MORE?</span>
-          <a href={DEEP_DIVE_LINKS[activeLeague]} target="_blank" rel="noopener noreferrer" style={styles.statsDeepDiveLink}>
-            {activeLeague} DEEP DIVE STATS →
+          <a href={`https://www.google.com/search?q=${encodeURIComponent(`${activeLeague} leaders stats ${year}`)}`}
+            target="_blank" rel="noopener noreferrer"
+            style={{...styles.statsNYCard, background:"#c8201c", color:"#fff"}}>
+            {activeLeague} ALL LEADERS →
           </a>
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -2752,7 +2807,42 @@ const styles = {
     textDecoration:"none",
   },
 
-  // STANDINGS
+  // STATS REFERENCE
+  statsRoot: { paddingTop:8 },
+  statsLeagueHeader: {
+    padding:"14px 16px", background:"#161616",
+    marginBottom:16, display:"flex", alignItems:"center",
+  },
+  statsLeagueTitle: { fontSize:16, fontWeight:900, color:"#e8e0d0", letterSpacing:"0.1em", fontFamily:"'Georgia',serif" },
+  statsLeagueDesc: { margin:"4px 0 0", fontSize:11, color:"#888" },
+  statsNYTeams: { margin:"4px 0 0", fontSize:10, color:"#c8201c", fontWeight:700, letterSpacing:"0.05em" },
+  statsRefGrid: {
+    display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px,1fr))",
+    gap:8, marginBottom:20,
+  },
+  statsRefCard: {
+    display:"flex", alignItems:"center", gap:10,
+    background:"#161616", border:"1px solid #2a2a2a",
+    padding:"12px 14px", textDecoration:"none",
+    transition:"border-color 0.15s", cursor:"pointer",
+  },
+  statsRefAbbrev: {
+    fontSize:11, fontWeight:900, color:"#fff",
+    padding:"4px 8px", minWidth:36, textAlign:"center",
+    letterSpacing:"0.05em", flexShrink:0,
+  },
+  statsRefBody: { flex:1, display:"flex", flexDirection:"column", gap:2 },
+  statsRefName: { fontSize:12, fontWeight:700, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  statsRefDesc: { fontSize:9, color:"#888", letterSpacing:"0.04em" },
+  statsRefArrow: { fontSize:14, color:"#c8201c", fontWeight:900 },
+  statsNYSection: { borderTop:"1px solid #2a2a2a", paddingTop:16 },
+  statsNYHeader: { fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.2em", marginBottom:10 },
+  statsNYCards: { display:"flex", flexWrap:"wrap", gap:8 },
+  statsNYCard: {
+    padding:"8px 16px", border:"1px solid #333", background:"#1a1a1a",
+    color:"#aaa", fontSize:10, fontWeight:900, letterSpacing:"0.1em",
+    textDecoration:"none", fontFamily:"'Georgia',serif",
+  },
   stdRoot: { paddingTop: 8 },
   stdHeader: { borderBottom: "2px solid #2a2a2a", paddingBottom: 12, marginBottom: 16 },
   stdTitle: { margin:"0 0 4px", fontSize:14, fontWeight:900, letterSpacing:"0.15em", color:"#e8e0d0", fontFamily:"'Georgia',serif" },
