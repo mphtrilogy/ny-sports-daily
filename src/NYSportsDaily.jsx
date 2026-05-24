@@ -658,7 +658,7 @@ export default function NYSportsDaily() {
       {/* ── FOOTER ── */}
       <footer style={styles.footer}>
         <div style={styles.footerRule} />
-        <p style={styles.footerText}>NY SPORTS DAILY · SCORES VIA ESPN · NEWS VIA RSS</p>
+        <p style={styles.footerText}>NY SPORTS DAILY · SCORES & NEWS VIA ESPN · FREE ALWAYS</p>
         <p style={styles.footerSub}>Free. Always. Built for New York.</p>
         <a href="https://buymeacoffee.com/mhughes65v" target="_blank" rel="noopener noreferrer" style={styles.bmcBtn}>
           ☕ Buy Me a Coffee
@@ -948,6 +948,7 @@ const SPORT_ICONS_TV = { NFL:"🏈", MLB:"⚾", NBA:"🏀", NHL:"🏒", WNBA:"�
 
 // ─── TV SCHEDULE COMPONENT ─────────────────────────────────────────────────
 function TVScheduleTab({ scores, loading }) {
+  const today = new Date();
   const NY_TV = ["new york yankees","new york mets","new york jets","new york giants","new york knicks","brooklyn nets","new york rangers","new york islanders","new jersey devils","new york liberty","nycfc","new york red bulls","gotham fc"];
   function isNYGame(g) {
     return [g.homeTeam, g.awayTeam].some(n => NY_TV.includes(n.toLowerCase()));
@@ -1138,30 +1139,30 @@ const HISTORY_LISTS = {
       { rank:10,name:"1990",  value:"91 wins",            years:"Last great Straw season" },
     ]},
     { title: "All-Time Mets HR Leaders", items: [
-      { rank:1,  name:"Darryl Strawberry", value:"252 HR", years:"1983–1990" },
-      { rank:2,  name:"Mike Piazza",       value:"220 HR", years:"1998–2005" },
-      { rank:3,  name:"Dave Kingman",      value:"154 HR", years:"1975–77, 1981–83" },
-      { rank:4,  name:"Howard Johnson",    value:"192 HR", years:"1985–1993" },
-      { rank:5,  name:"Carlos Delgado",    value:"104 HR", years:"2006–2009" },
-      { rank:6,  name:"Todd Hundley",      value:"124 HR", years:"1990–1998" },
-      { rank:7,  name:"Cleon Jones",       value:"93 HR",  years:"1963–1975" },
-      { rank:8,  name:"Pete Alonso",       value:"226 HR", years:"2019–present" },
-      { rank:9,  name:"Lucas Duda",        value:"100 HR", years:"2010–2017" },
-      { rank:10, name:"John Olerud",       value:"63 HR",  years:"1997–1999" },
+      { rank:1,  name:"Pete Alonso",       value:"240+ HR", years:"2019–present" },
+      { rank:2,  name:"Darryl Strawberry", value:"252 HR",  years:"1983–1990" },
+      { rank:3,  name:"Mike Piazza",       value:"220 HR",  years:"1998–2005" },
+      { rank:4,  name:"Howard Johnson",    value:"192 HR",  years:"1985–1993" },
+      { rank:5,  name:"Todd Hundley",      value:"124 HR",  years:"1990–1998" },
+      { rank:6,  name:"Dave Kingman",      value:"154 HR",  years:"1975–77, 1981–83" },
+      { rank:7,  name:"Carlos Delgado",    value:"104 HR",  years:"2006–2009" },
+      { rank:8,  name:"Lucas Duda",        value:"100 HR",  years:"2010–2017" },
+      { rank:9,  name:"Cleon Jones",       value:"93 HR",   years:"1963–1975" },
+      { rank:10, name:"John Olerud",       value:"63 HR",   years:"1997–1999" },
     ]},
   ],
   "Knicks": [
     { title: "All-Time Knicks Scoring Leaders", items: [
       { rank:1,  name:"Patrick Ewing",     value:"23,665 pts", years:"1985–2000" },
-      { rank:2,  name:"Walt Frazier",      value:"14,617 pts", years:"1967–1977" },
-      { rank:3,  name:"Allan Houston",     value:"9,253 pts",  years:"1996–2005" },
-      { rank:4,  name:"Bill Cartwright",   value:"8,674 pts",  years:"1979–1988" },
+      { rank:2,  name:"Willis Reed",       value:"12,183 pts", years:"1964–1974" },
+      { rank:3,  name:"Walt Frazier",      value:"14,617 pts", years:"1967–1977" },
+      { rank:4,  name:"Carmelo Anthony",   value:"8,752 pts",  years:"2011–2017" },
       { rank:5,  name:"Earl Monroe",       value:"8,710 pts",  years:"1971–1980" },
-      { rank:6,  name:"Dick Barnett",      value:"8,378 pts",  years:"1965–1974" },
-      { rank:7,  name:"Bernard King",      value:"8,145 pts",  years:"1982–1987, 1987" },
-      { rank:8,  name:"Carmelo Anthony",   value:"8,752 pts",  years:"2011–2017" },
+      { rank:6,  name:"Allan Houston",     value:"9,253 pts",  years:"1996–2005" },
+      { rank:7,  name:"Bernard King",      value:"8,145 pts",  years:"1982–1987" },
+      { rank:8,  name:"Dick Barnett",      value:"8,378 pts",  years:"1965–1974" },
       { rank:9,  name:"Charles Oakley",    value:"6,871 pts",  years:"1988–1998" },
-      { rank:10, name:"Willis Reed",       value:"12,183 pts", years:"1964–1974" },
+      { rank:10, name:"Jalen Brunson",     value:"Active",     years:"2022–present" },
     ]},
     { title: "Knicks Championship Seasons", items: [
       { rank:1, name:"1970 Champions", value:"vs Lakers",   years:"Willis Reed's heroic return" },
@@ -1709,9 +1710,9 @@ const WHEEL_SEGMENTS = [
   { label: "ISLANDERS", color: "#003B8E", emoji: "🏒" },
   { label: "NETS",      color: "#444",    emoji: "🏀" },
   { label: "LIBERTY",   color: "#007A5E", emoji: "🏀" },
-  { label: "DEVILS",      color: "#CE1126", emoji: "🏒" },
-  { label: "RED BULLS",   color: "#ED1C2E", emoji: "⚽" },
-  { label: "GOTHAM FC",   color: "#0A0A2E", emoji: "⚽" },
+  { label: "DEVILS",    color: "#CE1126", emoji: "🏒" },
+  { label: "RED BULLS", color: "#ED1C2E", emoji: "⚽" },
+  { label: "GOTHAM FC", color: "#0A0A2E", emoji: "⚽" },
 ];
 
 function polarToCartesian(cx, cy, r, angleDeg) {
@@ -2282,27 +2283,59 @@ function CrosswordTab() {
   }
 
   function handleDownload() {
-    const lines = [];
-    lines.push(puzzle.title);
-    lines.push(puzzle.date);
-    lines.push("");
-    lines.push("ACROSS");
-    puzzle.across.forEach(c => lines.push(`${c.number}. ${c.clue}`));
-    lines.push("");
-    lines.push("DOWN");
-    puzzle.down.forEach(c => lines.push(`${c.number}. ${c.clue}`));
-    lines.push("");
-    lines.push("--- GRID (for printing) ---");
-    puzzle.solution.forEach(row => {
-      lines.push(row.map(c => c === "." ? "■" : "□").join(" "));
+    // Build printable HTML and open print dialog
+    const SIZE = puzzle.solution.length;
+    const cellSize = 28;
+    const gridPx = SIZE * cellSize + SIZE + 2;
+
+    // Build number map
+    const numMap = {};
+    [...puzzle.across, ...puzzle.down].forEach(c => { numMap[`${c.row}-${c.col}`] = c.number; });
+
+    let gridHTML = `<table style="border-collapse:collapse;margin:0 auto;">`;
+    puzzle.solution.forEach((row, r) => {
+      gridHTML += `<tr>`;
+      row.forEach((cell, c) => {
+        const isBlack = cell === ".";
+        const num = numMap[`${r}-${c}`];
+        gridHTML += `<td style="width:${cellSize}px;height:${cellSize}px;border:1px solid #000;background:${isBlack?"#000":"#fff"};position:relative;vertical-align:top;font-size:7px;padding:1px;">`;
+        if (!isBlack && num) gridHTML += `<span style="font-size:7px;line-height:1;">${num}</span>`;
+        gridHTML += `</td>`;
+      });
+      gridHTML += `</tr>`;
     });
-    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href     = url;
-    a.download = "NYSportsDaily-Crossword.txt";
-    a.click();
-    URL.revokeObjectURL(url);
+    gridHTML += `</table>`;
+
+    let acrossHTML = puzzle.across.map(c => `<tr><td style="padding:2px 6px;font-weight:bold;white-space:nowrap;">${c.number}A</td><td style="padding:2px 6px;">${c.clue}</td></tr>`).join("");
+    let downHTML   = puzzle.down.map(c => `<tr><td style="padding:2px 6px;font-weight:bold;white-space:nowrap;">${c.number}D</td><td style="padding:2px 6px;">${c.clue}</td></tr>`).join("");
+
+    const html = `
+      <html><head><title>${puzzle.title}</title>
+      <style>
+        body{font-family:Georgia,serif;margin:20px;color:#000;}
+        h2{text-align:center;font-size:16px;margin:0 0 4px;}
+        p{text-align:center;font-size:11px;margin:0 0 12px;color:#555;}
+        .grid{margin-bottom:16px;}
+        .clues{display:flex;gap:20px;font-size:11px;}
+        .col{flex:1;}
+        h3{font-size:12px;border-bottom:1px solid #000;margin:0 0 4px;}
+        table.clue-table td{vertical-align:top;}
+        @media print{button{display:none;}}
+      </style></head>
+      <body>
+        <h2>${puzzle.title}</h2>
+        <p>${puzzle.date} · 15×15 · SUNDAY CHALLENGE</p>
+        <div class="grid">${gridHTML}</div>
+        <div class="clues">
+          <div class="col"><h3>ACROSS</h3><table class="clue-table">${acrossHTML}</table></div>
+          <div class="col"><h3>DOWN</h3><table class="clue-table">${downHTML}</table></div>
+        </div>
+        <script>window.onload=()=>window.print();</script>
+      </body></html>`;
+
+    const w = window.open("","_blank");
+    w.document.write(html);
+    w.document.close();
   }
 
   // Highlight logic
@@ -2336,7 +2369,7 @@ function CrosswordTab() {
         <div style={styles.xwActions}>
           <button onClick={handleCheck} style={styles.xwBtn}>CHECK</button>
           <button onClick={handleReveal} style={{...styles.xwBtn, ...styles.xwBtnReveal}}>REVEAL</button>
-          <button onClick={handleDownload} style={{...styles.xwBtn, color:"#888"}}>⬇ PRINT</button>
+          <button onClick={handleDownload} style={{...styles.xwBtn, color:"#888"}}>🖨 PRINT / PDF</button>
         </div>
       </div>
 
@@ -2580,7 +2613,7 @@ const styles = {
   },
   tickerScroll: {
     display: "flex", alignItems: "center",
-    animation: "ticker 70s linear infinite",
+    animation: "ticker 50s linear infinite",
     whiteSpace: "nowrap", paddingLeft: 16,
   },
   tickerItem: {
@@ -2609,7 +2642,7 @@ const styles = {
     transition: "all 0.15s", whiteSpace: "nowrap", flexShrink: 0,
   },
   tabBtnActive: {
-    color: "#c8201c", borderBottom: "3px solid #c8201c",
+    color: "#888", borderBottom: "3px solid #888",
   },
 
   // FILTER BAR
