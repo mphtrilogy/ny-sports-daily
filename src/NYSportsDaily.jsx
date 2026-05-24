@@ -1938,9 +1938,15 @@ function TriviaTab() {
   const dateStr = today.toLocaleDateString("en-US", { month: "long", day: "numeric" });
   const fullDateStr = today.toLocaleDateString("en-US", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
 
-  const [thisDate, setThisDate]         = useState(null);
+  const [thisDate, setThisDate] = useState([
+    { year:1969, team:"Mets", sport:"MLB", headline:"Miracle Mets win the World Series", detail:"The 100-to-1 longshots defeat the Baltimore Orioles to complete the most shocking World Series upset in baseball history. Ya Gotta Believe!" },
+    { year:1994, team:"Rangers", sport:"NHL", headline:"Rangers win Stanley Cup ending 54-year drought", detail:"Mark Messier and the Rangers defeat the Vancouver Canucks in Game 7, ending a 54-year championship drought at Madison Square Garden." },
+    { year:1969, team:"Jets", sport:"NFL", headline:"Namath guarantees Super Bowl III victory", detail:"Joe Namath backs up his famous guarantee defeating the Baltimore Colts 16-7 in one of the greatest upsets in sports history." },
+    { year:1970, team:"Knicks", sport:"NBA", headline:"Willis Reed limps onto court in Game 7", detail:"Playing on a torn thigh muscle Reed inspires the Knicks to their first NBA championship at Madison Square Garden." },
+    { year:1980, team:"Islanders", sport:"NHL", headline:"Bob Nystrom OT winner starts Islanders dynasty", detail:"Nystrom's overtime goal against the Flyers launches four consecutive Stanley Cups — the greatest dynasty in Islander history." },
+  ]);
   const [trivia, setTrivia]             = useState(null);
-  const [loadingDate, setLoadingDate]   = useState(true);
+  const [loadingDate, setLoadingDate]   = useState(false);
   const [loadingTrivia, setLoadingTrivia] = useState(true);
   const [triviaRevealed, setTriviaRevealed] = useState(false);
   const [triviaCorrect, setTriviaCorrect]   = useState(null);
