@@ -939,18 +939,20 @@ const SPORT_ICONS_TV = { NFL:"🏈", MLB:"⚾", NBA:"🏀", NHL:"🏒", WNBA:"�
 
 // ─── TV SCHEDULE COMPONENT ─────────────────────────────────────────────────
 function TVScheduleTab({ scores, loading }) {
-  const today = new Date();
-  const isToday = true; // always shows today's data (scores are already today-filtered)
+  const NY_TV = ["new york yankees","new york mets","new york jets","new york giants","new york knicks","brooklyn nets","new york rangers","new york islanders","new jersey devils","new york liberty","nycfc","new york red bulls","gotham fc"];
+  function isNYGame(g) {
+    return [g.homeTeam, g.awayTeam].some(n => NY_TV.includes(n.toLowerCase()));
+  }
 
-  // Sort by game time, NY games first
   const sorted = [...scores].sort((a, b) => {
-    if (a.isNY && !b.isNY) return -1;
-    if (!a.isNY && b.isNY) return 1;
+    const aNY = isNYGame(a), bNY = isNYGame(b);
+    if (aNY && !bNY) return -1;
+    if (!aNY && bNY) return 1;
     return (a.gameDate || 0) - (b.gameDate || 0);
   });
 
-  const nyGames    = sorted.filter(g => g.isNY);
-  const otherGames = sorted.filter(g => !g.isNY);
+  const nyGames    = sorted.filter(g => isNYGame(g));
+  const otherGames = sorted.filter(g => !isNYGame(g));
 
   if (loading) return (
     <div style={styles.loading}>
@@ -989,7 +991,7 @@ function TVScheduleTab({ scores, loading }) {
           <div style={styles.tvSectionHeader}>
             <span style={styles.tvSectionHeaderText}>🗽 NEW YORK TEAMS</span>
           </div>
-          {nyGames.map(game => <TVGameRow key={game.id} game={game} featured />)}
+          {nyGames.map(game => <TVGameRow key={game.id} game={game} featured={true} />)}
         </div>
       )}
 
@@ -2004,7 +2006,10 @@ function TriviaTab() {
         {loadingDate ? (
           <AILoadingBlock text="SEARCHING THE ARCHIVES..." />
         ) : !thisDate || thisDate.length === 0 ? (
-          <div style={styles.triviaEmpty}>No moments found — try refreshing.</div>
+          <div style={styles.triviaEmpty}>
+            <p style={{margin:0, fontSize:12, color:"#666"}}>No moments recorded for today yet.</p>
+            <p style={{margin:"6px 0 0", fontSize:10, color:"#444"}}>Check back — we add new moments regularly!</p>
+          </div>
         ) : (
           <div style={styles.momentsList}>
             {thisDate.map((m, i) => (
