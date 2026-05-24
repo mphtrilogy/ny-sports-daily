@@ -1954,31 +1954,24 @@ function TriviaTab() {
 
   async function loadThisDate() {
     setLoadingDate(true);
-    setThisDate(null);
     try {
       const monthDay = `${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-      const url = `${SUPABASE_URL}/rest/v1/ny_on_this_date?month_day=eq.${monthDay}&order=year.asc`;
-      const res = await fetch(url, {
-        headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
-      });
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/ny_on_this_date?month_day=eq.${monthDay}&order=year.asc`,
+        { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
+      );
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         setThisDate(data);
+        setLoadingDate(false);
         return;
       }
-      // Try random fallback from database
-      const offset = Math.floor(Math.random() * 70);
       const res2 = await fetch(
-        `${SUPABASE_URL}/rest/v1/ny_on_this_date?limit=3&offset=${offset}`,
+        `${SUPABASE_URL}/rest/v1/ny_on_this_date?limit=3&offset=${Math.floor(Math.random()*70)}`,
         { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
       );
       const data2 = await res2.json();
-      if (Array.isArray(data2) && data2.length > 0) {
-        setThisDate(data2);
-        return;
-      }
-      // Final fallback — always show something
-      setThisDate(STATIC_MOMENTS);
+      setThisDate(Array.isArray(data2) && data2.length > 0 ? data2 : STATIC_MOMENTS);
     } catch(e) {
       setThisDate(STATIC_MOMENTS);
     }
