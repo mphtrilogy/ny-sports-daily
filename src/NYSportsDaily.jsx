@@ -1951,12 +1951,22 @@ function TriviaTab() {
     setThisDate(null);
     try {
       const monthDay = `${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-      const data = await sbFetch("ny_on_this_date", `?month_day=eq.${monthDay}&order=year.asc`);
-      // Make sure we got an array not an error object
+      // Try today's date first
+      const url = `${SUPABASE_URL}/rest/v1/ny_on_this_date?month_day=eq.${monthDay}&order=year.asc`;
+      const res = await fetch(url, {
+        headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
+      });
+      const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         setThisDate(data);
       } else {
-        setThisDate([]);
+        // Fallback — grab 3 random great moments from any date
+        const fallbackRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/ny_on_this_date?limit=3&offset=${Math.floor(Math.random()*70)}`,
+          { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
+        );
+        const fallback = await fallbackRes.json();
+        setThisDate(Array.isArray(fallback) && fallback.length > 0 ? fallback : []);
       }
     } catch(e) { setThisDate([]); }
     setLoadingDate(false);
@@ -2005,7 +2015,7 @@ function TriviaTab() {
           <span style={styles.triviaSectionIcon}>📅</span>
           <div>
             <h2 style={styles.triviaSectionTitle}>ON THIS DATE IN NY SPORTS</h2>
-            <p style={styles.triviaSectionSub}>{dateStr.toUpperCase()}</p>
+            <p style={styles.triviaSectionSub}>{dateStr.toUpperCase()} · NY SPORTS HISTORY</p>
           </div>
           <button onClick={loadThisDate} style={styles.refreshBtn} disabled={loadingDate}>
             {loadingDate ? "…" : "↺"}
