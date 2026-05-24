@@ -1941,7 +1941,12 @@ function TriviaTab() {
     try {
       const monthDay = `${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
       const data = await sbFetch("ny_on_this_date", `?month_day=eq.${monthDay}&order=year.asc`);
-      setThisDate(data && data.length > 0 ? data : []);
+      // Make sure we got an array not an error object
+      if (Array.isArray(data) && data.length > 0) {
+        setThisDate(data);
+      } else {
+        setThisDate([]);
+      }
     } catch(e) { setThisDate([]); }
     setLoadingDate(false);
   }
