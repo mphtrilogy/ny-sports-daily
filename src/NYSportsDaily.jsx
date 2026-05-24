@@ -14,6 +14,25 @@ async function sbFetch(table, params = "") {
   return res.json();
 }
 
+async function sbRandom(table, filter = "") {
+  // Get count first then fetch random offset
+  try {
+    const countRes = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}select=id`, {
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Prefer": "count=exact",
+        "Range": "0-0",
+      }
+    });
+    const countHeader = countRes.headers.get("content-range");
+    const total = countHeader ? parseInt(countHeader.split("/")[1]) : 50;
+    const offset = Math.floor(Math.random() * total);
+    const data = await sbFetch(table, `?${filter}limit=1&offset=${offset}`);
+    return data?.[0] || null;
+  } catch(e) { return null; }
+}
+
 // ─── NY TEAMS CONFIG ───────────────────────────────────────────────────────
 const NY_TEAMS = {
   NFL:  [{ name: "Jets",    espnId: "20", color: "#125740" }, { name: "Giants", espnId: "19", color: "#0B2265" }],
@@ -1809,18 +1828,16 @@ function SpinTab() {
   async function fetchFact(team) {
     setLoading(true);
     try {
-      // Normalize team label to match Supabase data
       const teamKey = team.replace("NJ ","").replace(" FC","").toUpperCase();
-      const data = await sbFetch("ny_spin_facts", `?team=eq.${encodeURIComponent(teamKey)}&order=random()&limit=1`);
-      if (data && data.length > 0) {
-        setFact(data[0]);
+      const row = await sbRandom("ny_spin_facts", `team=eq.${encodeURIComponent(teamKey)}&`);
+      if (row) {
+        setFact(row);
       } else {
-        // Fallback — try any team fact
-        const fallback = await sbFetch("ny_spin_facts", `?order=random()&limit=1`);
-        setFact(fallback?.[0] || { fact: "Spin again for a great NY sports fact!", teaser: "Try again!", category: "weird", era: "" });
+        const fallback = await sbRandom("ny_spin_facts");
+        setFact(fallback || { fact: "Spin again for a great NY sports fact!", teaser: "Try again!", category: "weird", era: "" });
       }
     } catch(e) {
-      setFact({ fact: "Couldn't load fact — try spinning again!", teaser: "Spin again!", category: "weird", era: "" });
+      setFact({ fact: "Couldn't load — try spinning again!", teaser: "Spin again!", category: "weird", era: "" });
     }
     setLoading(false);
   }
@@ -1935,9 +1952,8 @@ function TriviaTab() {
     setTriviaRevealed(false);
     setTriviaCorrect(null);
     try {
-      const data = await sbFetch("ny_trivia", `?order=random()&limit=1`);
-      if (data && data.length > 0) {
-        const row = data[0];
+      const row = await sbRandom("ny_trivia");
+      if (row) {
         setTrivia({
           question:    row.question,
           options:     [`A) ${row.option_a}`, `B) ${row.option_b}`, `C) ${row.option_c}`, `D) ${row.option_d}`],
