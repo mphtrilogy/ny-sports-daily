@@ -12,7 +12,11 @@ const NY_TEAMS = {
 };
 
 const ALL_TEAM_IDS = Object.values(NY_TEAMS).flat().map(t => String(t.espnId));
-const ALL_TEAM_NAMES = Object.values(NY_TEAMS).flat().map(t => t.name.toLowerCase());
+const NY_EXACT_NAMES = [
+  "new york yankees","new york mets","new york jets","new york giants",
+  "new york knicks","brooklyn nets","new york rangers","new york islanders",
+  "new jersey devils","new york liberty","nycfc","new york red bulls","nj/ny gotham fc","gotham fc"
+];
 
 const SPORT_ENDPOINTS = [
   { sport: "football", league: "nfl",       label: "NFL"  },
@@ -71,7 +75,7 @@ async function fetchESPNScores(date) {
         const teams = comp.competitors || [];
         const isNY = teams.some(t =>
           ALL_TEAM_IDS.includes(String(t.team?.id)) ||
-          ALL_TEAM_NAMES.some(n => (t.team?.displayName || "").toLowerCase().includes(n))
+          NY_EXACT_NAMES.includes((t.team?.displayName || "").toLowerCase())
         );
         const home = teams.find(t => t.homeAway === "home");
         const away = teams.find(t => t.homeAway === "away");
