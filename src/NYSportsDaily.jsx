@@ -397,13 +397,17 @@ export default function NYSportsDaily() {
   }, []);
 
   const NY_TEAM_FILTER = [
-    "yankees","mets","jets","giants","knicks","nets",
-    "rangers","islanders","devils","liberty","nycfc","red bulls","gotham"
+    "new york yankees", "new york mets", "new york jets", "new york giants",
+    "new york knicks", "brooklyn nets", "new york rangers", "new york islanders",
+    "new jersey devils", "new york liberty", "nycfc", "new york red bulls",
+    "nj/ny gotham", "gotham fc"
   ];
 
   function gameIsNY(game) {
-    const names = [game.homeTeam, game.awayTeam].map(n => n.toLowerCase());
-    return names.some(n => NY_TEAM_FILTER.some(ny => n.includes(ny)));
+    const home = (game.homeTeam || "").toLowerCase();
+    const away = (game.awayTeam || "").toLowerCase();
+    return NY_TEAM_FILTER.some(ny => home === ny || away === ny ||
+      home.includes(ny) || away.includes(ny));
   }
 
   const filteredScores = scores.filter(s => {
@@ -671,8 +675,14 @@ const SPORT_LEAGUE_MAP = {
 };
 
 function ScoreCard({ game }) {
-  const NY_CHECK = ["yankees","mets","jets","giants","knicks","nets","rangers","islanders","devils","liberty","nycfc","red bulls","gotham"];
-  const isNY = [game.homeTeam, game.awayTeam].some(n => NY_CHECK.some(ny => n.toLowerCase().includes(ny)));
+  const NY_CHECK = [
+    "new york yankees","new york mets","new york jets","new york giants",
+    "new york knicks","brooklyn nets","new york rangers","new york islanders",
+    "new jersey devils","new york liberty","nycfc","new york red bulls","gotham fc"
+  ];
+  const isNY = [game.homeTeam, game.awayTeam].some(n =>
+    NY_CHECK.some(ny => n.toLowerCase() === ny)
+  );
   const [expanded, setExpanded]   = useState(false);
   const [boxScore, setBoxScore]   = useState(null);
   const [loadingBS, setLoadingBS] = useState(false);
@@ -2516,20 +2526,21 @@ const styles = {
 
   // TICKER
   ticker: {
-    background: "#c8201c", overflow: "hidden",
+    background: "#c8201c",
     height: 32, position: "relative", zIndex: 1,
-    width: "100%",
+    width: "100%", display: "flex", overflow: "hidden",
   },
   tickerInner: {
     display: "flex", alignItems: "center",
-    height: "100%", overflow: "hidden",
+    width: "100%", overflow: "hidden",
   },
   tickerBug: {
-    background: "#111", color: "#fff",
-    padding: "0 14px", height: "100%",
+    background: "#0e0e0e", color: "#fff",
+    padding: "0 12px", height: 32,
     display: "flex", alignItems: "center",
     fontSize: 10, fontWeight: 900, letterSpacing: "0.1em",
-    flexShrink: 0, whiteSpace: "nowrap",
+    flexShrink: 0, whiteSpace: "nowrap", zIndex: 2,
+    minWidth: 50,
   },
   tickerScroll: {
     display: "flex", alignItems: "center",
