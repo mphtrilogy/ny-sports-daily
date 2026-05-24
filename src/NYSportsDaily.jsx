@@ -1947,36 +1947,18 @@ function TriviaTab() {
   const [newTriviaLoading, setNewTriviaLoading] = useState(false);
 
   const STATIC_MOMENTS = [
-    { year:1969, team:"Mets", sport:"MLB", headline:"Miracle Mets win the World Series", detail:"The 100-to-1 longshots defeat the Baltimore Orioles to complete the most shocking World Series upset in baseball history." },
+    { year:1969, team:"Mets", sport:"MLB", headline:"Miracle Mets win the World Series", detail:"The 100-to-1 longshots defeat the Baltimore Orioles to complete the most shocking World Series upset in baseball history. Ya Gotta Believe!" },
     { year:1994, team:"Rangers", sport:"NHL", headline:"Rangers win Stanley Cup ending 54-year drought", detail:"Mark Messier and the Rangers defeat the Vancouver Canucks in Game 7, ending a 54-year championship drought at Madison Square Garden." },
     { year:1969, team:"Jets", sport:"NFL", headline:"Namath guarantees Super Bowl III victory", detail:"Joe Namath backs up his famous guarantee defeating the Baltimore Colts 16-7 in one of the greatest upsets in sports history." },
+    { year:1970, team:"Knicks", sport:"NBA", headline:"Willis Reed limps onto court in Game 7 of NBA Finals", detail:"Playing on a torn thigh muscle Reed scores the first two baskets inspiring Walt Frazier to a 36-point performance as the Knicks win their first title." },
+    { year:1980, team:"Islanders", sport:"NHL", headline:"Bob Nystrom scores OT winner to give Islanders first Cup", detail:"Nystrom's overtime goal at 7:11 of OT against the Flyers launches the greatest dynasty in Islander history — four consecutive Stanley Cups." },
   ];
 
-  async function loadThisDate() {
-    setLoadingDate(true);
-    try {
-      const monthDay = `${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/ny_on_this_date?month_day=eq.${monthDay}&order=year.asc`,
-        { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
-      );
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        setThisDate(data);
-        setLoadingDate(false);
-        return;
-      }
-      const res2 = await fetch(
-        `${SUPABASE_URL}/rest/v1/ny_on_this_date?limit=3&offset=${Math.floor(Math.random()*70)}`,
-        { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
-      );
-      const data2 = await res2.json();
-      setThisDate(Array.isArray(data2) && data2.length > 0 ? data2 : STATIC_MOMENTS);
-    } catch(e) {
-      setThisDate(STATIC_MOMENTS);
-    }
+  useEffect(() => {
+    // Show static moments immediately — Supabase integration coming soon
+    setThisDate(STATIC_MOMENTS);
     setLoadingDate(false);
-  }
+  }, []);
 
   async function loadTrivia(isNew = false) {
     isNew ? setNewTriviaLoading(true) : setLoadingTrivia(true);
@@ -2000,7 +1982,6 @@ function TriviaTab() {
   }
 
   useEffect(() => {
-    loadThisDate();
     loadTrivia();
   }, []);
 
@@ -2023,8 +2004,8 @@ function TriviaTab() {
             <h2 style={styles.triviaSectionTitle}>ON THIS DATE IN NY SPORTS</h2>
             <p style={styles.triviaSectionSub}>{dateStr.toUpperCase()} · NY SPORTS HISTORY</p>
           </div>
-          <button onClick={loadThisDate} style={styles.refreshBtn} disabled={loadingDate}>
-            {loadingDate ? "…" : "↺"}
+          <button onClick={() => setThisDate(STATIC_MOMENTS)} style={styles.refreshBtn}>
+            ↺
           </button>
         </div>
 
