@@ -396,13 +396,23 @@ export default function NYSportsDaily() {
     load();
   }, []);
 
+  const NY_TEAM_FILTER = [
+    "yankees","mets","jets","giants","knicks","nets",
+    "rangers","islanders","devils","liberty","nycfc","red bulls","gotham"
+  ];
+
+  function gameIsNY(game) {
+    const names = [game.homeTeam, game.awayTeam].map(n => n.toLowerCase());
+    return names.some(n => NY_TEAM_FILTER.some(ny => n.includes(ny)));
+  }
+
   const filteredScores = scores.filter(s => {
-    if (nyOnly && !s.isNY) return false;
+    if (nyOnly && !gameIsNY(s)) return false;
     if (activeLeague !== "ALL" && s.sport !== activeLeague) return false;
     return true;
   });
 
-  const nyScores  = scores.filter(s => s.isNY);
+  const nyScores  = scores.filter(s => gameIsNY(s));
   const allLeagues = ["ALL", ...SPORT_ENDPOINTS.map(e => e.label)];
 
   return (
@@ -441,19 +451,21 @@ export default function NYSportsDaily() {
         })}
       </div>
 
-      {/* ── NY TEAM TICKER (today's NY games) ── */}
+      {/* ── NY TEAM TICKER ── */}
       {nyScores.length > 0 && (
         <div style={styles.ticker}>
-          <span style={styles.tickerBug}>NY TEAMS</span>
-          <div style={styles.tickerScroll}>
-            {[...nyScores, ...nyScores].map((s, i) => (
-              <span key={i} style={styles.tickerItem}>
-                <span style={styles.tickerSport}>[{s.sport}]</span>
-                {" "}{s.awayTeam} {s.awayScore} — {s.homeTeam} {s.homeScore}
-                {s.statusDesc ? <span style={styles.tickerStatus}> · {s.statusDesc}</span> : null}
-                <span style={styles.tickerDot}>  ●  </span>
-              </span>
-            ))}
+          <div style={styles.tickerInner}>
+            <span style={styles.tickerBug}>🗽 NY</span>
+            <div style={styles.tickerScroll}>
+              {[...nyScores, ...nyScores].map((s, i) => (
+                <span key={i} style={styles.tickerItem}>
+                  <span style={styles.tickerSport}>[{s.sport}]</span>
+                  {" "}{s.awayTeam} {s.awayScore} — {s.homeTeam} {s.homeScore}
+                  {s.statusDesc ? <span style={styles.tickerStatus}> · {s.statusDesc}</span> : null}
+                  <span style={styles.tickerDot}>  ●  </span>
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -659,6 +671,8 @@ const SPORT_LEAGUE_MAP = {
 };
 
 function ScoreCard({ game }) {
+  const NY_CHECK = ["yankees","mets","jets","giants","knicks","nets","rangers","islanders","devils","liberty","nycfc","red bulls","gotham"];
+  const isNY = [game.homeTeam, game.awayTeam].some(n => NY_CHECK.some(ny => n.toLowerCase().includes(ny)));
   const [expanded, setExpanded]   = useState(false);
   const [boxScore, setBoxScore]   = useState(null);
   const [loadingBS, setLoadingBS] = useState(false);
@@ -699,8 +713,8 @@ function ScoreCard({ game }) {
   }
 
   return (
-    <div style={{...styles.scoreCard, ...(game.isNY ? styles.scoreCardNY : {})}}>
-      {game.isNY && <div style={styles.nyBadge}>NY</div>}
+    <div style={{...styles.scoreCard, ...(isNY ? styles.scoreCardNY : {})}}>
+      {isNY && <div style={styles.nyBadge}>NY</div>}
       <div style={styles.scoreCardSport}>{game.sport}</div>
       <div style={styles.scoreTeams}>
         <TeamRow logo={game.awayLogo} name={game.awayTeam} score={game.awayScore} color={game.awayColor} />
@@ -2502,10 +2516,13 @@ const styles = {
 
   // TICKER
   ticker: {
-    display: "flex", alignItems: "center",
     background: "#c8201c", overflow: "hidden",
     height: 32, position: "relative", zIndex: 1,
-    width: "100%", boxSizing: "border-box",
+    width: "100%",
+  },
+  tickerInner: {
+    display: "flex", alignItems: "center",
+    height: "100%", overflow: "hidden",
   },
   tickerBug: {
     background: "#111", color: "#fff",
