@@ -478,7 +478,7 @@ export default function NYSportsDaily() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => setNyOnly(!nyOnly)}
+              <button type="button" onClick={() => setNyOnly(prev => !prev)}
                 style={{...styles.nyToggle, ...(nyOnly ? styles.nyToggleActive : {})}}>
                 {nyOnly ? "★ NY ONLY" : "☆ NY ONLY"}
               </button>
@@ -803,11 +803,25 @@ function ScoreCard({ game }) {
 }
 
 function TeamRow({ logo, name, score, color }) {
+  // Ensure color is readable on dark background
+  // Some ESPN colors are too dark or white — normalize them
+  const safeColor = (() => {
+    if (!color || color === "#333" || color === "#ffffff" || color === "#fff") return "#e8e0d0";
+    // Convert to check brightness
+    const hex = color.replace("#","");
+    if (hex.length !== 6) return "#e8e0d0";
+    const r = parseInt(hex.slice(0,2),16);
+    const g = parseInt(hex.slice(2,4),16);
+    const b = parseInt(hex.slice(4,6),16);
+    const brightness = (r*299 + g*587 + b*114) / 1000;
+    // Too dark (under 60) — use light color instead
+    return brightness < 60 ? "#e8e0d0" : color;
+  })();
   return (
     <div style={styles.teamRow}>
       {logo && <img src={logo} alt="" style={styles.teamLogo} onError={e => e.target.style.display="none"} />}
       <span style={styles.teamName}>{name}</span>
-      <span style={{...styles.teamScore, color: color !== "#ffffff" ? color : "#e8e0d0"}}>{score}</span>
+      <span style={{...styles.teamScore, color: safeColor}}>{score}</span>
     </div>
   );
 }
@@ -2497,6 +2511,7 @@ const styles = {
     display: "flex", alignItems: "center",
     background: "#c8201c", overflow: "hidden",
     height: 32, position: "relative", zIndex: 1,
+    width: "100%",
   },
   tickerBug: {
     background: "#0e0e0e", color: "#c8201c",
@@ -2504,10 +2519,11 @@ const styles = {
     display: "flex", alignItems: "center",
     fontSize: 10, fontWeight: 900, letterSpacing: "0.1em",
     flexShrink: 0, whiteSpace: "nowrap",
+    borderRight: "2px solid #c8201c",
   },
   tickerScroll: {
     display: "flex", alignItems: "center",
-    animation: "ticker 40s linear infinite",
+    animation: "ticker 60s linear infinite",
     whiteSpace: "nowrap",
   },
   tickerItem: {
