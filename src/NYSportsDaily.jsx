@@ -5,31 +5,40 @@ const SUPABASE_URL = "https://fnxoucliekhotvartyfu.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZueG91Y2xpZWtob3R2YXJ0eWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTI3MzEsImV4cCI6MjA4OTUyODczMX0.V4A75JO9s-7MbDRY7VMydwydOvdkU4SNSz_BRoVAoqA";
 
 async function sbFetch(table, params = "") {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${params}`, {
-    headers: {
-      "apikey": SUPABASE_KEY,
-      "Authorization": `Bearer ${SUPABASE_KEY}`,
-    }
-  });
-  return res.json();
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${params}`, {
+      method: "GET",
+      headers: {
+        "apikey":        SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type":  "application/json",
+        "Accept":        "application/json",
+      }
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch(e) { return []; }
 }
 
 async function sbRandom(table, filter = "") {
-  // Get count first then fetch random offset
   try {
-    const countRes = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${filter}select=id`, {
-      headers: {
-        "apikey": SUPABASE_KEY,
-        "Authorization": `Bearer ${SUPABASE_KEY}`,
-        "Prefer": "count=exact",
-        "Range": "0-0",
-      }
-    });
+    const headers = {
+      "apikey":        SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Content-Type":  "application/json",
+      "Accept":        "application/json",
+      "Prefer":        "count=exact",
+      "Range":         "0-0",
+    };
+    const countRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/${table}?${filter}select=id`,
+      { headers }
+    );
     const countHeader = countRes.headers.get("content-range");
-    const total = countHeader ? parseInt(countHeader.split("/")[1]) : 50;
-    const offset = Math.floor(Math.random() * total);
+    const total = countHeader ? parseInt(countHeader.split("/")[1]) || 50 : 50;
+    const offset = Math.floor(Math.random() * Math.max(total, 1));
     const data = await sbFetch(table, `?${filter}limit=1&offset=${offset}`);
-    return data?.[0] || null;
+    return Array.isArray(data) ? data[0] || null : null;
   } catch(e) { return null; }
 }
 
@@ -1931,8 +1940,8 @@ function TriviaTab() {
 
   const [thisDate, setThisDate]         = useState(null);
   const [trivia, setTrivia]             = useState(null);
-  const [loadingDate, setLoadingDate]   = useState(false);
-  const [loadingTrivia, setLoadingTrivia] = useState(false);
+  const [loadingDate, setLoadingDate]   = useState(true);
+  const [loadingTrivia, setLoadingTrivia] = useState(true);
   const [triviaRevealed, setTriviaRevealed] = useState(false);
   const [triviaCorrect, setTriviaCorrect]   = useState(null);
   const [newTriviaLoading, setNewTriviaLoading] = useState(false);
@@ -2004,11 +2013,14 @@ function TriviaTab() {
         </div>
 
         {loadingDate ? (
-          <AILoadingBlock text="SEARCHING THE ARCHIVES..." />
+          <div style={{padding:"12px 0"}}>
+            <div style={styles.loadingDots}>
+              {[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}
+            </div>
+          </div>
         ) : !thisDate || thisDate.length === 0 ? (
-          <div style={styles.triviaEmpty}>
-            <p style={{margin:0, fontSize:12, color:"#666"}}>No moments recorded for today yet.</p>
-            <p style={{margin:"6px 0 0", fontSize:10, color:"#444"}}>Check back — we add new moments regularly!</p>
+          <div style={{padding:"10px 0", fontSize:11, color:"#555"}}>
+            No moments recorded for today — more added regularly!
           </div>
         ) : (
           <div style={styles.momentsList}>
