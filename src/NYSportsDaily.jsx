@@ -11,7 +11,8 @@ const NY_TEAMS = {
   NWSL: [{ name: "Gotham FC", espnId: "1163", color: "#0A0A2E" }],
 };
 
-const ALL_TEAM_IDS = Object.values(NY_TEAMS).flat().map(t => t.espnId);
+const ALL_TEAM_IDS = Object.values(NY_TEAMS).flat().map(t => String(t.espnId));
+const ALL_TEAM_NAMES = Object.values(NY_TEAMS).flat().map(t => t.name.toLowerCase());
 
 const SPORT_ENDPOINTS = [
   { sport: "football", league: "nfl",       label: "NFL"  },
@@ -68,7 +69,10 @@ async function fetchESPNScores(date) {
         const comp = event.competitions?.[0];
         if (!comp) return;
         const teams = comp.competitors || [];
-        const isNY = teams.some(t => ALL_TEAM_IDS.includes(t.team?.id));
+        const isNY = teams.some(t =>
+          ALL_TEAM_IDS.includes(String(t.team?.id)) ||
+          ALL_TEAM_NAMES.some(n => (t.team?.displayName || "").toLowerCase().includes(n))
+        );
         const home = teams.find(t => t.homeAway === "home");
         const away = teams.find(t => t.homeAway === "away");
         if (!home || !away) return;
@@ -803,25 +807,11 @@ function ScoreCard({ game }) {
 }
 
 function TeamRow({ logo, name, score, color }) {
-  // Ensure color is readable on dark background
-  // Some ESPN colors are too dark or white — normalize them
-  const safeColor = (() => {
-    if (!color || color === "#333" || color === "#ffffff" || color === "#fff") return "#e8e0d0";
-    // Convert to check brightness
-    const hex = color.replace("#","");
-    if (hex.length !== 6) return "#e8e0d0";
-    const r = parseInt(hex.slice(0,2),16);
-    const g = parseInt(hex.slice(2,4),16);
-    const b = parseInt(hex.slice(4,6),16);
-    const brightness = (r*299 + g*587 + b*114) / 1000;
-    // Too dark (under 60) — use light color instead
-    return brightness < 60 ? "#e8e0d0" : color;
-  })();
   return (
     <div style={styles.teamRow}>
       {logo && <img src={logo} alt="" style={styles.teamLogo} onError={e => e.target.style.display="none"} />}
       <span style={styles.teamName}>{name}</span>
-      <span style={{...styles.teamScore, color: safeColor}}>{score}</span>
+      <span style={styles.teamScore}>{score}</span>
     </div>
   );
 }
@@ -2511,20 +2501,19 @@ const styles = {
     display: "flex", alignItems: "center",
     background: "#c8201c", overflow: "hidden",
     height: 32, position: "relative", zIndex: 1,
-    width: "100%",
+    width: "100%", boxSizing: "border-box",
   },
   tickerBug: {
-    background: "#0e0e0e", color: "#c8201c",
-    padding: "0 12px", height: "100%",
+    background: "#111", color: "#fff",
+    padding: "0 14px", height: "100%",
     display: "flex", alignItems: "center",
     fontSize: 10, fontWeight: 900, letterSpacing: "0.1em",
     flexShrink: 0, whiteSpace: "nowrap",
-    borderRight: "2px solid #c8201c",
   },
   tickerScroll: {
     display: "flex", alignItems: "center",
-    animation: "ticker 60s linear infinite",
-    whiteSpace: "nowrap",
+    animation: "ticker 70s linear infinite",
+    whiteSpace: "nowrap", paddingLeft: 16,
   },
   tickerItem: {
     fontSize: 11, fontWeight: 700, letterSpacing: "0.05em",
@@ -2600,7 +2589,7 @@ const styles = {
   teamRow: { display: "flex", alignItems: "center", gap: 8 },
   teamLogo: { width: 24, height: 24, objectFit: "contain" },
   teamName: { flex: 1, fontSize: 12, fontWeight: 700, letterSpacing: "0.02em", color: "#e8e0d0" },
-  teamScore: { fontSize: 22, fontWeight: 900, fontFamily: "'Georgia', serif", minWidth: 32, textAlign: "right" },
+  teamScore: { fontSize: 22, fontWeight: 900, fontFamily: "'Georgia', serif", minWidth: 32, textAlign: "right", color: "#e8e0d0" },
   scoreAt: { fontSize: 10, color: "#888", textAlign: "center", margin: "2px 0" },
   scoreStatus: { marginTop: 10, fontSize: 10, color: "#aaa", letterSpacing: "0.05em" },
   scoreStatusLive: { color: "#4ade80" },
