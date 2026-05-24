@@ -1946,12 +1946,17 @@ function TriviaTab() {
   const [triviaCorrect, setTriviaCorrect]   = useState(null);
   const [newTriviaLoading, setNewTriviaLoading] = useState(false);
 
+  const STATIC_MOMENTS = [
+    { year:1969, team:"Mets", sport:"MLB", headline:"Miracle Mets win the World Series", detail:"The 100-to-1 longshots defeat the Baltimore Orioles to complete the most shocking World Series upset in baseball history." },
+    { year:1994, team:"Rangers", sport:"NHL", headline:"Rangers win Stanley Cup ending 54-year drought", detail:"Mark Messier and the Rangers defeat the Vancouver Canucks in Game 7, ending a 54-year championship drought at Madison Square Garden." },
+    { year:1969, team:"Jets", sport:"NFL", headline:"Namath guarantees Super Bowl III victory", detail:"Joe Namath backs up his famous guarantee defeating the Baltimore Colts 16-7 in one of the greatest upsets in sports history." },
+  ];
+
   async function loadThisDate() {
     setLoadingDate(true);
     setThisDate(null);
     try {
       const monthDay = `${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-      // Try today's date first
       const url = `${SUPABASE_URL}/rest/v1/ny_on_this_date?month_day=eq.${monthDay}&order=year.asc`;
       const res = await fetch(url, {
         headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
@@ -1959,16 +1964,24 @@ function TriviaTab() {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         setThisDate(data);
-      } else {
-        // Fallback — grab 3 random great moments from any date
-        const fallbackRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/ny_on_this_date?limit=3&offset=${Math.floor(Math.random()*70)}`,
-          { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
-        );
-        const fallback = await fallbackRes.json();
-        setThisDate(Array.isArray(fallback) && fallback.length > 0 ? fallback : []);
+        return;
       }
-    } catch(e) { setThisDate([]); }
+      // Try random fallback from database
+      const offset = Math.floor(Math.random() * 70);
+      const res2 = await fetch(
+        `${SUPABASE_URL}/rest/v1/ny_on_this_date?limit=3&offset=${offset}`,
+        { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
+      );
+      const data2 = await res2.json();
+      if (Array.isArray(data2) && data2.length > 0) {
+        setThisDate(data2);
+        return;
+      }
+      // Final fallback — always show something
+      setThisDate(STATIC_MOMENTS);
+    } catch(e) {
+      setThisDate(STATIC_MOMENTS);
+    }
     setLoadingDate(false);
   }
 
