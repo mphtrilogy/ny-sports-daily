@@ -114,33 +114,41 @@ const STANDINGS_ENDPOINTS = [
 
 async function fetchStandings() {
   const results = [];
-  await Promise.all(STANDINGS_ENDPOINTS.map(async ({ sport, league, label, division, teams }) => {
+  await Promise.all(STANDINGS_ENDPOINTS.map(async ({ sport, league, label, teams }) => {
     try {
-      const url = `https://site.api.espn.com/apis/v2/sports/${sport}/${league}/standings`;
-      const res = await fetch(url);
+      const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/standings`;
+      const res  = await fetch(url);
       const json = await res.json();
-      const groups = json.children || json.standings?.entries ? [json] : (json.children || []);
+
+      // ESPN returns standings in children (conferences/divisions)
+      const groups = json.children?.length ? json.children : [json];
+
       groups.forEach(group => {
-        const entries = group.standings?.entries || [];
         const divName = group.name || label;
+        const entries = group.standings?.entries || [];
+        if (!entries.length) return;
+
         const rows = entries.map(e => {
           const team = e.team?.displayName || e.team?.name || "";
           const stats = {};
-          (e.stats || []).forEach(s => { stats[s.name] = s.displayValue || s.value; });
+          (e.stats || []).forEach(s => {
+            stats[s.name] = s.displayValue ?? s.value;
+          });
           return {
             team,
             abbrev: e.team?.abbreviation || "",
-            logo: e.team?.logos?.[0]?.href || "",
-            w: stats.wins || stats.W || "-",
-            l: stats.losses || stats.L || "-",
-            pct: stats.winPercent || stats.PCT || "-",
-            gb: stats.gamesBehind || stats.GB || "-",
-            isNY: teams.some(t => team.toLowerCase().includes(t.toLowerCase())),
+            logo:   e.team?.logos?.[0]?.href || "",
+            w:      stats.wins        ?? stats.W   ?? "-",
+            l:      stats.losses      ?? stats.L   ?? "-",
+            pct:    stats.winPercent  ?? stats.PCT ?? "-",
+            gb:     stats.gamesBehind ?? stats.GB  ?? "-",
+            isNY:   teams.some(t => team.toLowerCase().includes(t.toLowerCase())),
           };
         });
+
         if (rows.length) results.push({ league: label, division: divName, rows });
       });
-    } catch(e) {}
+    } catch(e) { console.log('standings error', label, e); }
   }));
   return results;
 }
@@ -2485,7 +2493,7 @@ const styles = {
     letterSpacing: "0.1em",
   },
   scoreCardSport: {
-    fontSize: 9, letterSpacing: "0.2em", color: "#666",
+    fontSize: 9, letterSpacing: "0.2em", color: "#999",
     fontWeight: 900, marginBottom: 10,
   },
   scoreTeams: { display: "flex", flexDirection: "column", gap: 8 },
@@ -2493,14 +2501,14 @@ const styles = {
   teamLogo: { width: 24, height: 24, objectFit: "contain" },
   teamName: { flex: 1, fontSize: 12, fontWeight: 700, letterSpacing: "0.02em", color: "#e8e0d0" },
   teamScore: { fontSize: 22, fontWeight: 900, fontFamily: "'Georgia', serif", minWidth: 32, textAlign: "right" },
-  scoreAt: { fontSize: 10, color: "#555", textAlign: "center", margin: "2px 0" },
-  scoreStatus: { marginTop: 10, fontSize: 10, color: "#888", letterSpacing: "0.05em" },
+  scoreAt: { fontSize: 10, color: "#888", textAlign: "center", margin: "2px 0" },
+  scoreStatus: { marginTop: 10, fontSize: 10, color: "#aaa", letterSpacing: "0.05em" },
   scoreStatusLive: { color: "#4ade80" },
   livePulse: {
     display: "inline-block", marginRight: 4, color: "#4ade80",
     animation: "pulse 1s ease-in-out infinite",
   },
-  scoreVenue: { marginTop: 4, fontSize: 9, color: "#555" },
+  scoreVenue: { marginTop: 4, fontSize: 9, color: "#888" },
 
   // NEWS
   newsGrid: {},
@@ -2673,7 +2681,7 @@ const styles = {
     margin:"0 0 4px", fontSize:13, fontStyle:"italic",
     color:"#e8e0d0", lineHeight:1.5, fontFamily:"'Georgia',serif",
   },
-  quoteAuthor: { margin:0, fontSize:10, color:"#666", letterSpacing:"0.05em" },
+  quoteAuthor: { margin:0, fontSize:10, color:"#aaa", letterSpacing:"0.05em" },
   quoteTeam: { color:"#c8201c", fontWeight:700 },
 
   // STATS
@@ -2697,11 +2705,11 @@ const styles = {
   },
   statsRowAlt: { background:"#0f0f0f" },
   statsRowNY: { borderLeft:"2px solid #c8201c", background:"#161616" },
-  statsRank: { fontSize:10, color:"#444", minWidth:16, textAlign:"center", fontWeight:900 },
+  statsRank: { fontSize:10, color:"#888", minWidth:16, textAlign:"center", fontWeight:900 },
   statsHeadshot: { width:24, height:24, borderRadius:"50%", objectFit:"cover", flexShrink:0 },
   statsPlayerInfo: { flex:1, display:"flex", flexDirection:"column", gap:1 },
   statsName: { fontSize:12, color:"#aaa", fontWeight:700 },
-  statsTeam: { fontSize:9, color:"#555", letterSpacing:"0.04em" },
+  statsTeam: { fontSize:9, color:"#888", letterSpacing:"0.04em" },
   statsValue: { fontSize:14, fontWeight:900, color:"#888", fontFamily:"'Georgia',serif", minWidth:40, textAlign:"right" },
   statsNYBadge: { fontSize:7, background:"#c8201c", color:"#fff", padding:"1px 4px", fontWeight:900, letterSpacing:"0.05em" },
   statsDeepDive: {
@@ -2709,7 +2717,7 @@ const styles = {
     marginTop:20, padding:"12px 16px",
     background:"#161616", border:"1px solid #2a2a2a",
   },
-  statsDeepDiveLabel: { fontSize:9, color:"#555", fontWeight:900, letterSpacing:"0.15em" },
+  statsDeepDiveLabel: { fontSize:9, color:"#888", fontWeight:900, letterSpacing:"0.15em" },
   statsDeepDiveLink: {
     fontSize:10, color:"#c8201c", fontWeight:900, letterSpacing:"0.1em",
     textDecoration:"none",
@@ -2722,7 +2730,7 @@ const styles = {
   stdSub: { margin:0, fontSize:9, color:"#c8201c", letterSpacing:"0.2em", fontWeight:700 },
   stdGroups: { display:"flex", flexDirection:"column", gap:20, marginTop:16 },
   stdGroup: {},
-  stdDivisionHeader: { fontSize:9, fontWeight:900, letterSpacing:"0.18em", color:"#555", marginBottom:8 },
+  stdDivisionHeader: { fontSize:9, fontWeight:900, letterSpacing:"0.18em", color:"#888", marginBottom:8 },
   stdTable: { border:"1px solid #2a2a2a", overflow:"hidden" },
   stdRowHeader: {
     display:"grid", gridTemplateColumns:"1fr 40px 40px 60px 50px",
@@ -2761,10 +2769,10 @@ const styles = {
   schMatchup: { flex:1, display:"flex", flexDirection:"column", gap:4, minWidth:140 },
   schTeamLine: { display:"flex", alignItems:"center", gap:6 },
   schTeamName: { fontSize:12, fontWeight:700, color:"#ccc" },
-  schAt: { fontSize:8, color:"#444", paddingLeft:24 },
+  schAt: { fontSize:8, color:"#888", paddingLeft:24 },
   schRight: { display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, minWidth:80 },
   schTime: { fontSize:11, fontWeight:900, color:"#e8e0d0", letterSpacing:"0.03em" },
-  schVenue: { fontSize:8, color:"#444", textAlign:"right" },
+  schVenue: { fontSize:8, color:"#888", textAlign:"right" },
 
   // BOX SCORE
   boxScoreBtn: {
@@ -2790,7 +2798,7 @@ const styles = {
     padding:"4px 0", marginBottom:6, borderBottom:"1px solid #2a2a2a",
   },
   statGroupWrap: { marginBottom:10 },
-  statGroupName: { fontSize:8, color:"#555", letterSpacing:"0.15em", fontWeight:900, marginBottom:4 },
+  statGroupName: { fontSize:8, color:"#999", letterSpacing:"0.15em", fontWeight:900, marginBottom:4 },
   statTableWrap: { overflowX:"auto" },
   statTable: { width:"100%", borderCollapse:"collapse", fontSize:10, minWidth:300 },
   statThPlayer: { textAlign:"left", padding:"3px 6px", color:"#555", fontWeight:900, fontSize:8, background:"#1a1a1a", cursor:"pointer", whiteSpace:"nowrap" },
