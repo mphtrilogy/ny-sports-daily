@@ -384,20 +384,23 @@ const STATS_ENDPOINTS = [
 const NY_TEAM_NAMES = ["yankees","mets","jets","giants","knicks","nets","rangers","islanders","devils","liberty","gotham","nycfc","red bulls","new york","new jersey"];
 
 async function fetchLeagueLeaders(sport, league) {
-  try {
-    // Use the correct ESPN core API for leaders
-    const year = new Date().getFullYear();
-    const url = `https://sports.core.api.espn.com/v2/sports/${sport}/leagues/${league}/seasons/${year}/types/2/leaders?limit=10`;
-    const res  = await fetch(url);
-    const json = await res.json();
-    const cats = json.categories || [];
-    if (cats.length) return cats;
-    // Fallback to site API
-    const url2 = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders`;
-    const res2  = await fetch(url2);
-    const json2 = await res2.json();
-    return json2.categories || json2.leaders || [];
-  } catch(e) { return []; }
+  const year = new Date().getFullYear();
+  // Try multiple endpoints until one works
+  const endpoints = [
+    `https://site.web.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders?season=${year}&seasontype=2&limit=10`,
+    `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders?season=${year}`,
+    `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders`,
+  ];
+  for (const url of endpoints) {
+    try {
+      const res  = await fetch(url);
+      if (!res.ok) continue;
+      const json = await res.json();
+      const cats = json.categories || json.leaders || json.statistics?.categories || [];
+      if (cats.length && cats[0].leaders?.length) return cats;
+    } catch(e) {}
+  }
+  return [];
 }
 
 async function fetchNYNews() {
@@ -1194,6 +1197,22 @@ function QuoteOfDay() {
 }
 
 // ─── ALL-TIME NY SPORTS DATA ──────────────────────────────────────────────
+const STADIUM_HISTORY = [
+  { name:"Yankee Stadium (Original)", team:"Yankees", years:"1923–2008", capacity:"57,545", note:"The House That Ruth Built. Site of 26 World Series. Demolished 2009.", location:"Bronx, NY", emoji:"⚾" },
+  { name:"Yankee Stadium (New)", team:"Yankees", years:"2009–present", capacity:"54,251", note:"Opened same season Yankees won their 27th World Series. Replaced original across the street.", location:"Bronx, NY", emoji:"⚾" },
+  { name:"Shea Stadium", team:"Mets", years:"1964–2008", capacity:"55,601", note:"Home of the Miracle Mets and 1986 champions. Beatles played here 1965. Demolished 2009.", location:"Flushing, Queens", emoji:"⚾" },
+  { name:"Citi Field", team:"Mets", years:"2009–present", capacity:"41,922", note:"Replaced Shea Stadium. Features Mets Hall of Fame and Jackie Robinson Rotunda.", location:"Flushing, Queens", emoji:"⚾" },
+  { name:"Madison Square Garden", team:"Knicks/Rangers", years:"1968–present", capacity:"20,789", note:"The World's Most Famous Arena — 4th arena to bear the name. Knicks and Rangers both call it home.", location:"Midtown Manhattan", emoji:"🏀🏒" },
+  { name:"Nassau Veterans Memorial Coliseum", team:"Islanders", years:"1972–2015", capacity:"16,234", note:"Home of four consecutive Stanley Cup champions 1980-83. The loudest building in hockey.", location:"Uniondale, NY", emoji:"🏒" },
+  { name:"UBS Arena", team:"Islanders", years:"2021–present", capacity:"17,255", note:"State-of-the-art arena at Belmont Park. Finally gave the Islanders a modern home after years of uncertainty.", location:"Elmont, NY", emoji:"🏒" },
+  { name:"MetLife Stadium", team:"Giants/Jets", years:"2010–present", capacity:"82,500", note:"Shared by Giants and Jets — only NFL stadium shared by two teams. Site of Super Bowl XLVIII (2014).", location:"East Rutherford, NJ", emoji:"🏈" },
+  { name:"Giants Stadium", team:"Giants/Jets", years:"1976–2009", capacity:"80,242", note:"Replaced Shea and Yale Bowl as NY football home. Also hosted 1994 World Cup and 1996 Copa America.", location:"East Rutherford, NJ", emoji:"🏈" },
+  { name:"Polo Grounds", team:"Giants/Yankees/Mets", years:"1880s–1963", capacity:"55,000", note:"Original NY baseball cathedral. Home to Giants, early Yankees, and first Mets season. Demolished 1964.", location:"Upper Manhattan", emoji:"⚾" },
+  { name:"Barclays Center", team:"Nets/Liberty", years:"2012–present", capacity:"17,732", note:"Anchor of Brooklyn sports revival. Nets moved from NJ. Liberty share arena with Nets.", location:"Brooklyn, NY", emoji:"🏀" },
+  { name:"Red Bull Arena", team:"Red Bulls/Devils/Gotham", years:"2010–present", capacity:"25,000", note:"Soccer-specific stadium in Harrison NJ. Also home to NJ Devils practice facility nearby.", location:"Harrison, NJ", emoji:"⚽" },
+  { name:"Yankee Stadium (1923 Original) Facts", team:"Yankees", years:"1923", capacity:"N/A", note:"Cost $2.5 million to build. First game April 18 1923 — Babe Ruth hit a 3-run homer. Capacity expanded multiple times over 85 years.", location:"Bronx, NY", emoji:"⚾" },
+];
+
 const HISTORY_LISTS = {
   "Yankees": [
     { title: "All-Time Yankees Home Run Leaders", items: [
@@ -1383,6 +1402,7 @@ const HISTORY_LISTS = {
 function HistoryTab() {
   const [activeGroup, setActiveGroup] = useState("Greatest NY Moments");
   const [activeList, setActiveList]   = useState(0);
+  const [showStadiums, setShowStadiums] = useState(false);
   const groups = Object.keys(HISTORY_LISTS);
   const lists  = HISTORY_LISTS[activeGroup] || [];
   const list   = lists[activeList] || lists[0];
@@ -1391,18 +1411,55 @@ function HistoryTab() {
     <div style={styles.histRoot}>
       <div style={styles.stdHeader}>
         <h2 style={styles.stdTitle}>🏆 NY SPORTS HISTORY</h2>
-        <p style={styles.stdSub}>ALL-TIME LISTS · GREATEST MOMENTS · LEGENDS</p>
+        <p style={styles.stdSub}>ALL-TIME LISTS · GREATEST MOMENTS · STADIUM HISTORY</p>
       </div>
 
-      {/* Team group selector */}
-      <div style={{...styles.filterGroup, flexWrap:"wrap", marginBottom:12}}>
-        {groups.map(g => (
-          <button key={g} onClick={() => { setActiveGroup(g); setActiveList(0); }}
-            style={{...styles.filterBtn, ...(activeGroup===g ? styles.filterBtnActive : {})}}>
-            {g}
-          </button>
-        ))}
+      {/* Mode toggle */}
+      <div style={{display:"flex", gap:8, marginBottom:16}}>
+        <button onClick={() => setShowStadiums(false)}
+          style={{...styles.filterBtn, ...(! showStadiums ? styles.filterBtnActive : {})}}>
+          🏆 ALL-TIME LISTS
+        </button>
+        <button onClick={() => setShowStadiums(true)}
+          style={{...styles.filterBtn, ...(showStadiums ? styles.filterBtnActive : {})}}>
+          🏟️ STADIUM HISTORY
+        </button>
       </div>
+
+      {/* STADIUM VIEW */}
+      {showStadiums && (
+        <div style={styles.stadiumGrid}>
+          {STADIUM_HISTORY.map((s, i) => (
+            <div key={i} style={styles.stadiumCard}>
+              <div style={styles.stadiumEmoji}>{s.emoji}</div>
+              <div style={styles.stadiumBody}>
+                <div style={styles.stadiumName}>{s.name}</div>
+                <div style={styles.stadiumMeta}>
+                  <span style={styles.stadiumTeam}>{s.team}</span>
+                  <span style={styles.stadiumYears}>{s.years}</span>
+                  {s.capacity !== "N/A" && <span style={styles.stadiumCap}>Cap: {s.capacity}</span>}
+                </div>
+                <div style={styles.stadiumLocation}>📍 {s.location}</div>
+                <p style={styles.stadiumNote}>{s.note}</p>
+                <SearchLinks query={`${s.name} New York sports history`} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ALL-TIME LISTS VIEW */}
+      {!showStadiums && (
+        <>
+          {/* Team group selector */}
+          <div style={{...styles.filterGroup, flexWrap:"wrap", marginBottom:12}}>
+            {groups.map(g => (
+              <button key={g} onClick={() => { setActiveGroup(g); setActiveList(0); }}
+                style={{...styles.filterBtn, ...(activeGroup===g ? styles.filterBtnActive : {})}}>
+                {g}
+              </button>
+            ))}
+          </div>
 
       {/* List selector within group */}
       {lists.length > 1 && (
@@ -1440,6 +1497,8 @@ function HistoryTab() {
             </div>
           ))}
         </div>
+      )}
+        </>
       )}
     </div>
   );
@@ -3257,6 +3316,23 @@ const styles = {
   statTh: { textAlign:"center", padding:"3px 6px", color:"#555", fontWeight:900, fontSize:8, background:"#1a1a1a", cursor:"pointer", whiteSpace:"nowrap" },
   statTdPlayer: { padding:"3px 6px", color:"#bbb", fontSize:10, whiteSpace:"nowrap" },
   statTd: { textAlign:"center", padding:"3px 6px", color:"#888", fontSize:10 },
+
+  // STADIUM HISTORY
+  stadiumGrid: { display:"flex", flexDirection:"column", gap:12 },
+  stadiumCard: {
+    display:"flex", gap:14, background:"#161616",
+    border:"1px solid #2a2a2a", padding:"14px 16px",
+    borderLeft:"3px solid #c8201c",
+  },
+  stadiumEmoji: { fontSize:28, flexShrink:0, paddingTop:4 },
+  stadiumBody: { flex:1 },
+  stadiumName: { fontSize:15, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", marginBottom:4 },
+  stadiumMeta: { display:"flex", gap:10, flexWrap:"wrap", marginBottom:4 },
+  stadiumTeam: { fontSize:10, color:"#c8201c", fontWeight:900, letterSpacing:"0.05em" },
+  stadiumYears: { fontSize:10, color:"#888" },
+  stadiumCap: { fontSize:10, color:"#666" },
+  stadiumLocation: { fontSize:10, color:"#888", marginBottom:6 },
+  stadiumNote: { margin:"0 0 8px", fontSize:12, color:"#aaa", lineHeight:1.6, fontFamily:"'Georgia',serif" },
 
   // HISTORY
   histRoot: { paddingTop:8 },
