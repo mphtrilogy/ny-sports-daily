@@ -882,12 +882,14 @@ async function fetchBoxScore(gameId, sport, league) {
     const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/summary?event=${gameId}`;
     const res  = await fetch(url);
     const json = await res.json();
-    const comp = json.header?.competitions?.[0];
-    const boxscore = json.boxscore;
-    const players  = boxscore?.players || [];
-    const teams    = comp?.competitors || [];
 
-    // Fix order: away first, home second (ESPN returns home first)
+    const comp      = json.header?.competitions?.[0];
+    const boxscore  = json.boxscore;
+    const players   = boxscore?.players || [];
+    const teams     = comp?.competitors || [];
+    const situation = json.situation || {};
+
+    // Fix order: away first, home second
     const away = teams.find(t => t.homeAway === "away") || teams[1];
     const home = teams.find(t => t.homeAway === "home") || teams[0];
     const ordered = [away, home].filter(Boolean);
@@ -897,57 +899,94 @@ async function fetchBoxScore(gameId, sport, league) {
       abbrev:  t.team?.abbreviation,
       logo:    t.team?.logo,
       homeAway: t.homeAway,
-      periods: t.linescores?.map(l => l.displayValue || l.value) || [],
+      periods: t.linescores?.map(l => l.displayValue || l.value || "0") || [],
       total:   t.score,
+      record:  t.record?.[0]?.displayValue || "",
     }));
 
-    // Scoring summary — ESPN uses different fields per sport
-    const scoringPlays = json.scoringPlays || [];
-    const plays = json.plays || [];
-    
+    // ── SCORING PLAYS ──────────────────────────────────────────────────
+    const allPlays = json.plays || [];
+
     function parsePlay(play) {
-      const athletes = (play.athletesInvolved || []).map(a => a.displayName || a.shortName || "").filter(Boolean);
-      const athleteStr = athletes.length ? athletes.join(", ") : "";
+      const athletes = (play.athletesInvolved || [])
+        .map(a => a.displayName || a.shortName || "").filter(Boolean);
+      const athleteStr = athletes.join(", ");
       const rawText = play.text || play.shortText || play.type?.text || "";
-      const fullText = athleteStr && !rawText.includes(athletes[0]) ? `${athleteStr}: ${rawText}` : rawText;
+      const fullText = athleteStr && !rawText.toLowerCase().includes(athletes[0]?.split(" ").pop()?.toLowerCase() || "")
+        ? `${athleteStr}: ${rawText}` : rawText;
       return {
-        period:    play.period?.displayValue || (play.period?.number ? `${play.period.number}` : ""),
+        period:    play.period?.displayValue || (play.period?.number ? `Inn ${play.period.number}` : ""),
         clock:     play.clock?.displayValue || "",
         team:      play.team?.displayName || play.team?.abbreviation || "",
-        text:      fullText,
-        shortText: play.shortText || "",
+        text:      fullText || rawText,
         athletes:  athleteStr,
         awayScore: play.awayScore ?? "",
         homeScore: play.homeScore ?? "",
         type:      play.type?.text || "",
+        scoringPlay: play.scoringPlay || false,
       };
     }
 
-    // For baseball, build scoring from plays where scoringPlay === true
-    const baseballScoring = plays
-      .filter(p => p.scoringPlay === true)
-      .map(parsePlay);
+    // Get ALL scoring plays (ESPN's dedicated array + plays array)
+    const espnScoring = (json.scoringPlays || []).map(parsePlay);
+    const playsScoring = allPlays.filter(p => p.scoringPlay === true).map(parsePlay);
 
-    const scoringSummary = scoringPlays.length > 0
-      ? scoringPlays.map(parsePlay)
-      : baseballScoring;
+    // Merge and deduplicate by text
+    const scoringMap = new Map();
+    [...espnScoring, ...playsScoring].forEach(p => {
+      const key = `${p.period}-${p.text}`;
+      if (!scoringMap.has(key)) scoringMap.set(key, p);
+    });
+    const scoringSummary = Array.from(scoringMap.values());
 
-    // Player stats per team
+    // ── SITUATION (current game state) ──────────────────────────────────
+    const gameSituation = {
+      balls:   situation.balls,
+      strikes: situation.strikes,
+      outs:    situation.outs,
+      onFirst: situation.onFirst,
+      onSecond:situation.onSecond,
+      onThird: situation.onThird,
+      pitcher: situation.pitcher?.athlete?.displayName || "",
+      batter:  situation.batter?.athlete?.displayName  || "",
+    };
+
+    // ── PLAYER STATS ────────────────────────────────────────────────────
     const playerStats = players.map(teamStats => ({
-      team: teamStats.team?.displayName,
-      stats: (teamStats.statistics || []).map(statGroup => ({
-        name: statGroup.name,
-        keys: statGroup.keys || [],
-        labels: statGroup.labels || [],
-        athletes: (statGroup.athletes || []).map(a => ({
-          name: a.athlete?.displayName || a.athlete?.shortName || "",
+      team:   teamStats.team?.displayName,
+      abbrev: teamStats.team?.abbreviation,
+      stats:  (teamStats.statistics || []).map(statGroup => ({
+        name:    statGroup.name,
+        keys:    statGroup.keys    || [],
+        labels:  statGroup.labels  || [],
+        athletes:(statGroup.athletes || []).map(a => ({
+          name:     a.athlete?.displayName || a.athlete?.shortName || "",
           headshot: a.athlete?.headshot?.href || "",
-          stats: a.stats || [],
-        })),
+          position: a.athlete?.position?.abbreviation || "",
+          stats:    a.stats || [],
+          starter:  a.starter ?? null,
+          didNotPlay: a.didNotPlay || false,
+          active:   a.active ?? true,
+        })).filter(a => a.name && !a.didNotPlay),
       })),
     }));
-    return { linescores, playerStats, scoringSummary };
-  } catch { return null; }
+
+    // ── GAME INFO ────────────────────────────────────────────────────────
+    const gameInfo = {
+      venue:    json.gameInfo?.venue?.fullName || comp?.venue?.fullName || "",
+      city:     json.gameInfo?.venue?.address?.city || "",
+      attendance: json.gameInfo?.attendance?.toLocaleString() || "",
+      duration: json.gameInfo?.duration || "",
+      weather:  json.gameInfo?.weather?.displayValue || "",
+      status:   comp?.status?.type?.description || "",
+      detail:   comp?.status?.type?.detail || "",
+    };
+
+    return { linescores, playerStats, scoringSummary, gameSituation, gameInfo, sport };
+  } catch(e) {
+    console.log("box score error", e);
+    return null;
+  }
 }
 
 const SPORT_LEAGUE_MAP = {
@@ -1041,27 +1080,18 @@ function ScoreCard({ game }) {
             <p style={styles.boxScoreEmpty}>Box score unavailable</p>
           ) : (
             <div>
-              {/* Scoring Summary */}
-              {boxScore.scoringSummary?.length > 0 && (
-                <div style={styles.scoringSummary}>
-                  <div style={styles.scoringHeader}>⚡ SCORING SUMMARY ({boxScore.scoringSummary.length} plays)</div>
-                  {boxScore.scoringSummary.map((play, i) => (
-                    <div key={i} style={{...styles.scoringPlay, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
-                      <div style={styles.scoringLeft}>
-                        <span style={styles.scoringPeriod}>{play.period}{play.clock ? ` · ${play.clock}` : ""}</span>
-                        <span style={styles.scoringTeamBadge}>{play.team?.split(" ").pop() || play.team}</span>
-                      </div>
-                      <div style={styles.scoringMiddle}>
-                        {play.athletes && <span style={styles.scoringAthletes}>{play.athletes}</span>}
-                        <span style={styles.scoringText}>{play.text || play.type}</span>
-                      </div>
-                      <span style={styles.scoringScore}>{play.awayScore !== "" ? `${play.awayScore}-${play.homeScore}` : ""}</span>
-                    </div>
-                  ))}
+
+              {/* Game Info Bar */}
+              {(boxScore.gameInfo?.venue || boxScore.gameInfo?.attendance) && (
+                <div style={styles.gameInfoBar}>
+                  {boxScore.gameInfo.venue && <span>🏟 {boxScore.gameInfo.venue}{boxScore.gameInfo.city ? `, ${boxScore.gameInfo.city}` : ""}</span>}
+                  {boxScore.gameInfo.attendance && <span>👥 {boxScore.gameInfo.attendance}</span>}
+                  {boxScore.gameInfo.weather && <span>🌤 {boxScore.gameInfo.weather}</span>}
+                  {boxScore.gameInfo.duration && <span>⏱ {boxScore.gameInfo.duration}</span>}
                 </div>
               )}
 
-              {/* Line score */}
+              {/* Line Score */}
               {boxScore.linescores?.length > 0 && boxScore.linescores[0].periods?.length > 0 && (
                 <div style={styles.lineScoreWrap}>
                   <table style={styles.lineScoreTable}>
@@ -1069,9 +1099,11 @@ function ScoreCard({ game }) {
                       <tr>
                         <th style={styles.lsThTeam}>TEAM</th>
                         {boxScore.linescores[0].periods.map((_,i) => (
-                          <th key={i} style={styles.lsTh}>{i+1}</th>
+                          <th key={i} style={styles.lsTh}>
+                            {boxScore.sport === "MLB" ? i+1 : i+1}
+                          </th>
                         ))}
-                        <th style={{...styles.lsTh, color:"#c8201c"}}>T</th>
+                        <th style={{...styles.lsTh, color:"#c8201c"}}>R/T</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1079,11 +1111,11 @@ function ScoreCard({ game }) {
                         <tr key={i} style={i%2===0?{}:{background:"#0f0f0f"}}>
                           <td style={styles.lsTdTeam}>
                             {ls.logo && <img src={ls.logo} alt="" style={{width:14,height:14,objectFit:"contain",marginRight:4,verticalAlign:"middle"}} onError={e=>e.target.style.display="none"} />}
-                            {ls.abbrev}
-                            <span style={{fontSize:8,color:"#555",marginLeft:4}}>{ls.homeAway === "home" ? "HM" : "AW"}</span>
+                            <span>{ls.abbrev}</span>
+                            {ls.record && <span style={{fontSize:8,color:"#555",marginLeft:4}}>({ls.record})</span>}
                           </td>
                           {ls.periods.map((p,j) => <td key={j} style={styles.lsTd}>{p}</td>)}
-                          <td style={{...styles.lsTd, fontWeight:900, color:"#e8e0d0"}}>{ls.total}</td>
+                          <td style={{...styles.lsTd, fontWeight:900, color:"#e8e0d0", fontSize:14}}>{ls.total}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1091,11 +1123,37 @@ function ScoreCard({ game }) {
                 </div>
               )}
 
-              {/* Player stats per team */}
+              {/* Scoring Summary — all scoring plays */}
+              {boxScore.scoringSummary?.length > 0 && (
+                <div style={styles.scoringSummary}>
+                  <div style={styles.scoringHeader}>
+                    ⚡ SCORING SUMMARY — {boxScore.scoringSummary.length} SCORING {boxScore.scoringSummary.length === 1 ? "PLAY" : "PLAYS"}
+                  </div>
+                  {boxScore.scoringSummary.map((play, i) => (
+                    <div key={i} style={{...styles.scoringPlay, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+                      <div style={styles.scoringLeft}>
+                        <span style={styles.scoringPeriod}>{play.period}</span>
+                        <span style={styles.scoringTeamBadge}>{play.team?.split(" ").pop() || play.team}</span>
+                      </div>
+                      <div style={styles.scoringMiddle}>
+                        {play.athletes && <span style={styles.scoringAthletes}>{play.athletes}</span>}
+                        <span style={styles.scoringText}>{play.text}</span>
+                      </div>
+                      <span style={styles.scoringScore}>
+                        {play.awayScore !== "" ? `${play.awayScore}-${play.homeScore}` : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Player Stats — sport-aware display */}
               {boxScore.playerStats?.map((teamData, ti) => (
                 <div key={ti} style={styles.playerStatsSection}>
-                  <div style={styles.playerStatsTeamHeader}>{teamData.team}</div>
-                  {teamData.stats?.map((statGroup, gi) => (
+                  <div style={styles.playerStatsTeamHeader}>
+                    {teamData.abbrev || teamData.team}
+                  </div>
+                  {teamData.stats?.filter(sg => sg.athletes?.length > 0).map((statGroup, gi) => (
                     <div key={gi} style={styles.statGroupWrap}>
                       <div style={styles.statGroupName}>{statGroup.name?.toUpperCase()}</div>
                       <div style={styles.statTableWrap}>
@@ -1104,7 +1162,7 @@ function ScoreCard({ game }) {
                             <tr>
                               <th style={styles.statThPlayer}>PLAYER</th>
                               {statGroup.labels?.map((lbl,i) => (
-                                <th key={i} style={styles.statTh}
+                                <th key={i} style={{...styles.statTh, cursor:"pointer"}}
                                   onClick={() => handleSort(statGroup.keys?.[i])}>
                                   {lbl}
                                   {sortCol === statGroup.keys?.[i] && (
@@ -1118,11 +1176,19 @@ function ScoreCard({ game }) {
                             {sortedAthletes(statGroup.athletes, statGroup.keys || []).map((a, ai) => (
                               <tr key={ai} style={ai%2===0?{}:{background:"#0f0f0f"}}>
                                 <td style={styles.statTdPlayer}>
-                                  {a.headshot && <img src={a.headshot} alt="" style={{width:16,height:16,borderRadius:"50%",objectFit:"cover",marginRight:4,verticalAlign:"middle"}} onError={e=>e.target.style.display="none"} />}
-                                  {a.name}
+                                  {a.headshot && (
+                                    <img src={a.headshot} alt="" style={{width:16,height:16,borderRadius:"50%",objectFit:"cover",marginRight:4,verticalAlign:"middle"}}
+                                      onError={e=>e.target.style.display="none"} />
+                                  )}
+                                  <span>{a.name}</span>
+                                  {a.position && <span style={{fontSize:8,color:"#555",marginLeft:3}}>{a.position}</span>}
                                 </td>
                                 {a.stats.map((s,si) => (
-                                  <td key={si} style={styles.statTd}>{s}</td>
+                                  <td key={si} style={{
+                                    ...styles.statTd,
+                                    fontWeight: s === "0" ? 400 : 600,
+                                    color: s === "0" ? "#444" : "#e8e0d0",
+                                  }}>{s}</td>
                                 ))}
                               </tr>
                             ))}
@@ -1133,6 +1199,14 @@ function ScoreCard({ game }) {
                   ))}
                 </div>
               ))}
+
+              {/* No stats fallback */}
+              {(!boxScore.playerStats || boxScore.playerStats.length === 0) &&
+               (!boxScore.scoringSummary || boxScore.scoringSummary.length === 0) && (
+                <p style={{fontSize:11, color:"#555", padding:"10px 0"}}>
+                  Detailed stats available after game completes.
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -4350,7 +4424,11 @@ const styles = {
   schTime: { fontSize:11, fontWeight:900, color:"#e8e0d0", letterSpacing:"0.03em" },
   schVenue: { fontSize:8, color:"#888", textAlign:"right" },
 
-  // SCORING SUMMARY
+  gameInfoBar: {
+    display:"flex", gap:12, flexWrap:"wrap", padding:"6px 10px",
+    background:"#111", fontSize:9, color:"#888", marginBottom:8,
+    borderBottom:"1px solid #1a1a1a",
+  },
   scoringSummary: { marginBottom: 12, border:"1px solid #2a2a2a", overflow:"hidden" },
   scoringHeader: { fontSize:8, fontWeight:900, letterSpacing:"0.15em", color:"#c8201c", background:"#1a1a1a", padding:"5px 10px" },
   scoringPlay: { display:"flex", gap:8, padding:"6px 10px", alignItems:"flex-start", fontSize:10, borderTop:"1px solid #1a1a1a" },
