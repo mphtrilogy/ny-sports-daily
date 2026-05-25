@@ -78,6 +78,18 @@ const NY_NEWS_ENDPOINTS = [
   { sport:"hockey",     league:"nhl",   name:"NHL"  },
   { sport:"basketball", league:"wnba",  name:"WNBA" },
   { sport:"soccer",     league:"usa.1", name:"MLS"  },
+  { sport:"soccer",     league:"nwsl",  name:"NWSL" },
+];
+
+// Also fetch team-specific news for NY teams
+const NY_TEAM_NEWS = [
+  { sport:"baseball",   league:"mlb",        id:"10",    name:"Yankees" },
+  { sport:"baseball",   league:"mlb",        id:"21",    name:"Mets"    },
+  { sport:"basketball", league:"nba",        id:"18",    name:"Knicks"  },
+  { sport:"basketball", league:"nba",        id:"17",    name:"Nets"    },
+  { sport:"hockey",     league:"nhl",        id:"13",    name:"Rangers" },
+  { sport:"hockey",     league:"nhl",        id:"22",    name:"Islanders"},
+  { sport:"basketball", league:"wnba",       id:"20",    name:"Liberty" },
 ];
 
 const NY_KEYWORDS = ["jets","giants","yankees","mets","knicks","nets","rangers","islanders","devils","gotham","nycfc","red bulls","new york","liberty"];
@@ -356,27 +368,35 @@ async function fetchLeagueLeaders(sport, league) {
 
 async function fetchNYNews() {
   const results = [];
+
+  // League-level news filtered by NY keywords
   await Promise.all(NY_NEWS_ENDPOINTS.map(async ({ sport, league, name }) => {
     try {
-      const url = `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=20`;
-      const res  = await fetch(url);
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=20`);
       const json = await res.json();
       (json.articles || []).forEach(a => {
         const title = a.headline || a.title || "";
         const desc  = a.description || "";
         const combined = (title + " " + desc).toLowerCase();
-        const isNY = NY_KEYWORDS.some(kw => combined.includes(kw));
-        if (!isNY) return;
-        results.push({
-          title,
-          link:   a.links?.web?.href || "#",
-          desc,
-          pub:    a.published || a.lastModified || "",
-          source: `ESPN · ${name}`,
-        });
+        if (!NY_KEYWORDS.some(kw => combined.includes(kw))) return;
+        results.push({ title, link: a.links?.web?.href || "#", desc, pub: a.published || "", source: `ESPN · ${name}` });
       });
     } catch(e) {}
   }));
+
+  // Team-specific news (always NY relevant)
+  await Promise.all(NY_TEAM_NEWS.map(async ({ sport, league, id, name }) => {
+    try {
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=5`);
+      const json = await res.json();
+      (json.articles || []).forEach(a => {
+        const title = a.headline || a.title || "";
+        if (!title) return;
+        results.push({ title, link: a.links?.web?.href || "#", desc: a.description || "", pub: a.published || "", source: `ESPN · ${name}` });
+      });
+    } catch(e) {}
+  }));
+
   const seen = new Set();
   return results
     .sort((a,b) => new Date(b.pub) - new Date(a.pub))
@@ -680,14 +700,31 @@ async function fetchBoxScore(gameId, sport, league) {
     const boxscore = json.boxscore;
     const players  = boxscore?.players || [];
     const teams    = comp?.competitors || [];
-    // Line score (periods/innings/quarters)
-    const linescores = teams.map(t => ({
-      team: t.team?.displayName,
-      abbrev: t.team?.abbreviation,
-      logo: t.team?.logo,
+
+    // Fix order: away first, home second (ESPN returns home first)
+    const away = teams.find(t => t.homeAway === "away") || teams[1];
+    const home = teams.find(t => t.homeAway === "home") || teams[0];
+    const ordered = [away, home].filter(Boolean);
+
+    const linescores = ordered.map(t => ({
+      team:    t.team?.displayName,
+      abbrev:  t.team?.abbreviation,
+      logo:    t.team?.logo,
+      homeAway: t.homeAway,
       periods: t.linescores?.map(l => l.displayValue || l.value) || [],
-      total: t.score,
+      total:   t.score,
     }));
+
+    // Scoring summary (who scored and when)
+    const scoringSummary = (json.scoringPlays || []).map(play => ({
+      period:   play.period?.displayValue || play.period?.number || "",
+      clock:    play.clock?.displayValue || "",
+      team:     play.team?.displayName || "",
+      text:     play.text || play.type?.text || "",
+      awayScore: play.awayScore,
+      homeScore: play.homeScore,
+    }));
+
     // Player stats per team
     const playerStats = players.map(teamStats => ({
       team: teamStats.team?.displayName,
@@ -702,7 +739,7 @@ async function fetchBoxScore(gameId, sport, league) {
         })),
       })),
     }));
-    return { linescores, playerStats };
+    return { linescores, playerStats, scoringSummary };
   } catch { return null; }
 }
 
@@ -797,6 +834,21 @@ function ScoreCard({ game }) {
             <p style={styles.boxScoreEmpty}>Box score unavailable</p>
           ) : (
             <div>
+              {/* Scoring Summary */}
+              {boxScore.scoringSummary?.length > 0 && (
+                <div style={styles.scoringSummary}>
+                  <div style={styles.scoringHeader}>SCORING SUMMARY</div>
+                  {boxScore.scoringSummary.map((play, i) => (
+                    <div key={i} style={{...styles.scoringPlay, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+                      <span style={styles.scoringPeriod}>{play.period} {play.clock}</span>
+                      <span style={styles.scoringTeam}>{play.team}</span>
+                      <span style={styles.scoringText}>{play.text}</span>
+                      <span style={styles.scoringScore}>{play.awayScore}-{play.homeScore}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Line score */}
               {boxScore.linescores?.length > 0 && boxScore.linescores[0].periods?.length > 0 && (
                 <div style={styles.lineScoreWrap}>
@@ -816,6 +868,7 @@ function ScoreCard({ game }) {
                           <td style={styles.lsTdTeam}>
                             {ls.logo && <img src={ls.logo} alt="" style={{width:14,height:14,objectFit:"contain",marginRight:4,verticalAlign:"middle"}} onError={e=>e.target.style.display="none"} />}
                             {ls.abbrev}
+                            <span style={{fontSize:8,color:"#555",marginLeft:4}}>{ls.homeAway === "home" ? "HM" : "AW"}</span>
                           </td>
                           {ls.periods.map((p,j) => <td key={j} style={styles.lsTd}>{p}</td>)}
                           <td style={{...styles.lsTd, fontWeight:900, color:"#e8e0d0"}}>{ls.total}</td>
@@ -1351,168 +1404,284 @@ function HistoryTab() {
 
 // ─── STATS TAB ────────────────────────────────────────────────────────────
 function StatsTab() {
-  const [activeLeague, setActiveLeague] = useState("MLB");
+  const [activeSection, setActiveSection] = useState("LEADERS");
+  const year = new Date().getFullYear();
 
-  const STATS_REFERENCE = {
-    MLB: {
-      color: "#003087", emoji: "⚾",
-      desc: "Major League Baseball statistics — batting, pitching, fielding",
-      categories: [
-        { name:"Batting Average",  abbrev:"AVG",  url:"https://www.baseball-reference.com/leaders/batting_avg_active.shtml",   desc:"Best hitters by AVG" },
-        { name:"Home Runs",        abbrev:"HR",   url:"https://www.baseball-reference.com/leaders/HR_active.shtml",            desc:"Power hitters" },
-        { name:"RBI",              abbrev:"RBI",  url:"https://www.baseball-reference.com/leaders/RBI_active.shtml",           desc:"Runs batted in" },
-        { name:"ERA",              abbrev:"ERA",  url:"https://www.baseball-reference.com/leaders/earned_run_avg_active.shtml",desc:"Best ERA starters" },
-        { name:"Strikeouts",       abbrev:"K",    url:"https://www.baseball-reference.com/leaders/SO_p_active.shtml",          desc:"Pitching strikeouts" },
-        { name:"Stolen Bases",     abbrev:"SB",   url:"https://www.baseball-reference.com/leaders/SB_active.shtml",            desc:"Speed on the bases" },
-        { name:"OPS",              abbrev:"OPS",  url:"https://www.baseball-reference.com/leaders/onbase_plus_slugging_active.shtml", desc:"On-base + slugging" },
-        { name:"Wins",             abbrev:"W",    url:"https://www.baseball-reference.com/leaders/W_active.shtml",             desc:"Pitcher wins" },
-        { name:"WHIP",             abbrev:"WHIP", url:"https://www.baseball-reference.com/leaders/whip_active.shtml",          desc:"Walks + hits per inning" },
-        { name:"Saves",            abbrev:"SV",   url:"https://www.baseball-reference.com/leaders/SV_active.shtml",            desc:"Closer saves" },
-      ],
-      nySearch: "https://www.baseball-reference.com/teams/NYY/2026.shtml",
-      nyTeams: ["Yankees","Mets"],
-    },
-    NFL: {
-      color: "#013369", emoji: "🏈",
-      desc: "National Football League statistics — offense, defense, special teams",
-      categories: [
-        { name:"Passing Yards",    abbrev:"YDS",  url:"https://www.pro-football-reference.com/leaders/pass_yds_single_season.htm", desc:"Top QBs by yards" },
-        { name:"Touchdowns",       abbrev:"TD",   url:"https://www.pro-football-reference.com/leaders/pass_td_single_season.htm",  desc:"Passing TDs" },
-        { name:"Rushing Yards",    abbrev:"RU",   url:"https://www.pro-football-reference.com/leaders/rush_yds_single_season.htm", desc:"Ground game leaders" },
-        { name:"Receiving Yards",  abbrev:"REC",  url:"https://www.pro-football-reference.com/leaders/rec_yds_single_season.htm",  desc:"Top receivers" },
-        { name:"Receptions",       abbrev:"REC",  url:"https://www.pro-football-reference.com/leaders/rec_single_season.htm",      desc:"Most catches" },
-        { name:"Sacks",            abbrev:"SK",   url:"https://www.pro-football-reference.com/leaders/def_sacks_single_season.htm",desc:"Pass rushers" },
-        { name:"Interceptions",    abbrev:"INT",  url:"https://www.pro-football-reference.com/leaders/def_int_single_season.htm",  desc:"Ball hawks" },
-        { name:"Passer Rating",    abbrev:"RTG",  url:"https://www.pro-football-reference.com/leaders/pass_rating_single_season.htm", desc:"QB efficiency" },
-      ],
-      nyTeams: ["Jets","Giants"],
-    },
-    NBA: {
-      color: "#006BB6", emoji: "🏀",
-      desc: "National Basketball Association statistics — scoring, rebounds, assists",
-      categories: [
-        { name:"Points Per Game",  abbrev:"PPG",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Scoring leaders" },
-        { name:"Rebounds",         abbrev:"RPG",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Board men" },
-        { name:"Assists",          abbrev:"APG",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Playmakers" },
-        { name:"Steals",           abbrev:"SPG",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Defensive disruptors" },
-        { name:"Blocks",           abbrev:"BPG",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Shot blockers" },
-        { name:"3-Pointers Made",  abbrev:"3PM",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Long range shooters" },
-        { name:"Field Goal %",     abbrev:"FG%",  url:"https://www.basketball-reference.com/leagues/NBA_2026_per_game.html",    desc:"Efficiency inside" },
-        { name:"Win Shares",       abbrev:"WS",   url:"https://www.basketball-reference.com/leagues/NBA_2026_advanced.html",   desc:"Overall impact" },
-      ],
-      nyTeams: ["Knicks","Nets"],
-    },
-    NHL: {
-      color: "#0038A8", emoji: "🏒",
-      desc: "National Hockey League statistics — scoring, goaltending, defense",
-      categories: [
-        { name:"Points",           abbrev:"PTS",  url:"https://www.hockey-reference.com/leagues/NHL_2026_skaters.html",         desc:"Goals + assists" },
-        { name:"Goals",            abbrev:"G",    url:"https://www.hockey-reference.com/leagues/NHL_2026_skaters.html",         desc:"Goal scorers" },
-        { name:"Assists",          abbrev:"A",    url:"https://www.hockey-reference.com/leagues/NHL_2026_skaters.html",         desc:"Primary playmakers" },
-        { name:"Plus/Minus",       abbrev:"+/-",  url:"https://www.hockey-reference.com/leagues/NHL_2026_skaters.html",         desc:"Defensive impact" },
-        { name:"GAA",              abbrev:"GAA",  url:"https://www.hockey-reference.com/leagues/NHL_2026_goalies.html",         desc:"Goalie avg against" },
-        { name:"Save %",           abbrev:"SV%",  url:"https://www.hockey-reference.com/leagues/NHL_2026_goalies.html",         desc:"Goalie efficiency" },
-        { name:"Penalty Minutes",  abbrev:"PIM",  url:"https://www.hockey-reference.com/leagues/NHL_2026_skaters.html",         desc:"Tough guys" },
-        { name:"Power Play Goals", abbrev:"PPG",  url:"https://www.hockey-reference.com/leagues/NHL_2026_skaters.html",         desc:"PP specialists" },
-      ],
-      nyTeams: ["Rangers","Islanders","NJ Devils"],
-    },
-    WNBA: {
-      color: "#FF6B35", emoji: "🏀",
-      desc: "Women's National Basketball Association — NY Liberty are defending champs!",
-      categories: [
-        { name:"Points Per Game",  abbrev:"PPG",  url:"https://www.basketball-reference.com/wnba/leagues/WNBA_2026_per_game.html", desc:"Scoring leaders" },
-        { name:"Rebounds",         abbrev:"RPG",  url:"https://www.basketball-reference.com/wnba/leagues/WNBA_2026_per_game.html", desc:"Board women" },
-        { name:"Assists",          abbrev:"APG",  url:"https://www.basketball-reference.com/wnba/leagues/WNBA_2026_per_game.html", desc:"Playmakers" },
-        { name:"Field Goal %",     abbrev:"FG%",  url:"https://www.basketball-reference.com/wnba/leagues/WNBA_2026_per_game.html", desc:"Efficiency" },
-        { name:"3-Pointers",       abbrev:"3PM",  url:"https://www.basketball-reference.com/wnba/leagues/WNBA_2026_per_game.html", desc:"Long range" },
-        { name:"Win Shares",       abbrev:"WS",   url:"https://www.basketball-reference.com/wnba/leagues/WNBA_2026_advanced.html", desc:"Overall impact" },
-      ],
-      nyTeams: ["NY Liberty"],
-    },
-    MLS: {
-      color: "#1a1a2e", emoji: "⚽",
-      desc: "Major League Soccer and NWSL statistics",
-      categories: [
-        { name:"Goals",            abbrev:"G",    url:"https://fbref.com/en/comps/22/stats/MLS-Stats",    desc:"Top scorers" },
-        { name:"Assists",          abbrev:"A",    url:"https://fbref.com/en/comps/22/stats/MLS-Stats",    desc:"Playmakers" },
-        { name:"xG",               abbrev:"xG",   url:"https://fbref.com/en/comps/22/stats/MLS-Stats",    desc:"Expected goals" },
-        { name:"Clean Sheets",     abbrev:"CS",   url:"https://fbref.com/en/comps/22/keepers/MLS-Stats",  desc:"GK clean sheets" },
-        { name:"NWSL Goals",       abbrev:"G",    url:"https://fbref.com/en/comps/182/stats/NWSL-Stats",  desc:"NWSL top scorers" },
-        { name:"NWSL Assists",     abbrev:"A",    url:"https://fbref.com/en/comps/182/stats/NWSL-Stats",  desc:"NWSL playmakers" },
-      ],
-      nyTeams: ["NYCFC","NJ Red Bulls","Gotham FC"],
-    },
+  const NY_TEAMS_DATA = {
+    Yankees:   { color:"#003087", emoji:"⚾", site:"https://www.mlb.com/yankees",   ref:"https://www.baseball-reference.com/teams/NYY/",   league:"MLB" },
+    Mets:      { color:"#002D72", emoji:"⚾", site:"https://www.mlb.com/mets",      ref:"https://www.baseball-reference.com/teams/NYM/",   league:"MLB" },
+    Jets:      { color:"#125740", emoji:"🏈", site:"https://www.newyorkjets.com",   ref:"https://www.pro-football-reference.com/teams/nyj/",league:"NFL" },
+    Giants:    { color:"#0B2265", emoji:"🏈", site:"https://www.giants.com",        ref:"https://www.pro-football-reference.com/teams/nyg/",league:"NFL" },
+    Knicks:    { color:"#006BB6", emoji:"🏀", site:"https://www.nba.com/knicks",    ref:"https://www.basketball-reference.com/teams/NYK/", league:"NBA" },
+    Nets:      { color:"#000000", emoji:"🏀", site:"https://www.nba.com/nets",      ref:"https://www.basketball-reference.com/teams/BRK/", league:"NBA" },
+    Rangers:   { color:"#0038A8", emoji:"🏒", site:"https://www.nhl.com/rangers",   ref:"https://www.hockey-reference.com/teams/NYR/",    league:"NHL" },
+    Islanders: { color:"#00539B", emoji:"🏒", site:"https://www.nhl.com/islanders", ref:"https://www.hockey-reference.com/teams/NYI/",    league:"NHL" },
+    Devils:    { color:"#CE1126", emoji:"🏒", site:"https://www.nhl.com/devils",    ref:"https://www.hockey-reference.com/teams/NJD/",    league:"NHL" },
+    Liberty:   { color:"#007A5E", emoji:"🏀", site:"https://www.nyliberty.com",     ref:"https://www.basketball-reference.com/wnba/teams/NYL/", league:"WNBA" },
+    NYCFC:     { color:"#6CACE4", emoji:"⚽", site:"https://www.nycfc.com",         ref:"https://fbref.com/en/squads/",                   league:"MLS" },
+    "Red Bulls":{ color:"#ED1C2E",emoji:"⚽", site:"https://www.rbny.com",          ref:"https://fbref.com/en/squads/",                   league:"MLS" },
+    "Gotham FC":{ color:"#0A0A2E",emoji:"⚽", site:"https://www.gothamfc.com",      ref:"https://fbref.com/en/squads/",                   league:"NWSL" },
   };
 
-  const leagues = Object.keys(STATS_REFERENCE);
-  const active  = STATS_REFERENCE[activeLeague];
-  const year    = new Date().getFullYear();
+  const DROUGHT_DATA = [
+    { team:"Mets",      last:1986, sport:"MLB",  note:"39 years and counting" },
+    { team:"Jets",      last:1969, sport:"NFL",  note:"56 years — longest in NFL" },
+    { team:"Giants",    last:2012, sport:"NFL",  note:"13 years" },
+    { team:"Knicks",    last:1973, sport:"NBA",  note:"52 years of heartbreak" },
+    { team:"Nets",      last:null, sport:"NBA",  note:"Never won a championship" },
+    { team:"Rangers",   last:1994, sport:"NHL",  note:"31 years" },
+    { team:"Islanders", last:1983, sport:"NHL",  note:"42 years since dynasty ended" },
+    { team:"Devils",    last:2003, sport:"NHL",  note:"22 years" },
+    { team:"Yankees",   last:2009, sport:"MLB",  note:"16 years" },
+    { team:"Liberty",   last:2025, sport:"WNBA", note:"Defending champions! 🏆" },
+    { team:"NYCFC",     last:2021, sport:"MLS",  note:"4 years" },
+  ].sort((a,b) => (a.last||0) - (b.last||0));
+
+  const DRAFT_DATA = {
+    Yankees: [
+      { year:1965, pick:"#1", name:"Ron Blomberg", note:"First designated hitter in MLB history" },
+      { year:1991, pick:"#1", name:"Brien Taylor", note:"$1.55M bonus — blew out shoulder never played" },
+      { year:2009, pick:"#28",name:"Gary Sanchez", note:"Late round gem, 3x All-Star" },
+    ],
+    Mets: [
+      { year:1966, pick:"#1", name:"Les Rohr", note:"Never made impact" },
+      { year:1984, pick:"#1", name:"Shawn Abner", note:"Traded for Kevin McReynolds" },
+      { year:2019, pick:"#1", name:"Brett Baty", note:"Current Mets corner piece" },
+    ],
+    Jets: [
+      { year:1965, pick:"#1", name:"Joe Namath", note:"Changed football forever — $427K contract" },
+      { year:1983, pick:"#24",name:"Ken O'Brien", note:"Solid QB but overshadowed by Marino" },
+      { year:2021, pick:"#2", name:"Zach Wilson", note:"Did not pan out" },
+    ],
+    Giants: [
+      { year:1981, pick:"#2", name:"Lawrence Taylor", note:"Greatest defensive player ever" },
+      { year:1987, pick:"#1", name:"Reggie White",    note:"Went to Eagles — Giants' biggest miss" },
+      { year:2004, pick:"#4", name:"Eli Manning",     note:"2x Super Bowl MVP" },
+    ],
+    Knicks: [
+      { year:1985, pick:"#1", name:"Patrick Ewing",   note:"First ever lottery pick — franchise cornerstone" },
+      { year:1999, pick:"#8", name:"Frederic Weis",   note:"Famously dunked on by Vince Carter in Olympics" },
+      { year:2023, pick:"#13",name:"Jalen Brunson",   note:"FA signing not draft — but transformative" },
+    ],
+    Rangers: [
+      { year:1991, pick:"#1", name:"Eric Lindros",    note:"Refused to sign — traded to Quebec" },
+      { year:2004, pick:"#1", name:"Al Montoya",      note:"Never reached potential" },
+      { year:2017, pick:"#27",name:"Filip Chytil",    note:"Key piece of current core" },
+    ],
+    Islanders: [
+      { year:1977, pick:"#15",name:"Mike Bossy",      note:"Greatest pure goal scorer in NHL history" },
+      { year:1988, pick:"#1", name:"Mike Turgeon",    note:"Solid but not a franchise changer" },
+      { year:2009, pick:"#1", name:"John Tavares",    note:"Franchise star who broke hearts leaving" },
+    ],
+  };
+
+  const RIVALS_DATA = [
+    { team1:"Yankees", team2:"Red Sox", sport:"MLB", t1wins:"10 pennants to 9", note:"Baseball's greatest rivalry — 100+ years of hate" },
+    { team1:"Yankees", team2:"Mets", sport:"MLB", t1wins:"2000 Subway Series", note:"The city divided every summer" },
+    { team1:"Knicks",  team2:"Celtics", sport:"NBA", t1wins:"Celtics lead all-time", note:"Reed vs Cowens, Ewing vs Bird — classic battles" },
+    { team1:"Rangers", team2:"Devils", sport:"NHL", t1wins:"Messier guarantee 1994", note:"The rivalry that defined the tri-state area" },
+    { team1:"Jets",    team2:"Patriots", sport:"NFL", t1wins:"Patriots dominate era", note:"Namath's guarantee the lone Jets highlight" },
+    { team1:"Giants",  team2:"Eagles", sport:"NFL", t1wins:"Split historically", note:"NFC East rivalry, LT vs Philly — brutal" },
+  ];
+
+  const STATS_REFERENCE = {
+    MLB: { color:"#003087", emoji:"⚾", categories:[
+      { name:"Batting Average", abbrev:"AVG", url:"https://www.baseball-reference.com/leaders/batting_avg_active.shtml", desc:"Best hitters" },
+      { name:"Home Runs",       abbrev:"HR",  url:"https://www.baseball-reference.com/leaders/HR_active.shtml",         desc:"Power hitters" },
+      { name:"RBI",             abbrev:"RBI", url:"https://www.baseball-reference.com/leaders/RBI_active.shtml",        desc:"Run producers" },
+      { name:"ERA",             abbrev:"ERA", url:"https://www.baseball-reference.com/leaders/earned_run_avg_active.shtml", desc:"Best starters" },
+      { name:"Strikeouts",      abbrev:"K",   url:"https://www.baseball-reference.com/leaders/SO_p_active.shtml",       desc:"Power pitchers" },
+      { name:"OPS",             abbrev:"OPS", url:"https://www.baseball-reference.com/leaders/onbase_plus_slugging_active.shtml", desc:"Overall hitting" },
+      { name:"WAR",             abbrev:"WAR", url:"https://www.baseball-reference.com/leaders/WAR_active.shtml",        desc:"Best overall players" },
+      { name:"Saves",           abbrev:"SV",  url:"https://www.baseball-reference.com/leaders/SV_active.shtml",         desc:"Closers" },
+    ], nyTeams:["Yankees","Mets"], ref:"https://www.baseball-reference.com" },
+    NFL: { color:"#013369", emoji:"🏈", categories:[
+      { name:"Passing Yards",  abbrev:"YDS", url:"https://www.pro-football-reference.com/leaders/pass_yds_single_season.htm", desc:"Top QBs" },
+      { name:"Rushing Yards",  abbrev:"RU",  url:"https://www.pro-football-reference.com/leaders/rush_yds_single_season.htm", desc:"Ground game" },
+      { name:"Receiving Yards",abbrev:"REC", url:"https://www.pro-football-reference.com/leaders/rec_yds_single_season.htm",  desc:"Top receivers" },
+      { name:"Sacks",          abbrev:"SK",  url:"https://www.pro-football-reference.com/leaders/def_sacks_single_season.htm",desc:"Pass rushers" },
+      { name:"Interceptions",  abbrev:"INT", url:"https://www.pro-football-reference.com/leaders/def_int_single_season.htm",  desc:"Ball hawks" },
+      { name:"Passer Rating",  abbrev:"RTG", url:"https://www.pro-football-reference.com/leaders/pass_rating_single_season.htm", desc:"QB efficiency" },
+    ], nyTeams:["Jets","Giants"], ref:"https://www.pro-football-reference.com" },
+    NBA: { color:"#006BB6", emoji:"🏀", categories:[
+      { name:"Points Per Game", abbrev:"PPG", url:`https://www.basketball-reference.com/leagues/NBA_${year}_per_game.html`, desc:"Scoring leaders" },
+      { name:"Rebounds",        abbrev:"RPG", url:`https://www.basketball-reference.com/leagues/NBA_${year}_per_game.html`, desc:"Board men" },
+      { name:"Assists",         abbrev:"APG", url:`https://www.basketball-reference.com/leagues/NBA_${year}_per_game.html`, desc:"Playmakers" },
+      { name:"Blocks",          abbrev:"BPG", url:`https://www.basketball-reference.com/leagues/NBA_${year}_per_game.html`, desc:"Shot blockers" },
+      { name:"Win Shares",      abbrev:"WS",  url:`https://www.basketball-reference.com/leagues/NBA_${year}_advanced.html`, desc:"Overall impact" },
+      { name:"PER",             abbrev:"PER", url:`https://www.basketball-reference.com/leagues/NBA_${year}_advanced.html`, desc:"Player efficiency" },
+    ], nyTeams:["Knicks","Nets"], ref:"https://www.basketball-reference.com" },
+    NHL: { color:"#0038A8", emoji:"🏒", categories:[
+      { name:"Points",    abbrev:"PTS", url:`https://www.hockey-reference.com/leagues/NHL_${year}_skaters.html`, desc:"Goals + assists" },
+      { name:"Goals",     abbrev:"G",   url:`https://www.hockey-reference.com/leagues/NHL_${year}_skaters.html`, desc:"Goal scorers" },
+      { name:"Assists",   abbrev:"A",   url:`https://www.hockey-reference.com/leagues/NHL_${year}_skaters.html`, desc:"Playmakers" },
+      { name:"GAA",       abbrev:"GAA", url:`https://www.hockey-reference.com/leagues/NHL_${year}_goalies.html`, desc:"Goalie avg" },
+      { name:"Save %",    abbrev:"SV%", url:`https://www.hockey-reference.com/leagues/NHL_${year}_goalies.html`, desc:"Goalie efficiency" },
+    ], nyTeams:["Rangers","Islanders","Devils"], ref:"https://www.hockey-reference.com" },
+    WNBA: { color:"#FF6B35", emoji:"🏀", categories:[
+      { name:"Points",   abbrev:"PPG", url:`https://www.basketball-reference.com/wnba/leagues/WNBA_${year}_per_game.html`, desc:"Scoring leaders" },
+      { name:"Rebounds", abbrev:"RPG", url:`https://www.basketball-reference.com/wnba/leagues/WNBA_${year}_per_game.html`, desc:"Board women" },
+      { name:"Assists",  abbrev:"APG", url:`https://www.basketball-reference.com/wnba/leagues/WNBA_${year}_per_game.html`, desc:"Playmakers" },
+    ], nyTeams:["Liberty"], ref:"https://www.basketball-reference.com/wnba" },
+  };
+
+  const sections = ["LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS"];
 
   return (
     <div style={styles.statsRoot}>
       <div style={styles.stdHeader}>
-        <h2 style={styles.stdTitle}>STATS REFERENCE</h2>
-        <p style={styles.stdSub}>KEY CATEGORIES · CLICK ANY STAT FOR FULL LEAGUE LEADERS</p>
+        <h2 style={styles.stdTitle}>NY SPORTS STATS & HISTORY</h2>
+        <p style={styles.stdSub}>LEADERS · DROUGHT TRACKER · DRAFT HISTORY · RIVALRIES · TEAM LINKS</p>
       </div>
 
-      {/* League selector */}
-      <div style={{...styles.filterGroup, flexWrap:"wrap", marginBottom:20}}>
-        {leagues.map(l => (
-          <button key={l} onClick={() => setActiveLeague(l)}
-            style={{...styles.filterBtn, ...(activeLeague===l ? styles.filterBtnActive : {})}}>
-            {STATS_REFERENCE[l].emoji} {l}
+      {/* Section tabs */}
+      <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:20, borderBottom:"1px solid #2a2a2a", paddingBottom:12}}>
+        {sections.map(s => (
+          <button key={s} onClick={() => setActiveSection(s)}
+            style={{...styles.filterBtn, ...(activeSection===s ? styles.filterBtnActive : {})}}>
+            {s}
           </button>
         ))}
       </div>
 
-      {/* League header */}
-      <div style={{...styles.statsLeagueHeader, borderLeft:`4px solid ${active.color}`}}>
+      {/* LEADERS */}
+      {activeSection === "LEADERS" && (
         <div>
-          <span style={styles.statsLeagueTitle}>{activeLeague}</span>
-          <p style={styles.statsLeagueDesc}>{active.desc}</p>
-          {active.nyTeams && (
-            <p style={styles.statsNYTeams}>
-              🗽 NY TEAMS: {active.nyTeams.join(" · ")}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Stat category cards */}
-      <div style={styles.statsRefGrid}>
-        {active.categories.map((cat, i) => (
-          <a key={i} href={cat.url} target="_blank" rel="noopener noreferrer"
-            style={styles.statsRefCard}>
-            <div style={{...styles.statsRefAbbrev, background: active.color}}>{cat.abbrev}</div>
-            <div style={styles.statsRefBody}>
-              <span style={styles.statsRefName}>{cat.name}</span>
-              <span style={styles.statsRefDesc}>{cat.desc}</span>
+          {Object.entries(STATS_REFERENCE).map(([league, data]) => (
+            <div key={league} style={{marginBottom:24}}>
+              <div style={{...styles.statsLeagueHeader, borderLeft:`4px solid ${data.color}`, marginBottom:10}}>
+                <div>
+                  <span style={styles.statsLeagueTitle}>{data.emoji} {league}</span>
+                  <span style={{fontSize:9, color:"#888", marginLeft:10}}>NY: {data.nyTeams.join(" · ")}</span>
+                </div>
+                <a href={data.ref} target="_blank" rel="noopener noreferrer"
+                  style={{fontSize:9, color:"#c8201c", fontWeight:900, textDecoration:"none", marginLeft:"auto"}}>
+                  FULL STATS →
+                </a>
+              </div>
+              <div style={styles.statsRefGrid}>
+                {data.categories.map((cat, i) => (
+                  <a key={i} href={cat.url} target="_blank" rel="noopener noreferrer" style={styles.statsRefCard}>
+                    <span style={{...styles.statsRefAbbrev, background: data.color}}>{cat.abbrev}</span>
+                    <div style={styles.statsRefBody}>
+                      <span style={styles.statsRefName}>{cat.name}</span>
+                      <span style={styles.statsRefDesc}>{cat.desc}</span>
+                    </div>
+                    <span style={styles.statsRefArrow}>→</span>
+                  </a>
+                ))}
+              </div>
             </div>
-            <span style={styles.statsRefArrow}>→</span>
-          </a>
-        ))}
-      </div>
-
-      {/* NY Teams quick search */}
-      <div style={styles.statsNYSection}>
-        <div style={styles.statsNYHeader}>🗽 SEARCH NY PLAYERS</div>
-        <div style={styles.statsNYCards}>
-          {active.nyTeams?.map((team, i) => (
-            <a key={i}
-              href={`https://www.google.com/search?q=${encodeURIComponent(`${team} ${year} stats roster`)}`}
-              target="_blank" rel="noopener noreferrer"
-              style={styles.statsNYCard}>
-              {team} STATS →
-            </a>
           ))}
-          <a href={`https://www.google.com/search?q=${encodeURIComponent(`${activeLeague} leaders stats ${year}`)}`}
-            target="_blank" rel="noopener noreferrer"
-            style={{...styles.statsNYCard, background:"#c8201c", color:"#fff"}}>
-            {activeLeague} ALL LEADERS →
-          </a>
         </div>
-      </div>
+      )}
+
+      {/* DROUGHT TRACKER */}
+      {activeSection === "DROUGHT" && (
+        <div>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>How long has it been since each NY team last won a championship? Sorted by most desperate first.</p>
+          </div>
+          {DROUGHT_DATA.map((t, i) => {
+            const years = t.last ? (new Date().getFullYear() - t.last) : 999;
+            const pct = Math.min(years / 60 * 100, 100);
+            return (
+              <div key={i} style={{...styles.droughtRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+                <div style={styles.droughtTeam}>
+                  <span style={styles.droughtEmoji}>{["⚾","🏈","🏀","🏒","⚽"].find(e => ["MLB","NFL","NBA","NHL","MLS","WNBA","NWSL"].includes(t.sport)) || "🏆"}</span>
+                  <div>
+                    <span style={styles.droughtTeamName}>{t.team}</span>
+                    <span style={styles.droughtSport}> · {t.sport}</span>
+                  </div>
+                </div>
+                <div style={styles.droughtBar}>
+                  <div style={{...styles.droughtFill, width:`${pct}%`, background: years > 40 ? "#c8201c" : years > 20 ? "#cc8800" : "#2d8a50"}} />
+                </div>
+                <div style={styles.droughtRight}>
+                  <span style={styles.droughtYear}>{t.last ? `Last: ${t.last}` : "Never"}</span>
+                  <span style={styles.droughtNote}>{t.note}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* DRAFT HISTORY */}
+      {activeSection === "DRAFT" && (
+        <div>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>Notable draft picks — the hits, the misses, and the legends.</p>
+          </div>
+          {Object.entries(DRAFT_DATA).map(([team, picks]) => (
+            <div key={team} style={{marginBottom:16}}>
+              <div style={styles.stdDivisionHeader}>{team.toUpperCase()}</div>
+              {picks.map((p, i) => (
+                <div key={i} style={{...styles.histRow, ...(i%2===0?{}:styles.histRowAlt)}}>
+                  <span style={{...styles.histRank, color:"#c8201c", fontSize:11, fontWeight:900}}>{p.year}</span>
+                  <span style={{fontSize:10, color:"#c8201c", fontWeight:900, minWidth:40}}>{p.pick}</span>
+                  <div style={styles.histInfo}>
+                    <span style={styles.histName}>{p.name}</span>
+                    <span style={styles.histYears}>{p.note}</span>
+                  </div>
+                  <SearchLinks query={`${p.name} ${team} draft ${p.year}`} />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* RIVALS */}
+      {activeSection === "RIVALS" && (
+        <div>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>The rivalries that define NY sports — decades of passion, heartbreak and glory.</p>
+          </div>
+          {RIVALS_DATA.map((r, i) => (
+            <div key={i} style={{...styles.rivalRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.rivalTeams}>
+                <span style={styles.rivalTeam}>{r.team1}</span>
+                <span style={styles.rivalVs}>vs</span>
+                <span style={styles.rivalTeam}>{r.team2}</span>
+                <span style={styles.rivalSport}>{r.sport}</span>
+              </div>
+              <div style={styles.rivalInfo}>
+                <span style={styles.rivalStat}>{r.t1wins}</span>
+                <span style={styles.rivalNote}>{r.note}</span>
+              </div>
+              <SearchLinks query={`${r.team1} vs ${r.team2} rivalry history`} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* TEAM LINKS */}
+      {activeSection === "TEAM LINKS" && (
+        <div style={styles.statsRefGrid}>
+          {Object.entries(NY_TEAMS_DATA).map(([team, data]) => (
+            <div key={team} style={{...styles.teamLinkCard, borderLeft:`3px solid ${data.color}`}}>
+              <div style={styles.teamLinkHeader}>
+                <span style={styles.teamLinkEmoji}>{data.emoji}</span>
+                <span style={styles.teamLinkName}>{team}</span>
+                <span style={styles.teamLinkLeague}>{data.league}</span>
+              </div>
+              <div style={styles.teamLinkBtns}>
+                <a href={data.site} target="_blank" rel="noopener noreferrer" style={styles.teamLinkBtn}>
+                  🌐 Official Site
+                </a>
+                <a href={data.ref} target="_blank" rel="noopener noreferrer" style={styles.teamLinkBtn}>
+                  📊 Stats & History
+                </a>
+                <a href={`https://www.google.com/search?q=${encodeURIComponent(`${team} latest news ${year}`)}`}
+                  target="_blank" rel="noopener noreferrer" style={styles.teamLinkBtn}>
+                  📰 Latest News
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -3005,6 +3174,15 @@ const styles = {
   schTime: { fontSize:11, fontWeight:900, color:"#e8e0d0", letterSpacing:"0.03em" },
   schVenue: { fontSize:8, color:"#888", textAlign:"right" },
 
+  // SCORING SUMMARY
+  scoringSummary: { marginBottom: 12, border:"1px solid #2a2a2a", overflow:"hidden" },
+  scoringHeader: { fontSize:8, fontWeight:900, letterSpacing:"0.15em", color:"#c8201c", background:"#1a1a1a", padding:"4px 8px" },
+  scoringPlay: { display:"flex", gap:8, padding:"4px 8px", alignItems:"center", fontSize:10 },
+  scoringPeriod: { color:"#666", minWidth:50, fontSize:9, flexShrink:0 },
+  scoringTeam: { color:"#c8201c", fontWeight:700, minWidth:70, fontSize:9, flexShrink:0 },
+  scoringText: { flex:1, color:"#ccc" },
+  scoringScore: { color:"#e8e0d0", fontWeight:900, minWidth:35, textAlign:"right", flexShrink:0 },
+
   // BOX SCORE
   boxScoreBtn: {
     marginTop:8, background:"transparent", border:"1px solid #333",
@@ -3069,6 +3247,45 @@ const styles = {
   histLink: {
     fontSize:9, color:"#c8201c", textDecoration:"none",
     fontWeight:700, letterSpacing:"0.05em",
+  },
+
+  // DROUGHT TRACKER
+  droughtRow: { display:"flex", alignItems:"center", gap:12, padding:"10px 12px", flexWrap:"wrap" },
+  droughtTeam: { display:"flex", alignItems:"center", gap:8, minWidth:140, flexShrink:0 },
+  droughtEmoji: { fontSize:18 },
+  droughtTeamName: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  droughtSport: { fontSize:9, color:"#666" },
+  droughtBar: { flex:1, height:8, background:"#1a1a1a", borderRadius:4, overflow:"hidden", minWidth:60 },
+  droughtFill: { height:"100%", borderRadius:4, transition:"width 0.5s" },
+  droughtRight: { display:"flex", flexDirection:"column", alignItems:"flex-end", minWidth:120 },
+  droughtYear: { fontSize:11, fontWeight:900, color:"#aaa" },
+  droughtNote: { fontSize:9, color:"#666" },
+
+  // RIVALS
+  rivalRow: { display:"flex", alignItems:"center", gap:12, padding:"12px 14px", flexWrap:"wrap", borderTop:"1px solid #1a1a1a" },
+  rivalTeams: { display:"flex", alignItems:"center", gap:8, minWidth:200, flexShrink:0 },
+  rivalTeam: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  rivalVs: { fontSize:10, color:"#c8201c", fontWeight:900 },
+  rivalSport: { fontSize:9, color:"#555", marginLeft:4 },
+  rivalInfo: { flex:1, display:"flex", flexDirection:"column", gap:2 },
+  rivalStat: { fontSize:11, fontWeight:700, color:"#aaa" },
+  rivalNote: { fontSize:10, color:"#666" },
+
+  // TEAM LINKS
+  teamLinkCard: {
+    background:"#161616", border:"1px solid #2a2a2a",
+    padding:"14px", display:"flex", flexDirection:"column", gap:10,
+  },
+  teamLinkHeader: { display:"flex", alignItems:"center", gap:8 },
+  teamLinkEmoji: { fontSize:20 },
+  teamLinkName: { fontSize:14, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", flex:1 },
+  teamLinkLeague: { fontSize:9, color:"#666", letterSpacing:"0.1em" },
+  teamLinkBtns: { display:"flex", flexDirection:"column", gap:4 },
+  teamLinkBtn: {
+    display:"block", padding:"6px 10px", background:"#1a1a1a",
+    border:"1px solid #2a2a2a", color:"#aaa", textDecoration:"none",
+    fontSize:10, fontWeight:700, letterSpacing:"0.05em",
+    transition:"border-color 0.15s",
   },
 
   // SEARCH LINKS
