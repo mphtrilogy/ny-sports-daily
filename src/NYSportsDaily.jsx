@@ -294,41 +294,162 @@ async function fetchNYSchedule() {
 
 // ─── NY SPORTS QUOTES ─────────────────────────────────────────────────────
 const NY_QUOTES = [
+  // YANKEES
   { quote: "I want to thank the Good Lord for making me a Yankee.", author: "Joe DiMaggio", team: "Yankees" },
-  { quote: "I guarantee it.", author: "Joe Namath", team: "Jets", context: "Super Bowl III, 1969" },
-  { quote: "Ya gotta believe!", author: "Tug McGraw", team: "Mets", context: "1973 pennant run" },
   { quote: "Some people say New York is the capital of the world. I wouldn't argue with that.", author: "Derek Jeter", team: "Yankees" },
-  { quote: "New York is a city of conversation, of energy. The fans here live and die with every pitch.", author: "Mike Piazza", team: "Mets" },
-  { quote: "The key to this team is the same as it always has been: pride.", author: "Phil Jackson", team: "Knicks" },
-  { quote: "There is always some kid who may be seeing me for the first or last time. I owe him my best.", author: "Joe DiMaggio", team: "Yankees" },
-  { quote: "Hockey is a unique sport — you need each and every guy pulling in the same direction.", author: "Mark Messier", team: "Rangers" },
   { quote: "We are the Yankees. We don't rebuild, we reload.", author: "Derek Jeter", team: "Yankees" },
-  { quote: "Pressure is a privilege — it only comes to those who earn it.", author: "Billie Jean King", team: "Sports" },
-  { quote: "The only way to prove you are a good sport is to lose.", author: "Ernie Banks", team: "Baseball" },
-  { quote: "Every day is a new opportunity. You can build on yesterday's success or put its failures behind and start over again.", author: "Bob Feller", team: "Baseball" },
-  { quote: "Baseball is like church. Many attend, few understand.", author: "Leo Durocher", team: "Baseball" },
   { quote: "The way a team plays as a whole determines its success.", author: "Babe Ruth", team: "Yankees" },
-  { quote: "Hard work beats talent when talent doesn't work hard.", author: "Tim Notke", team: "Sports" },
-  { quote: "Champions keep playing until they get it right.", author: "Billie Jean King", team: "Sports" },
-  { quote: "The only place success comes before work is in the dictionary.", author: "Vince Lombardi", team: "NFL" },
   { quote: "It ain't over till it's over.", author: "Yogi Berra", team: "Yankees" },
   { quote: "You can observe a lot just by watching.", author: "Yogi Berra", team: "Yankees" },
   { quote: "When you come to a fork in the road, take it.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "In theory there is no difference between theory and practice. In practice there is.", author: "Yogi Berra", team: "Yankees" },
   { quote: "I never said most of the things I said.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "Little League baseball is a very good thing because it keeps the parents off the streets.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "I'm not going to buy my kids an encyclopedia. Let them walk to school like I did.", author: "Yogi Berra", team: "Yankees" },
   { quote: "A nickel ain't worth a dime anymore.", author: "Yogi Berra", team: "Yankees" },
   { quote: "We made too many wrong mistakes.", author: "Yogi Berra", team: "Yankees" },
   { quote: "Nobody goes there anymore. It's too crowded.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "Always go to other people's funerals, otherwise they won't come to yours.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "If you don't know where you are going, you might wind up someplace else.", author: "Yogi Berra", team: "Yankees" },
   { quote: "The future ain't what it used to be.", author: "Yogi Berra", team: "Yankees" },
+  { quote: "If you don't know where you are going, you might wind up someplace else.", author: "Yogi Berra", team: "Yankees" },
+  { quote: "Baseball is 90% mental and the other half is physical.", author: "Yogi Berra", team: "Yankees" },
+  { quote: "When you're in a slump, it's almost as if you look out at the field and it's one big glove.", author: "Vince Coleman", team: "Baseball" },
+  { quote: "There is always some kid who may be seeing me for the first or last time. I owe him my best.", author: "Joe DiMaggio", team: "Yankees" },
+  { quote: "Today I consider myself the luckiest man on the face of the earth.", author: "Lou Gehrig", team: "Yankees", context: "Farewell speech, 1939" },
+  { quote: "Fans don't boo nobodies.", author: "Reggie Jackson", team: "Yankees" },
+  { quote: "October is not like any other month in baseball.", author: "Reggie Jackson", team: "Yankees" },
+  { quote: "I'm the best in baseball. No one comes close. The Yankees are the best in baseball.", author: "Reggie Jackson", team: "Yankees" },
+  { quote: "I make my best pitch and trust my defense.", author: "Mariano Rivera", team: "Yankees" },
+  { quote: "I've never worried about statistics.", author: "Mariano Rivera", team: "Yankees" },
+  { quote: "Don't look back. Something might be gaining on you.", author: "Satchel Paige", team: "Baseball" },
+  // METS
+  { quote: "Ya gotta believe!", author: "Tug McGraw", team: "Mets", context: "1973 pennant run" },
+  { quote: "New York is a city of conversation, of energy. The fans here live and die with every pitch.", author: "Mike Piazza", team: "Mets" },
+  { quote: "I don't think about the negative. That's a waste of time.", author: "Tom Seaver", team: "Mets" },
+  { quote: "In baseball, you can't sit on a lead and run a few plays into the line and just kill the clock. You've got to throw the ball over the damn plate and let the game proceed.", author: "Tom Seaver", team: "Mets" },
+  { quote: "Good pitching will always stop good hitting and vice-versa.", author: "Casey Stengel", team: "Mets" },
+  { quote: "Being with a team the whole season, winning and losing together... then winning in the end... that's special.", author: "David Wright", team: "Mets" },
+  { quote: "The Mets are losers, just like nearly everybody else in life. This is the team for the cab driver, the guy who owns the diner, the bartender.", author: "Jimmy Breslin", team: "Mets" },
+  // JETS
+  { quote: "I guarantee it.", author: "Joe Namath", team: "Jets", context: "Super Bowl III, 1969" },
+  { quote: "I can throw the ball better than any quarterback in the game.", author: "Joe Namath", team: "Jets" },
+  { quote: "You got to be a man first before you can be a player.", author: "Joe Namath", team: "Jets" },
+  { quote: "I live and die with the New York Jets.", author: "Rex Ryan", team: "Jets" },
+  { quote: "The key to this football team is Mark Gastineau.", author: "Joe Klecko", team: "Jets" },
+  // GIANTS
+  { quote: "If you want to win, do the little things right.", author: "Lawrence Taylor", team: "Giants" },
+  { quote: "I want to be the best. Not the best in New York. The best in the NFL.", author: "Lawrence Taylor", team: "Giants" },
+  { quote: "Pressure is a privilege.", author: "Lawrence Taylor", team: "Giants" },
+  { quote: "You play the way you practice.", author: "Bill Parcells", team: "Giants" },
+  { quote: "I'm not telling you it's going to be easy. I'm telling you it's going to be worth it.", author: "Bill Parcells", team: "Giants" },
+  { quote: "When the game is on the line, you want Eli Manning.", author: "Tiki Barber", team: "Giants" },
+  // KNICKS
+  { quote: "The key to this team is the same as it always has been: pride.", author: "Red Holzman", team: "Knicks" },
+  { quote: "I'm coming back to New York. I belong in New York.", author: "Patrick Ewing", team: "Knicks" },
+  { quote: "Clyde is poetry in motion. He glides, he doesn't run.", author: "Walt Frazier self-intro", team: "Knicks" },
+  { quote: "I feel great — better than anyone in this building right now.", author: "Willis Reed", team: "Knicks", context: "Limping onto court, 1970 Finals" },
+  { quote: "This is our building. Don't come in here.", author: "Patrick Ewing", team: "Knicks" },
+  { quote: "New York basketball is different. The passion, the energy, the fans — nothing like it.", author: "Jalen Brunson", team: "Knicks" },
+  // RANGERS
+  { quote: "We will win tonight.", author: "Mark Messier", team: "Rangers", context: "Game 6 guarantee vs Devils, 1994" },
+  { quote: "The best trophy in sports is the Stanley Cup. And we have it.", author: "Mark Messier", team: "Rangers" },
+  { quote: "Hockey is a unique sport — you need each and every guy pulling in the same direction.", author: "Mark Messier", team: "Rangers" },
+  { quote: "You can get great talent anywhere. The difference is what you do with it.", author: "Brian Leetch", team: "Rangers" },
+  { quote: "I don't care about goals. I care about wins.", author: "Henrik Lundqvist", team: "Rangers" },
+  // ISLANDERS
+  { quote: "We had a special group. Nobody gave us credit. We just won.", author: "Bryan Trottier", team: "Islanders" },
+  { quote: "Four Stanley Cups. Nobody can take that away from us.", author: "Mike Bossy", team: "Islanders" },
+  { quote: "I'll take the puck to the net every time. That's where goals are scored.", author: "Mike Bossy", team: "Islanders" },
+  { quote: "When we played, we played to win. Not to look good. To win.", author: "Denis Potvin", team: "Islanders" },
+  // GENERAL SPORTS
+  { quote: "The strength of the team is each individual member. The strength of each member is the team.", author: "Phil Jackson", team: "Sports" },
+  { quote: "You miss 100% of the shots you don't take.", author: "Wayne Gretzky", team: "Hockey" },
+  { quote: "The more difficult the victory, the greater the happiness in winning.", author: "Pele", team: "Soccer" },
+  { quote: "Champions keep playing until they get it right.", author: "Billie Jean King", team: "Sports" },
+  { quote: "The only place success comes before work is in the dictionary.", author: "Vince Lombardi", team: "NFL" },
+  { quote: "Hard work beats talent when talent doesn't work hard.", author: "Tim Notke", team: "Sports" },
+  { quote: "Baseball is like church. Many attend, few understand.", author: "Leo Durocher", team: "Baseball" },
+  { quote: "Every strike brings me closer to the next home run.", author: "Babe Ruth", team: "Yankees" },
+  { quote: "The secret to success is to know something nobody else knows.", author: "Aristotle Onassis", team: "Business" },
+  { quote: "New York City is the place where all the people come who want to make something of themselves.", author: "Unknown", team: "NYC" },
+  { quote: "Being a New York sports fan means having the highest highs and the lowest lows. Wouldn't trade it.", author: "NY Fan", team: "NYC" },
 ];
 
 function getDailyQuote() {
   const day = Math.floor(Date.now() / 86400000);
   return NY_QUOTES[day % NY_QUOTES.length];
+}
+
+// ─── DAILY PLAYER SPOTLIGHT ───────────────────────────────────────────────
+const DAILY_PLAYERS = [
+  { name:"Derek Jeter",    team:"Yankees",   sport:"MLB", pos:"SS",  emoji:"⚾", number:"2",  active:false, era:"1995–2014", stats:"3,465 H · .310 AVG · 260 HR · 14× All-Star", fact:"The only Yankee to win 5 World Series rings AND be drafted by the team. Made the flip, the dive, and Mr. November moments.", wiki:"https://en.wikipedia.org/wiki/Derek_Jeter" },
+  { name:"Mike Piazza",    team:"Mets",      sport:"MLB", pos:"C",   emoji:"⚾", number:"31", active:false, era:"1998–2005", stats:"220 HR · .296 AVG · 655 RBI as a Met", fact:"His 9/11 home run on September 21, 2001 is the most emotional moment in Mets history. Greatest hitting catcher ever.", wiki:"https://en.wikipedia.org/wiki/Mike_Piazza" },
+  { name:"Joe Namath",     team:"Jets",      sport:"NFL", pos:"QB",  emoji:"🏈", number:"12", active:false, era:"1965–1976", stats:"27,057 yds · 173 TD · Super Bowl III MVP", fact:"Guaranteed a Super Bowl win as a 17-point underdog then delivered. Changed professional football forever with one press conference.", wiki:"https://en.wikipedia.org/wiki/Joe_Namath" },
+  { name:"Lawrence Taylor", team:"Giants",   sport:"NFL", pos:"LB",  emoji:"🏈", number:"56", active:false, era:"1981–1993", stats:"132.5 sacks · 2× SB · NFL MVP 1986", fact:"The NFL changed its blocking rules because of him. Every modern edge rusher is chasing his ghost.", wiki:"https://en.wikipedia.org/wiki/Lawrence_Taylor" },
+  { name:"Patrick Ewing",  team:"Knicks",   sport:"NBA", pos:"C",   emoji:"🏀", number:"33", active:false, era:"1985–2000", stats:"23,665 pts · 10,759 reb · 11× All-Star", fact:"First ever NBA lottery pick. Led the Knicks for 15 years and came heartbreakingly close to a championship in 1994.", wiki:"https://en.wikipedia.org/wiki/Patrick_Ewing" },
+  { name:"Walt Frazier",   team:"Knicks",   sport:"NBA", pos:"G",   emoji:"🏀", number:"10", active:false, era:"1967–1977", stats:"14,617 pts · 4,791 ast · 2× NBA Champion", fact:"Scored 36 points in the famous Willis Reed Game 7. The most stylishly dressed player in NBA history.", wiki:"https://en.wikipedia.org/wiki/Walt_Frazier" },
+  { name:"Mark Messier",   team:"Rangers",  sport:"NHL", pos:"C",   emoji:"🏒", number:"11", active:false, era:"1991–2004", stats:"851 pts as a Ranger · 6× Stanley Cup champion", fact:"Guaranteed a Game 6 win against the Devils when down 3-2. Then scored a hat trick. The greatest captain in hockey history.", wiki:"https://en.wikipedia.org/wiki/Mark_Messier" },
+  { name:"Mike Bossy",     team:"Islanders",sport:"NHL", pos:"RW",  emoji:"🏒", number:"22", active:false, era:"1977–1987", stats:"573 G · 9 straight 50-goal seasons · 4× Cup", fact:"Matched Rocket Richard's 50 in 50 in 1981. Retired at 30 due to back injuries — may have been even greater.", wiki:"https://en.wikipedia.org/wiki/Mike_Bossy" },
+  { name:"Bryan Trottier", team:"Islanders",sport:"NHL", pos:"C",   emoji:"🏒", number:"19", active:false, era:"1975–1990", stats:"1,353 pts · 4× Cup · Hart Trophy 1979", fact:"Won 4 Cups with the Islanders then 2 more with Pittsburgh. The engine of the greatest dynasty in NHL history.", wiki:"https://en.wikipedia.org/wiki/Bryan_Trottier" },
+  { name:"Tom Seaver",     team:"Mets",     sport:"MLB", pos:"SP",  emoji:"⚾", number:"41", active:false, era:"1967–1983", stats:"311 W · 2.86 ERA · 3,272 K · 3× Cy Young", fact:"Led the Miracle Mets to the 1969 World Series. Tom Terrific is the greatest Met of all time — not even close.", wiki:"https://en.wikipedia.org/wiki/Tom_Seaver" },
+  { name:"Babe Ruth",      team:"Yankees",  sport:"MLB", pos:"RF",  emoji:"⚾", number:"3",  active:false, era:"1920–1934", stats:"659 HR as Yankee · .349 AVG · 7× WS", fact:"Was sold by Boston for $100,000 in 1920 — cursing them for 86 years. Possibly the most impactful transaction in sports history.", wiki:"https://en.wikipedia.org/wiki/Babe_Ruth" },
+  { name:"Lou Gehrig",     team:"Yankees",  sport:"MLB", pos:"1B",  emoji:"⚾", number:"4",  active:false, era:"1923–1939", stats:"2,721 H · 1,995 RBI · .340 AVG · 7× All-Star", fact:"Played 2,130 consecutive games as the Iron Horse. His farewell speech — 'luckiest man' — is the most powerful in sports history.", wiki:"https://en.wikipedia.org/wiki/Lou_Gehrig" },
+  { name:"Willis Reed",    team:"Knicks",   sport:"NBA", pos:"C",   emoji:"🏀", number:"19", active:false, era:"1964–1974", stats:"12,183 pts · 8,414 reb · 2× NBA Champion", fact:"Limped onto the Garden floor on a torn thigh muscle for Game 7. The crowd went insane. The Knicks won. Frazier scored 36.", wiki:"https://en.wikipedia.org/wiki/Willis_Reed" },
+  { name:"Denis Potvin",   team:"Islanders",sport:"NHL", pos:"D",   emoji:"🏒", number:"5",  active:false, era:"1973–1988", stats:"1,052 pts · 3× Norris · 4× Cup", fact:"Broke Bobby Orr's career points record for defensemen. Captained four consecutive Stanley Cup champions.", wiki:"https://en.wikipedia.org/wiki/Denis_Potvin" },
+  { name:"Phil Simms",     team:"Giants",   sport:"NFL", pos:"QB",  emoji:"🏈", number:"11", active:false, era:"1979–1993", stats:"33,462 yds · 199 TD · Super Bowl XXI MVP", fact:"Completed 22 of 25 passes (88%) in Super Bowl XXI — still the record completion percentage in Super Bowl history.", wiki:"https://en.wikipedia.org/wiki/Phil_Simms" },
+  { name:"Don Mattingly",  team:"Yankees",  sport:"MLB", pos:"1B",  emoji:"⚾", number:"23", active:false, era:"1982–1995", stats:"2,153 H · 9× Gold Glove · .307 career AVG", fact:"The most beloved Yankee of the 1980s never won a World Series ring. Finally made the playoffs in his last season.", wiki:"https://en.wikipedia.org/wiki/Don_Mattingly" },
+  { name:"Joe DiMaggio",   team:"Yankees",  sport:"MLB", pos:"CF",  emoji:"⚾", number:"5",  active:false, era:"1936–1951", stats:"361 HR · .325 AVG · 9× WS · 3× MVP", fact:"Hit safely in 56 consecutive games in 1941. Mathematical models suggest the odds of that ever happening are less than 1 in 1,000.", wiki:"https://en.wikipedia.org/wiki/Joe_DiMaggio" },
+  { name:"Dwight Gooden",  team:"Mets",     sport:"MLB", pos:"SP",  emoji:"⚾", number:"16", active:false, era:"1984–1994", stats:"194 W · 1.53 ERA in 1985 · Cy Young 1985", fact:"At age 20, went 24-4 with 1.53 ERA. Batters said facing him was like hitting against a wall. What could have been the greatest career.", wiki:"https://en.wikipedia.org/wiki/Dwight_Gooden" },
+  { name:"Eli Manning",    team:"Giants",   sport:"NFL", pos:"QB",  emoji:"🏈", number:"10", active:false, era:"2004–2019", stats:"57,023 yds · 366 TD · 2× Super Bowl MVP", fact:"Beat the undefeated Patriots twice in the Super Bowl. Made the pass to David Tyree and the throw to Mario Manningham.", wiki:"https://en.wikipedia.org/wiki/Eli_Manning" },
+  { name:"Mariano Rivera",  team:"Yankees", sport:"MLB", pos:"RP",  emoji:"⚾", number:"42", active:false, era:"1995–2013", stats:"652 SV · 2.21 ERA · 5× WS · ALCS MVP 2003", fact:"Unanimous Hall of Fame election — first ever. Threw one pitch (cutter) his entire career. The greatest closer in baseball history.", wiki:"https://en.wikipedia.org/wiki/Mariano_Rivera" },
+  { name:"Jalen Brunson",  team:"Knicks",   sport:"NBA", pos:"PG",  emoji:"🏀", number:"11", active:true,  era:"2022–present", stats:"28+ PPG · 6+ APG · MSG's new hero", fact:"Turned down a max contract extension, then got a bigger one. Breathed new life into Knicks basketball in a way the Garden hasn't seen since Ewing.", wiki:"https://en.wikipedia.org/wiki/Jalen_Brunson" },
+  { name:"Pete Alonso",    team:"Mets",     sport:"MLB", pos:"1B",  emoji:"⚾", number:"20", active:true,  era:"2019–present", stats:"240+ HR · 53 HR in 2019 (rookie record)", fact:"The Polar Bear broke the MLB rookie home run record in 2019. Now leads the Mets all-time home run list, ahead of Darryl Strawberry.", wiki:"https://en.wikipedia.org/wiki/Pete_Alonso" },
+  { name:"Aaron Judge",    team:"Yankees",  sport:"MLB", pos:"RF",  emoji:"⚾", number:"99", active:true,  era:"2016–present", stats:"60+ HR seasons · .280+ AVG · AL MVP 2017, 2022", fact:"Hit 62 home runs in 2022 — the American League single-season record. The current face of the Yankees dynasty.", wiki:"https://en.wikipedia.org/wiki/Aaron_Judge" },
+  { name:"Breanna Stewart", team:"Liberty", sport:"WNBA",pos:"F",  emoji:"🏀", number:"30", active:true,  era:"2023–present", stats:"2× WNBA Champion · Finals MVP", fact:"Came to New York to win and delivered back-to-back championships. The best player in women's basketball history.", wiki:"https://en.wikipedia.org/wiki/Breanna_Stewart" },
+];
+
+function getDailyPlayer() {
+  const day = Math.floor(Date.now() / 86400000);
+  return DAILY_PLAYERS[day % DAILY_PLAYERS.length];
+}
+
+function PlayerSpotlight() {
+  const [flipped, setFlipped] = useState(false);
+  const p = getDailyPlayer();
+  return (
+    <div style={styles.spotlightWrap} onClick={() => setFlipped(!flipped)}>
+      <div style={styles.spotlightCard}>
+        {!flipped ? (
+          // Front — card face
+          <div style={styles.spotlightFront}>
+            <div style={styles.spotlightHeader}>
+              <span style={styles.spotlightBadge}>⭐ DAILY SPOTLIGHT</span>
+              <span style={styles.spotlightTap}>tap to flip →</span>
+            </div>
+            <div style={styles.spotlightEmoji}>{p.emoji}</div>
+            <div style={styles.spotlightName}>{p.name}</div>
+            <div style={styles.spotlightMeta}>
+              <span style={styles.spotlightTeam}>{p.team}</span>
+              <span style={styles.spotlightPos}>#{p.number} · {p.pos}</span>
+              {p.active && <span style={styles.spotlightActive}>● ACTIVE</span>}
+            </div>
+            <div style={styles.spotlightEra}>{p.era}</div>
+            <div style={styles.spotlightStats}>{p.stats}</div>
+          </div>
+        ) : (
+          // Back — fact + links
+          <div style={styles.spotlightBack}>
+            <div style={styles.spotlightHeader}>
+              <span style={styles.spotlightBadge}>{p.name}</span>
+              <span style={styles.spotlightTap}>← flip back</span>
+            </div>
+            <p style={styles.spotlightFact}>{p.fact}</p>
+            <div style={styles.spotlightLinks}>
+              <a href={p.wiki} target="_blank" rel="noopener noreferrer" style={styles.spotlightLink} onClick={e=>e.stopPropagation()}>📖 Wikipedia</a>
+              <a href={googleUrl(`${p.name} ${p.team} stats career`)} target="_blank" rel="noopener noreferrer" style={styles.spotlightLink} onClick={e=>e.stopPropagation()}>🔍 Google</a>
+              <a href={`https://www.amazon.com/s?k=${encodeURIComponent(p.name+" biography")}&tag=nysportsdaily-20`} target="_blank" rel="noopener noreferrer" style={styles.spotlightLink} onClick={e=>e.stopPropagation()}>📚 Books</a>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ─── ESPN STATS FETCH ─────────────────────────────────────────────────────
@@ -568,7 +689,7 @@ export default function NYSportsDaily() {
 
         {/* TAB NAV */}
         <div style={styles.tabNav}>
-          {["SCORES","TV","STANDINGS","SCHEDULE","STATS","HISTORY","NEWS","TRIVIA","XWORD","SPIN"].map(tab => (
+          {["SCORES","TV","STANDINGS","SCHEDULE","STATS","HISTORY","NEWS","TRIVIA","XWORD","SPIN","SHOP"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {})}}>
               {tab}
@@ -580,7 +701,10 @@ export default function NYSportsDaily() {
         {activeTab === "SCORES" && (
           <div>
             {/* Quote of the Day */}
-            <QuoteOfDay />
+            <div style={{display:"flex", gap:12, flexWrap:"wrap", marginBottom:16}}>
+              <div style={{flex:1, minWidth:280}}><QuoteOfDay /></div>
+              <div style={{minWidth:220}}><PlayerSpotlight /></div>
+            </div>
             {/* League filter */}
             <div style={styles.filterBar}>
               <div style={styles.filterGroup}>
@@ -700,6 +824,10 @@ export default function NYSportsDaily() {
         {activeTab === "SPIN" && (
           <SpinTab />
         )}
+        {/* ──── SHOP TAB ──── */}
+        {activeTab === "SHOP" && (
+          <ShopTab />
+        )}
       </main>
 
       {/* ── FOOTER ── */}
@@ -746,27 +874,31 @@ async function fetchBoxScore(gameId, sport, league) {
     const scoringPlays = json.scoringPlays || [];
     const plays = json.plays || [];
     
+    function parsePlay(play) {
+      const athletes = (play.athletesInvolved || []).map(a => a.displayName || a.shortName || "").filter(Boolean);
+      const athleteStr = athletes.length ? athletes.join(", ") : "";
+      const rawText = play.text || play.shortText || play.type?.text || "";
+      const fullText = athleteStr && !rawText.includes(athletes[0]) ? `${athleteStr}: ${rawText}` : rawText;
+      return {
+        period:    play.period?.displayValue || (play.period?.number ? `${play.period.number}` : ""),
+        clock:     play.clock?.displayValue || "",
+        team:      play.team?.displayName || play.team?.abbreviation || "",
+        text:      fullText,
+        shortText: play.shortText || "",
+        athletes:  athleteStr,
+        awayScore: play.awayScore ?? "",
+        homeScore: play.homeScore ?? "",
+        type:      play.type?.text || "",
+      };
+    }
+
     // For baseball, build scoring from plays where scoringPlay === true
     const baseballScoring = plays
       .filter(p => p.scoringPlay === true)
-      .map(play => ({
-        period:    play.period?.displayValue || `Inn ${play.period?.number || ""}`,
-        clock:     play.clock?.displayValue || "",
-        team:      play.team?.displayName || "",
-        text:      play.text || play.type?.text || "",
-        awayScore: play.awayScore ?? "",
-        homeScore: play.homeScore ?? "",
-      }));
+      .map(parsePlay);
 
     const scoringSummary = scoringPlays.length > 0
-      ? scoringPlays.map(play => ({
-          period:    play.period?.displayValue || play.period?.number || "",
-          clock:     play.clock?.displayValue || "",
-          team:      play.team?.displayName || "",
-          text:      play.text || play.type?.text || "",
-          awayScore: play.awayScore ?? "",
-          homeScore: play.homeScore ?? "",
-        }))
+      ? scoringPlays.map(parsePlay)
       : baseballScoring;
 
     // Player stats per team
@@ -881,13 +1013,18 @@ function ScoreCard({ game }) {
               {/* Scoring Summary */}
               {boxScore.scoringSummary?.length > 0 && (
                 <div style={styles.scoringSummary}>
-                  <div style={styles.scoringHeader}>SCORING SUMMARY</div>
+                  <div style={styles.scoringHeader}>⚡ SCORING SUMMARY ({boxScore.scoringSummary.length} plays)</div>
                   {boxScore.scoringSummary.map((play, i) => (
                     <div key={i} style={{...styles.scoringPlay, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
-                      <span style={styles.scoringPeriod}>{play.period} {play.clock}</span>
-                      <span style={styles.scoringTeam}>{play.team}</span>
-                      <span style={styles.scoringText}>{play.text}</span>
-                      <span style={styles.scoringScore}>{play.awayScore}-{play.homeScore}</span>
+                      <div style={styles.scoringLeft}>
+                        <span style={styles.scoringPeriod}>{play.period}{play.clock ? ` · ${play.clock}` : ""}</span>
+                        <span style={styles.scoringTeamBadge}>{play.team?.split(" ").pop() || play.team}</span>
+                      </div>
+                      <div style={styles.scoringMiddle}>
+                        {play.athletes && <span style={styles.scoringAthletes}>{play.athletes}</span>}
+                        <span style={styles.scoringText}>{play.text || play.type}</span>
+                      </div>
+                      <span style={styles.scoringScore}>{play.awayScore !== "" ? `${play.awayScore}-${play.homeScore}` : ""}</span>
                     </div>
                   ))}
                 </div>
@@ -1215,118 +1352,228 @@ const STADIUM_HISTORY = [
 const HISTORY_LISTS = {
   "Yankees": [
     { title: "All-Time Yankees Home Run Leaders", items: [
-      { rank:1, name:"Babe Ruth",        value:"659 HR",  years:"1920–1934" },
-      { rank:2, name:"Mickey Mantle",    value:"536 HR",  years:"1951–1968" },
-      { rank:3, name:"Lou Gehrig",       value:"493 HR",  years:"1923–1939" },
-      { rank:4, name:"Joe DiMaggio",     value:"361 HR",  years:"1936–1951" },
-      { rank:5, name:"Yogi Berra",       value:"358 HR",  years:"1946–1963" },
-      { rank:6, name:"Bernie Williams",  value:"287 HR",  years:"1991–2006" },
-      { rank:7, name:"Jorge Posada",     value:"275 HR",  years:"1995–2011" },
-      { rank:8, name:"Derek Jeter",      value:"260 HR",  years:"1995–2014" },
-      { rank:9, name:"Don Mattingly",    value:"222 HR",  years:"1982–1995" },
-      { rank:10,name:"Dave Winfield",    value:"205 HR",  years:"1981–1990" },
+      { rank:1,  name:"Babe Ruth",        value:"659 HR",  years:"1920–1934" },
+      { rank:2,  name:"Mickey Mantle",    value:"536 HR",  years:"1951–1968" },
+      { rank:3,  name:"Lou Gehrig",       value:"493 HR",  years:"1923–1939" },
+      { rank:4,  name:"Alex Rodriguez",   value:"351 HR",  years:"2004–2016" },
+      { rank:5,  name:"Joe DiMaggio",     value:"361 HR",  years:"1936–1951" },
+      { rank:6,  name:"Yogi Berra",       value:"358 HR",  years:"1946–1963" },
+      { rank:7,  name:"Bernie Williams",  value:"287 HR",  years:"1991–2006" },
+      { rank:8,  name:"Jorge Posada",     value:"275 HR",  years:"1995–2011" },
+      { rank:9,  name:"Derek Jeter",      value:"260 HR",  years:"1995–2014" },
+      { rank:10, name:"Don Mattingly",    value:"222 HR",  years:"1982–1995" },
+    ]},
+    { title: "All-Time Yankees RBI Leaders", items: [
+      { rank:1,  name:"Babe Ruth",        value:"1,978 RBI", years:"1920–1934" },
+      { rank:2,  name:"Lou Gehrig",       value:"1,995 RBI", years:"1923–1939" },
+      { rank:3,  name:"Mickey Mantle",    value:"1,509 RBI", years:"1951–1968" },
+      { rank:4,  name:"Joe DiMaggio",     value:"1,537 RBI", years:"1936–1951" },
+      { rank:5,  name:"Yogi Berra",       value:"1,430 RBI", years:"1946–1963" },
+      { rank:6,  name:"Derek Jeter",      value:"1,311 RBI", years:"1995–2014" },
+      { rank:7,  name:"Bernie Williams",  value:"1,257 RBI", years:"1991–2006" },
+      { rank:8,  name:"Alex Rodriguez",   value:"1,096 RBI", years:"2004–2016" },
+      { rank:9,  name:"Don Mattingly",    value:"1,099 RBI", years:"1982–1995" },
+      { rank:10, name:"Jorge Posada",     value:"1,065 RBI", years:"1995–2011" },
+    ]},
+    { title: "All-Time Yankees Hits Leaders", items: [
+      { rank:1,  name:"Derek Jeter",      value:"3,465 H",  years:"1995–2014" },
+      { rank:2,  name:"Babe Ruth",        value:"2,518 H",  years:"1920–1934" },
+      { rank:3,  name:"Lou Gehrig",       value:"2,721 H",  years:"1923–1939" },
+      { rank:4,  name:"Mickey Mantle",    value:"2,415 H",  years:"1951–1968" },
+      { rank:5,  name:"Bernie Williams",  value:"2,336 H",  years:"1991–2006" },
+      { rank:6,  name:"Joe DiMaggio",     value:"2,214 H",  years:"1936–1951" },
+      { rank:7,  name:"Yogi Berra",       value:"2,150 H",  years:"1946–1963" },
+      { rank:8,  name:"Don Mattingly",    value:"2,153 H",  years:"1982–1995" },
+      { rank:9,  name:"Roy White",        value:"1,803 H",  years:"1965–1979" },
+      { rank:10, name:"Jorge Posada",     value:"1,664 H",  years:"1995–2011" },
+    ]},
+    { title: "All-Time Yankees Pitching Wins Leaders", items: [
+      { rank:1,  name:"Whitey Ford",      value:"236 W",   years:"1950–1967" },
+      { rank:2,  name:"Red Ruffing",      value:"231 W",   years:"1930–1946" },
+      { rank:3,  name:"Lefty Gomez",      value:"189 W",   years:"1930–1942" },
+      { rank:4,  name:"Ron Guidry",       value:"170 W",   years:"1975–1988" },
+      { rank:5,  name:"Andy Pettitte",    value:"219 W",   years:"1995–2013" },
+      { rank:6,  name:"Herb Pennock",     value:"162 W",   years:"1923–1933" },
+      { rank:7,  name:"Waite Hoyt",       value:"157 W",   years:"1921–1930" },
+      { rank:8,  name:"Mel Stottlemyre", value:"164 W",    years:"1964–1974" },
+      { rank:9,  name:"Jack Chesbro",     value:"128 W",   years:"1903–1909" },
+      { rank:10, name:"CC Sabathia",      value:"157 W",   years:"2009–2019" },
     ]},
     { title: "Yankees World Series Championships", items: [
       { rank:1,  name:"1923", value:"vs Giants",       years:"First championship" },
       { rank:2,  name:"1927", value:"vs Pirates",      years:"Murderers' Row" },
       { rank:3,  name:"1928", value:"vs Cardinals",    years:"Back-to-back" },
       { rank:4,  name:"1932", value:"vs Cubs",         years:"Babe's called shot" },
-      { rank:5,  name:"1936–39", value:"4 straight",   years:"DiMaggio era" },
-      { rank:6,  name:"1949–53", value:"5 straight",   years:"Greatest dynasty" },
+      { rank:5,  name:"1936–39", value:"4 straight",   years:"DiMaggio era begins" },
+      { rank:6,  name:"1949–53", value:"5 straight",   years:"Greatest dynasty ever" },
       { rank:7,  name:"1977–78", value:"Back-to-back", years:"Reggie Jackson era" },
       { rank:8,  name:"1996", value:"vs Braves",       years:"Jeter's first ring" },
-      { rank:9,  name:"1998–2000", value:"3 straight", years:"Dynasty repeat" },
+      { rank:9,  name:"1998–2000", value:"3 straight", years:"Dynasty peak" },
       { rank:10, name:"2009", value:"vs Phillies",     years:"27th championship" },
     ]},
   ],
   "Mets": [
-    { title: "Greatest Mets Seasons", items: [
-      { rank:1, name:"1969",  value:"World Champions",    years:"Miracle Mets" },
-      { rank:2, name:"1986",  value:"World Champions",    years:"108 wins, Gooden, Strawberry" },
-      { rank:3, name:"2015",  value:"NL Champions",       years:"Harvey, deGrom, Syndergaard" },
-      { rank:4, name:"1988",  value:"100 wins",           years:"Cone, Gooden dominate" },
-      { rank:5, name:"1973",  value:"NL Champions",       years:"Ya Gotta Believe!" },
-      { rank:6, name:"2000",  value:"NL Champions",       years:"Subway Series" },
-      { rank:7, name:"1999",  value:"NLCS",               years:"Piazza era begins" },
-      { rank:8, name:"1985",  value:"98 wins",            years:"One game from division" },
-      { rank:9, name:"2022",  value:"101 wins",           years:"deGrom/Scherzer" },
-      { rank:10,name:"1990",  value:"91 wins",            years:"Last great Straw season" },
-    ]},
     { title: "All-Time Mets HR Leaders", items: [
       { rank:1,  name:"Pete Alonso",       value:"240+ HR", years:"2019–present" },
       { rank:2,  name:"Darryl Strawberry", value:"252 HR",  years:"1983–1990" },
       { rank:3,  name:"Mike Piazza",       value:"220 HR",  years:"1998–2005" },
       { rank:4,  name:"Howard Johnson",    value:"192 HR",  years:"1985–1993" },
-      { rank:5,  name:"Todd Hundley",      value:"124 HR",  years:"1990–1998" },
-      { rank:6,  name:"Dave Kingman",      value:"154 HR",  years:"1975–77, 1981–83" },
+      { rank:5,  name:"Dave Kingman",      value:"154 HR",  years:"1975–77, 1981–83" },
+      { rank:6,  name:"Todd Hundley",      value:"124 HR",  years:"1990–1998" },
       { rank:7,  name:"Carlos Delgado",    value:"104 HR",  years:"2006–2009" },
       { rank:8,  name:"Lucas Duda",        value:"100 HR",  years:"2010–2017" },
       { rank:9,  name:"Cleon Jones",       value:"93 HR",   years:"1963–1975" },
       { rank:10, name:"John Olerud",       value:"63 HR",   years:"1997–1999" },
     ]},
+    { title: "All-Time Mets RBI Leaders", items: [
+      { rank:1,  name:"Darryl Strawberry", value:"733 RBI", years:"1983–1990" },
+      { rank:2,  name:"Howard Johnson",    value:"629 RBI", years:"1985–1993" },
+      { rank:3,  name:"Mike Piazza",       value:"655 RBI", years:"1998–2005" },
+      { rank:4,  name:"Pete Alonso",       value:"600+ RBI",years:"2019–present" },
+      { rank:5,  name:"Ed Kranepool",      value:"614 RBI", years:"1962–1979" },
+      { rank:6,  name:"Cleon Jones",       value:"521 RBI", years:"1963–1975" },
+      { rank:7,  name:"Carlos Beltran",    value:"559 RBI", years:"2005–2011" },
+      { rank:8,  name:"Dave Magadan",      value:"290 RBI", years:"1986–1992" },
+      { rank:9,  name:"Carlos Delgado",    value:"339 RBI", years:"2006–2009" },
+      { rank:10, name:"Mike Jacobs",       value:"180 RBI", years:"2004–2007" },
+    ]},
+    { title: "All-Time Mets Hits Leaders", items: [
+      { rank:1,  name:"Ed Kranepool",      value:"1,418 H", years:"1962–1979" },
+      { rank:2,  name:"Cleon Jones",       value:"1,188 H", years:"1963–1975" },
+      { rank:3,  name:"Darryl Strawberry", value:"1,025 H", years:"1983–1990" },
+      { rank:4,  name:"Howard Johnson",    value:"997 H",   years:"1985–1993" },
+      { rank:5,  name:"David Wright",      value:"1,777 H", years:"2004–2018" },
+      { rank:6,  name:"Mike Piazza",       value:"1,028 H", years:"1998–2005" },
+      { rank:7,  name:"Carlos Beltran",    value:"935 H",   years:"2005–2011" },
+      { rank:8,  name:"Jose Reyes",        value:"1,210 H", years:"2003–2016" },
+      { rank:9,  name:"Mookie Wilson",     value:"1,112 H", years:"1980–1989" },
+      { rank:10, name:"Rusty Staub",       value:"792 H",   years:"1972–85" },
+    ]},
+    { title: "All-Time Mets Strikeout Leaders (Pitchers)", items: [
+      { rank:1,  name:"Tom Seaver",        value:"2,541 K", years:"1967–1983" },
+      { rank:2,  name:"Dwight Gooden",     value:"1,875 K", years:"1984–1994" },
+      { rank:3,  name:"Jerry Koosman",     value:"1,799 K", years:"1967–1978" },
+      { rank:4,  name:"Jacob deGrom",      value:"1,228 K", years:"2014–2022" },
+      { rank:5,  name:"Sid Fernandez",     value:"1,449 K", years:"1983–1993" },
+      { rank:6,  name:"Ron Darling",       value:"1,172 K", years:"1983–1991" },
+      { rank:7,  name:"Noah Syndergaard",  value:"855 K",   years:"2015–2021" },
+      { rank:8,  name:"David Cone",        value:"1,172 K", years:"1987–1992, 2003" },
+      { rank:9,  name:"Bobby Jones",       value:"669 K",   years:"1993–2000" },
+      { rank:10, name:"Tug McGraw",        value:"618 K",   years:"1965–1974" },
+    ]},
+    { title: "Greatest Mets Seasons", items: [
+      { rank:1,  name:"1969", value:"World Champions",    years:"Miracle Mets" },
+      { rank:2,  name:"1986", value:"World Champions",    years:"108 wins, Gooden, Strawberry" },
+      { rank:3,  name:"2015", value:"NL Champions",       years:"Harvey, deGrom, Syndergaard" },
+      { rank:4,  name:"1988", value:"100 wins",           years:"Cone, Gooden dominate" },
+      { rank:5,  name:"1973", value:"NL Champions",       years:"Ya Gotta Believe!" },
+      { rank:6,  name:"2000", value:"NL Champions",       years:"Subway Series" },
+      { rank:7,  name:"2022", value:"101 wins",           years:"deGrom/Scherzer" },
+      { rank:8,  name:"1985", value:"98 wins",            years:"One game from division" },
+      { rank:9,  name:"1999", value:"NLCS",               years:"Piazza era" },
+      { rank:10, name:"1990", value:"91 wins",            years:"Last great Straw season" },
+    ]},
   ],
   "Knicks": [
-    { title: "All-Time Knicks Scoring Leaders", items: [
+    { title: "All-Time Knicks Points Leaders", items: [
       { rank:1,  name:"Patrick Ewing",     value:"23,665 pts", years:"1985–2000" },
-      { rank:2,  name:"Willis Reed",       value:"12,183 pts", years:"1964–1974" },
-      { rank:3,  name:"Walt Frazier",      value:"14,617 pts", years:"1967–1977" },
-      { rank:4,  name:"Carmelo Anthony",   value:"8,752 pts",  years:"2011–2017" },
-      { rank:5,  name:"Earl Monroe",       value:"8,710 pts",  years:"1971–1980" },
-      { rank:6,  name:"Allan Houston",     value:"9,253 pts",  years:"1996–2005" },
-      { rank:7,  name:"Bernard King",      value:"8,145 pts",  years:"1982–1987" },
-      { rank:8,  name:"Dick Barnett",      value:"8,378 pts",  years:"1965–1974" },
+      { rank:2,  name:"Walt Frazier",      value:"14,617 pts", years:"1967–1977" },
+      { rank:3,  name:"Willis Reed",       value:"12,183 pts", years:"1964–1974" },
+      { rank:4,  name:"Allan Houston",     value:"9,253 pts",  years:"1996–2005" },
+      { rank:5,  name:"Carmelo Anthony",   value:"8,752 pts",  years:"2011–2017" },
+      { rank:6,  name:"Earl Monroe",       value:"8,710 pts",  years:"1971–1980" },
+      { rank:7,  name:"Dick Barnett",      value:"8,378 pts",  years:"1965–1974" },
+      { rank:8,  name:"Bernard King",      value:"8,145 pts",  years:"1982–1987" },
       { rank:9,  name:"Charles Oakley",    value:"6,871 pts",  years:"1988–1998" },
       { rank:10, name:"Jalen Brunson",     value:"Active",     years:"2022–present" },
     ]},
+    { title: "All-Time Knicks Rebounds Leaders", items: [
+      { rank:1,  name:"Willis Reed",       value:"8,414 reb",  years:"1964–1974" },
+      { rank:2,  name:"Patrick Ewing",     value:"10,759 reb", years:"1985–2000" },
+      { rank:3,  name:"Walt Bellamy",      value:"7,029 reb",  years:"1965–1968" },
+      { rank:4,  name:"Dave DeBusschere",  value:"4,563 reb",  years:"1968–1974" },
+      { rank:5,  name:"Charles Oakley",    value:"7,169 reb",  years:"1988–1998" },
+      { rank:6,  name:"Larry Johnson",     value:"3,148 reb",  years:"1996–2001" },
+      { rank:7,  name:"Marcus Camby",      value:"1,996 reb",  years:"2002–2005" },
+      { rank:8,  name:"Carmelo Anthony",   value:"2,861 reb",  years:"2011–2017" },
+      { rank:9,  name:"Bob McAdoo",        value:"1,700 reb",  years:"1976–1979" },
+      { rank:10, name:"Julius Randle",     value:"2,726 reb",  years:"2019–2024" },
+    ]},
+    { title: "All-Time Knicks Assists Leaders", items: [
+      { rank:1,  name:"Walt Frazier",      value:"4,791 ast",  years:"1967–1977" },
+      { rank:2,  name:"Mark Jackson",      value:"4,345 ast",  years:"1987–1992, 1999–2001" },
+      { rank:3,  name:"Derek Harper",      value:"1,521 ast",  years:"1994–1996" },
+      { rank:4,  name:"Charlie Ward",      value:"1,919 ast",  years:"1994–2004" },
+      { rank:5,  name:"Patrick Ewing",     value:"2,215 ast",  years:"1985–2000" },
+      { rank:6,  name:"Jalen Brunson",     value:"Active",     years:"2022–present" },
+      { rank:7,  name:"Richie Guerin",     value:"3,049 ast",  years:"1956–1963" },
+      { rank:8,  name:"Howard Porter",     value:"812 ast",    years:"1974–1977" },
+      { rank:9,  name:"Earl Monroe",       value:"2,345 ast",  years:"1971–1980" },
+      { rank:10, name:"Allan Houston",     value:"1,782 ast",  years:"1996–2005" },
+    ]},
     { title: "Knicks Championship Seasons", items: [
-      { rank:1, name:"1970 Champions", value:"vs Lakers",   years:"Willis Reed's heroic return" },
-      { rank:2, name:"1973 Champions", value:"vs Lakers",   years:"Frazier, DeBusschere, Bradley" },
-      { rank:3, name:"1994 Finals",    value:"Lost to Rockets", years:"Ewing's closest call" },
-      { rank:4, name:"1999 Finals",    value:"Lost to Spurs",   years:"8-seed made the Finals" },
-      { rank:5, name:"1971–72",        value:"48 wins",         years:"Back-to-back dynasty" },
-      { rank:6, name:"2024–25",        value:"Best in decades", years:"Thibodeau era peaks" },
-      { rank:7, name:"1968–69",        value:"Division title",  years:"Pre-championship rise" },
-      { rank:8, name:"2012–13",        value:"54 wins",         years:"Melo's best season" },
-      { rank:9, name:"1988–89",        value:"52 wins",         years:"Ewing prime begins" },
-      { rank:10,name:"1995–96",        value:"47 wins",         years:"Riley's last season" },
+      { rank:1, name:"1970 Champions", value:"vs Lakers",      years:"Willis Reed's heroic return" },
+      { rank:2, name:"1973 Champions", value:"vs Lakers",      years:"Frazier, Monroe, DeBusschere, Bradley" },
+      { rank:3, name:"1994 Finals",    value:"Lost to Rockets",years:"Ewing's closest call" },
+      { rank:4, name:"1999 Finals",    value:"Lost to Spurs",  years:"8-seed greatest underdog run" },
+      { rank:5, name:"2012–13",        value:"54 wins",        years:"Melo's best — Atlantic champs" },
+      { rank:6, name:"1988–89",        value:"52 wins",        years:"Ewing prime begins" },
+      { rank:7, name:"1968–69",        value:"Division title", years:"Pre-championship rise" },
+      { rank:8, name:"1971–72",        value:"48 wins",        years:"Back-to-back dynasty" },
+      { rank:9, name:"1995–96",        value:"47 wins",        years:"Riley's last Knicks season" },
+      { rank:10,name:"2024–25",        value:"Deep playoff run",years:"Brunson era peaks" },
+    ]},
+  ],
+  "Nets": [
+    { title: "All-Time Nets Points Leaders", items: [
+      { rank:1,  name:"Buck Williams",     value:"10,440 pts", years:"1981–1989" },
+      { rank:2,  name:"Vince Carter",      value:"9,621 pts",  years:"2004–2009" },
+      { rank:3,  name:"Kerry Kittles",     value:"7,436 pts",  years:"1996–2004" },
+      { rank:4,  name:"Jason Kidd",        value:"7,833 pts",  years:"2001–2008" },
+      { rank:5,  name:"Richard Jefferson", value:"6,985 pts",  years:"2001–2006" },
+      { rank:6,  name:"Derrick Coleman",   value:"6,843 pts",  years:"1990–1995" },
+      { rank:7,  name:"Kevin Durant",      value:"4,474 pts",  years:"2020–2023" },
+      { rank:8,  name:"Brook Lopez",       value:"10,444 pts", years:"2008–2017" },
+      { rank:9,  name:"James Edwards",     value:"5,765 pts",  years:"1984–1988" },
+      { rank:10, name:"Kyrie Irving",      value:"3,041 pts",  years:"2021–2023" },
+    ]},
+    { title: "Greatest Nets Seasons", items: [
+      { rank:1,  name:"2001–02", value:"NBA Finals",    years:"Kidd era — lost to Lakers" },
+      { rank:2,  name:"2002–03", value:"NBA Finals",    years:"Back-to-back Finals — lost to Spurs" },
+      { rank:3,  name:"2006–07", value:"52 wins",       years:"Carter/Jefferson/Kidd" },
+      { rank:4,  name:"1992–93", value:"43 wins",       years:"Coleman, Anderson era" },
+      { rank:5,  name:"2020–21", value:"48-24",         years:"KD returns, Brooklyn's Big 3" },
+      { rank:6,  name:"1983–84", value:"45 wins",       years:"Buck Williams dominant" },
+      { rank:7,  name:"1993–94", value:"45 wins",       years:"Kenny Anderson leads" },
+      { rank:8,  name:"1973–74", value:"55 wins ABA",   years:"ABA Finals — Doctor J era" },
+      { rank:9,  name:"1975–76", value:"ABA Champions", years:"Julius Erving's only title" },
+      { rank:10, name:"2021–22", value:"44-38",         years:"KD/Kyrie era" },
     ]},
   ],
   "Islanders": [
     { title: "4 Consecutive Stanley Cup Championships", items: [
-      { rank:1,  name:"1980 Stanley Cup", value:"vs Flyers",      years:"First Cup — end of Flyers dynasty" },
-      { rank:2,  name:"1981 Stanley Cup", value:"vs North Stars", years:"Back-to-back, Butch Goring MVP" },
-      { rank:3,  name:"1982 Stanley Cup", value:"vs Canucks",     years:"Three straight, Potvin lifts Cup" },
-      { rank:4,  name:"1983 Stanley Cup", value:"vs Oilers",      years:"Four straight — swept Gretzky's Oilers" },
-      { rank:5,  name:"1984 Finals",      value:"Lost to Oilers", years:"Bid for 5 straight — Gretzky ends dynasty" },
-      { rank:6,  name:"1975 Champions",   value:"vs Flyers",      years:"First championship run begins" },
-      { rank:7,  name:"19 Consecutive Playoff Series Wins", value:"1980–84", years:"Most dominant playoff run in NHL history" },
-      { rank:8,  name:"Billy Smith Vezina", value:"1982",         years:"Battlin' Billy — warrior in net" },
-      { rank:9,  name:"Bossy 50 in 50",   value:"1981",           years:"Matched Rocket Richard's legendary mark" },
-      { rank:10, name:"2002 Playoffs",    value:"Upset Devils",   years:"Parise OT goal — Nassau goes crazy" },
+      { rank:1,  name:"1980 Stanley Cup", value:"vs Flyers",      years:"First Cup — Nystrom OT winner" },
+      { rank:2,  name:"1981 Stanley Cup", value:"vs North Stars", years:"Back-to-back — Butch Goring MVP" },
+      { rank:3,  name:"1982 Stanley Cup", value:"vs Canucks",     years:"Three straight — Potvin lifts Cup" },
+      { rank:4,  name:"1983 Stanley Cup", value:"vs Oilers",      years:"Four straight — swept Gretzky" },
+      { rank:5,  name:"1984 Finals",      value:"Lost to Oilers", years:"Bid for 5 straight ended" },
+      { rank:6,  name:"19 Playoff Series Wins", value:"1980–84",  years:"Most dominant run in NHL history" },
+      { rank:7,  name:"Billy Smith Vezina", value:"1982",         years:"Battlin' Billy — warrior in net" },
+      { rank:8,  name:"Bossy 50 in 50",   value:"1981",           years:"Matched Rocket Richard" },
+      { rank:9,  name:"Trottier Hart Trophy", value:"1979",       years:"MVP year before first Cup" },
+      { rank:10, name:"2002 Playoffs",    value:"Upset Devils",   years:"Nassau Coliseum goes crazy" },
     ]},
     { title: "All-Time Islanders Points Leaders", items: [
-      { rank:1,  name:"Bryan Trottier",   value:"1,353 pts", years:"1975–1990 · 4x Cup champion" },
-      { rank:2,  name:"Mike Bossy",       value:"1,126 pts", years:"1977–1987 · 9 straight 50-goal seasons" },
-      { rank:3,  name:"Denis Potvin",     value:"1,052 pts", years:"1973–1988 · 3x Norris Trophy" },
-      { rank:4,  name:"Clark Gillies",    value:"872 pts",   years:"1974–1986 · Enforcer of the dynasty" },
-      { rank:5,  name:"Bob Nystrom",      value:"672 pts",   years:"1972–1986 · OT Cup winner 1980" },
-      { rank:6,  name:"Brent Sutter",     value:"822 pts",   years:"1980–1991 · Heart of the dynasty" },
-      { rank:7,  name:"Pat LaFontaine",   value:"560 pts",   years:"1983–1991 · Fog Game hero" },
-      { rank:8,  name:"Billy Smith",      value:"Goalie",    years:"1972–1989 · Conn Smythe 1983" },
-      { rank:9,  name:"John Tonelli",     value:"627 pts",   years:"1978–1986 · Underrated dynasty glue" },
-      { rank:10, name:"Mathew Barzal",    value:"Active",    years:"2017–present · Modern era star" },
-    ]},
-    { title: "Top 10 Islanders Moments", items: [
-      { rank:1,  name:"Bob Nystrom OT Winner", value:"1980",   years:"Cup win vs Flyers — franchise forever changed" },
-      { rank:2,  name:"Bossy's 50 in 50",      value:"1981",   years:"Matched Rocket Richard on final night" },
-      { rank:3,  name:"4th Straight Cup",       value:"1983",   years:"Swept Gretzky's Oilers — peak of dynasty" },
-      { rank:4,  name:"The Fog Game",           value:"1987",   years:"LaFontaine OT winner in the fog vs Capitals" },
-      { rank:5,  name:"19 Straight Playoff Series", value:"1980–84", years:"Most dominant playoff run in NHL history" },
-      { rank:6,  name:"Denis Potvin — HOF",    value:"1991",   years:"Greatest defensive career in team history" },
-      { rank:7,  name:"Parise OT — 2002",      value:"2002",   years:"10th man, 5 seconds left — Nassau explodes" },
-      { rank:8,  name:"Trottier 50-Goal Season", value:"1978", years:"Center of the greatest dynasty" },
-      { rank:9,  name:"Fisherman Controversy", value:"1995",   years:"New logo causes fan revolt — classic NY" },
-      { rank:10, name:"John Tavares Era",       value:"2009–18", years:"Franchise hope reborn — before the heartbreak" },
+      { rank:1,  name:"Bryan Trottier",   value:"1,353 pts", years:"1975–1990" },
+      { rank:2,  name:"Mike Bossy",       value:"1,126 pts", years:"1977–1987" },
+      { rank:3,  name:"Denis Potvin",     value:"1,052 pts", years:"1973–1988" },
+      { rank:4,  name:"Clark Gillies",    value:"872 pts",   years:"1974–1986" },
+      { rank:5,  name:"John Tonelli",     value:"853 pts",   years:"1978–1986" },
+      { rank:6,  name:"Brent Sutter",     value:"829 pts",   years:"1980–1991" },
+      { rank:7,  name:"Bob Nystrom",      value:"672 pts",   years:"1972–1986" },
+      { rank:8,  name:"John Tavares",     value:"621 pts",   years:"2009–2018" },
+      { rank:9,  name:"Pat Flatley",      value:"560 pts",   years:"1983–1996" },
+      { rank:10, name:"Mathew Barzal",    value:"Active",    years:"2016–present" },
     ]},
   ],
   "Rangers": [
@@ -1335,50 +1582,100 @@ const HISTORY_LISTS = {
       { rank:2,  name:"Brian Leetch",     value:"1,028 pts", years:"1987–2004" },
       { rank:3,  name:"Jean Ratelle",     value:"817 pts",   years:"1960–1975" },
       { rank:4,  name:"Andy Bathgate",    value:"729 pts",   years:"1952–1964" },
-      { rank:5,  name:"Mark Messier",     value:"851 pts",   years:"1991–1997, 2000–04" },
-      { rank:6,  name:"Ron Duguay",       value:"432 pts",   years:"1977–1983" },
-      { rank:7,  name:"Adam Graves",      value:"614 pts",   years:"1991–2001" },
-      { rank:8,  name:"Vic Hadfield",     value:"571 pts",   years:"1961–1974" },
-      { rank:9,  name:"Mike Gartner",     value:"469 pts",   years:"1990–1994" },
-      { rank:10, name:"Henrik Lundqvist", value:"459 GS",    years:"2005–2021" },
+      { rank:5,  name:"Mark Messier",     value:"851 pts",   years:"1991–2004" },
+      { rank:6,  name:"Vic Hadfield",     value:"641 pts",   years:"1961–1974" },
+      { rank:7,  name:"Adam Graves",      value:"682 pts",   years:"1991–2001" },
+      { rank:8,  name:"Walt Tkaczuk",     value:"678 pts",   years:"1967–1981" },
+      { rank:9,  name:"Phil Esposito",    value:"555 pts",   years:"1975–1981" },
+      { rank:10, name:"Artemi Panarin",   value:"Active",    years:"2019–present" },
     ]},
     { title: "Rangers Stanley Cup Championships", items: [
-      { rank:1, name:"1928", value:"vs Maroons",    years:"First Cup — Lester Patrick era" },
-      { rank:2, name:"1933", value:"vs Leafs",      years:"Bill Cook's heroics" },
-      { rank:3, name:"1940", value:"vs Leafs",      years:"Last Cup for 54 years" },
-      { rank:4, name:"1994", value:"vs Canucks",    years:"Messier's guarantee, curse broken" },
-      { rank:5, name:"1928–33", value:"Dynasty",    years:"Two Cups in six years" },
-      { rank:6, name:"1979 Finals", value:"Lost to Canadiens", years:"Heartbreak on ice" },
-      { rank:7, name:"2014 Finals", value:"Lost to Kings",     years:"Henrik era peaks" },
-      { rank:8, name:"1972 Finals", value:"Lost to Bruins",    years:"GAG Line era" },
-      { rank:9, name:"1950 Finals", value:"Lost to Wings",     years:"So close in OT" },
-      { rank:10,name:"2022 Conference Finals", value:"Lost to Lightning", years:"New core rises" },
+      { rank:1,  name:"1928", value:"vs Maroons",    years:"First Stanley Cup" },
+      { rank:2,  name:"1933", value:"vs Maple Leafs",years:"Second championship" },
+      { rank:3,  name:"1940", value:"vs Maple Leafs",years:"Third — 54-year drought begins" },
+      { rank:4,  name:"1994", value:"vs Canucks",    years:"54-year curse broken — Messier" },
+      { rank:5,  name:"1994 Conf Finals", value:"vs Devils", years:"Messier's guarantee game" },
+      { rank:6,  name:"1979 Finals", value:"Lost to Canadiens", years:"GAG Line era peak" },
+      { rank:7,  name:"2014 Finals", value:"Lost to Kings", years:"Henrik Lundqvist era" },
+      { rank:8,  name:"2022 Conf Finals", value:"Lost to Lightning", years:"New core rising" },
+      { rank:9,  name:"1972 Finals", value:"Lost to Bruins", years:"GAG Line — Ratelle, Gilbert, Hadfield" },
+      { rank:10, name:"2024 Conf Finals", value:"Lost to Panthers", years:"Panarin/Fox era" },
+    ]},
+  ],
+  "Devils": [
+    { title: "NJ Devils Stanley Cup Championships", items: [
+      { rank:1,  name:"1995 Stanley Cup", value:"vs Red Wings",  years:"Swept Detroit — Brodeur masterful" },
+      { rank:2,  name:"2000 Stanley Cup", value:"vs Stars",      years:"Scott Stevens era — Devils dynasty" },
+      { rank:3,  name:"2003 Stanley Cup", value:"vs Mighty Ducks",years:"Third Cup in 9 years" },
+      { rank:4,  name:"1994 Conference Finals", value:"Lost to Rangers", years:"Messier's guarantee crushed Devils" },
+      { rank:5,  name:"2001 Finals", value:"Lost to Avalanche", years:"7-game classic — Colorado wins" },
+      { rank:6,  name:"Martin Brodeur — NHL Records", value:"All-Time", years:"Most wins, shutouts in NHL history" },
+      { rank:7,  name:"Scott Stevens — Hits", value:"Enforcer", years:"Most feared hitter in Devils history" },
+      { rank:8,  name:"Pat Burns — Coach", value:"2002–03", years:"Coached Devils to 3rd Cup" },
+      { rank:9,  name:"Elias — Points Leader", value:"1,025 pts", years:"All-time Devils points leader" },
+      { rank:10, name:"NJ Devils Founding", value:"1982", years:"Moved from Colorado — became NJ's team" },
+    ]},
+    { title: "All-Time Devils Points Leaders", items: [
+      { rank:1,  name:"Patrik Elias",     value:"1,025 pts", years:"1994–2016" },
+      { rank:2,  name:"Brian Gionta",     value:"587 pts",   years:"2001–2009" },
+      { rank:3,  name:"Scott Gomez",      value:"408 pts",   years:"2000–2006" },
+      { rank:4,  name:"Ken Daneyko",      value:"520 pts",   years:"1983–2003" },
+      { rank:5,  name:"Bobby Holik",      value:"480 pts",   years:"1992–2003" },
+      { rank:6,  name:"Brian Rolston",    value:"367 pts",   years:"2002–2006" },
+      { rank:7,  name:"Dave Andreychuk",  value:"345 pts",   years:"2000–2006" },
+      { rank:8,  name:"Martin Brodeur",   value:"231 pts",   years:"1991–2014 (goalie)" },
+      { rank:9,  name:"Petr Sykora",      value:"375 pts",   years:"1995–2002" },
+      { rank:10, name:"Zach Parise",      value:"504 pts",   years:"2005–2012" },
     ]},
   ],
   "Jets & Giants": [
+    { title: "All-Time Jets Passing Leaders", items: [
+      { rank:1,  name:"Joe Namath",       value:"27,057 yds", years:"1965–1976" },
+      { rank:2,  name:"Ken O'Brien",      value:"24,386 yds", years:"1983–1992" },
+      { rank:3,  name:"Chad Pennington",  value:"17,823 yds", years:"2000–2007" },
+      { rank:4,  name:"Richard Todd",     value:"13,403 yds", years:"1976–1983" },
+      { rank:5,  name:"Vinny Testaverde", value:"9,852 yds",  years:"1998–2003" },
+      { rank:6,  name:"Mark Sanchez",     value:"8,682 yds",  years:"2009–2012" },
+      { rank:7,  name:"Brett Favre",      value:"3,472 yds",  years:"2008" },
+      { rank:8,  name:"Neil O'Donnell",   value:"5,397 yds",  years:"1996–1997" },
+      { rank:9,  name:"Ryan Fitzpatrick", value:"8,106 yds",  years:"2015–2016" },
+      { rank:10, name:"Aaron Rodgers",    value:"Active",     years:"2023–present" },
+    ]},
+    { title: "All-Time Giants Passing Leaders", items: [
+      { rank:1,  name:"Eli Manning",      value:"57,023 yds", years:"2004–2019" },
+      { rank:2,  name:"Phil Simms",       value:"33,462 yds", years:"1979–1993" },
+      { rank:3,  name:"Charlie Conerly",  value:"13,439 yds", years:"1948–1961" },
+      { rank:4,  name:"Dave Brown",       value:"9,449 yds",  years:"1992–1997" },
+      { rank:5,  name:"Y.A. Tittle",      value:"10,439 yds", years:"1961–1964" },
+      { rank:6,  name:"Kerry Collins",    value:"10,220 yds", years:"1999–2003" },
+      { rank:7,  name:"Fran Tarkenton",   value:"3,832 yds",  years:"1967–1971" },
+      { rank:8,  name:"Daniel Jones",     value:"14,004 yds", years:"2019–2023" },
+      { rank:9,  name:"Scott Brunner",    value:"3,706 yds",  years:"1980–1984" },
+      { rank:10, name:"Tommy Kramer",     value:"2,060 yds",  years:"1985" },
+    ]},
     { title: "Top 10 Jets Moments", items: [
       { rank:1,  name:"Super Bowl III Win",        value:"1969",  years:"Namath's guarantee, 16–7 vs Colts" },
-      { rank:2,  name:"The Guarantee",             value:"Jan 1969", years:"Namath: 'I guarantee it'" },
-      { rank:3,  name:"Mud Bowl",                  value:"1982",  years:"Freeman McNeil, 44–17 vs Raiders" },
-      { rank:4,  name:"Gastineau's 22 Sacks",      value:"1984",  years:"Single season sack record" },
-      { rank:5,  name:"2010 AFC Championship",     value:"2010",  years:"Sanchez leads Jets to title game" },
+      { rank:2,  name:"Gastineau's 22 Sacks",      value:"1984",  years:"NFL single-season sack record" },
+      { rank:3,  name:"2009 AFC Championship",     value:"2009",  years:"Rex Ryan — 45-17 blowout of Chargers" },
+      { rank:4,  name:"Revis Island Era",          value:"2009",  years:"Best CB in football" },
+      { rank:5,  name:"Mud Bowl",                  value:"1982",  years:"Freeman McNeil, 44–17 vs Raiders" },
       { rank:6,  name:"Don Maynard 1,000 Yards",   value:"1965",  years:"First AFL receiver to do it" },
-      { rank:7,  name:"Dennis Byrd Comeback",       value:"1993",  years:"Walked onto field — moving moment" },
-      { rank:8,  name:"Keyshawn's Super Bowl",      value:"1996",  years:"#1 pick transforms offense" },
-      { rank:9,  name:"Darrelle Revis Island",      value:"2009",  years:"Best CB in football era" },
-      { rank:10, name:"Gang Green Defense",         value:"1998",  years:"7 sacks vs Cowboys on MNF" },
+      { rank:7,  name:"Dennis Byrd Comeback",      value:"1993",  years:"Walked onto field — moving moment" },
+      { rank:8,  name:"Keyshawn's Super Bowl",     value:"1996",  years:"#1 pick transforms offense" },
+      { rank:9,  name:"2010 AFC Championship",     value:"2010",  years:"Sanchez leads back-to-back title run" },
+      { rank:10, name:"Aaron Rodgers Returns",     value:"2024",  years:"Standing ovation at MetLife" },
     ]},
     { title: "Top 10 Giants Moments", items: [
       { rank:1,  name:"Super Bowl XXI Win",        value:"1987",  years:"LT, Simms, 39–20 vs Broncos" },
       { rank:2,  name:"Super Bowl XXV Win",        value:"1991",  years:"Ottis Anderson MVP, beat Bills" },
-      { rank:3,  name:"Super Bowl XLII Win",       value:"2008",  years:"Manning to Tyree — greatest catch" },
-      { rank:4,  name:"Super Bowl XLVI Win",       value:"2012",  years:"Repeat vs Patriots" },
-      { rank:5,  name:"The Helmet Catch",          value:"Feb 2008", years:"David Tyree, 4th and 1" },
-      { rank:6,  name:"LT's 1986 Season",          value:"1986",  years:"22 sacks, Defensive POY" },
-      { rank:7,  name:"1958 Championship",         value:"1958",  years:"Greatest game ever played vs Colts" },
-      { rank:8,  name:"Bavaro's '86 Season",       value:"1986",  years:"Dragged Cowboys for 30 yards" },
-      { rank:9,  name:"Phil Simms SB MVP",         value:"1987",  years:"22/25 completions, 88% accuracy" },
-      { rank:10, name:"OBJ's One-Handed Catch",    value:"2014",  years:"vs Cowboys — most viral catch ever" },
+      { rank:3,  name:"Super Bowl XLII Win",       value:"2008",  years:"Manning to Tyree — greatest catch ever" },
+      { rank:4,  name:"Super Bowl XLVI Win",       value:"2012",  years:"Bradshaw's accidental TD wins it" },
+      { rank:5,  name:"The Helmet Catch",          value:"2008",  years:"David Tyree, 4th and 1" },
+      { rank:6,  name:"LT's 1986 Season",          value:"1986",  years:"22 sacks, NFL MVP, Defensive POY" },
+      { rank:7,  name:"LT Sacks Theismann",        value:"1985",  years:"Nov 18 — broke his leg on MNF" },
+      { rank:8,  name:"OBJ's One-Handed Catch",    value:"2014",  years:"vs Cowboys — most viral catch ever" },
+      { rank:9,  name:"1958 Championship",         value:"1958",  years:"Greatest game ever played vs Colts" },
+      { rank:10, name:"Bavaro Drags Cowboys",      value:"1986",  years:"30 yards on his back — toughness defined" },
     ]},
   ],
   "Greatest NY Moments": [
@@ -1430,43 +1727,54 @@ const HISTORY_LISTS = {
       { rank:45, name:"Gastineau 22 Sacks",            value:"Jets",      years:"1984 NFL record — so dominant they changed the rules" },
       { rank:46, name:"NY Liberty Win 2025 NWSL Title", value:"Liberty", years:"WNBA champions! Defending their 2023 crown" },
       { rank:47, name:"Islanders Sweep Oilers 1983",   value:"Islanders", years:"Swept Gretzky's powerhouse — their 4th consecutive Cup" },
-      { rank:48, name:"Rangers-Devils 1994 Playoffs",  value:"Rangers",   years:"Seven brutal games — Messier's guarantee decides it" },
-      { rank:49, name:"Mr. November — Jeter's WS HR",  value:"Yankees",  years:"Nov 1, 2001 — walk-off into the midnight air" },
-      { rank:50, name:"NYCFC 2021 MLS Cup",            value:"NYCFC",    years:"First MLS championship for any New York area team" },
+      { rank:48, name:"Devils Win 3 Stanley Cups",      value:"Devils",    years:"1995, 2000, 2003 — NJ Devils became a true dynasty" },
+      { rank:49, name:"Mr. November — Jeter's WS HR",  value:"Yankees",   years:"Nov 1, 2001 — walk-off into the midnight air" },
+      { rank:50, name:"NYCFC 2021 MLS Cup",             value:"NYCFC",     years:"First MLS championship for any New York area team" },
     ]},
   ],
 };
 
 // ─── HISTORY TAB ──────────────────────────────────────────────────────────
 function HistoryTab() {
-  const [activeGroup, setActiveGroup] = useState("Greatest NY Moments");
-  const [activeList, setActiveList]   = useState(0);
-  const [showStadiums, setShowStadiums] = useState(false);
+  const [activeGroup, setActiveGroup]   = useState("Greatest NY Moments");
+  const [activeList, setActiveList]     = useState(0);
+  const [histView, setHistView]         = useState("lists"); // "lists" | "stadiums" | "bios"
+  const [momentFilter, setMomentFilter] = useState("ALL");
   const groups = Object.keys(HISTORY_LISTS);
   const lists  = HISTORY_LISTS[activeGroup] || [];
   const list   = lists[activeList] || lists[0];
+
+  const MOMENT_TEAMS = ["ALL","Yankees","Mets","Jets","Giants","Knicks","Rangers","Islanders","Devils","Nets","Liberty","NYCFC"];
+
+  const filteredItems = activeGroup === "Greatest NY Moments" && momentFilter !== "ALL"
+    ? (list?.items || []).filter(item => item.value === momentFilter)
+    : (list?.items || []);
 
   return (
     <div style={styles.histRoot}>
       <div style={styles.stdHeader}>
         <h2 style={styles.stdTitle}>🏆 NY SPORTS HISTORY</h2>
-        <p style={styles.stdSub}>ALL-TIME LISTS · GREATEST MOMENTS · STADIUM HISTORY</p>
+        <p style={styles.stdSub}>ALL-TIME LISTS · GREATEST MOMENTS · STADIUMS · LEGENDS</p>
       </div>
 
       {/* Mode toggle */}
-      <div style={{display:"flex", gap:8, marginBottom:16}}>
-        <button onClick={() => setShowStadiums(false)}
-          style={{...styles.filterBtn, ...(! showStadiums ? styles.filterBtnActive : {})}}>
+      <div style={{display:"flex", gap:8, marginBottom:16, flexWrap:"wrap"}}>
+        <button onClick={() => setHistView("lists")}
+          style={{...styles.filterBtn, ...(histView==="lists" ? styles.filterBtnActive : {})}}>
           🏆 ALL-TIME LISTS
         </button>
-        <button onClick={() => setShowStadiums(true)}
-          style={{...styles.filterBtn, ...(showStadiums ? styles.filterBtnActive : {})}}>
+        <button onClick={() => setHistView("stadiums")}
+          style={{...styles.filterBtn, ...(histView==="stadiums" ? styles.filterBtnActive : {})}}>
           🏟️ STADIUM HISTORY
+        </button>
+        <button onClick={() => setHistView("bios")}
+          style={{...styles.filterBtn, ...(histView==="bios" ? styles.filterBtnActive : {})}}>
+          ⭐ LEGENDS & BIOS
         </button>
       </div>
 
       {/* STADIUM VIEW */}
-      {showStadiums && (
+      {histView==="stadiums" && (
         <div style={styles.stadiumGrid}>
           {STADIUM_HISTORY.map((s, i) => (
             <div key={i} style={styles.stadiumCard}>
@@ -1488,7 +1796,7 @@ function HistoryTab() {
       )}
 
       {/* ALL-TIME LISTS VIEW */}
-      {!showStadiums && (
+      {histView==="lists" && (
         <>
           {/* Team group selector */}
           <div style={{...styles.filterGroup, flexWrap:"wrap", marginBottom:12}}>
@@ -1502,7 +1810,7 @@ function HistoryTab() {
 
       {/* List selector within group */}
       {lists.length > 1 && (
-        <div style={{...styles.filterGroup, flexWrap:"wrap", marginBottom:16}}>
+        <div style={{...styles.filterGroup, flexWrap:"wrap", marginBottom:8}}>
           {lists.map((l, i) => (
             <button key={i} onClick={() => setActiveList(i)}
               style={{...styles.filterBtn, fontSize:9, ...(activeList===i ? styles.filterBtnActive : {})}}>
@@ -1512,14 +1820,27 @@ function HistoryTab() {
         </div>
       )}
 
+      {/* Team filter for Greatest NY Moments */}
+      {activeGroup === "Greatest NY Moments" && (
+        <div style={{...styles.filterGroup, flexWrap:"wrap", marginBottom:12, paddingBottom:8, borderBottom:"1px solid #2a2a2a"}}>
+          <span style={{fontSize:9, color:"#555", letterSpacing:"0.1em", alignSelf:"center", flexShrink:0}}>FILTER BY TEAM:</span>
+          {MOMENT_TEAMS.map(t => (
+            <button key={t} onClick={() => setMomentFilter(t)}
+              style={{...styles.filterBtn, ...(momentFilter===t ? styles.filterBtnActive : {}), fontSize:9}}>
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* List display */}
       {list && (
         <div style={styles.histList}>
           <div style={styles.histListHeader}>
-            <span style={styles.histListTitle}>{list.title}</span>
+            <span style={styles.histListTitle}>{list.title}{momentFilter !== "ALL" && activeGroup === "Greatest NY Moments" ? ` — ${momentFilter}` : ""}</span>
             <SearchLinks query={`${list.title} New York sports`} />
           </div>
-          {list.items.map((item, i) => (
+          {filteredItems.map((item, i) => (
             <div key={i} style={{...styles.histRow, ...(i%2===0?{}:styles.histRowAlt), ...(i===0?styles.histRowFirst:{})}}>
               <div style={{...styles.histRank, ...(i===0?styles.histRankFirst:i===1?styles.histRankSecond:i===2?styles.histRankThird:{})}}>
                 {i===0?"🥇":i===1?"🥈":i===2?"🥉":item.rank}
@@ -1538,6 +1859,36 @@ function HistoryTab() {
         </div>
       )}
         </>
+      )}
+
+      {/* BIOS VIEW */}
+      {histView === "bios" && (
+        <div>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>The legends who defined NY sports — click any name for their full biography, books, and more.</p>
+          </div>
+          {DAILY_PLAYERS.map((p, i) => (
+            <div key={i} style={{...styles.bioRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.bioEmoji}>{p.emoji}</div>
+              <div style={styles.bioInfo}>
+                <div style={styles.bioHeader}>
+                  <span style={styles.bioName}>{p.name}</span>
+                  <span style={styles.bioTeam}>{p.team}</span>
+                  <span style={styles.bioYears}>{p.era}</span>
+                  <span style={styles.bioRole}>#{p.number} · {p.pos}</span>
+                  {p.active && <span style={{fontSize:9, color:"#4ade80", fontWeight:900}}>● ACTIVE</span>}
+                </div>
+                <p style={styles.bioBio}>{p.fact}</p>
+                <div style={styles.bioStats}>{p.stats}</div>
+                <div style={styles.bioLinks}>
+                  <a href={p.wiki} target="_blank" rel="noopener noreferrer" style={styles.histLink}>📖 Wikipedia</a>
+                  <a href={googleUrl(`${p.name} ${p.team} career stats`)} target="_blank" rel="noopener noreferrer" style={styles.histLink}>🔍 Google</a>
+                  <a href={`https://www.amazon.com/s?k=${encodeURIComponent(p.name+" biography")}&tag=nysportsdaily-20`} target="_blank" rel="noopener noreferrer" style={styles.histLink}>📚 Books</a>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -1598,7 +1949,7 @@ function StatsTab() {
     { team:"Nets",      last:null, sport:"NBA",  note:"Never won a championship" },
     { team:"Rangers",   last:1994, sport:"NHL",  note:"31 years" },
     { team:"Islanders", last:1983, sport:"NHL",  note:"42 years since dynasty ended" },
-    { team:"Devils",    last:2003, sport:"NHL",  note:"22 years" },
+    { team:"Devils",    last:2003, sport:"NHL",  note:"22 years — 3 Cups in 9 years (1995, 2000, 2003)" },
     { team:"Yankees",   last:2009, sport:"MLB",  note:"16 years" },
     { team:"Liberty",   last:2025, sport:"WNBA", note:"Defending champions! 🏆" },
     { team:"NYCFC",     last:2021, sport:"MLS",  note:"4 years" },
@@ -1606,49 +1957,136 @@ function StatsTab() {
 
   const DRAFT_DATA = {
     Yankees: [
-      { year:1965, pick:"#1", name:"Ron Blomberg", note:"First designated hitter in MLB history" },
-      { year:1991, pick:"#1", name:"Brien Taylor", note:"$1.55M bonus — blew out shoulder never played" },
-      { year:2009, pick:"#28",name:"Gary Sanchez", note:"Late round gem, 3x All-Star" },
+      { year:1965, pick:"#1",  name:"Ron Blomberg",    note:"Became the first designated hitter in MLB history on April 6, 1973" },
+      { year:1991, pick:"#1",  name:"Brien Taylor",    note:"$1.55M bonus — largest ever at the time. Blew out shoulder in bar fight. Never played an MLB game." },
+      { year:1999, pick:"#1",  name:"David Walling",   note:"Never reached majors — one of many forgettable #1s in the Steinbrenner era" },
+      { year:2005, pick:"#1",  name:"C.C. Lee",        note:"Never made impact — Yankees drafted better in later rounds" },
+      { year:2009, pick:"#28", name:"Gary Sanchez",    note:"16th round international signing — became a 3x All-Star and key part of the 2009 dynasty" },
+      { year:2010, pick:"#17", name:"Cito Culver",     note:"Highly touted shortstop — never cracked the majors" },
+      { year:2013, pick:"#32", name:"Aaron Judge",     note:"Best pick in Yankees draft history. 2017 AL ROY, 2022 MVP, 62 HR season. The next Yankee icon." },
+      { year:2016, pick:"#1",  name:"Blake Rutherford",note:"Traded to White Sox in 2017 — never became the star Yankees hoped for" },
+      { year:2017, pick:"#16", name:"Clarke Schmidt",  note:"Solid rotation piece — part of the young Yankees core" },
+      { year:2019, pick:"#10", name:"Anthony Volpe",   note:"Current starting SS — Yankees shortstop of the future who arrived ahead of schedule" },
     ],
     Mets: [
-      { year:1966, pick:"#1", name:"Les Rohr", note:"Never made impact" },
-      { year:1984, pick:"#1", name:"Shawn Abner", note:"Traded for Kevin McReynolds" },
-      { year:2019, pick:"#1", name:"Brett Baty", note:"Current Mets corner piece" },
+      { year:1966, pick:"#1",  name:"Les Rohr",        note:"First overall pick — went 3-3 in career, never fulfilled potential" },
+      { year:1973, pick:"#1",  name:"John Stearns",    note:"4x All-Star catcher — one of the Mets' better #1 picks" },
+      { year:1984, pick:"#1",  name:"Shawn Abner",     note:"Traded for Kevin McReynolds — decent trade but Abner was a bust" },
+      { year:1994, pick:"#1",  name:"Paul Wilson",     note:"Part of the 'Generation K' that was supposed to be historic — injuries derailed it" },
+      { year:1999, pick:"#1",  name:"Jason Vargas",    note:"Solid starter but not the star the Mets needed" },
+      { year:2001, pick:"#1",  name:"Aaron Heilman",   note:"Better as reliever than starter — 100+ save career in parts" },
+      { year:2004, pick:"#1",  name:"Philip Humber",   note:"Threw a perfect game for the White Sox in 2012 — Mets fans still sigh" },
+      { year:2006, pick:"#1",  name:"Mike Pelfrey",    note:"Solid starter — made Opening Day roster, wins in double digits" },
+      { year:2011, pick:"#1",  name:"Brandon Nimmo",   note:"Best Mets #1 pick in years — All-Star caliber outfielder and true fan favorite" },
+      { year:2019, pick:"#1",  name:"Brett Baty",      note:"Current Mets 3B — part of rebuild core" },
+      { year:2021, pick:"#1",  name:"Kumar Rocker",    note:"Declined to sign — re-entered draft 2022 and went to Texas" },
     ],
     Jets: [
-      { year:1965, pick:"#1", name:"Joe Namath", note:"Changed football forever — $427K contract" },
-      { year:1983, pick:"#24",name:"Ken O'Brien", note:"Solid QB but overshadowed by Marino" },
-      { year:2021, pick:"#2", name:"Zach Wilson", note:"Did not pan out" },
+      { year:1965, pick:"#1",  name:"Joe Namath",      note:"Changed football forever. $427K contract broke the sport. Super Bowl III guarantee. The greatest Jet ever." },
+      { year:1969, pick:"#1",  name:"Dave Foley",      note:"Solid offensive lineman — part of the post-Namath rebuild" },
+      { year:1976, pick:"#1",  name:"Richard Todd",    note:"Namath's successor — led Jets to 1982 AFC Championship game" },
+      { year:1983, pick:"#24", name:"Ken O'Brien",     note:"Solid QB but taken one spot before Dan Marino. The Jets' great what-if." },
+      { year:1984, pick:"#1",  name:"Russell Carter",  note:"DB who never lived up to first-round billing" },
+      { year:1995, pick:"#1",  name:"Hugh Douglas",    note:"Traded immediately — became a Pro Bowl DE for the Eagles. Jets got Kyle Brady." },
+      { year:2009, pick:"#5",  name:"Mark Sanchez",    note:"Led back-to-back AFC Championship runs. 2009-10 playoff magic defined his legacy." },
+      { year:2013, pick:"#9",  name:"Dee Milliner",    note:"CB bust — injuries derailed promising career" },
+      { year:2018, pick:"#3",  name:"Sam Darnold",     note:"Never overcame the supporting cast — traded to Carolina 2021" },
+      { year:2021, pick:"#2",  name:"Zach Wilson",     note:"BYU product who could not translate college success to the NFL. Released 2023." },
+      { year:2022, pick:"#4",  name:"Ahmad Gardner",   note:"Sauce — immediate Pro Bowler and one of the best CBs in the game" },
+      { year:2023, pick:"#13", name:"Will McDonald IV",note:"Pass rusher finding his role in the Jets defense" },
+      { year:2026, pick:"#2",  name:"Abdul Carter",    note:"Penn State LB — most electrifying Jets pick since Namath. Generational talent." },
     ],
     Giants: [
-      { year:1981, pick:"#2", name:"Lawrence Taylor", note:"Greatest defensive player ever" },
-      { year:1987, pick:"#1", name:"Reggie White",    note:"Went to Eagles — Giants' biggest miss" },
-      { year:2004, pick:"#4", name:"Eli Manning",     note:"2x Super Bowl MVP" },
+      { year:1958, pick:"#1",  name:"Lee Grosscup",    note:"QB bust — but the Giants were a dynasty without him" },
+      { year:1965, pick:"#1",  name:"Tucker Frederickson", note:"RB who had solid but injury-plagued career" },
+      { year:1979, pick:"#1",  name:"Phil Simms",       note:"Booed on draft day by Giants fans. Won Super Bowl XXI MVP with 88% completion rate. Redemption." },
+      { year:1981, pick:"#2",  name:"Lawrence Taylor",  note:"The greatest defensive player in NFL history. Period. Changed the game forever." },
+      { year:1987, pick:"#1",  name:"Reggie White",     note:"Giants passed on Reggie White — he went to Eagles. Greatest miss in franchise history." },
+      { year:1992, pick:"#1",  name:"Derek Brown",      note:"TE bust — career ended early due to injuries" },
+      { year:2000, pick:"#1",  name:"Ron Dayne",        note:"Heisman Trophy winner — never replicated college success in the NFL" },
+      { year:2004, pick:"#4",  name:"Eli Manning",      note:"Traded from San Diego for Philip Rivers. Won 2 Super Bowls. Worth every bit of it." },
+      { year:2018, pick:"#2",  name:"Saquon Barkley",   note:"Most electrifying offensive talent in Giants history in years — lost to the Eagles as FA" },
+      { year:2019, pick:"#6",  name:"Daniel Jones",     note:"Danielthrowed — showed promise but never reached franchise QB level" },
+      { year:2022, pick:"#5",  name:"Kayvon Thibodeaux",note:"Oregon DE — still developing into the pass rusher Giants hoped for" },
+      { year:2023, pick:"#25", name:"John Michael Schmitz",note:"C — offensive line cornerstone of the rebuild" },
     ],
     Knicks: [
-      { year:1985, pick:"#1", name:"Patrick Ewing",   note:"First ever lottery pick — franchise cornerstone" },
-      { year:1999, pick:"#8", name:"Frederic Weis",   note:"Famously dunked on by Vince Carter in Olympics" },
-      { year:2023, pick:"#13",name:"Jalen Brunson",   note:"FA signing not draft — but transformative" },
+      { year:1985, pick:"#1",  name:"Patrick Ewing",    note:"First NBA lottery pick ever. Led the Knicks for 15 years. Should have won at least one title." },
+      { year:1986, pick:"#5",  name:"Kenny Walker",     note:"Dunked on everyone in college — never quite replicated it in the pros" },
+      { year:1991, pick:"#1",  name:"Greg Anthony",     note:"Solid reserve PG — part of the Ewing-era Knicks" },
+      { year:1993, pick:"#3",  name:"Hubert Davis",     note:"Sharp shooter — part of the 1994 Finals run" },
+      { year:1996, pick:"#18", name:"John Wallace",     note:"Syracuse hero — limited impact with Knicks" },
+      { year:1999, pick:"#8",  name:"Frederic Weis",    note:"Never played in NBA. Infamously dunked on by Vince Carter in 2000 Olympics. 'The Dunk of Death.'" },
+      { year:2001, pick:"#1",  name:"Eddy Curry",       note:"Traded to Chicago — heart condition concerns ended promising run" },
+      { year:2006, pick:"#29", name:"Renaldo Balkman",  note:"Stolen in late first round — tough defender" },
+      { year:2009, pick:"#8",  name:"Jordan Hill",      note:"Part of Knicks lottery era struggles" },
+      { year:2011, pick:"#17", name:"Iman Shumpert",    note:"Key defensive stooge of the Melo era" },
+      { year:2015, pick:"#4",  name:"Kristaps Porzingis",note:"The Unicorn — electrifying but traded dramatically in 2019. Could have been everything." },
+      { year:2021, pick:"#19", name:"Quentin Grimes",   note:"Solid rotation piece — part of the Brunson era foundation" },
     ],
     Rangers: [
-      { year:1991, pick:"#1", name:"Eric Lindros",    note:"Refused to sign — traded to Quebec" },
-      { year:2004, pick:"#1", name:"Al Montoya",      note:"Never reached potential" },
-      { year:2017, pick:"#27",name:"Filip Chytil",    note:"Key piece of current core" },
+      { year:1965, pick:"#2",  name:"Andre Dupont",     note:"Solid defenseman — part of the GAG Line era supporting cast" },
+      { year:1976, pick:"#1",  name:"Don Murdoch",      note:"Scored 32 goals as a rookie then suspended for drug issues — tragic what-if" },
+      { year:1988, pick:"#1",  name:"Daniel Lacroix",   note:"Never made significant impact — Rangers made better picks later" },
+      { year:1991, pick:"#1",  name:"Eric Lindros",     note:"Refused to report. Rangers traded pick — Nordiques got Lindros, Rangers eventually got Messier." },
+      { year:1994, pick:"#8",  name:"Dan Cloutier",     note:"Goalie who became a solid NHLer but not in NY" },
+      { year:2000, pick:"#1",  name:"Pavel Brendl",     note:"Czech winger bust — highly touted, barely played" },
+      { year:2004, pick:"#1",  name:"Al Montoya",       note:"Backup goalie — Lundqvist made him expendable before he even arrived" },
+      { year:2004, pick:"#6",  name:"Lauri Korpikoski", note:"Traded — never made mark as a Ranger" },
+      { year:2005, pick:"#6",  name:"Marc Staal",       note:"Solid shutdown D for over a decade. Brother of Eric and Jordan Staal." },
+      { year:2009, pick:"#7",  name:"Chris Kreider",    note:"Power forward who became the Rangers' heart and soul. Best pick of the past 20 years." },
+      { year:2017, pick:"#27", name:"Filip Chytil",     note:"Czech center — key piece of the current Rangers' young core" },
+      { year:2019, pick:"#1",  name:"Kaapo Kakko",      note:"Finnish winger — struggled to find footing but shown flashes of brilliance" },
+      { year:2020, pick:"#1",  name:"Alexis Lafrenière", note:"#1 overall — Quebec-born left wing, emerging as a key piece of Rangers future" },
+      { year:2021, pick:"#1",  name:"Brennan Othmann",  note:"High-energy winger — part of loaded Rangers prospect pipeline" },
     ],
     Islanders: [
-      { year:1977, pick:"#15",name:"Mike Bossy",      note:"Greatest pure goal scorer in NHL history" },
-      { year:1988, pick:"#1", name:"Mike Turgeon",    note:"Solid but not a franchise changer" },
-      { year:2009, pick:"#1", name:"John Tavares",    note:"Franchise star who broke hearts leaving" },
+      { year:1972, pick:"#1",  name:"Billy Harris",     note:"First ever Islanders draft pick — solid contributor to the dynasty" },
+      { year:1973, pick:"#1",  name:"Denis Potvin",     note:"#1 overall. 3× Norris Trophy. Broke Bobby Orr's points record. Captained 4 consecutive Cup champions." },
+      { year:1977, pick:"#15", name:"Mike Bossy",       note:"Greatest steal in draft history? 15th overall. 9 straight 50-goal seasons. 4 Cups. Pure goal-scoring genius." },
+      { year:1980, pick:"#1",  name:"Brent Sutter",     note:"Hard-nosed center who was a key part of all 4 Cup teams" },
+      { year:1988, pick:"#1",  name:"Mike Turgeon",     note:"Solid player who put up big numbers — one of the better #1 picks post-dynasty" },
+      { year:1993, pick:"#1",  name:"Todd Bertuzzi",    note:"Traded before reaching potential — controversial career but NHL all-star caliber" },
+      { year:2000, pick:"#1",  name:"Rick DiPietro",    note:"Goalie signed to 15-year $67.5M deal — played only 301 games due to injuries. Costliest bust." },
+      { year:2001, pick:"#1",  name:"Raffi Torres",     note:"Traded in Alexei Yashin deal — one of many moves that stalled Islanders rebuilds" },
+      { year:2009, pick:"#1",  name:"John Tavares",     note:"Franchise cornerstone for 9 years. Left for Toronto in free agency in 2018. Broke Long Island hearts." },
+      { year:2015, pick:"#1",  name:"Mathew Barzal",    note:"Calder Trophy winner, 3× All-Star — the face of the current Islanders" },
+      { year:2019, pick:"#5",  name:"Simon Holmstrom",  note:"Swedish winger still developing into the player the Islanders need" },
+    ],
+    Devils: [
+      { year:1982, pick:"#1",  name:"Rocky Trottier",   note:"Brother of Bryan Trottier. Disappointingly couldn't replicate his sibling's greatness." },
+      { year:1987, pick:"#1",  name:"Brendan Shanahan", note:"Traded to St. Louis — became a Hall of Famer. One that got away." },
+      { year:1988, pick:"#1",  name:"Corey Foster",     note:"Defenseman who never made impact in NJ" },
+      { year:1991, pick:"#1",  name:"Scott Niedermayer", note:"The best Devils draft pick ever. 4× Cup winner including 3 with NJ. Hall of Famer. Pure elegance." },
+      { year:1995, pick:"#1",  name:"Petr Sykora",      note:"Czech winger who was a key part of 2000 and 2003 Cup wins" },
+      { year:2000, pick:"#1",  name:"David Hale",       note:"Defenseman who never fulfilled first-round promise" },
+      { year:2003, pick:"#3",  name:"Zach Parise",      note:"Minnesota native who became the Devils' best player. Left for Minnesota in 2012 — heartbreak." },
+      { year:2012, pick:"#9",  name:"Stefan Matteau",   note:"Son of Stephane Matteau — scored a memorable OT goal like his dad but career was limited" },
+      { year:2017, pick:"#1",  name:"Nico Hischier",    note:"Swiss center — #1 overall, named captain and the foundation of the Devils rebuild" },
+      { year:2019, pick:"#1",  name:"Jack Hughes",      note:"#1 overall — the most hyped Devils pick since Niedermayer. True franchise center emerging." },
+      { year:2021, pick:"#2",  name:"Luke Hughes",      note:"Brother of Jack — #2 overall defenseman. The Hughes brothers could anchor the franchise for years." },
     ],
   };
 
   const RIVALS_DATA = [
-    { team1:"Yankees", team2:"Red Sox", sport:"MLB", t1wins:"10 pennants to 9", note:"Baseball's greatest rivalry — 100+ years of hate" },
-    { team1:"Yankees", team2:"Mets", sport:"MLB", t1wins:"2000 Subway Series", note:"The city divided every summer" },
-    { team1:"Knicks",  team2:"Celtics", sport:"NBA", t1wins:"Celtics lead all-time", note:"Reed vs Cowens, Ewing vs Bird — classic battles" },
-    { team1:"Rangers", team2:"Devils", sport:"NHL", t1wins:"Messier guarantee 1994", note:"The rivalry that defined the tri-state area" },
-    { team1:"Jets",    team2:"Patriots", sport:"NFL", t1wins:"Patriots dominate era", note:"Namath's guarantee the lone Jets highlight" },
-    { team1:"Giants",  team2:"Eagles", sport:"NFL", t1wins:"Split historically", note:"NFC East rivalry, LT vs Philly — brutal" },
+    // MLB
+    { team1:"Yankees", team2:"Red Sox",    sport:"MLB", t1wins:"27 WS titles to 9", note:"Baseball's greatest rivalry — 100+ years of pure hatred" },
+    { team1:"Yankees", team2:"Mets",       sport:"MLB", t1wins:"2000 Subway Series", note:"Queens vs The Bronx — the city divided every summer" },
+    { team1:"Mets",    team2:"Phillies",   sport:"MLB", t1wins:"Split historically", note:"NL East division rivals — always intense" },
+    { team1:"Yankees", team2:"Orioles",    sport:"MLB", t1wins:"Yankees lead AL East", note:"AL East rivals — old-school battles in the division" },
+    // NFL
+    { team1:"Jets",    team2:"Dolphins",   sport:"NFL", t1wins:"Split all time", note:"AFC East rivals — Miami always haunted the Jets" },
+    { team1:"Jets",    team2:"Bills",      sport:"NFL", t1wins:"Bills dominate recent era", note:"AFC East division battle" },
+    { team1:"Giants",  team2:"Eagles",     sport:"NFL", t1wins:"Split historically", note:"NFC East — LT vs Philly, brutal division games" },
+    { team1:"Giants",  team2:"Cowboys",    sport:"NFL", t1wins:"Cowboys lead all-time", note:"NFC East — America's Team vs NY's team" },
+    // NHL
+    { team1:"Rangers", team2:"Islanders",  sport:"NHL", t1wins:"Rangers lead overall", note:"The Battle of New York — defining tri-state hockey wars" },
+    { team1:"Rangers", team2:"Devils",     sport:"NHL", t1wins:"Devils dominated 90s-00s", note:"Metropolitan rivals — Messier's guarantee the defining moment" },
+    { team1:"Islanders",team2:"Devils",    sport:"NHL", t1wins:"Devils won 3 Cups", note:"NJ vs LI — two dynasties from the same era" },
+    // NBA
+    { team1:"Knicks",  team2:"Celtics",    sport:"NBA", t1wins:"Celtics lead all-time", note:"Reed vs Cowens, Ewing vs Bird — classic battles" },
+    { team1:"Knicks",  team2:"Heat",       sport:"NBA", t1wins:"Split in key series", note:"Riley's revenge — he coached both sides" },
+    { team1:"Nets",    team2:"Knicks",     sport:"NBA", t1wins:"Split in modern era", note:"Brooklyn vs Manhattan — the city's NBA rivalry" },
   ];
 
   const STATS_REFERENCE = {
@@ -1692,13 +2130,13 @@ function StatsTab() {
     ], nyTeams:["Liberty"], ref:"https://www.basketball-reference.com/wnba" },
   };
 
-  const sections = ["LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS","RADIO","BIOS","SHOP"];
+  const sections = ["LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS","RADIO"];
 
   return (
     <div style={styles.statsRoot}>
       <div style={styles.stdHeader}>
         <h2 style={styles.stdTitle}>NY SPORTS STATS & HISTORY</h2>
-        <p style={styles.stdSub}>LEADERS · DROUGHT TRACKER · DRAFT HISTORY · RIVALRIES · TEAM LINKS</p>
+        <p style={styles.stdSub}>LEADERS · DROUGHT TRACKER · DRAFT HISTORY · RIVALRIES · TEAM LINKS · RADIO</p>
       </div>
 
       {/* Section tabs */}
@@ -2158,6 +2596,107 @@ function StatsTab() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── SHOP TAB ─────────────────────────────────────────────────────────────
+function ShopTab() {
+  return (
+    <div style={styles.statsRoot}>
+      <div style={styles.stdHeader}>
+        <h2 style={styles.stdTitle}>🛒 NY SPORTS SHOP</h2>
+        <p style={styles.stdSub}>BOOKS · GEAR · SUPPORT THE SITE</p>
+      </div>
+      <div style={{padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c", marginBottom:20}}>
+        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Curated NY sports books, gear and gifts. All Amazon links support nysportsdaily.com at no extra cost to you. 🙏</p>
+        <p style={{margin:"6px 0 0", fontSize:10, color:"#555"}}>As an Amazon Associate, NY Sports Daily earns from qualifying purchases.</p>
+      </div>
+
+      {/* Support */}
+      <div style={styles.stdDivisionHeader}>☕ SUPPORT NY SPORTS DAILY</div>
+      <div style={{display:"flex", gap:12, flexWrap:"wrap", marginBottom:20, padding:"0 0 16px", borderBottom:"1px solid #1a1a1a"}}>
+        <a href="https://buymeacoffee.com/mhughes65v" target="_blank" rel="noopener noreferrer"
+          style={{...styles.shopRow, flex:1, minWidth:200, background:"#1a1a1a", border:"1px solid #2a2a2a", textDecoration:"none"}}>
+          <span style={styles.shopEmoji}>☕</span>
+          <div style={styles.shopInfo}>
+            <span style={styles.shopTitle}>Buy Me a Coffee</span>
+            <span style={styles.shopDesc}>Keep nysportsdaily.com free — a coffee goes a long way!</span>
+          </div>
+          <span style={styles.shopBtn}>Support →</span>
+        </a>
+      </div>
+
+      {/* Books — reuse from StatsTab data */}
+      <div style={styles.stdDivisionHeader}>📚 NY SPORTS BOOKS</div>
+      {[
+        { title:"The Yankee Years", author:"Joe Torre & Tom Verducci", tag:"yankee+years+torre+verducci", desc:"Inside the dynasty — 4 World Series from the manager's chair" },
+        { title:"Summer of '49", author:"David Halberstam", tag:"summer+of+49+halberstam+yankees", desc:"Yankees vs Red Sox — the greatest rivalry ever told" },
+        { title:"The Bad Guys Won", author:"Jeff Pearlman", tag:"bad+guys+won+1986+mets+pearlman", desc:"The wild story of the drug-fueled 1986 Mets champions" },
+        { title:"The Last Boy: Mickey Mantle", author:"Jane Leavy", tag:"last+boy+mickey+mantle+biography", desc:"The definitive Mantle biography — heroism, pain, greatness" },
+        { title:"Luckiest Man: Lou Gehrig", author:"Jonathan Eig", tag:"luckiest+man+lou+gehrig+biography", desc:"The Iron Horse's extraordinary life and tragic death" },
+        { title:"The Big Bam: Babe Ruth", author:"Leigh Montville", tag:"big+bam+babe+ruth+biography+montville", desc:"The definitive Ruth biography — from orphanage to legend" },
+        { title:"Namath: A Biography", author:"Mark Kriegel", tag:"namath+biography+kriegel+jets", desc:"Broadway Joe and the greatest upset in Super Bowl history" },
+        { title:"When the Garden Was Eden", author:"Harvey Araton", tag:"when+garden+was+eden+knicks+araton", desc:"The legendary Knicks of the early 70s — Reed, Frazier, Bradley" },
+        { title:"Blood on the Ice", author:"Gare Joyce", tag:"rangers+messier+1994+stanley+cup+blood+ice", desc:"The Rangers 1994 championship run — 54 years of drought ended" },
+        { title:"Four on the Floor: Islanders Dynasty", author:"Various", tag:"new+york+islanders+dynasty+four+cups", desc:"The story of 4 consecutive Stanley Cups" },
+        { title:"Pinstripe Empire", author:"Marty Appel", tag:"pinstripe+empire+yankees+history+appel", desc:"The complete history of the New York Yankees from 1903 on" },
+        { title:"The Miracle Mets", author:"Stanley Cohen", tag:"miracle+mets+1969+cohen", desc:"The complete story of the 1969 Amazin' Mets championship" },
+        { title:"Doc: A Memoir", author:"Dwight Gooden", tag:"doc+memoir+dwight+gooden", desc:"Gooden's raw honest account of rise and fall" },
+        { title:"LT: Over the Edge", author:"Lawrence Taylor", tag:"lawrence+taylor+LT+autobiography", desc:"LT's brutal honest autobiography — greatness and survival" },
+        { title:"Yogi: A Life Behind the Mask", author:"Jon Pessah", tag:"yogi+berra+biography+pessah", desc:"The definitive biography of baseball's greatest character" },
+        { title:"The Bronx is Burning", author:"Jonathan Mahler", tag:"bronx+is+burning+1977+yankees+book", desc:"1977 NYC, Billy Martin, Reggie and the summer that defined an era" },
+        { title:"Joe DiMaggio: The Hero's Life", author:"Richard Ben Cramer", tag:"joe+dimaggio+hero+life+cramer", desc:"The real DiMaggio behind the myth" },
+        { title:"Mariano Rivera: The Closer", author:"Mariano Rivera", tag:"mariano+rivera+closer+autobiography", desc:"Mo's own story — the greatest closer in baseball history" },
+        { title:"Steinbrenner", author:"Bill Madden", tag:"steinbrenner+biography+bill+madden", desc:"The complete biography of The Boss" },
+        { title:"The Boys of Summer", author:"Roger Kahn", tag:"boys+of+summer+roger+kahn+dodgers", desc:"The greatest sports book ever written — Brooklyn Dodgers" },
+        { title:"Mike Bossy: The Boss", author:"Mike Bossy", tag:"mike+bossy+islanders+autobiography", desc:"The greatest pure goal scorer tells his own story" },
+        { title:"When You Play the Game of Life", author:"Derek Jeter", tag:"derek+jeter+life+you+imagine", desc:"The Captain's own story from childhood to the major leagues" },
+        { title:"Denis Potvin: Power On Ice", author:"Denis Potvin", tag:"denis+potvin+islanders+autobiography", desc:"The Islanders captain — broke Orr's record, won 4 Cups" },
+        { title:"Parcells: A Football Life", author:"Bill Parcells", tag:"bill+parcells+football+life+biography", desc:"The Big Tuna's coaching career from Giants to beyond" },
+        { title:"The House That Ruth Built", author:"Robert Weintraub", tag:"house+ruth+built+yankee+stadium+history", desc:"The story of the original Yankee Stadium" },
+        { title:"Ball Four", author:"Jim Bouton", tag:"ball+four+jim+bouton+yankees", desc:"The Yankees pitcher's diary that blew the lid off baseball" },
+        { title:"42: The Jackie Robinson Story", author:"Various", tag:"jackie+robinson+42+biography", desc:"Baseball's greatest moment — Brooklyn, courage, breaking barriers" },
+        { title:"I Can't Wait Until Tomorrow", author:"Joe Namath", tag:"namath+cant+wait+tomorrow+autobiography", desc:"Namath's own tell-all — one of sports' greatest memoirs" },
+      ].map((b, i) => (
+        <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(b.tag)}&tag=nysportsdaily-20`}
+          target="_blank" rel="noopener noreferrer"
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <span style={styles.shopEmoji}>📖</span>
+          <div style={styles.shopInfo}>
+            <span style={styles.shopTitle}>{b.title}</span>
+            <span style={styles.shopAuthor}>{b.author}</span>
+            <span style={styles.shopDesc}>{b.desc}</span>
+          </div>
+          <span style={styles.shopBtn}>Shop →</span>
+        </a>
+      ))}
+
+      {/* Gear */}
+      <div style={{...styles.stdDivisionHeader, marginTop:24}}>👕 NY SPORTS GEAR</div>
+      {[
+        { title:"New York Yankees Gear", tag:"new+york+yankees+jersey+gear+official", desc:"Official Yankees jerseys, hats, merchandise" },
+        { title:"New York Mets Gear", tag:"new+york+mets+jersey+gear+official", desc:"Official Mets jerseys, hats, merchandise" },
+        { title:"New York Knicks Gear", tag:"new+york+knicks+jersey+gear+nba", desc:"Official Knicks jerseys and merchandise" },
+        { title:"NY Rangers Gear", tag:"new+york+rangers+jersey+gear+nhl", desc:"Official Rangers jerseys and hockey gear" },
+        { title:"NY Giants Gear", tag:"new+york+giants+jersey+gear+nfl", desc:"Official Giants jerseys and NFL merchandise" },
+        { title:"NY Jets Gear", tag:"new+york+jets+jersey+gear+nfl", desc:"Official Jets jerseys and NFL merchandise" },
+        { title:"NY Islanders Gear", tag:"new+york+islanders+jersey+gear+nhl", desc:"Official Islanders jerseys and hockey gear" },
+        { title:"NJ Devils Gear", tag:"new+jersey+devils+jersey+gear+nhl", desc:"Official Devils jerseys and hockey gear" },
+        { title:"NY Liberty Gear", tag:"new+york+liberty+wnba+jersey+gear", desc:"Official Liberty jerseys and WNBA gear" },
+        { title:"Brooklyn Nets Gear", tag:"brooklyn+nets+jersey+gear+nba", desc:"Official Nets jerseys and NBA merchandise" },
+      ].map((g, i) => (
+        <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(g.tag)}&tag=nysportsdaily-20`}
+          target="_blank" rel="noopener noreferrer"
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <span style={styles.shopEmoji}>👕</span>
+          <div style={styles.shopInfo}>
+            <span style={styles.shopTitle}>{g.title}</span>
+            <span style={styles.shopDesc}>{g.desc}</span>
+          </div>
+          <span style={styles.shopBtn}>Shop →</span>
+        </a>
+      ))}
     </div>
   );
 }
@@ -3509,6 +4048,30 @@ const styles = {
     borderTop: "1px solid #1a1a1a", paddingTop: 12,
   },
 
+  // PLAYER SPOTLIGHT
+  spotlightWrap: { cursor:"pointer", userSelect:"none" },
+  spotlightCard: {
+    background:"#161616", border:"1px solid #2a2a2a",
+    borderLeft:"3px solid #c8201c", padding:"12px 14px",
+    height:"100%", boxSizing:"border-box",
+  },
+  spotlightFront: { display:"flex", flexDirection:"column", gap:4 },
+  spotlightBack: { display:"flex", flexDirection:"column", gap:8 },
+  spotlightHeader: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 },
+  spotlightBadge: { fontSize:8, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em" },
+  spotlightTap: { fontSize:8, color:"#444", fontStyle:"italic" },
+  spotlightEmoji: { fontSize:28, lineHeight:1 },
+  spotlightName: { fontSize:16, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", lineHeight:1.2 },
+  spotlightMeta: { display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" },
+  spotlightTeam: { fontSize:10, color:"#c8201c", fontWeight:900 },
+  spotlightPos: { fontSize:9, color:"#666" },
+  spotlightActive: { fontSize:9, color:"#4ade80", fontWeight:900 },
+  spotlightEra: { fontSize:9, color:"#555", letterSpacing:"0.05em" },
+  spotlightStats: { fontSize:10, color:"#aaa", lineHeight:1.5 },
+  spotlightFact: { fontSize:11, color:"#aaa", lineHeight:1.6, fontFamily:"'Georgia',serif", margin:0 },
+  spotlightLinks: { display:"flex", gap:10, flexWrap:"wrap" },
+  spotlightLink: { fontSize:10, color:"#c8201c", fontWeight:700, textDecoration:"none" },
+
   // QUOTE OF THE DAY
   quoteBar: {
     display:"flex", gap:12, alignItems:"flex-start",
@@ -3651,12 +4214,15 @@ const styles = {
 
   // SCORING SUMMARY
   scoringSummary: { marginBottom: 12, border:"1px solid #2a2a2a", overflow:"hidden" },
-  scoringHeader: { fontSize:8, fontWeight:900, letterSpacing:"0.15em", color:"#c8201c", background:"#1a1a1a", padding:"4px 8px" },
-  scoringPlay: { display:"flex", gap:8, padding:"4px 8px", alignItems:"center", fontSize:10 },
-  scoringPeriod: { color:"#666", minWidth:50, fontSize:9, flexShrink:0 },
-  scoringTeam: { color:"#c8201c", fontWeight:700, minWidth:70, fontSize:9, flexShrink:0 },
-  scoringText: { flex:1, color:"#ccc" },
-  scoringScore: { color:"#e8e0d0", fontWeight:900, minWidth:35, textAlign:"right", flexShrink:0 },
+  scoringHeader: { fontSize:8, fontWeight:900, letterSpacing:"0.15em", color:"#c8201c", background:"#1a1a1a", padding:"5px 10px" },
+  scoringPlay: { display:"flex", gap:8, padding:"6px 10px", alignItems:"flex-start", fontSize:10, borderTop:"1px solid #1a1a1a" },
+  scoringLeft: { display:"flex", flexDirection:"column", gap:2, minWidth:70, flexShrink:0 },
+  scoringPeriod: { color:"#666", fontSize:9, letterSpacing:"0.05em" },
+  scoringTeamBadge: { color:"#c8201c", fontWeight:900, fontSize:9, letterSpacing:"0.05em" },
+  scoringMiddle: { flex:1, display:"flex", flexDirection:"column", gap:2 },
+  scoringAthletes: { color:"#e8e0d0", fontWeight:700, fontSize:10 },
+  scoringText: { color:"#aaa", fontSize:10, lineHeight:1.4 },
+  scoringScore: { color:"#e8e0d0", fontWeight:900, fontSize:11, minWidth:35, textAlign:"right", flexShrink:0, fontFamily:"'Georgia',serif" },
 
   // BOX SCORE
   boxScoreBtn: {
@@ -3807,7 +4373,8 @@ const styles = {
   bioTeam: { fontSize:10, color:"#c8201c", fontWeight:900, letterSpacing:"0.05em" },
   bioYears: { fontSize:9, color:"#666" },
   bioRole: { fontSize:9, color:"#888", letterSpacing:"0.08em", fontWeight:700 },
-  bioBio: { margin:"0 0 8px", fontSize:12, color:"#aaa", lineHeight:1.6, fontFamily:"'Georgia',serif" },
+  bioBio: { margin:"0 0 6px", fontSize:12, color:"#aaa", lineHeight:1.6, fontFamily:"'Georgia',serif" },
+  bioStats: { fontSize:10, color:"#888", marginBottom:6, letterSpacing:"0.03em" },
   bioLinks: { display:"flex", gap:12, flexWrap:"wrap" },
 
   // SEARCH LINKS
