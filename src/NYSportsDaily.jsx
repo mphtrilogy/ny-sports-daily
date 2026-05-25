@@ -742,15 +742,32 @@ async function fetchBoxScore(gameId, sport, league) {
       total:   t.score,
     }));
 
-    // Scoring summary (who scored and when)
-    const scoringSummary = (json.scoringPlays || []).map(play => ({
-      period:   play.period?.displayValue || play.period?.number || "",
-      clock:    play.clock?.displayValue || "",
-      team:     play.team?.displayName || "",
-      text:     play.text || play.type?.text || "",
-      awayScore: play.awayScore,
-      homeScore: play.homeScore,
-    }));
+    // Scoring summary — ESPN uses different fields per sport
+    const scoringPlays = json.scoringPlays || [];
+    const plays = json.plays || [];
+    
+    // For baseball, build scoring from plays where scoringPlay === true
+    const baseballScoring = plays
+      .filter(p => p.scoringPlay === true)
+      .map(play => ({
+        period:    play.period?.displayValue || `Inn ${play.period?.number || ""}`,
+        clock:     play.clock?.displayValue || "",
+        team:      play.team?.displayName || "",
+        text:      play.text || play.type?.text || "",
+        awayScore: play.awayScore ?? "",
+        homeScore: play.homeScore ?? "",
+      }));
+
+    const scoringSummary = scoringPlays.length > 0
+      ? scoringPlays.map(play => ({
+          period:    play.period?.displayValue || play.period?.number || "",
+          clock:     play.clock?.displayValue || "",
+          team:      play.team?.displayName || "",
+          text:      play.text || play.type?.text || "",
+          awayScore: play.awayScore ?? "",
+          homeScore: play.homeScore ?? "",
+        }))
+      : baseballScoring;
 
     // Player stats per team
     const playerStats = players.map(teamStats => ({
@@ -1635,7 +1652,7 @@ function StatsTab() {
     ], nyTeams:["Liberty"], ref:"https://www.basketball-reference.com/wnba" },
   };
 
-  const sections = ["LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS"];
+  const sections = ["LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS","RADIO","BIOS","SHOP"];
 
   return (
     <div style={styles.statsRoot}>
@@ -1856,11 +1873,206 @@ function StatsTab() {
           ))}
         </div>
       )}
+      {/* RADIO & PODCASTS */}
+      {activeSection === "RADIO" && (
+        <div>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>Official radio broadcasts, podcasts and streams for all NY teams. WFAN is the heartbeat of NY sports radio.</p>
+          </div>
+
+          {/* Main NY Radio Stations */}
+          <div style={styles.stdDivisionHeader}>📻 NY SPORTS RADIO STATIONS</div>
+          {[
+            { name:"WFAN 101.9 FM / 66 AM", desc:"The home of Yankees, Mets, Giants, Jets, Knicks, Rangers, Islanders, Nets, Devils — NY's flagship sports station since 1987", url:"https://www.audacy.com/wfan", teams:"All NY Teams" },
+            { name:"ESPN NY 98.7 FM", desc:"ESPN Radio New York — breaking news, analysis and coverage of all NY teams", url:"https://espn.com/new-york", teams:"All NY Teams" },
+            { name:"YES Network Radio", desc:"Yankees home radio — Dave Sims, Suzyn Waldman call the games", url:"https://www.yesnetwork.com", teams:"Yankees" },
+            { name:"SNY", desc:"SNY covers Mets, Jets, Giants, Knicks, Yankees, Nets, Rangers, Islanders, Devils", url:"https://sny.tv", teams:"All NY Teams" },
+            { name:"MSG Network", desc:"Rangers and Knicks home broadcast — garden-fresh coverage", url:"https://www.msgnetworks.com", teams:"Rangers · Knicks" },
+            { name:"WGBB 95.5FM / 1240 AM", desc:"Long Island's NY sports talk — Sundays at 8PM. Yankees, Mets, Islanders focus", url:"https://www.sportstalkny.com", teams:"All NY Teams · LI Focus" },
+          ].map((r, i) => (
+            <a key={i} href={r.url} target="_blank" rel="noopener noreferrer"
+              style={{...styles.radioRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.radioIcon}>📻</div>
+              <div style={styles.radioInfo}>
+                <span style={styles.radioName}>{r.name}</span>
+                <span style={styles.radioTeams}>{r.teams}</span>
+                <span style={styles.radioDesc}>{r.desc}</span>
+              </div>
+              <span style={styles.radioArrow}>→</span>
+            </a>
+          ))}
+
+          {/* Team Podcasts */}
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>🎙️ OFFICIAL TEAM PODCASTS</div>
+          {[
+            { name:"Yankees Podcast", team:"Yankees ⚾", url:"https://www.mlb.com/yankees/fans/podcasts", desc:"Official MLB Yankees podcast — player interviews, game breakdowns" },
+            { name:"Mets Pod", team:"Mets ⚾", url:"https://www.mlb.com/mets/fans/podcasts", desc:"Inside the Mets clubhouse — official team podcast" },
+            { name:"Big Blue Podcast", team:"Giants 🏈", url:"https://www.giants.com/podcasts", desc:"NY Giants official podcast — news, analysis, player features" },
+            { name:"The Green & White Report", team:"Jets 🏈", url:"https://www.newyorkjets.com/podcasts", desc:"Official Jets podcast — training camp to game day" },
+            { name:"Knicks Podcast", team:"Knicks 🏀", url:"https://www.nba.com/knicks/podcasts", desc:"Madison Square Garden's official Knicks coverage" },
+            { name:"Rangers Podcast", team:"Rangers 🏒", url:"https://www.nhl.com/rangers/podcasts", desc:"Broadway Blueshirts official podcast" },
+            { name:"Isles Podcast", team:"Islanders 🏒", url:"https://www.nhl.com/islanders/podcasts", desc:"Official Islanders podcast — news from UBS Arena" },
+            { name:"Liberty Podcast", team:"Liberty 🏀", url:"https://www.nyliberty.com", desc:"WNBA Champion NY Liberty — official team coverage" },
+            { name:"NYCFC Podcast", team:"NYCFC ⚽", url:"https://www.nycfc.com/podcasts", desc:"The Pigeons official podcast — soccer in NYC" },
+          ].map((p, i) => (
+            <a key={i} href={p.url} target="_blank" rel="noopener noreferrer"
+              style={{...styles.radioRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.radioIcon}>🎙️</div>
+              <div style={styles.radioInfo}>
+                <span style={styles.radioName}>{p.name}</span>
+                <span style={styles.radioTeams}>{p.team}</span>
+                <span style={styles.radioDesc}>{p.desc}</span>
+              </div>
+              <span style={styles.radioArrow}>→</span>
+            </a>
+          ))}
+
+          {/* Streaming */}
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>📱 STREAM NY SPORTS</div>
+          {[
+            { name:"TuneIn", desc:"Free streaming for WFAN and all NY sports radio", url:"https://tunein.com/radio/WFAN-Sports-Radio-1019-FMa25701/", icon:"📻" },
+            { name:"Audacy App", desc:"Free — stream WFAN live on iOS and Android", url:"https://www.audacy.com/wfan", icon:"📱" },
+            { name:"ESPN App", desc:"ESPN NY coverage plus live radio", url:"https://www.espn.com/espnradio/", icon:"📺" },
+          ].map((s, i) => (
+            <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+              style={{...styles.radioRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.radioIcon}>{s.icon}</div>
+              <div style={styles.radioInfo}>
+                <span style={styles.radioName}>{s.name}</span>
+                <span style={styles.radioDesc}>{s.desc}</span>
+              </div>
+              <span style={styles.radioArrow}>→</span>
+            </a>
+          ))}
+        </div>
+      )}
+
+      {/* BIOGRAPHIES */}
+      {activeSection === "BIOS" && (
+        <div>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>The legends who defined NY sports — click any name for their full biography.</p>
+          </div>
+          {[
+            { name:"Babe Ruth", team:"Yankees", years:"1920–1934", emoji:"⚾", role:"Outfielder", bio:"The greatest player in baseball history transformed the Yankees into a dynasty. 659 HR as a Yankee, 7 World Series titles. Called his shot in 1932.", wiki:"https://en.wikipedia.org/wiki/Babe_Ruth" },
+            { name:"Lou Gehrig", team:"Yankees", years:"1923–1939", emoji:"⚾", role:"First Baseman", bio:"The Iron Horse played 2,130 consecutive games. Four-time batting champion, died tragically of ALS at 37. 'Luckiest man on the face of the earth.'", wiki:"https://en.wikipedia.org/wiki/Lou_Gehrig" },
+            { name:"Joe DiMaggio", team:"Yankees", years:"1936–1951", emoji:"⚾", role:"Centerfielder", bio:"56-game hitting streak in 1941 — possibly the most unbreakable record in sports. 9 World Series rings, 13-time All-Star, married Marilyn Monroe.", wiki:"https://en.wikipedia.org/wiki/Joe_DiMaggio" },
+            { name:"Mickey Mantle", team:"Yankees", years:"1951–1968", emoji:"⚾", role:"Centerfielder", bio:"Switch-hitting power and speed. 536 career HR despite playing through constant pain. Three-time MVP, 7 World Series titles, tape measure home runs.", wiki:"https://en.wikipedia.org/wiki/Mickey_Mantle" },
+            { name:"Yogi Berra", team:"Yankees", years:"1946–1963", emoji:"⚾", role:"Catcher", bio:"10 World Series rings as player. Famous for Yogi-isms: 'It ain't over till it's over.' One of the greatest catchers in baseball history.", wiki:"https://en.wikipedia.org/wiki/Yogi_Berra" },
+            { name:"Derek Jeter", team:"Yankees", years:"1995–2014", emoji:"⚾", role:"Shortstop", bio:"The Captain. 5 World Series rings, 14 All-Star Games, 3,465 career hits. The face of the Yankees dynasty. The Flip, the Dive, Mr. November.", wiki:"https://en.wikipedia.org/wiki/Derek_Jeter" },
+            { name:"Joe Namath", team:"Jets", years:"1965–1976", emoji:"🏈", role:"Quarterback", bio:"Broadway Joe guaranteed a Super Bowl III victory then delivered. Changed pro football forever with his $427K contract and charisma.", wiki:"https://en.wikipedia.org/wiki/Joe_Namath" },
+            { name:"Lawrence Taylor", team:"Giants", years:"1981–1993", emoji:"🏈", role:"Linebacker", bio:"Arguably the greatest defensive player in NFL history. Revolutionized the outside linebacker position. 2 Super Bowls, NFL MVP 1986, 22 sacks.", wiki:"https://en.wikipedia.org/wiki/Lawrence_Taylor" },
+            { name:"Willis Reed", team:"Knicks", years:"1964–1974", emoji:"🏀", role:"Center", bio:"Limped onto court for Game 7 of 1970 Finals on a torn thigh muscle. Inspired Walt Frazier's 36-point performance. 2 championships, Hall of Famer.", wiki:"https://en.wikipedia.org/wiki/Willis_Reed" },
+            { name:"Walt Frazier", team:"Knicks", years:"1967–1977", emoji:"🏀", role:"Guard", bio:"Clyde — the most stylish player in NBA history. Led the Knicks to 2 championships. Scored 36 points in the famous Game 7 Willis Reed game.", wiki:"https://en.wikipedia.org/wiki/Walt_Frazier" },
+            { name:"Patrick Ewing", team:"Knicks", years:"1985–2000", emoji:"🏀", role:"Center", bio:"The first NBA lottery pick led the Knicks for 15 years. All-time leading scorer. Came heartbreakingly close to a championship in 1994.", wiki:"https://en.wikipedia.org/wiki/Patrick_Ewing" },
+            { name:"Mark Messier", team:"Rangers", years:"1991–97, 2000–04", emoji:"🏒", role:"Center", bio:"The Captain who ended 54 years of Rangers heartbreak in 1994. Guaranteed a Game 6 win against the Devils then scored a hat trick to back it up.", wiki:"https://en.wikipedia.org/wiki/Mark_Messier" },
+            { name:"Mike Bossy", team:"Islanders", years:"1977–1987", emoji:"🏒", role:"Right Wing", bio:"9 consecutive 50-goal seasons. Matched Rocket Richard's 50 in 50 in 1981. 4 Stanley Cups. One of the purest goal scorers in NHL history.", wiki:"https://en.wikipedia.org/wiki/Mike_Bossy" },
+            { name:"Denis Potvin", team:"Islanders", years:"1973–1988", emoji:"🏒", role:"Defenseman", bio:"Three Norris Trophies. Broke Bobby Orr's career points record for defensemen. Captain of four consecutive Stanley Cup champions.", wiki:"https://en.wikipedia.org/wiki/Denis_Potvin" },
+            { name:"Tom Seaver", team:"Mets", years:"1967–77, 1983", emoji:"⚾", role:"Pitcher", bio:"Tom Terrific led the Miracle Mets to the 1969 World Series. 3 Cy Young Awards, 311 career wins, 3,272 strikeouts. Greatest Met ever.", wiki:"https://en.wikipedia.org/wiki/Tom_Seaver" },
+            { name:"Mike Piazza", team:"Mets", years:"1998–2005", emoji:"⚾", role:"Catcher", bio:"Greatest hitting catcher in baseball history. His 9/11 home run is the most emotional moment in Mets history. 220 HR as a Met.", wiki:"https://en.wikipedia.org/wiki/Mike_Piazza" },
+            { name:"Dwight Gooden", team:"Mets", years:"1984–1994", emoji:"⚾", role:"Pitcher", bio:"Doc at age 20 went 24-4 with a 1.53 ERA. Virtually unhittable. What could have been the greatest career in baseball history.", wiki:"https://en.wikipedia.org/wiki/Dwight_Gooden" },
+            { name:"Bryan Trottier", team:"Islanders", years:"1975–1990", emoji:"🏒", role:"Center", bio:"The engine of the Islanders dynasty. Hart Trophy winner, 4 Stanley Cups, 1,353 career points. Won 2 more Cups with Pittsburgh.", wiki:"https://en.wikipedia.org/wiki/Bryan_Trottier" },
+          ].map((p, i) => (
+            <div key={i} style={{...styles.bioRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.bioEmoji}>{p.emoji}</div>
+              <div style={styles.bioInfo}>
+                <div style={styles.bioHeader}>
+                  <span style={styles.bioName}>{p.name}</span>
+                  <span style={styles.bioTeam}>{p.team}</span>
+                  <span style={styles.bioYears}>{p.years}</span>
+                  <span style={styles.bioRole}>{p.role}</span>
+                </div>
+                <p style={styles.bioBio}>{p.bio}</p>
+                <div style={styles.bioLinks}>
+                  <a href={p.wiki} target="_blank" rel="noopener noreferrer" style={styles.histLink}>📖 Wikipedia</a>
+                  <a href={googleUrl(`${p.name} New York ${p.team} baseball career stats`)} target="_blank" rel="noopener noreferrer" style={styles.histLink}>🔍 Google</a>
+                  <a href={`https://www.amazon.com/s?k=${encodeURIComponent(p.name+" biography")}&tag=nysportsdaily-20`} target="_blank" rel="noopener noreferrer" style={styles.histLink}>📚 Books</a>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {/* SHOP */}
+      {activeSection === "SHOP" && (
+        <div>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>Curated NY sports books, gear and gifts — all links support nysportsdaily.com at no extra cost to you. 🙏</p>
+          </div>
+
+          <div style={styles.stdDivisionHeader}>📚 NY SPORTS BOOKS</div>
+          {[
+            { title:"The Yankee Years", author:"Joe Torre & Tom Verducci", tag:"yankee+years+torre", desc:"Inside the Yankees dynasty from the manager who led them to 4 World Series" },
+            { title:"The Bad Guys Won", author:"Jeff Pearlman", tag:"bad+guys+won+1986+mets", desc:"The wild story of the 1986 Mets championship team" },
+            { title:"Namath: A Biography", author:"Mark Kriegel", tag:"namath+biography+kriegel", desc:"The definitive biography of Broadway Joe and Super Bowl III" },
+            { title:"When the Garden Was Eden", author:"Harvey Araton", tag:"when+garden+was+eden+knicks", desc:"The legendary Knicks of the early 70s — Reed, Frazier, Bradley" },
+            { title:"The Miracle Mets", author:"Various", tag:"miracle+mets+1969+world+series+book", desc:"The untold story of the 1969 Miracle Mets championship season" },
+            { title:"Blood on the Ice", author:"Gare Joyce", tag:"rangers+messier+1994+stanley+cup", desc:"The Rangers 1994 championship run — ending the 54-year drought" },
+            { title:"Summer of '49", author:"David Halberstam", tag:"summer+of+49+halberstam", desc:"Yankees vs Red Sox — the greatest rivalry told by a master" },
+            { title:"The Last Boy: Mickey Mantle", author:"Jane Leavy", tag:"last+boy+mickey+mantle+biography", desc:"The definitive Mickey Mantle biography" },
+          ].map((b, i) => (
+            <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(b.tag)}&tag=nysportsdaily-20`}
+              target="_blank" rel="noopener noreferrer"
+              style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <span style={styles.shopEmoji}>📖</span>
+              <div style={styles.shopInfo}>
+                <span style={styles.shopTitle}>{b.title}</span>
+                <span style={styles.shopAuthor}>{b.author}</span>
+                <span style={styles.shopDesc}>{b.desc}</span>
+              </div>
+              <span style={styles.shopBtn}>Shop →</span>
+            </a>
+          ))}
+
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>👕 NY SPORTS GEAR</div>
+          {[
+            { title:"New York Yankees Gear", tag:"new+york+yankees+jersey+gear", desc:"Official Yankees jerseys, hats, merchandise" },
+            { title:"New York Mets Gear", tag:"new+york+mets+jersey+gear", desc:"Official Mets jerseys, hats, merchandise" },
+            { title:"New York Knicks Gear", tag:"new+york+knicks+jersey+gear", desc:"Official Knicks jerseys and merchandise" },
+            { title:"NY Rangers Gear", tag:"new+york+rangers+jersey+gear", desc:"Official Rangers jerseys and hockey gear" },
+            { title:"NY Giants Gear", tag:"new+york+giants+jersey+gear", desc:"Official Giants jerseys and NFL merchandise" },
+            { title:"NY Jets Gear", tag:"new+york+jets+jersey+gear", desc:"Official Jets jerseys and NFL merchandise" },
+            { title:"NY Islanders Gear", tag:"new+york+islanders+jersey+gear", desc:"Official Islanders jerseys and hockey gear" },
+            { title:"NY Liberty Gear", tag:"new+york+liberty+wnba+gear", desc:"Official Liberty jerseys and WNBA gear" },
+          ].map((g, i) => (
+            <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(g.tag)}&tag=nysportsdaily-20`}
+              target="_blank" rel="noopener noreferrer"
+              style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <span style={styles.shopEmoji}>👕</span>
+              <div style={styles.shopInfo}>
+                <span style={styles.shopTitle}>{g.title}</span>
+                <span style={styles.shopDesc}>{g.desc}</span>
+              </div>
+              <span style={styles.shopBtn}>Shop →</span>
+            </a>
+          ))}
+
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>🎵 NY SPORTS ON VINYL</div>
+          {[
+            { title:"Frank Sinatra — New York New York", tag:"frank+sinatra+new+york+new+york+vinyl", desc:"The ultimate NY anthem on vinyl" },
+            { title:"NY Sports Theme Songs", tag:"new+york+sports+themes+vinyl", desc:"Classic NY sports anthems on vinyl" },
+          ].map((v, i) => (
+            <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(v.tag)}&tag=nysportsdaily-20`}
+              target="_blank" rel="noopener noreferrer"
+              style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <span style={styles.shopEmoji}>🎵</span>
+              <div style={styles.shopInfo}>
+                <span style={styles.shopTitle}>{v.title}</span>
+                <span style={styles.shopDesc}>{v.desc}</span>
+              </div>
+              <span style={styles.shopBtn}>Shop →</span>
+            </a>
+          ))}
+
+          <div style={{marginTop:20, padding:"12px 14px", background:"#0f0f0f", fontSize:10, color:"#555"}}>
+            As an Amazon Associate, NY Sports Daily earns from qualifying purchases at no extra cost to you.
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── STANDINGS COMPONENT ──────────────────────────────────────────────────
 function StandingsTab({ standings, loading }) {
   const [activeLeague, setActiveLeague] = useState("MLB");
   const leagues = ["MLB","NFL","NBA","NHL","WNBA","MLS"];
@@ -3478,6 +3690,36 @@ const styles = {
     fontSize:10, fontWeight:700, letterSpacing:"0.05em",
     transition:"border-color 0.15s",
   },
+
+  // RADIO
+  radioRow: { display:"flex", alignItems:"center", gap:12, padding:"10px 14px", textDecoration:"none", borderTop:"1px solid #1a1a1a" },
+  radioIcon: { fontSize:20, flexShrink:0 },
+  radioInfo: { flex:1, display:"flex", flexDirection:"column", gap:2 },
+  radioName: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  radioTeams: { fontSize:9, color:"#c8201c", fontWeight:900, letterSpacing:"0.08em" },
+  radioDesc: { fontSize:10, color:"#888" },
+  radioArrow: { fontSize:14, color:"#c8201c", fontWeight:900, flexShrink:0 },
+
+  // SHOP
+  shopRow: { display:"flex", alignItems:"center", gap:12, padding:"12px 14px", textDecoration:"none", borderTop:"1px solid #1a1a1a" },
+  shopEmoji: { fontSize:22, flexShrink:0 },
+  shopInfo: { flex:1, display:"flex", flexDirection:"column", gap:2 },
+  shopTitle: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  shopAuthor: { fontSize:10, color:"#888", fontStyle:"italic" },
+  shopDesc: { fontSize:10, color:"#666" },
+  shopBtn: { fontSize:10, fontWeight:900, color:"#c8201c", letterSpacing:"0.05em", flexShrink:0, whiteSpace:"nowrap" },
+
+  // BIOS
+  bioRow: { display:"flex", gap:14, padding:"14px", borderTop:"1px solid #1a1a1a" },
+  bioEmoji: { fontSize:26, flexShrink:0, paddingTop:2 },
+  bioInfo: { flex:1 },
+  bioHeader: { display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:6 },
+  bioName: { fontSize:15, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  bioTeam: { fontSize:10, color:"#c8201c", fontWeight:900, letterSpacing:"0.05em" },
+  bioYears: { fontSize:9, color:"#666" },
+  bioRole: { fontSize:9, color:"#888", letterSpacing:"0.08em", fontWeight:700 },
+  bioBio: { margin:"0 0 8px", fontSize:12, color:"#aaa", lineHeight:1.6, fontFamily:"'Georgia',serif" },
+  bioLinks: { display:"flex", gap:12, flexWrap:"wrap" },
 
   // SEARCH LINKS
   searchLinks: {
