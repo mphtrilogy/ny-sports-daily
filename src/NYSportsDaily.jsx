@@ -95,29 +95,14 @@ const NY_TEAM_NEWS = [
   { sport:"basketball", league:"wnba", id:"20",    name:"Liberty" },
 ];
 
-// Free RSS feeds via rss2json
-const NY_RSS_FEEDS = [
-  { url:"https://www.cbssports.com/rss/headlines/nfl/", name:"CBS NFL" },
-  { url:"https://www.cbssports.com/rss/headlines/nba/", name:"CBS NBA" },
-  { url:"https://www.cbssports.com/rss/headlines/mlb/", name:"CBS MLB" },
-  { url:"https://www.cbssports.com/rss/headlines/nhl/", name:"CBS NHL" },
+// Additional NY team ESPN news endpoints
+const NY_EXTRA_NEWS = [
+  { sport:"football",   league:"nfl",  id:"20",    name:"Jets"      },
+  { sport:"football",   league:"nfl",  id:"19",    name:"Giants"    },
+  { sport:"hockey",     league:"nhl",  id:"1",     name:"Devils"    },
+  { sport:"soccer",     league:"usa.1",id:"18479", name:"NYCFC"     },
+  { sport:"soccer",     league:"nwsl", id:"1163",  name:"Gotham FC" },
 ];
-
-const RSS2JSON_KEY = ""; // free tier, no key needed
-async function fetchRSSFeed(feed) {
-  try {
-    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=15`);
-    const json = await res.json();
-    if (json.status !== "ok") return [];
-    return (json.items || []).map(item => ({
-      title:  item.title?.trim() || "",
-      link:   item.link || "",
-      desc:   item.description?.replace(/<[^>]*>/g,"").trim().slice(0,180) || "",
-      pub:    item.pubDate || "",
-      source: feed.name,
-    })).filter(i => i.title && i.link);
-  } catch { return []; }
-}
 
 const NY_KEYWORDS = [
   "new york yankees","new york mets","new york jets","new york giants",
@@ -405,52 +390,48 @@ async function fetchLeagueLeaders(sport, league) {
 
 async function fetchNYNews() {
   const results = [];
+  const seen = new Set();
+
+  // ESPN team-specific news — guaranteed NY content
+  const allTeams = [...NY_TEAM_NEWS, ...NY_EXTRA_NEWS];
+  await Promise.all(allTeams.map(async ({ sport, league, id, name }) => {
+    try {
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=8`);
+      const json = await res.json();
+      (json.articles || []).forEach(a => {
+        const title = a.headline || a.title || "";
+        if (!title || seen.has(title)) return;
+        seen.add(title);
+        results.push({
+          title,
+          link:   a.links?.web?.href || "#",
+          desc:   a.description || "",
+          pub:    a.published || a.lastModified || "",
+          source: `ESPN · ${name}`,
+          team:   name,
+        });
+      });
+    } catch(e) {}
+  }));
 
   // ESPN league-level news filtered by NY keywords
   await Promise.all(NY_NEWS_ENDPOINTS.map(async ({ sport, league, name }) => {
     try {
-      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=20`);
+      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=15`);
       const json = await res.json();
       (json.articles || []).forEach(a => {
         const title = a.headline || a.title || "";
         const desc  = a.description || "";
+        if (!title || seen.has(title)) return;
         const combined = (title + " " + desc).toLowerCase();
         if (!NY_KEYWORDS.some(kw => combined.includes(kw))) return;
+        seen.add(title);
         results.push({ title, link: a.links?.web?.href || "#", desc, pub: a.published || "", source: `ESPN · ${name}` });
       });
     } catch(e) {}
   }));
 
-  // ESPN team-specific news (always NY relevant)
-  await Promise.all(NY_TEAM_NEWS.map(async ({ sport, league, id, name }) => {
-    try {
-      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=5`);
-      const json = await res.json();
-      (json.articles || []).forEach(a => {
-        const title = a.headline || a.title || "";
-        if (!title) return;
-        results.push({ title, link: a.links?.web?.href || "#", desc: a.description || "", pub: a.published || "", source: `ESPN · ${name}` });
-      });
-    } catch(e) {}
-  }));
-
-  // CBS Sports RSS feeds filtered for NY teams
-  const rssResults = await Promise.all(NY_RSS_FEEDS.map(fetchRSSFeed));
-  rssResults.flat().forEach(item => {
-    const combined = (item.title + " " + item.desc).toLowerCase();
-    if (NY_KEYWORDS.some(kw => combined.includes(kw))) {
-      results.push(item);
-    }
-  });
-
-  const seen = new Set();
-  return results
-    .sort((a,b) => new Date(b.pub) - new Date(a.pub))
-    .filter(item => {
-      if (!item.title || seen.has(item.title)) return false;
-      seen.add(item.title);
-      return true;
-    });
+  return results.sort((a,b) => new Date(b.pub) - new Date(a.pub));
 }
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
@@ -1207,9 +1188,10 @@ const STADIUM_HISTORY = [
   { name:"UBS Arena", team:"Islanders", years:"2021–present", capacity:"17,255", note:"State-of-the-art arena at Belmont Park. Finally gave the Islanders a modern home after years of uncertainty.", location:"Elmont, NY", emoji:"🏒" },
   { name:"MetLife Stadium", team:"Giants/Jets", years:"2010–present", capacity:"82,500", note:"Shared by Giants and Jets — only NFL stadium shared by two teams. Site of Super Bowl XLVIII (2014).", location:"East Rutherford, NJ", emoji:"🏈" },
   { name:"Giants Stadium", team:"Giants/Jets", years:"1976–2009", capacity:"80,242", note:"Replaced Shea and Yale Bowl as NY football home. Also hosted 1994 World Cup and 1996 Copa America.", location:"East Rutherford, NJ", emoji:"🏈" },
-  { name:"Polo Grounds", team:"Giants/Yankees/Mets", years:"1880s–1963", capacity:"55,000", note:"Original NY baseball cathedral. Home to Giants, early Yankees, and first Mets season. Demolished 1964.", location:"Upper Manhattan", emoji:"⚾" },
+  { name:"Shea Stadium", team:"Mets/Jets", years:"1964–2008", capacity:"55,601", note:"Home of Miracle Mets and 1986 champions. Jets called it home 1964-1983. Beatles played here 1965. Demolished 2009.", location:"Flushing, Queens", emoji:"⚾🏈" },
+  { name:"Polo Grounds", team:"Giants/Yankees/Mets/Jets", years:"1880s–1963", capacity:"55,000", note:"Original NY sports cathedral. Home to baseball Giants, early Yankees, first Mets season, and Jets in 1960. Demolished 1964.", location:"Upper Manhattan", emoji:"⚾🏈" },
   { name:"Barclays Center", team:"Nets/Liberty", years:"2012–present", capacity:"17,732", note:"Anchor of Brooklyn sports revival. Nets moved from NJ. Liberty share arena with Nets.", location:"Brooklyn, NY", emoji:"🏀" },
-  { name:"Red Bull Arena", team:"Red Bulls/Devils/Gotham", years:"2010–present", capacity:"25,000", note:"Soccer-specific stadium in Harrison NJ. Also home to NJ Devils practice facility nearby.", location:"Harrison, NJ", emoji:"⚽" },
+  { name:"Sports Illustrated Stadium", team:"Red Bulls/Gotham FC", years:"2010–present", capacity:"25,000", note:"Soccer-specific stadium in Harrison NJ. Home to Red Bulls and 2x NWSL champion Gotham FC. Formerly called Red Bull Arena.", location:"Harrison, NJ", emoji:"⚽" },
   { name:"Yankee Stadium (1923 Original) Facts", team:"Yankees", years:"1923", capacity:"N/A", note:"Cost $2.5 million to build. First game April 18 1923 — Babe Ruth hit a 3-run homer. Capacity expanded multiple times over 85 years.", location:"Bronx, NY", emoji:"⚾" },
 ];
 
@@ -1507,7 +1489,33 @@ function HistoryTab() {
 // ─── STATS TAB ────────────────────────────────────────────────────────────
 function StatsTab() {
   const [activeSection, setActiveSection] = useState("LEADERS");
+  const [activeLeague, setActiveLeague]   = useState("MLB");
+  const [liveLeaders, setLiveLeaders]     = useState([]);
+  const [loadingLeaders, setLoadingLeaders] = useState(false);
   const year = new Date().getFullYear();
+
+  const LEAGUE_MAP = {
+    MLB:  { sport:"baseball",   league:"mlb"  },
+    NFL:  { sport:"football",   league:"nfl"  },
+    NBA:  { sport:"basketball", league:"nba"  },
+    NHL:  { sport:"hockey",     league:"nhl"  },
+    WNBA: { sport:"basketball", league:"wnba" },
+  };
+
+  useEffect(() => {
+    if (activeSection !== "LEADERS") return;
+    setLoadingLeaders(true);
+    setLiveLeaders([]);
+    const lm = LEAGUE_MAP[activeLeague];
+    if (lm) {
+      fetchLeagueLeaders(lm.sport, lm.league).then(cats => {
+        setLiveLeaders(cats);
+        setLoadingLeaders(false);
+      });
+    } else {
+      setLoadingLeaders(false);
+    }
+  }, [activeSection, activeLeague]);
 
   const NY_TEAMS_DATA = {
     Yankees:   { color:"#003087", emoji:"⚾", site:"https://www.mlb.com/yankees",   ref:"https://www.baseball-reference.com/teams/NYY/",   league:"MLB" },
@@ -1649,32 +1657,96 @@ function StatsTab() {
       {/* LEADERS */}
       {activeSection === "LEADERS" && (
         <div>
-          {Object.entries(STATS_REFERENCE).map(([league, data]) => (
-            <div key={league} style={{marginBottom:24}}>
-              <div style={{...styles.statsLeagueHeader, borderLeft:`4px solid ${data.color}`, marginBottom:10}}>
-                <div>
-                  <span style={styles.statsLeagueTitle}>{data.emoji} {league}</span>
-                  <span style={{fontSize:9, color:"#888", marginLeft:10}}>NY: {data.nyTeams.join(" · ")}</span>
-                </div>
-                <a href={data.ref} target="_blank" rel="noopener noreferrer"
-                  style={{fontSize:9, color:"#c8201c", fontWeight:900, textDecoration:"none", marginLeft:"auto"}}>
-                  FULL STATS →
-                </a>
+          {/* League selector for live leaders */}
+          <div style={{...styles.filterGroup, flexWrap:"wrap", marginBottom:16}}>
+            {Object.keys(LEAGUE_MAP).map(l => (
+              <button key={l} onClick={() => setActiveLeague(l)}
+                style={{...styles.filterBtn, ...(activeLeague===l ? styles.filterBtnActive : {})}}>
+                {STATS_REFERENCE[l]?.emoji} {l}
+              </button>
+            ))}
+          </div>
+
+          {/* Live leaders from ESPN */}
+          {loadingLeaders ? (
+            <div style={styles.loading}>
+              <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
+              <p style={styles.loadingText}>LOADING {activeLeague} LEADERS...</p>
+            </div>
+          ) : liveLeaders.length > 0 ? (
+            <div>
+              <div style={styles.statsCatHeader}>
+                <span style={{color:"#4ade80", marginRight:8}}>●</span>
+                <span style={styles.statsCatName}>LIVE {activeLeague} LEADERS</span>
               </div>
-              <div style={styles.statsRefGrid}>
-                {data.categories.map((cat, i) => (
-                  <a key={i} href={cat.url} target="_blank" rel="noopener noreferrer" style={styles.statsRefCard}>
-                    <span style={{...styles.statsRefAbbrev, background: data.color}}>{cat.abbrev}</span>
-                    <div style={styles.statsRefBody}>
-                      <span style={styles.statsRefName}>{cat.name}</span>
-                      <span style={styles.statsRefDesc}>{cat.desc}</span>
+              <div style={styles.statsGrid}>
+                {liveLeaders.slice(0,6).map((cat, ci) => {
+                  const rows = (cat.leaders || []).slice(0,10);
+                  if (!rows.length) return null;
+                  return (
+                    <div key={ci} style={styles.statsCat}>
+                      <div style={styles.statsCatHeader}>
+                        <span style={styles.statsCatName}>{cat.displayName || cat.name}</span>
+                        <span style={styles.statsCatAbbrev}>{cat.abbreviation}</span>
+                      </div>
+                      {rows.map((l, i) => {
+                        const isNY = NY_TEAM_NAMES.some(t => (l.athlete?.team?.displayName || "").toLowerCase().includes(t));
+                        return (
+                          <a key={i}
+                            href={`https://www.google.com/search?q=${encodeURIComponent(`${l.athlete?.displayName} ${activeLeague} stats ${year}`)}`}
+                            target="_blank" rel="noopener noreferrer"
+                            style={{...styles.statsRow, ...(isNY ? styles.statsRowNY : {}), ...(i%2===0?{}:styles.statsRowAlt)}}>
+                            <span style={styles.statsRank}>{i+1}</span>
+                            {l.athlete?.headshot?.href && <img src={l.athlete.headshot.href} alt="" style={styles.statsHeadshot} onError={e=>e.target.style.display="none"} />}
+                            <div style={styles.statsPlayerInfo}>
+                              <span style={{...styles.statsName, ...(isNY?{color:"#e8e0d0",fontWeight:900}:{})}}>{l.athlete?.displayName}</span>
+                              <span style={styles.statsTeam}>{l.athlete?.team?.displayName || ""}</span>
+                            </div>
+                            <span style={{...styles.statsValue, ...(isNY?{color:"#c8201c"}:{})}}>{l.displayValue || l.value}</span>
+                            {isNY && <span style={styles.statsNYBadge}>NY</span>}
+                          </a>
+                        );
+                      })}
                     </div>
-                    <span style={styles.statsRefArrow}>→</span>
-                  </a>
-                ))}
+                  );
+                })}
               </div>
             </div>
-          ))}
+          ) : (
+            <div style={{padding:"10px 0 16px", borderBottom:"1px solid #2a2a2a", marginBottom:16}}>
+              <p style={{margin:0, fontSize:11, color:"#555"}}>Live leaders unavailable — ESPN doesn't expose this endpoint reliably. Use the reference links below.</p>
+            </div>
+          )}
+
+          {/* Reference cards */}
+          <div style={{marginTop:20}}>
+            {Object.entries(STATS_REFERENCE).filter(([l]) => l === activeLeague).map(([league, data]) => (
+              <div key={league}>
+                <div style={{...styles.statsLeagueHeader, borderLeft:`4px solid ${data.color}`, marginBottom:10}}>
+                  <div>
+                    <span style={styles.statsLeagueTitle}>{data.emoji} {league} DEEP DIVE</span>
+                    <span style={{fontSize:9, color:"#888", marginLeft:10}}>NY: {data.nyTeams.join(" · ")}</span>
+                  </div>
+                  <a href={data.ref} target="_blank" rel="noopener noreferrer"
+                    style={{fontSize:9, color:"#c8201c", fontWeight:900, textDecoration:"none", marginLeft:"auto"}}>
+                    FULL STATS →
+                  </a>
+                </div>
+                <div style={styles.statsRefGrid}>
+                  {data.categories.map((cat, i) => (
+                    <a key={i} href={cat.url} target="_blank" rel="noopener noreferrer" style={styles.statsRefCard}>
+                      <span style={{...styles.statsRefAbbrev, background: data.color}}>{cat.abbrev}</span>
+                      <div style={styles.statsRefBody}>
+                        <span style={styles.statsRefName}>{cat.name}</span>
+                        <span style={styles.statsRefDesc}>{cat.desc}</span>
+                      </div>
+                      <span style={styles.statsRefArrow}>→</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
