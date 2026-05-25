@@ -290,10 +290,13 @@ async function fetchNYSchedule() {
       const events = json.events || [];
       const today = new Date();
       today.setHours(0,0,0,0);
+      // For WNBA, look broader since season may not have started
       const upcoming = events.filter(e => {
         const d = new Date(e.date);
-        return d >= today;
-      }).slice(0, 6);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 1); // include yesterday
+        return d >= cutoff;
+      }).slice(0, 8);
       upcoming.forEach(event => {
         const comp = event.competitions?.[0];
         const home = comp?.competitors?.find(t => t.homeAway === "home");
@@ -517,21 +520,33 @@ const NY_TEAM_NAMES = ["yankees","mets","jets","giants","knicks","nets","rangers
 
 async function fetchLeagueLeaders(sport, league) {
   const year = new Date().getFullYear();
-  // Try multiple endpoints until one works
-  const endpoints = [
-    `https://site.web.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders?season=${year}&seasontype=2&limit=10`,
-    `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders?season=${year}`,
-    `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders`,
-  ];
-  for (const url of endpoints) {
-    try {
-      const res  = await fetch(url);
-      if (!res.ok) continue;
-      const json = await res.json();
-      const cats = json.categories || json.leaders || json.statistics?.categories || [];
-      if (cats.length && cats[0].leaders?.length) return cats;
-    } catch(e) {}
-  }
+  try {
+    // Try the site web API which sometimes returns full data
+    const url = `https://site.web.api.espn.com/apis/site/v2/sports/${sport}/${league}/leaders?season=${year}&seasontype=2&limit=10`;
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error("bad response");
+    const json = await res.json();
+    const cats = json.categories || json.leaders || [];
+
+    // ESPN sometimes returns $ref links — resolve them
+    const resolved = await Promise.all(cats.slice(0,6).map(async cat => {
+      const leaders = cat.leaders || [];
+      const resolvedLeaders = await Promise.all(leaders.slice(0,10).map(async l => {
+        // If athlete is a $ref, fetch it
+        if (l.athlete?.$ref) {
+          try {
+            const ar = await fetch(l.athlete.$ref);
+            const aj = await ar.json();
+            return { ...l, athlete: aj };
+          } catch { return l; }
+        }
+        return l;
+      }));
+      return { ...cat, leaders: resolvedLeaders };
+    }));
+
+    if (resolved.length && resolved[0].leaders?.length) return resolved;
+  } catch(e) {}
   return [];
 }
 
@@ -804,31 +819,7 @@ export default function NYSportsDaily() {
 
         {/* ──── NEWS TAB ──── */}
         {activeTab === "NEWS" && (
-          <div>
-            {loadingNews ? (
-              <div style={styles.loading}>
-                <div style={styles.loadingDots}>
-                  {[0,1,2].map(i => <span key={i} style={{...styles.dot, animationDelay:`${i*0.2}s`}} />)}
-                </div>
-                <p style={styles.loadingText}>LOADING HEADLINES...</p>
-              </div>
-            ) : news.length === 0 ? (
-              <div style={styles.empty}>
-                <span style={styles.emptyIcon}>📰</span>
-                <p style={styles.emptyText}>NO STORIES AVAILABLE</p>
-              </div>
-            ) : (
-              <div style={styles.newsGrid}>
-                {news.slice(0,4).map((item,i) => (
-                  <NewsCardFeatured key={i} item={item} />
-                ))}
-                <div style={styles.newsDivider}><span style={styles.newsDividerText}>MORE STORIES</span></div>
-                {news.slice(4,30).map((item,i) => (
-                  <NewsCardSmall key={i} item={item} index={i} />
-                ))}
-              </div>
-            )}
-          </div>
+          <NewsTab news={news} loading={loadingNews} />
         )}
         {/* ──── TV TAB ──── */}
         {activeTab === "TV" && (
@@ -1180,6 +1171,64 @@ function NewsCardSmall({ item, index }) {
       </div>
       <p style={styles.newsSmallTitle}>{item.title}</p>
     </a>
+  );
+}
+
+function NewsTab({ news, loading }) {
+  const [filter, setFilter] = useState("NY");
+  const [sport,  setSport]  = useState("ALL");
+
+  const NY_KEYWORDS_CHECK = ["yankees","mets","knicks","nets","rangers","islanders","devils","liberty","nycfc","red bulls","gotham","new york","brooklyn","bronx","queens"];
+  const SPORTS = ["ALL","MLB","NFL","NBA","NHL","WNBA","MLS"];
+
+  const filtered = news.filter(item => {
+    const combined = (item.title + " " + (item.desc||"") + " " + (item.source||"")).toLowerCase();
+    const isNY = NY_KEYWORDS_CHECK.some(kw => combined.includes(kw));
+    if (filter === "NY" && !isNY) return false;
+    if (sport !== "ALL" && !combined.includes(sport.toLowerCase())) return false;
+    return true;
+  });
+
+  return (
+    <div>
+      <div style={{display:"flex", gap:8, flexWrap:"wrap", marginBottom:16, alignItems:"center"}}>
+        {/* NY/ALL toggle */}
+        <div style={{display:"flex", gap:4, marginRight:8}}>
+          {["NY","ALL"].map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              style={{...styles.filterBtn, ...(filter===f ? styles.filterBtnActive : {})}}>
+              {f === "NY" ? "🗽 NY ONLY" : "🌐 ALL SPORTS"}
+            </button>
+          ))}
+        </div>
+        {/* Sport filter */}
+        {SPORTS.map(s => (
+          <button key={s} onClick={() => setSport(s)}
+            style={{...styles.filterBtn, ...(sport===s ? styles.filterBtnActive : {}), fontSize:9}}>
+            {s}
+          </button>
+        ))}
+        <span style={{fontSize:9, color:"#555", marginLeft:"auto"}}>{filtered.length} STORIES</span>
+      </div>
+
+      {loading ? (
+        <div style={styles.loading}>
+          <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
+          <p style={styles.loadingText}>LOADING HEADLINES...</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div style={styles.empty}>
+          <span style={styles.emptyIcon}>📰</span>
+          <p style={styles.emptyText}>NO STORIES — TRY "ALL SPORTS" FILTER</p>
+        </div>
+      ) : (
+        <div style={styles.newsGrid}>
+          {filtered.slice(0,4).map((item,i) => <NewsCardFeatured key={i} item={item} />)}
+          <div style={styles.newsDivider}><span style={styles.newsDividerText}>MORE STORIES</span></div>
+          {filtered.slice(4,60).map((item,i) => <NewsCardSmall key={i} item={item} index={i} />)}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -2032,7 +2081,8 @@ function StatsTab() {
       { year:2021, pick:"#2",  name:"Zach Wilson",     note:"BYU product who could not translate college success to the NFL. Released 2023." },
       { year:2022, pick:"#4",  name:"Ahmad Gardner",   note:"Sauce — immediate Pro Bowler and one of the best CBs in the game" },
       { year:2023, pick:"#13", name:"Will McDonald IV", note:"Pass rusher developing in the Jets defense" },
-      { year:2026, pick:"#7",  name:"Armand Membou",   note:"Missouri OT — Jets address the offensive line in 2026 draft" },
+      { year:2025, pick:"#13", name:"Armand Membou",   note:"Missouri OT — Jets address the offensive line in 2025 draft" },
+      { year:2026, pick:"#7",  name:"David Bailey",    note:"2026 first round pick — Jets continue their rebuild under new regime" },
     ],
     Giants: [
       { year:1958, pick:"#1",  name:"Lee Grosscup",    note:"QB bust — but the Giants were a dynasty without him" },
