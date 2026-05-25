@@ -554,11 +554,14 @@ async function fetchNYNews() {
   const results = [];
   const seen = new Set();
 
-  // ESPN team-specific news — guaranteed NY content
+  // Team-specific ESPN news — always NY relevant, no keyword filtering needed
   const allTeams = [...NY_TEAM_NEWS, ...NY_EXTRA_NEWS];
   await Promise.all(allTeams.map(async ({ sport, league, id, name }) => {
     try {
-      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=8`);
+      const res  = await fetch(
+        `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=8`,
+        { signal: AbortSignal.timeout(5000) }
+      );
       const json = await res.json();
       (json.articles || []).forEach(a => {
         const title = a.headline || a.title || "";
@@ -571,39 +574,38 @@ async function fetchNYNews() {
           pub:    a.published || a.lastModified || "",
           source: `ESPN · ${name}`,
           team:   name,
+          isNY:   true,
         });
       });
     } catch(e) {}
   }));
 
-  // ESPN league-level news filtered by NY keywords
+  // League-level ESPN news — store ALL articles, let NewsTab filter
   await Promise.all(NY_NEWS_ENDPOINTS.map(async ({ sport, league, name }) => {
     try {
-      const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=15`);
+      const res  = await fetch(
+        `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=20`,
+        { signal: AbortSignal.timeout(5000) }
+      );
       const json = await res.json();
       (json.articles || []).forEach(a => {
         const title = a.headline || a.title || "";
-        const desc  = a.description || "";
         if (!title || seen.has(title)) return;
-        const combined = (title + " " + desc).toLowerCase();
-        if (!NY_KEYWORDS.some(kw => combined.includes(kw))) return;
+        const desc = a.description || "";
         seen.add(title);
-        results.push({ title, link: a.links?.web?.href || "#", desc, pub: a.published || "", source: `ESPN · ${name}` });
+        const combined = (title + " " + desc).toLowerCase();
+        const isNY = NY_KEYWORDS.some(kw => combined.includes(kw));
+        results.push({
+          title,
+          link:   a.links?.web?.href || "#",
+          desc,
+          pub:    a.published || a.lastModified || "",
+          source: `ESPN · ${name}`,
+          isNY,
+        });
       });
     } catch(e) {}
   }));
-
-  // Try free RSS feeds — filter for NY teams
-  try {
-    const rssResults = await Promise.all(FREE_RSS_FEEDS.map(tryRSSFeed));
-    rssResults.flat().forEach(item => {
-      const combined = (item.title + " " + item.desc).toLowerCase();
-      if (NY_KEYWORDS.some(kw => combined.includes(kw)) && !seen.has(item.title)) {
-        seen.add(item.title);
-        results.push(item);
-      }
-    });
-  } catch(e) {}
 
   return results.sort((a,b) => new Date(b.pub) - new Date(a.pub));
 }
@@ -1181,11 +1183,24 @@ function NewsTab({ news, loading }) {
   const NY_KEYWORDS_CHECK = ["yankees","mets","knicks","nets","rangers","islanders","devils","liberty","nycfc","red bulls","gotham","new york","brooklyn","bronx","queens"];
   const SPORTS = ["ALL","MLB","NFL","NBA","NHL","WNBA","MLS"];
 
+  const SPORT_KEYWORDS = {
+    MLB:  ["mlb","baseball","yankees","mets","cubs","dodgers","red sox"],
+    NFL:  ["nfl","football","jets","giants","touchdown","quarterback"],
+    NBA:  ["nba","basketball","knicks","nets","lakers","celtics"],
+    NHL:  ["nhl","hockey","rangers","islanders","devils","stanley"],
+    WNBA: ["wnba","liberty","women's basketball"],
+    MLS:  ["mls","soccer","nycfc","red bulls","gotham"],
+  };
+
   const filtered = news.filter(item => {
     const combined = (item.title + " " + (item.desc||"") + " " + (item.source||"")).toLowerCase();
-    const isNY = NY_KEYWORDS_CHECK.some(kw => combined.includes(kw));
+    // Use pre-computed isNY flag OR check keywords
+    const isNY = item.isNY || NY_KEYWORDS_CHECK.some(kw => combined.includes(kw));
     if (filter === "NY" && !isNY) return false;
-    if (sport !== "ALL" && !combined.includes(sport.toLowerCase())) return false;
+    if (sport !== "ALL") {
+      const sportKws = SPORT_KEYWORDS[sport] || [];
+      if (!sportKws.some(kw => combined.includes(kw))) return false;
+    }
     return true;
   });
 
