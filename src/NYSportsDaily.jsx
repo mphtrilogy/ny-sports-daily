@@ -95,7 +95,7 @@ const NY_TEAM_NEWS = [
   { sport:"basketball", league:"wnba", id:"20",    name:"Liberty" },
 ];
 
-// Additional NY team ESPN news endpoints
+// Additional NY Extra news endpoints
 const NY_EXTRA_NEWS = [
   { sport:"football",   league:"nfl",  id:"20",    name:"Jets"      },
   { sport:"football",   league:"nfl",  id:"19",    name:"Giants"    },
@@ -103,6 +103,30 @@ const NY_EXTRA_NEWS = [
   { sport:"soccer",     league:"usa.1",id:"18479", name:"NYCFC"     },
   { sport:"soccer",     league:"nwsl", id:"1163",  name:"Gotham FC" },
 ];
+
+// Free RSS feeds via rss2json (best chance of working in browser)
+const FREE_RSS_FEEDS = [
+  { url:"https://api.foxsports.com/v2/content/optimized-rss-feed?legacy=true&hl=en-US&sourceId=5add9f40-5bfc-4f3c-ab9c-88e81437af3e", name:"Fox Sports" },
+  { url:"https://www.espn.com/espn/rss/nfl/news", name:"ESPN NFL" },
+  { url:"https://www.espn.com/espn/rss/mlb/news", name:"ESPN MLB" },
+  { url:"https://www.espn.com/espn/rss/nba/news", name:"ESPN NBA" },
+  { url:"https://www.espn.com/espn/rss/nhl/news", name:"ESPN NHL" },
+];
+
+async function tryRSSFeed(feed) {
+  try {
+    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=10`);
+    const json = await res.json();
+    if (json.status !== "ok" || !json.items?.length) return [];
+    return json.items.map(item => ({
+      title:  item.title?.trim() || "",
+      link:   item.link || item.guid || "#",
+      desc:   item.description?.replace(/<[^>]*>/g,"").trim().slice(0,200) || "",
+      pub:    item.pubDate || "",
+      source: feed.name,
+    })).filter(i => i.title);
+  } catch { return []; }
+}
 
 const NY_KEYWORDS = [
   "new york yankees","new york mets","new york jets","new york giants",
@@ -264,10 +288,12 @@ async function fetchNYSchedule() {
       const res = await fetch(url);
       const json = await res.json();
       const events = json.events || [];
+      const today = new Date();
+      today.setHours(0,0,0,0);
       const upcoming = events.filter(e => {
         const d = new Date(e.date);
-        return d >= new Date();
-      }).slice(0, 5);
+        return d >= today;
+      }).slice(0, 6);
       upcoming.forEach(event => {
         const comp = event.competitions?.[0];
         const home = comp?.competitors?.find(t => t.homeAway === "home");
@@ -551,6 +577,18 @@ async function fetchNYNews() {
       });
     } catch(e) {}
   }));
+
+  // Try free RSS feeds — filter for NY teams
+  try {
+    const rssResults = await Promise.all(FREE_RSS_FEEDS.map(tryRSSFeed));
+    rssResults.flat().forEach(item => {
+      const combined = (item.title + " " + item.desc).toLowerCase();
+      if (NY_KEYWORDS.some(kw => combined.includes(kw)) && !seen.has(item.title)) {
+        seen.add(item.title);
+        results.push(item);
+      }
+    });
+  } catch(e) {}
 
   return results.sort((a,b) => new Date(b.pub) - new Date(a.pub));
 }
@@ -1699,36 +1737,36 @@ const HISTORY_LISTS = {
       { rank:17, name:"1998 Yankees — 125 Wins",       value:"Yankees",   years:"Greatest team ever — 114-48 regular season" },
       { rank:18, name:"Babe Ruth Called Shot",         value:"Yankees",   years:"1932 World Series — pointed to center, delivered" },
       { rank:19, name:"Walt Frazier's Game 7",         value:"Knicks",    years:"36 pts, 19 ast — greatest individual Finals game" },
-      { rank:20, name:"The Pine Tar Game",             value:"Yankees",   years:"1983 — Brett's homer nullified, chaos at the Stadium" },
-      { rank:21, name:"1977 Yankees World Series",     value:"Yankees",   years:"Reggie's night — Mr. October born" },
-      { rank:22, name:"Giants Super Bowl XXI",         value:"Giants",    years:"Phil Simms 22/25 — first Super Bowl title" },
-      { rank:23, name:"1970 Knicks Championship",      value:"Knicks",    years:"First title — Reed and Frazier lead the way" },
-      { rank:24, name:"Dwight Gooden's 1985 Season",  value:"Mets",      years:"24-4, 1.53 ERA at age 20 — virtually unhittable" },
-      { rank:25, name:"Messier Signs with Rangers",    value:"Rangers",   years:"1991 — the move that changed everything" },
-      { rank:26, name:"David Wells Perfect Game",      value:"Yankees",   years:"May 17, 1998 — all 27 Twins retired" },
-      { rank:27, name:"1969 Jets Super Bowl III",      value:"Jets",      years:"16-7 win — the upset that validated the AFL" },
-      { rank:28, name:"1973 Knicks Championship",      value:"Knicks",    years:"Red Holzman's masterpiece — Monroe and Frazier" },
-      { rank:29, name:"LT's 22 Sacks in 1986",        value:"Giants",    years:"NFL MVP — changed how the game is played" },
-      { rank:30, name:"Mets 1986 NLCS Game 6",        value:"Mets",      years:"Lenny Dykstra walk-off — Mets survive" },
-      { rank:31, name:"Giants Super Bowl XXV",         value:"Giants",    years:"20-19 over Bills — Scott Norwood wide right" },
-      { rank:32, name:"Robin Ventura Grand Slam Single", value:"Mets",   years:"1999 NLCS — mobbed before reaching 2nd base" },
-      { rank:33, name:"Bossy 50 Goals in 50 Games",   value:"Islanders", years:"1981 — matched Rocket Richard's legendary mark" },
-      { rank:34, name:"Jeter's Flip Play",             value:"Yankees",   years:"2001 ALDS — impossible play saved the series" },
-      { rank:35, name:"Seaver Strikes Out 19",         value:"Mets",      years:"April 22, 1970 — 10 consecutive to end the game" },
-      { rank:36, name:"Pete Alonso — 53 HR Rookie",   value:"Mets",      years:"2019 — broke the rookie record" },
-      { rank:37, name:"Jeter's Last Game",             value:"Yankees",   years:"Walk-off single in the final AB of his career" },
-      { rank:38, name:"1994 Yankees Strike",           value:"Yankees",   years:"Best record in baseball — season cancelled. Still haunts." },
-      { rank:39, name:"Jets' 2009-10 AFC Run",        value:"Jets",      years:"Rex Ryan's Jets reached back-to-back AFC Championship Games" },
-      { rank:40, name:"Knicks 1999 — 8 Seed Finals",  value:"Knicks",    years:"Greatest underdog run in NBA Finals history" },
-      { rank:41, name:"LT Sacks Theismann",            value:"Giants",    years:"Nov 18, 1985 — changed football forever" },
-      { rank:42, name:"Mazeroski HR Breaks Yankee Hearts", value:"Yankees", years:"1960 World Series — Yankees outscored 55-27, still lost" },
-      { rank:43, name:"David Cone Perfect Game",       value:"Yankees",   years:"July 18, 1999 — Yogi Berra Day. Don Larsen in attendance." },
-      { rank:44, name:"Tug McGraw — Ya Gotta Believe", value:"Mets",     years:"1973 pennant race — a rallying cry for the ages" },
-      { rank:45, name:"Gastineau 22 Sacks",            value:"Jets",      years:"1984 NFL record — so dominant they changed the rules" },
-      { rank:46, name:"NY Liberty Win 2025 NWSL Title", value:"Liberty", years:"WNBA champions! Defending their 2023 crown" },
-      { rank:47, name:"Islanders Sweep Oilers 1983",   value:"Islanders", years:"Swept Gretzky's powerhouse — their 4th consecutive Cup" },
-      { rank:48, name:"Devils Win 3 Stanley Cups",      value:"Devils",    years:"1995, 2000, 2003 — NJ Devils became a true dynasty" },
-      { rank:49, name:"Mr. November — Jeter's WS HR",  value:"Yankees",   years:"Nov 1, 2001 — walk-off into the midnight air" },
+      { rank:20, name:"Devils Win 1995 Stanley Cup",    value:"Devils",    years:"Swept Detroit Red Wings — Brodeur and Stevens usher in NJ dynasty" },
+      { rank:21, name:"1977 Yankees World Series",      value:"Yankees",   years:"Reggie's night — Mr. October born" },
+      { rank:22, name:"Giants Super Bowl XXI",          value:"Giants",    years:"Phil Simms 22/25 — first Super Bowl title" },
+      { rank:23, name:"1970 Knicks Championship",       value:"Knicks",    years:"First title — Reed and Frazier lead the way" },
+      { rank:24, name:"Dwight Gooden's 1985 Season",   value:"Mets",      years:"24-4, 1.53 ERA at age 20 — virtually unhittable" },
+      { rank:25, name:"Devils Win 2000 Stanley Cup",    value:"Devils",    years:"Scott Stevens destroys Eric Lindros — second Cup cements the dynasty" },
+      { rank:26, name:"David Wells Perfect Game",       value:"Yankees",   years:"May 17, 1998 — all 27 Twins retired" },
+      { rank:27, name:"1969 Jets Super Bowl III",       value:"Jets",      years:"16-7 win — the upset that validated the AFL" },
+      { rank:28, name:"1973 Knicks Championship",       value:"Knicks",    years:"Red Holzman's masterpiece — Monroe and Frazier" },
+      { rank:29, name:"LT's 22 Sacks in 1986",         value:"Giants",    years:"NFL MVP — changed how the game is played" },
+      { rank:30, name:"Mets 1986 NLCS Game 6",         value:"Mets",      years:"Lenny Dykstra walk-off — Mets survive" },
+      { rank:31, name:"Giants Super Bowl XXV",          value:"Giants",    years:"20-19 over Bills — Scott Norwood wide right" },
+      { rank:32, name:"Robin Ventura Grand Slam Single",value:"Mets",      years:"1999 NLCS — mobbed before reaching 2nd base" },
+      { rank:33, name:"Bossy 50 Goals in 50 Games",    value:"Islanders", years:"1981 — matched Rocket Richard's legendary mark" },
+      { rank:34, name:"Jeter's Flip Play",              value:"Yankees",   years:"2001 ALDS — impossible play saved the series" },
+      { rank:35, name:"Devils Win 2003 Stanley Cup",    value:"Devils",    years:"Three Cups in nine years — Pat Burns coaches a dynasty to its peak" },
+      { rank:36, name:"Seaver Strikes Out 19",          value:"Mets",      years:"April 22, 1970 — 10 consecutive to end the game" },
+      { rank:37, name:"Pete Alonso — 53 HR Rookie",    value:"Mets",      years:"2019 — broke the MLB rookie home run record" },
+      { rank:38, name:"Jeter's Last Game",              value:"Yankees",   years:"Walk-off single in the final AB of his career" },
+      { rank:39, name:"1994 Yankees Strike",            value:"Yankees",   years:"Best record in baseball — season cancelled. Still haunts." },
+      { rank:40, name:"Jets' 2009-10 AFC Run",          value:"Jets",      years:"Rex Ryan's Jets reached back-to-back AFC Championship Games" },
+      { rank:41, name:"Knicks 1999 — 8 Seed Finals",   value:"Knicks",    years:"Greatest underdog run in NBA Finals history" },
+      { rank:42, name:"LT Sacks Theismann",             value:"Giants",    years:"Nov 18, 1985 — changed football forever" },
+      { rank:43, name:"Mazeroski HR Breaks Yankee Hearts",value:"Yankees", years:"1960 World Series — outscored 55-27, still lost" },
+      { rank:44, name:"David Cone Perfect Game",        value:"Yankees",   years:"July 18, 1999 — Yogi Berra Day. Don Larsen in attendance." },
+      { rank:45, name:"Tug McGraw — Ya Gotta Believe",  value:"Mets",     years:"1973 pennant race — a rallying cry forever" },
+      { rank:46, name:"Gastineau 22 Sacks",             value:"Jets",      years:"1984 NFL record — so dominant they changed the rules" },
+      { rank:47, name:"NY Liberty Win 2025 Title",      value:"Liberty",   years:"WNBA champions — defending their 2023 crown" },
+      { rank:48, name:"Islanders Sweep Oilers 1983",    value:"Islanders", years:"Swept Gretzky's powerhouse — 4th consecutive Cup" },
+      { rank:49, name:"Mr. November — Jeter's WS HR",  value:"Yankees",   years:"Nov 1, 2001 — walk-off into the midnight Bronx air" },
       { rank:50, name:"NYCFC 2021 MLS Cup",             value:"NYCFC",     years:"First MLS championship for any New York area team" },
     ]},
   ],
@@ -1993,8 +2031,8 @@ function StatsTab() {
       { year:2018, pick:"#3",  name:"Sam Darnold",     note:"Never overcame the supporting cast — traded to Carolina 2021" },
       { year:2021, pick:"#2",  name:"Zach Wilson",     note:"BYU product who could not translate college success to the NFL. Released 2023." },
       { year:2022, pick:"#4",  name:"Ahmad Gardner",   note:"Sauce — immediate Pro Bowler and one of the best CBs in the game" },
-      { year:2023, pick:"#13", name:"Will McDonald IV",note:"Pass rusher finding his role in the Jets defense" },
-      { year:2026, pick:"#2",  name:"Abdul Carter",    note:"Penn State LB — most electrifying Jets pick since Namath. Generational talent." },
+      { year:2023, pick:"#13", name:"Will McDonald IV", note:"Pass rusher developing in the Jets defense" },
+      { year:2026, pick:"#7",  name:"Armand Membou",   note:"Missouri OT — Jets address the offensive line in 2026 draft" },
     ],
     Giants: [
       { year:1958, pick:"#1",  name:"Lee Grosscup",    note:"QB bust — but the Giants were a dynasty without him" },
@@ -2005,10 +2043,10 @@ function StatsTab() {
       { year:1992, pick:"#1",  name:"Derek Brown",      note:"TE bust — career ended early due to injuries" },
       { year:2000, pick:"#1",  name:"Ron Dayne",        note:"Heisman Trophy winner — never replicated college success in the NFL" },
       { year:2004, pick:"#4",  name:"Eli Manning",      note:"Traded from San Diego for Philip Rivers. Won 2 Super Bowls. Worth every bit of it." },
-      { year:2018, pick:"#2",  name:"Saquon Barkley",   note:"Most electrifying offensive talent in Giants history in years — lost to the Eagles as FA" },
-      { year:2019, pick:"#6",  name:"Daniel Jones",     note:"Danielthrowed — showed promise but never reached franchise QB level" },
-      { year:2022, pick:"#5",  name:"Kayvon Thibodeaux",note:"Oregon DE — still developing into the pass rusher Giants hoped for" },
-      { year:2023, pick:"#25", name:"John Michael Schmitz",note:"C — offensive line cornerstone of the rebuild" },
+      { year:2018, pick:"#2",  name:"Saquon Barkley",   note:"Most electrifying offensive talent in years — lost to Eagles as a free agent" },
+      { year:2019, pick:"#6",  name:"Daniel Jones",     note:"Showed promise but never reached franchise QB level" },
+      { year:2022, pick:"#5",  name:"Kayvon Thibodeaux",note:"Oregon DE — developing into the pass rusher Giants hoped for" },
+      { year:2026, pick:"#3",  name:"Abdul Carter",     note:"Penn State LB — most electrifying Giants pick in years. Generational pass rusher." },
     ],
     Knicks: [
       { year:1985, pick:"#1",  name:"Patrick Ewing",    note:"First NBA lottery pick ever. Led the Knicks for 15 years. Should have won at least one title." },
@@ -2280,21 +2318,47 @@ function StatsTab() {
       {activeSection === "DRAFT" && (
         <div>
           <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa"}}>Notable draft picks — the hits, the misses, and the legends.</p>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>Notable draft picks — the hits, the misses, and the legends. Click any name to search, or view full draft history.</p>
           </div>
+
+          {/* Draft reference links */}
+          <div style={{display:"flex", gap:8, flexWrap:"wrap", marginBottom:16, paddingBottom:12, borderBottom:"1px solid #2a2a2a"}}>
+            {[
+              { label:"MLB Draft History", url:"https://www.baseball-reference.com/draft/" },
+              { label:"NFL Draft History", url:"https://www.pro-football-reference.com/draft/" },
+              { label:"NBA Draft History", url:"https://www.basketball-reference.com/draft/" },
+              { label:"NHL Draft History", url:"https://www.hockey-reference.com/draft/" },
+            ].map((l, i) => (
+              <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
+                style={{fontSize:10, fontWeight:900, color:"#c8201c", textDecoration:"none", padding:"4px 10px", border:"1px solid #333", background:"#161616"}}>
+                {l.label} →
+              </a>
+            ))}
+          </div>
+
           {Object.entries(DRAFT_DATA).map(([team, picks]) => (
             <div key={team} style={{marginBottom:16}}>
-              <div style={styles.stdDivisionHeader}>{team.toUpperCase()}</div>
+              <div style={{...styles.stdDivisionHeader, display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+                <span>{team.toUpperCase()}</span>
+                <a href={`https://www.google.com/search?q=${encodeURIComponent(team+" draft history picks all years")}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{fontSize:9, color:"#c8201c", textDecoration:"none", fontWeight:900}}>
+                  FULL HISTORY →
+                </a>
+              </div>
               {picks.map((p, i) => (
-                <div key={i} style={{...styles.histRow, ...(i%2===0?{}:styles.histRowAlt)}}>
-                  <span style={{...styles.histRank, color:"#c8201c", fontSize:11, fontWeight:900}}>{p.year}</span>
-                  <span style={{fontSize:10, color:"#c8201c", fontWeight:900, minWidth:40}}>{p.pick}</span>
+                <a key={i}
+                  href={`https://www.google.com/search?q=${encodeURIComponent(`${p.name} ${team} draft ${p.year} NFL NBA MLB NHL`)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{...styles.histRow, ...(i%2===0?{}:styles.histRowAlt), textDecoration:"none", display:"flex", alignItems:"center", gap:10}}>
+                  <span style={{...styles.histRank, color:"#c8201c", fontSize:11, fontWeight:900, minWidth:36}}>{p.year}</span>
+                  <span style={{fontSize:10, color:"#888", fontWeight:700, minWidth:30}}>{p.pick}</span>
                   <div style={styles.histInfo}>
                     <span style={styles.histName}>{p.name}</span>
                     <span style={styles.histYears}>{p.note}</span>
                   </div>
-                  <SearchLinks query={`${p.name} ${team} draft ${p.year}`} />
-                </div>
+                  <span style={{fontSize:10, color:"#c8201c", flexShrink:0}}>→</span>
+                </a>
               ))}
             </div>
           ))}
@@ -2615,7 +2679,7 @@ function ShopTab() {
 
       {/* Support */}
       <div style={styles.stdDivisionHeader}>☕ SUPPORT NY SPORTS DAILY</div>
-      <div style={{display:"flex", gap:12, flexWrap:"wrap", marginBottom:20, padding:"0 0 16px", borderBottom:"1px solid #1a1a1a"}}>
+      <div style={{display:"flex", gap:12, flexWrap:"wrap", marginBottom:20, paddingBottom:16, borderBottom:"1px solid #1a1a1a"}}>
         <a href="https://buymeacoffee.com/mhughes65v" target="_blank" rel="noopener noreferrer"
           style={{...styles.shopRow, flex:1, minWidth:200, background:"#1a1a1a", border:"1px solid #2a2a2a", textDecoration:"none"}}>
           <span style={styles.shopEmoji}>☕</span>
@@ -2624,6 +2688,15 @@ function ShopTab() {
             <span style={styles.shopDesc}>Keep nysportsdaily.com free — a coffee goes a long way!</span>
           </div>
           <span style={styles.shopBtn}>Support →</span>
+        </a>
+        <a href="https://www.amazon.com?tag=nysportsdaily-20" target="_blank" rel="noopener noreferrer"
+          style={{...styles.shopRow, flex:1, minWidth:200, background:"#1a1a1a", border:"1px solid #2a2a2a", textDecoration:"none"}}>
+          <span style={styles.shopEmoji}>🛒</span>
+          <div style={styles.shopInfo}>
+            <span style={styles.shopTitle}>Shop Amazon</span>
+            <span style={styles.shopDesc}>Start any Amazon shopping here — we earn a small commission on anything you buy at no extra cost to you!</span>
+          </div>
+          <span style={styles.shopBtn}>Shop →</span>
         </a>
       </div>
 
