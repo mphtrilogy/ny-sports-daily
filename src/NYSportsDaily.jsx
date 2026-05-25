@@ -83,16 +83,50 @@ const NY_NEWS_ENDPOINTS = [
 
 // Also fetch team-specific news for NY teams
 const NY_TEAM_NEWS = [
-  { sport:"baseball",   league:"mlb",        id:"10",    name:"Yankees" },
-  { sport:"baseball",   league:"mlb",        id:"21",    name:"Mets"    },
-  { sport:"basketball", league:"nba",        id:"18",    name:"Knicks"  },
-  { sport:"basketball", league:"nba",        id:"17",    name:"Nets"    },
-  { sport:"hockey",     league:"nhl",        id:"13",    name:"Rangers" },
-  { sport:"hockey",     league:"nhl",        id:"22",    name:"Islanders"},
-  { sport:"basketball", league:"wnba",       id:"20",    name:"Liberty" },
+  { sport:"baseball",   league:"mlb",  id:"10",    name:"Yankees" },
+  { sport:"baseball",   league:"mlb",  id:"21",    name:"Mets"    },
+  { sport:"football",   league:"nfl",  id:"20",    name:"Jets"    },
+  { sport:"football",   league:"nfl",  id:"19",    name:"Giants"  },
+  { sport:"basketball", league:"nba",  id:"18",    name:"Knicks"  },
+  { sport:"basketball", league:"nba",  id:"17",    name:"Nets"    },
+  { sport:"hockey",     league:"nhl",  id:"13",    name:"Rangers" },
+  { sport:"hockey",     league:"nhl",  id:"22",    name:"Islanders"},
+  { sport:"hockey",     league:"nhl",  id:"1",     name:"Devils"  },
+  { sport:"basketball", league:"wnba", id:"20",    name:"Liberty" },
 ];
 
-const NY_KEYWORDS = ["jets","giants","yankees","mets","knicks","nets","rangers","islanders","devils","gotham","nycfc","red bulls","new york","liberty"];
+// Free RSS feeds via rss2json
+const NY_RSS_FEEDS = [
+  { url:"https://www.cbssports.com/rss/headlines/nfl/", name:"CBS NFL" },
+  { url:"https://www.cbssports.com/rss/headlines/nba/", name:"CBS NBA" },
+  { url:"https://www.cbssports.com/rss/headlines/mlb/", name:"CBS MLB" },
+  { url:"https://www.cbssports.com/rss/headlines/nhl/", name:"CBS NHL" },
+];
+
+const RSS2JSON_KEY = ""; // free tier, no key needed
+async function fetchRSSFeed(feed) {
+  try {
+    const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=15`);
+    const json = await res.json();
+    if (json.status !== "ok") return [];
+    return (json.items || []).map(item => ({
+      title:  item.title?.trim() || "",
+      link:   item.link || "",
+      desc:   item.description?.replace(/<[^>]*>/g,"").trim().slice(0,180) || "",
+      pub:    item.pubDate || "",
+      source: feed.name,
+    })).filter(i => i.title && i.link);
+  } catch { return []; }
+}
+
+const NY_KEYWORDS = [
+  "new york yankees","new york mets","new york jets","new york giants",
+  "new york knicks","brooklyn nets","new york rangers","new york islanders",
+  "new jersey devils","new york liberty","nycfc","red bulls","gotham fc",
+  "yankees","mets","knicks","nets","islanders","liberty",
+  // Use full names only for teams with common words in other team names
+  // Avoid: "giants" (SF Giants), "rangers" (Texas Rangers), "jets" (generic)
+];
 
 // ─── DATE HELPERS ──────────────────────────────────────────────────────────
 function getDateLabel(d) {
@@ -369,7 +403,7 @@ async function fetchLeagueLeaders(sport, league) {
 async function fetchNYNews() {
   const results = [];
 
-  // League-level news filtered by NY keywords
+  // ESPN league-level news filtered by NY keywords
   await Promise.all(NY_NEWS_ENDPOINTS.map(async ({ sport, league, name }) => {
     try {
       const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=20`);
@@ -384,7 +418,7 @@ async function fetchNYNews() {
     } catch(e) {}
   }));
 
-  // Team-specific news (always NY relevant)
+  // ESPN team-specific news (always NY relevant)
   await Promise.all(NY_TEAM_NEWS.map(async ({ sport, league, id, name }) => {
     try {
       const res  = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=5`);
@@ -396,6 +430,15 @@ async function fetchNYNews() {
       });
     } catch(e) {}
   }));
+
+  // CBS Sports RSS feeds filtered for NY teams
+  const rssResults = await Promise.all(NY_RSS_FEEDS.map(fetchRSSFeed));
+  rssResults.flat().forEach(item => {
+    const combined = (item.title + " " + item.desc).toLowerCase();
+    if (NY_KEYWORDS.some(kw => combined.includes(kw))) {
+      results.push(item);
+    }
+  });
 
   const seen = new Set();
   return results
