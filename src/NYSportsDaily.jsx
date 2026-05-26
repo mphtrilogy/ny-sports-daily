@@ -744,7 +744,7 @@ export default function NYSportsDaily() {
 
         {/* TAB NAV */}
         <div style={styles.tabNav}>
-          {["SCORES","TV","STANDINGS","SCHEDULE","STATS","HISTORY","NEWS","TRIVIA","XWORD","SPIN","SHOP"].map(tab => (
+          {["SCORES","TV","STANDINGS","SCHEDULE","STATS","HISTORY","NEWS","RADIO","TRIVIA","XWORD","SPIN","SHOP"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {})}}>
               {tab}
@@ -805,7 +805,7 @@ export default function NYSportsDaily() {
                 <div style={styles.newsSidebarHeader}>📰 NY SPORTS HEADLINES</div>
                 {loadingNews ? (
                   <p style={styles.newsSidebarLoading}>LOADING...</p>
-                ) : news.slice(0, 8).map((item, i) => (
+                ) : news.filter(n => n.isNY).slice(0, 10).map((item, i) => (
                   <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" style={styles.newsSidebarItem}>
                     <span style={styles.newsSidebarSource}>{item.source}</span>
                     <p style={styles.newsSidebarTitle}>{item.title}</p>
@@ -848,6 +848,9 @@ export default function NYSportsDaily() {
           <TriviaTab />
         )}
         {/* ──── CROSSWORD TAB ──── */}
+        {activeTab === "RADIO" && (
+          <RadioTab />
+        )}
         {activeTab === "XWORD" && (
           <CrosswordTab />
         )}
@@ -1625,6 +1628,18 @@ const HISTORY_LISTS = {
       { rank:9,  name:"Mookie Wilson",     value:"1,112 H", years:"1980–1989" },
       { rank:10, name:"Rusty Staub",       value:"792 H",   years:"1972–85" },
     ]},
+    { title: "All-Time Mets Pitching Wins Leaders", items: [
+      { rank:1,  name:"Tom Seaver",        value:"198 W",  years:"1967–1977, 1983" },
+      { rank:2,  name:"Dwight Gooden",     value:"157 W",  years:"1984–1994" },
+      { rank:3,  name:"Jerry Koosman",     value:"140 W",  years:"1967–1978" },
+      { rank:4,  name:"Ron Darling",       value:"99 W",   years:"1983–1991" },
+      { rank:5,  name:"Al Jackson",        value:"67 W",   years:"1962–1969" },
+      { rank:6,  name:"Sid Fernandez",     value:"98 W",   years:"1983–1993" },
+      { rank:7,  name:"Jon Matlack",       value:"82 W",   years:"1971–1977" },
+      { rank:8,  name:"Jacob deGrom",      value:"82 W",   years:"2014–2022" },
+      { rank:9,  name:"David Cone",        value:"81 W",   years:"1987–1992, 2003" },
+      { rank:10, name:"Bobby Jones",       value:"74 W",   years:"1993–2000" },
+    ]},
     { title: "All-Time Mets Strikeout Leaders (Pitchers)", items: [
       { rank:1,  name:"Tom Seaver",        value:"2,541 K", years:"1967–1983" },
       { rank:2,  name:"Dwight Gooden",     value:"1,875 K", years:"1984–1994" },
@@ -1701,29 +1716,230 @@ const HISTORY_LISTS = {
     ]},
   ],
   "Nets": [
+    { title: "Nets ABA Championships — The Dr. J Years", items: [
+      { rank:1,  name:"1974 ABA Champions",   value:"vs Utah Stars",    years:"Julius Erving leads Nets to first ABA title" },
+      { rank:2,  name:"1976 ABA Champions",   value:"vs Nuggets",       years:"Dr. J's last ABA season — swept Denver for his 2nd title" },
+      { rank:3,  name:"Julius Erving 1973-76",value:"ABA MVP 3x",       years:"The greatest show in basketball — Dr. J reinvented the game" },
+      { rank:4,  name:"Dr. J Dunks",          value:"Artistic genius",   years:"Erving's hang time and creativity changed basketball forever" },
+      { rank:5,  name:"ABA-NBA Merger 1976",  value:"Nets join NBA",     years:"Nets sold Dr. J to 76ers for $3M to pay merger fee — heartbreak" },
+      { rank:6,  name:"2002 NBA Finals",      value:"vs Lakers",         years:"Kidd era — lost to Shaq/Kobe in 4. First Finals appearance" },
+      { rank:7,  name:"2003 NBA Finals",      value:"vs Spurs",          years:"Back-to-back Finals — Duncan's Spurs win in 6" },
+      { rank:8,  name:"Jason Kidd Era",       value:"2001–2008",         years:"Triple-doubles machine transformed NJ into a contender" },
+      { rank:9,  name:"Move to Brooklyn 2012",value:"Barclays Center",   years:"New home, new era — first NY borough team since Dodgers" },
+      { rank:10, name:"Big 3 Era 2020-22",    value:"KD/Kyrie/Harden",  years:"Most hyped team that never reached its potential" },
+    ]},
     { title: "All-Time Nets Points Leaders", items: [
-      { rank:1,  name:"Buck Williams",     value:"10,440 pts", years:"1981–1989" },
-      { rank:2,  name:"Vince Carter",      value:"9,621 pts",  years:"2004–2009" },
-      { rank:3,  name:"Kerry Kittles",     value:"7,436 pts",  years:"1996–2004" },
-      { rank:4,  name:"Jason Kidd",        value:"7,833 pts",  years:"2001–2008" },
-      { rank:5,  name:"Richard Jefferson", value:"6,985 pts",  years:"2001–2006" },
-      { rank:6,  name:"Derrick Coleman",   value:"6,843 pts",  years:"1990–1995" },
-      { rank:7,  name:"Kevin Durant",      value:"4,474 pts",  years:"2020–2023" },
-      { rank:8,  name:"Brook Lopez",       value:"10,444 pts", years:"2008–2017" },
-      { rank:9,  name:"James Edwards",     value:"5,765 pts",  years:"1984–1988" },
+      { rank:1,  name:"Brook Lopez",       value:"10,444 pts", years:"2008–2017" },
+      { rank:2,  name:"Buck Williams",     value:"10,440 pts", years:"1981–1989" },
+      { rank:3,  name:"Julius Erving",     value:"ABA record", years:"1973–1976 (ABA)" },
+      { rank:4,  name:"Vince Carter",      value:"9,621 pts",  years:"2004–2009" },
+      { rank:5,  name:"Jason Kidd",        value:"7,833 pts",  years:"2001–2008" },
+      { rank:6,  name:"Kerry Kittles",     value:"7,436 pts",  years:"1996–2004" },
+      { rank:7,  name:"Richard Jefferson", value:"6,985 pts",  years:"2001–2006" },
+      { rank:8,  name:"Derrick Coleman",   value:"6,843 pts",  years:"1990–1995" },
+      { rank:9,  name:"Kevin Durant",      value:"4,474 pts",  years:"2020–2023" },
       { rank:10, name:"Kyrie Irving",      value:"3,041 pts",  years:"2021–2023" },
     ]},
-    { title: "Greatest Nets Seasons", items: [
-      { rank:1,  name:"2001–02", value:"NBA Finals",    years:"Kidd era — lost to Lakers" },
-      { rank:2,  name:"2002–03", value:"NBA Finals",    years:"Back-to-back Finals — lost to Spurs" },
-      { rank:3,  name:"2006–07", value:"52 wins",       years:"Carter/Jefferson/Kidd" },
-      { rank:4,  name:"1992–93", value:"43 wins",       years:"Coleman, Anderson era" },
-      { rank:5,  name:"2020–21", value:"48-24",         years:"KD returns, Brooklyn's Big 3" },
-      { rank:6,  name:"1983–84", value:"45 wins",       years:"Buck Williams dominant" },
-      { rank:7,  name:"1993–94", value:"45 wins",       years:"Kenny Anderson leads" },
-      { rank:8,  name:"1973–74", value:"55 wins ABA",   years:"ABA Finals — Doctor J era" },
-      { rank:9,  name:"1975–76", value:"ABA Champions", years:"Julius Erving's only title" },
-      { rank:10, name:"2021–22", value:"44-38",         years:"KD/Kyrie era" },
+  ],
+  "Coaches": [
+    { title: "All-Time Yankees Managers", items: [
+      { rank:1,  name:"Casey Stengel",    value:"7 World Series",  years:"1949–1960 · 10 pennants" },
+      { rank:2,  name:"Joe McCarthy",     value:"7 World Series",  years:"1931–1946 · Greatest winning pct" },
+      { rank:3,  name:"Miller Huggins",   value:"3 World Series",  years:"1918–1929 · Babe Ruth era" },
+      { rank:4,  name:"Joe Torre",        value:"4 World Series",  years:"1996–2007 · Dynasty" },
+      { rank:5,  name:"Billy Martin",     value:"2 World Series",  years:"1975–1988 (5 stints) · Volatile genius" },
+      { rank:6,  name:"Ralph Houk",       value:"2 World Series",  years:"1961–1963, 1966–1973" },
+      { rank:7,  name:"Yogi Berra",       value:"1 Pennant",       years:"1963–64, 1984–85 · Beloved" },
+      { rank:8,  name:"Aaron Boone",      value:"Active",          years:"2018–present" },
+      { rank:9,  name:"Buck Showalter",   value:"AL East titles",  years:"1992–1995 · Set up dynasty" },
+      { rank:10, name:"Bob Lemon",        value:"1 World Series",  years:"1978–1979, 1981–1982" },
+    ]},
+    { title: "All-Time Knicks Head Coaches", items: [
+      { rank:1,  name:"Red Holzman",     value:"2 Championships", years:"1967–1982 · All-Time great" },
+      { rank:2,  name:"Pat Riley",       value:"2 Conf Finals",   years:"1991–1995 · Tough defense era" },
+      { rank:3,  name:"Jeff Van Gundy",  value:"1999 Finals run", years:"1996–2001 · 8-seed to Finals" },
+      { rank:4,  name:"Tom Thibodeau",   value:"Active",          years:"2020–present · Brunson era" },
+      { rank:5,  name:"Rick Pitino",     value:"1 Conf Finals",   years:"1987–1989 · Transition coach" },
+      { rank:6,  name:"Fuzzy Levane",    value:"Early era",       years:"1958–1960" },
+      { rank:7,  name:"Eddie Donovan",   value:"Expansion era",   years:"1961–1965" },
+      { rank:8,  name:"Larry Brown",     value:"Short tenure",    years:"2005–2006 · Drama" },
+      { rank:9,  name:"Isiah Thomas",    value:"Short tenure",    years:"2006–2008" },
+      { rank:10, name:"Mike D'Antoni",   value:"7 Seconds era",   years:"2008–2012 · Linsanity" },
+    ]},
+    { title: "All-Time Giants Head Coaches", items: [
+      { rank:1,  name:"Bill Parcells",   value:"2 Super Bowls",   years:"1983–1990 · Dynasty builder" },
+      { rank:2,  name:"Steve Owen",      value:"2 Championships", years:"1930–1953 · Longest tenure" },
+      { rank:3,  name:"Tom Coughlin",    value:"2 Super Bowls",   years:"2004–2015 · Upset master" },
+      { rank:4,  name:"Allie Sherman",   value:"3 Conf titles",   years:"1961–1968" },
+      { rank:5,  name:"Jim Lee Howell",  value:"1 Championship",  years:"1954–1960 · Lombardi/Landry staff" },
+      { rank:6,  name:"Ray Perkins",     value:"Transition",      years:"1979–1982 · Recruited Parcells" },
+      { rank:7,  name:"Dan Reeves",      value:"1 Super Bowl app",years:"1993–1996" },
+      { rank:8,  name:"Jim Fassel",      value:"2000 Super Bowl", years:"1997–2003" },
+      { rank:9,  name:"Brian Daboll",    value:"Active",          years:"2022–present" },
+      { rank:10, name:"Ben McAdoo",      value:"1 Playoff",       years:"2016–2017" },
+    ]},
+    { title: "All-Time Rangers Head Coaches", items: [
+      { rank:1,  name:"Emile Francis",   value:"GAG Line era",    years:"1965–1975 · 654 games behind bench" },
+      { rank:2,  name:"Mike Keenan",     value:"1994 Stanley Cup",years:"1993–1994 · Won it then left" },
+      { rank:3,  name:"Lester Patrick",  value:"1928, 1933 Cups", years:"1926–1939 · Original GM/coach" },
+      { rank:4,  name:"Alain Vigneault", value:"2014 Finals",     years:"2013–2018" },
+      { rank:5,  name:"David Quinn",     value:"Rebuild",         years:"2018–2021" },
+      { rank:6,  name:"Gerard Gallant",  value:"2022 Conf Finals",years:"2021–2023" },
+      { rank:7,  name:"Peter Laviolette",value:"Active",          years:"2023–present" },
+      { rank:8,  name:"Roger Neilson",   value:"2nd in command",  years:"1989–1993" },
+      { rank:9,  name:"Phil Watson",     value:"Late 50s",        years:"1955–1960" },
+      { rank:10, name:"Muzz Patrick",    value:"Post-war era",    years:"1953–1955" },
+    ]},
+  ],
+  "Jets & Giants": [
+    { title: "All-Time Jets Passing Leaders", items: [
+      { rank:1,  name:"Joe Namath",       value:"27,057 yds", years:"1965–1976" },
+      { rank:2,  name:"Ken O'Brien",      value:"24,386 yds", years:"1983–1992" },
+      { rank:3,  name:"Chad Pennington",  value:"17,823 yds", years:"2000–2007" },
+      { rank:4,  name:"Richard Todd",     value:"13,403 yds", years:"1976–1983" },
+      { rank:5,  name:"Vinny Testaverde", value:"9,852 yds",  years:"1998–2003" },
+      { rank:6,  name:"Mark Sanchez",     value:"8,682 yds",  years:"2009–2012" },
+      { rank:7,  name:"Ryan Fitzpatrick", value:"8,106 yds",  years:"2015–2016" },
+      { rank:8,  name:"Brett Favre",      value:"3,472 yds",  years:"2008" },
+      { rank:9,  name:"Neil O'Donnell",   value:"5,397 yds",  years:"1996–1997" },
+      { rank:10, name:"Aaron Rodgers",    value:"Active",     years:"2023–present" },
+    ]},
+    { title: "All-Time Giants Passing Leaders", items: [
+      { rank:1,  name:"Eli Manning",      value:"57,023 yds", years:"2004–2019" },
+      { rank:2,  name:"Phil Simms",       value:"33,462 yds", years:"1979–1993" },
+      { rank:3,  name:"Kerry Collins",    value:"10,220 yds", years:"1999–2003" },
+      { rank:4,  name:"Y.A. Tittle",      value:"10,439 yds", years:"1961–1964" },
+      { rank:5,  name:"Charlie Conerly",  value:"13,439 yds", years:"1948–1961" },
+      { rank:6,  name:"Daniel Jones",     value:"14,004 yds", years:"2019–2023" },
+      { rank:7,  name:"Dave Brown",       value:"9,449 yds",  years:"1992–1997" },
+      { rank:8,  name:"Fran Tarkenton",   value:"3,832 yds",  years:"1967–1971" },
+      { rank:9,  name:"Scott Brunner",    value:"3,706 yds",  years:"1980–1984" },
+      { rank:10, name:"Tommy Kramer",     value:"2,060 yds",  years:"1985" },
+    ]},
+    { title: "Top 10 Jets Greatest Moments", items: [
+      { rank:1,  name:"Super Bowl III Win",          value:"1969", years:"Namath's guarantee — 16–7 vs Colts" },
+      { rank:2,  name:"Mark Gastineau 22 Sacks",     value:"1984", years:"NFL single-season sack record" },
+      { rank:3,  name:"2009 AFC Championship Game",  value:"2009", years:"Rex Ryan — 45-17 rout of San Diego Chargers" },
+      { rank:4,  name:"Revis Island Season",         value:"2009", years:"Best CB in football — receivers had nowhere to go" },
+      { rank:5,  name:"The Mud Bowl",                value:"1982", years:"Freeman McNeil, 44–17 vs Raiders in the mud" },
+      { rank:6,  name:"Don Maynard 1,000 Yards",     value:"1965", years:"First AFL receiver to hit 1,000 yards" },
+      { rank:7,  name:"2010 AFC Championship Game",  value:"2010", years:"Sanchez leads back-to-back title game runs" },
+      { rank:8,  name:"Dennis Byrd Comeback",        value:"1993", years:"Paralyzed on the field — walked onto it again at season opener" },
+      { rank:9,  name:"Sauce Gardner Rookie Year",   value:"2022", years:"Immediate Pro Bowler — best CB since Revis" },
+      { rank:10, name:"Aaron Rodgers Returns 2024",  value:"2024", years:"Standing ovation at MetLife — hope renewed" },
+    ]},
+    { title: "Top 10 Giants Greatest Moments", items: [
+      { rank:1,  name:"Super Bowl XXI Win",          value:"1987", years:"LT, Simms, 39–20 vs Broncos — first title" },
+      { rank:2,  name:"Super Bowl XLII Win",         value:"2008", years:"Manning to Tyree — greatest catch ever made" },
+      { rank:3,  name:"Super Bowl XXV Win",          value:"1991", years:"Ottis Anderson MVP — Bills' wide right" },
+      { rank:4,  name:"Super Bowl XLVI Win",         value:"2012", years:"Bradshaw's accidental TD wins it vs Patriots" },
+      { rank:5,  name:"The Helmet Catch",            value:"2008", years:"David Tyree, 4th and 1 — defied physics" },
+      { rank:6,  name:"LT's 1986 MVP Season",        value:"1986", years:"22 sacks, NFL MVP, Defensive POY" },
+      { rank:7,  name:"LT Sacks Theismann",          value:"1985", years:"Nov 18 — snapped his leg on Monday Night Football" },
+      { rank:8,  name:"OBJ's One-Handed Catch",      value:"2014", years:"vs Cowboys — most viral catch in NFL history" },
+      { rank:9,  name:"1958 Championship Game",      value:"1958", years:"Greatest game ever played — Colts in OT" },
+      { rank:10, name:"Bavaro Drags Cowboys",        value:"1986", years:"Ran 30 yards with Cowboys hanging off him" },
+    ]},
+  ],
+  "Retired Numbers": [
+    { title: "NY Yankees Retired Numbers", items: [
+      { rank:1,  name:"#1 — Billy Martin",     value:"Manager",   years:"5 World Series manager stints" },
+      { rank:2,  name:"#2 — Derek Jeter",      value:"SS",        years:"1995–2014 · The Captain" },
+      { rank:3,  name:"#3 — Babe Ruth",        value:"RF",        years:"1920–1934 · The greatest" },
+      { rank:4,  name:"#4 — Lou Gehrig",       value:"1B",        years:"1923–1939 · Iron Horse" },
+      { rank:5,  name:"#5 — Joe DiMaggio",     value:"CF",        years:"1936–1951 · Yankee Clipper" },
+      { rank:6,  name:"#6 — Joe Torre",        value:"Manager",   years:"1996–2007 · 4 World Series" },
+      { rank:7,  name:"#7 — Mickey Mantle",    value:"CF",        years:"1951–1968 · The Commerce Comet" },
+      { rank:8,  name:"#8 — Yogi Berra/Bill Dickey", value:"C",  years:"Both catchers, both legends" },
+      { rank:9,  name:"#9 — Roger Maris",      value:"RF",        years:"1960–1966 · 61 HR in 1961" },
+      { rank:10, name:"#10 — Phil Rizzuto",    value:"SS",        years:"1941–1956 · Holy Cow!" },
+      { rank:11, name:"#15 — Thurman Munson",  value:"C",         years:"1969–1979 · Captain, died 1979" },
+      { rank:12, name:"#16 — Whitey Ford",     value:"SP",        years:"1950–1967 · Chairman of the Board" },
+      { rank:13, name:"#23 — Don Mattingly",   value:"1B",        years:"1982–1995 · Donnie Baseball" },
+      { rank:14, name:"#32 — Elston Howard",   value:"C",         years:"1955–1967 · First Black Yankee" },
+      { rank:15, name:"#42 — Mariano Rivera",  value:"RP",        years:"1995–2013 · Greatest closer" },
+      { rank:16, name:"#42 — Jackie Robinson", value:"All MLB",   years:"1997 — retired across all of MLB" },
+      { rank:17, name:"#44 — Reggie Jackson",  value:"RF",        years:"1977–1981 · Mr. October" },
+      { rank:18, name:"#49 — Ron Guidry",      value:"SP",        years:"1975–1988 · Louisiana Lightning" },
+    ]},
+    { title: "NY Knicks Retired Numbers", items: [
+      { rank:1,  name:"#10 — Walt Frazier",    value:"G",  years:"1967–1977 · Clyde" },
+      { rank:2,  name:"#12 — Dick Barnett",    value:"G",  years:"1965–1974" },
+      { rank:3,  name:"#15 — Earl Monroe",     value:"G",  years:"1971–1980 · The Pearl" },
+      { rank:4,  name:"#19 — Willis Reed",     value:"C",  years:"1964–1974 · Captain" },
+      { rank:5,  name:"#22 — Dave DeBusschere",value:"F",  years:"1968–1974" },
+      { rank:6,  name:"#24 — Bill Bradley",    value:"F",  years:"1967–1977 · Dollar Bill" },
+      { rank:7,  name:"#33 — Patrick Ewing",   value:"C",  years:"1985–2000 · The greatest Knick" },
+      { rank:8,  name:"#613 — Red Holzman",    value:"Coach",years:"Two championships" },
+    ]},
+    { title: "NY Rangers Retired Numbers", items: [
+      { rank:1,  name:"#1 — Ed Giacomin",      value:"G",  years:"1965–1975 · Hall of Famer" },
+      { rank:2,  name:"#2 — Brian Leetch",     value:"D",  years:"1987–2004 · Conn Smythe 1994" },
+      { rank:3,  name:"#3 — Harry Howell",     value:"D",  years:"1952–1969 · Norris Trophy 1967" },
+      { rank:4,  name:"#7 — Rod Gilbert",      value:"RW", years:"1960–1978 · All-time franchise scorer" },
+      { rank:5,  name:"#9 — Andy Bathgate",    value:"RW", years:"1952–1964 · Hart Trophy 1959" },
+      { rank:6,  name:"#11 — Mark Messier",    value:"C",  years:"1991–2004 · The Captain" },
+      { rank:7,  name:"#19 — Jean Ratelle",    value:"C",  years:"1960–1975 · Lady Byng 4x" },
+      { rank:8,  name:"#22 — Mike Gartner",    value:"RW", years:"1990–1994 · 700+ goals" },
+      { rank:9,  name:"#35 — Mike Richter",    value:"G",  years:"1989–2003 · 1994 Cup hero" },
+    ]},
+    { title: "NY Islanders Retired Numbers", items: [
+      { rank:1,  name:"#5 — Denis Potvin",     value:"D",  years:"1973–1988 · Captain, 4x Cup" },
+      { rank:2,  name:"#9 — Clark Gillies",    value:"LW", years:"1974–1986 · Enforcer of dynasty" },
+      { rank:3,  name:"#19 — Bryan Trottier",  value:"C",  years:"1975–1990 · Hart Trophy, 4x Cup" },
+      { rank:4,  name:"#22 — Mike Bossy",      value:"RW", years:"1977–1987 · 573 goals" },
+      { rank:5,  name:"#23 — Bob Nystrom",     value:"RW", years:"1972–1986 · 1980 OT Cup winner" },
+      { rank:6,  name:"#31 — Billy Smith",     value:"G",  years:"1972–1989 · Battlin' Billy" },
+    ]},
+  ],
+  "Records": [
+    { title: "NY Players Who Hold MLB Records", items: [
+      { rank:1,  name:"Don Larsen — World Series Perfect Game", value:"Yankees", years:"Oct 8, 1956 — only WS perfect game ever" },
+      { rank:2,  name:"Joe DiMaggio — 56-Game Hitting Streak", value:"Yankees", years:"1941 — most unbreakable record in baseball" },
+      { rank:3,  name:"Roger Maris — 61 HR (AL Record)",       value:"Yankees", years:"1961 — stood as MLB record until 1998" },
+      { rank:4,  name:"Aaron Judge — 62 HR (AL Record)",       value:"Yankees", years:"2022 — current American League single-season record" },
+      { rank:5,  name:"Derek Jeter — Most Yankees Hits",       value:"Yankees", years:"3,465 hits — all-time Yankee franchise record" },
+      { rank:6,  name:"Mariano Rivera — 652 Saves",            value:"Yankees", years:"All-time MLB saves record" },
+      { rank:7,  name:"Pete Alonso — Rookie HR Record (53)",   value:"Mets",    years:"2019 — broke Mark McGwire's rookie record" },
+      { rank:8,  name:"Tom Seaver — 3 Cy Young Awards (Mets)", value:"Mets",    years:"Most Cy Youngs by a Met — 1969, 1973, 1975" },
+      { rank:9,  name:"Jack Chesbro — 41 Wins (1904)",         value:"Yankees", years:"Modern era single-season wins record (pre-Yankees)" },
+      { rank:10, name:"Whitey Ford — 10 WS Wins",              value:"Yankees", years:"Most World Series pitching wins ever" },
+    ]},
+    { title: "NY Players Who Hold NFL Records", items: [
+      { rank:1,  name:"Lawrence Taylor — Redefining LB",       value:"Giants",  years:"NFL changed rules twice because of LT — most impactful defender ever" },
+      { rank:2,  name:"Mark Gastineau — 22 Sacks (1984)",      value:"Jets",    years:"Single-season sack record (since broken by Haason Reddick)" },
+      { rank:3,  name:"Phil Simms — 88% Completion Rate",      value:"Giants",  years:"Super Bowl XXI — 22/25 still the SB completion record" },
+      { rank:4,  name:"Eli Manning — 2 SB Upsets vs Patriots", value:"Giants",  years:"Only QB to beat Patriots twice in Super Bowl" },
+      { rank:5,  name:"Joe Namath — First $400K+ Contract",    value:"Jets",    years:"Changed football economics forever in 1965" },
+      { rank:6,  name:"Gene Roberts — 218 Yards (1950)",       value:"Giants",  years:"Old franchise single-game rushing record" },
+      { rank:7,  name:"Darrelle Revis — Shutdown Corner",      value:"Jets",    years:"2009 — lowest passer rating allowed in a season by any CB" },
+      { rank:8,  name:"Y.A. Tittle — 7 TD in a game (1962)",   value:"Giants",  years:"Tied NFL record with 7 TD passes in a single game" },
+      { rank:9,  name:"Ward Cuff — Early Giants Records",      value:"Giants",  years:"1930s franchise scoring records from dynasty era" },
+      { rank:10, name:"Frank Gifford — Mr. Giant",             value:"Giants",  years:"Career touchdowns franchise record for decades" },
+    ]},
+    { title: "NY Players Who Hold NHL Records", items: [
+      { rank:1,  name:"Mike Bossy — Fastest to 50 Goals",      value:"Islanders",years:"1981 — 50 goals in 50 games, matching Rocket Richard" },
+      { rank:2,  name:"Denis Potvin — Defenseman Points",       value:"Islanders",years:"Broke Bobby Orr's career points record for defensemen" },
+      { rank:3,  name:"Bryan Trottier — 1984 Finals Record",   value:"Islanders",years:"Part of longest Cup dynasty (4 consecutive) in NHL history" },
+      { rank:4,  name:"Islanders — 19 Playoff Series Wins",    value:"Islanders",years:"1980–84 — most consecutive playoff series wins in NHL history" },
+      { rank:5,  name:"Martin Brodeur — Most Wins/Shutouts",   value:"Devils",   years:"All-time NHL wins and shutouts records — both still stand" },
+      { rank:6,  name:"Brian Leetch — American-Born Scoring",  value:"Rangers",  years:"102 points in 1991-92 — most ever by American-born player" },
+      { rank:7,  name:"Rod Gilbert — Rangers Franchise Record",value:"Rangers",  years:"1,021 points — all-time Rangers franchise scoring record" },
+      { rank:8,  name:"Mark Messier — Captain Record",         value:"Rangers",  years:"Only player to captain two different teams to Stanley Cups" },
+      { rank:9,  name:"Billy Smith — Playoff Save %",          value:"Islanders",years:"Dynasty era goaltending records during 4-Cup run" },
+      { rank:10, name:"Chuck Rayner — Goalie Goal (1949)",     value:"Rangers",  years:"One of only a handful of goalies to ever score a goal" },
+    ]},
+    { title: "NY Players Who Hold NBA Records", items: [
+      { rank:1,  name:"Patrick Ewing — Knicks All-Time Scorer",value:"Knicks",  years:"23,665 points — Knicks all-time franchise record" },
+      { rank:2,  name:"Walt Frazier — Assists Leader",         value:"Knicks",  years:"4,791 assists — Knicks all-time franchise record" },
+      { rank:3,  name:"Carmelo Anthony — Most Points in Game", value:"Knicks",  years:"62 points vs Charlotte (2014) — MSG single-game record" },
+      { rank:4,  name:"Julius Erving — ABA Scoring",           value:"Nets",    years:"ABA Finals MVP twice — pioneered modern basketball" },
+      { rank:5,  name:"Willis Reed — First Finals MVP",        value:"Knicks",  years:"1970 — won both regular season and Finals MVP" },
+      { rank:6,  name:"Bernard King — 32.9 PPG Season",        value:"Knicks",  years:"1984-85 — career-high scoring season before knee injury" },
+      { rank:7,  name:"Jason Kidd — Triple-Double Machine",    value:"Nets",    years:"Averaged triple-double in 2002 season leading Nets to Finals" },
+      { rank:8,  name:"Brook Lopez — Nets Franchise Scorer",   value:"Nets",    years:"10,444 points — all-time Brooklyn/NJ Nets franchise record" },
+      { rank:9,  name:"Knicks 1970 — Assist Record",           value:"Knicks",  years:"Team assists record for Finals game (Frazier's 19 in Game 7)" },
+      { rank:10, name:"Breanna Stewart — WNBA Champion",       value:"Liberty", years:"2x WNBA champion, 2x Finals MVP — best active WNBA player" },
     ]},
   ],
   "Islanders": [
@@ -2202,20 +2418,18 @@ function StatsTab() {
       { year:2021, pick:"#19", name:"Quentin Grimes",   note:"Solid rotation piece — part of the Brunson era foundation" },
     ],
     Rangers: [
-      { year:1965, pick:"#2",  name:"Andre Dupont",     note:"Solid defenseman — part of the GAG Line era supporting cast" },
-      { year:1976, pick:"#1",  name:"Don Murdoch",      note:"Scored 32 goals as a rookie then suspended for drug issues — tragic what-if" },
-      { year:1988, pick:"#1",  name:"Daniel Lacroix",   note:"Never made significant impact — Rangers made better picks later" },
-      { year:1991, pick:"#1",  name:"Eric Lindros",     note:"Refused to report. Rangers traded pick — Nordiques got Lindros, Rangers eventually got Messier." },
-      { year:1994, pick:"#8",  name:"Dan Cloutier",     note:"Goalie who became a solid NHLer but not in NY" },
-      { year:2000, pick:"#1",  name:"Pavel Brendl",     note:"Czech winger bust — highly touted, barely played" },
-      { year:2004, pick:"#1",  name:"Al Montoya",       note:"Backup goalie — Lundqvist made him expendable before he even arrived" },
-      { year:2004, pick:"#6",  name:"Lauri Korpikoski", note:"Traded — never made mark as a Ranger" },
-      { year:2005, pick:"#6",  name:"Marc Staal",       note:"Solid shutdown D for over a decade. Brother of Eric and Jordan Staal." },
-      { year:2009, pick:"#7",  name:"Chris Kreider",    note:"Power forward who became the Rangers' heart and soul. Best pick of the past 20 years." },
-      { year:2017, pick:"#27", name:"Filip Chytil",     note:"Czech center — key piece of the current Rangers' young core" },
-      { year:2019, pick:"#1",  name:"Kaapo Kakko",      note:"Finnish winger — struggled to find footing but shown flashes of brilliance" },
-      { year:2020, pick:"#1",  name:"Alexis Lafrenière", note:"#1 overall — Quebec-born left wing, emerging as a key piece of Rangers future" },
-      { year:2021, pick:"#1",  name:"Brennan Othmann",  note:"High-energy winger — part of loaded Rangers prospect pipeline" },
+      { year:1965, pick:"#1",  name:"Andre Veilleux",   note:"Rangers' ONLY first overall before 2020 — never played an NHL game. One of draft history's biggest busts." },
+      { year:1973, pick:"#14", name:"Rick Middleton",   note:"Traded to Boston for Ken Hodge — Middleton became a star, Hodge was washed. Worst Rangers deal." },
+      { year:1976, pick:"#3",  name:"Don Murdoch",      note:"Scored 32 goals as a rookie then suspended for drug issues — a tragic what-if" },
+      { year:1986, pick:"#9",  name:"Brian Leetch",     note:"Best Rangers pick of the modern era — Norris Trophy, Conn Smythe 1994, Hall of Famer" },
+      { year:2000, pick:"#12", name:"Pavel Brendl",     note:"Czech winger bust — highly touted, barely played in the NHL" },
+      { year:2005, pick:"#6",  name:"Marc Staal",       note:"Solid shutdown defenseman for over a decade — brother of Eric and Jordan Staal" },
+      { year:2006, pick:"#21", name:"Bobby Sanguinetti",note:"NJ native bust — Flyers took Claude Giroux (1,066 pts) with the very next pick" },
+      { year:2009, pick:"#7",  name:"Chris Kreider",    note:"Best Rangers pick in 20 years — power forward, team's heart and soul for over a decade" },
+      { year:2017, pick:"#27", name:"Filip Chytil",     note:"Czech center — key piece of the current Rangers young core" },
+      { year:2019, pick:"#2",  name:"Kaapo Kakko",      note:"Finnish winger — struggled early but showing real upside in his role" },
+      { year:2020, pick:"#1",  name:"Alexis Lafrenière",note:"Rangers' second ever #1 overall — Quebec-born LW emerging as the future" },
+      { year:2023, pick:"#23", name:"Gabriel Perreault",note:"Skilled forward — son of former NHL player Yanic Perreault, high hockey IQ" },
     ],
     Islanders: [
       { year:1972, pick:"#1",  name:"Billy Harris",     note:"First ever Islanders draft pick — solid contributor to the dynasty" },
@@ -2307,7 +2521,7 @@ function StatsTab() {
     ], nyTeams:["Liberty"], ref:"https://www.basketball-reference.com/wnba" },
   };
 
-  const sections = ["LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS","RADIO"];
+  const sections = ["LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS"];
 
   return (
     <div style={styles.statsRoot}>
@@ -2804,6 +3018,88 @@ function StatsTab() {
 }
 
 // ─── SHOP TAB ─────────────────────────────────────────────────────────────
+// ─── RADIO TAB ────────────────────────────────────────────────────────────
+function RadioTab() {
+  return (
+    <div style={styles.statsRoot}>
+      <div style={styles.stdHeader}>
+        <h2 style={styles.stdTitle}>📻 NY SPORTS RADIO & PODCASTS</h2>
+        <p style={styles.stdSub}>STATIONS · PODCASTS · STREAMING</p>
+      </div>
+      <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Official radio, podcasts and streams for all NY teams. WFAN is the heartbeat of NY sports radio.</p>
+      </div>
+
+      <div style={styles.stdDivisionHeader}>📻 NY SPORTS RADIO STATIONS</div>
+      {[
+        { name:"WFAN 101.9 FM / 66 AM",  teams:"All NY Teams",        url:"https://www.audacy.com/wfan",            desc:"NY's flagship sports station since 1987 — Yankees, Mets, Giants, Jets, Knicks, Rangers, Islanders, Nets, Devils" },
+        { name:"ESPN NY 98.7 FM",         teams:"All NY Teams",        url:"https://www.espn.com/espnradio/",        desc:"ESPN Radio New York — breaking news, analysis and live coverage of all NY teams" },
+        { name:"YES Network",             teams:"Yankees",             url:"https://www.yesnetwork.com",             desc:"Yankees home radio and TV — Dave Sims, Michael Kay, Suzyn Waldman call the games" },
+        { name:"SNY",                     teams:"Mets + All NY",       url:"https://sny.tv",                        desc:"Home of Mets baseball on TV — plus Jets, Giants, Knicks, Yankees, Rangers, Islanders, Nets coverage" },
+        { name:"MSG Network",             teams:"Rangers · Knicks",    url:"https://www.msgnetworks.com",            desc:"Rangers and Knicks home broadcast — live from the World's Most Famous Arena" },
+        { name:"WGBB 95.5FM / 1240 AM",  teams:"All NY · LI Focus",   url:"https://www.sportstalkny.com",           desc:"Long Island's NY sports talk. Sundays 8PM. Yankees, Mets, Islanders, Jets focus for LI fans" },
+        { name:"97.3 ESPN NJ",            teams:"Devils · Giants · Jets",url:"https://www.973espnnj.com",           desc:"NJ-focused ESPN Radio — Devils, Giants, Jets coverage from the NJ perspective" },
+      ].map((r, i) => (
+        <a key={i} href={r.url} target="_blank" rel="noopener noreferrer"
+          style={{...styles.radioRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <div style={styles.radioIcon}>📻</div>
+          <div style={styles.radioInfo}>
+            <span style={styles.radioName}>{r.name}</span>
+            <span style={styles.radioTeams}>{r.teams}</span>
+            <span style={styles.radioDesc}>{r.desc}</span>
+          </div>
+          <span style={styles.radioArrow}>→</span>
+        </a>
+      ))}
+
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>🎙️ OFFICIAL TEAM PODCASTS</div>
+      {[
+        { name:"Yankees Podcast",          team:"Yankees ⚾",    url:"https://www.mlb.com/yankees/fans/podcasts",      desc:"Official Yankees podcast — player interviews, game breakdowns, analysis" },
+        { name:"Mets Podcast",             team:"Mets ⚾",       url:"https://www.mlb.com/mets/fans/podcasts",         desc:"Inside the Mets clubhouse — official team podcast and post-game breakdown" },
+        { name:"Big Blue Podcast",         team:"Giants 🏈",    url:"https://www.giants.com/podcasts",                desc:"NY Giants official podcast — news, analysis, player and coach features" },
+        { name:"The Green & White Report", team:"Jets 🏈",      url:"https://www.newyorkjets.com/podcasts",           desc:"Official Jets podcast — training camp to game day coverage" },
+        { name:"Knicks Podcast",           team:"Knicks 🏀",    url:"https://www.nba.com/knicks/podcasts",            desc:"Madison Square Garden's official Knicks coverage — Brunson era begins" },
+        { name:"Blueshirts Beat",          team:"Rangers 🏒",   url:"https://www.nhl.com/rangers/news/podcasts",      desc:"New York Rangers official podcast — from practice to game night" },
+        { name:"Isles Audio",             team:"Islanders 🏒",  url:"https://www.nhl.com/islanders/news/podcasts",    desc:"Official Islanders podcast and radio — UBS Arena coverage" },
+        { name:"Liberty Podcast",          team:"Liberty 🏀",   url:"https://www.nyliberty.com/multimedia",           desc:"Defending WNBA champion NY Liberty — official coverage and interviews" },
+        { name:"NYCFC Podcast",            team:"NYCFC ⚽",     url:"https://www.nycfc.com/news/podcasts",            desc:"Official NYCFC podcast — The Pigeons, MLS Cup coverage, player features" },
+        { name:"Nets Podcast",             team:"Nets 🏀",      url:"https://www.nba.com/nets/podcasts",              desc:"Brooklyn Nets official coverage — game analysis and player interviews" },
+        { name:"Devils Podcast",           team:"Devils 🏒",    url:"https://www.nhl.com/devils/news/podcasts",       desc:"New Jersey Devils official podcast — Nico Hischier, Jack Hughes era coverage" },
+        { name:"Gotham FC Podcast",        team:"Gotham FC ⚽", url:"https://www.gothamfc.com",                       desc:"2x NWSL champion Gotham FC — official team coverage from Harrison NJ" },
+      ].map((p, i) => (
+        <a key={i} href={p.url} target="_blank" rel="noopener noreferrer"
+          style={{...styles.radioRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <div style={styles.radioIcon}>🎙️</div>
+          <div style={styles.radioInfo}>
+            <span style={styles.radioName}>{p.name}</span>
+            <span style={styles.radioTeams}>{p.team}</span>
+            <span style={styles.radioDesc}>{p.desc}</span>
+          </div>
+          <span style={styles.radioArrow}>→</span>
+        </a>
+      ))}
+
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>📱 STREAM LIVE</div>
+      {[
+        { name:"Audacy App",  icon:"📱", url:"https://www.audacy.com/wfan",                              desc:"Free — stream WFAN 101.9/66 live on iOS and Android" },
+        { name:"TuneIn",      icon:"📻", url:"https://tunein.com/radio/WFAN-Sports-Radio-1019-FMa25701/",desc:"Free streaming for WFAN and all NY sports radio stations" },
+        { name:"ESPN App",    icon:"📺", url:"https://www.espn.com/espnradio/",                          desc:"ESPN NY 98.7 live radio plus highlights and alerts" },
+        { name:"YouTube TV",  icon:"📺", url:"https://tv.youtube.com",                                   desc:"YES Network, SNY, MSG — stream live NY sports TV" },
+      ].map((s, i) => (
+        <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+          style={{...styles.radioRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <div style={styles.radioIcon}>{s.icon}</div>
+          <div style={styles.radioInfo}>
+            <span style={styles.radioName}>{s.name}</span>
+            <span style={styles.radioDesc}>{s.desc}</span>
+          </div>
+          <span style={styles.radioArrow}>→</span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 function ShopTab() {
   return (
     <div style={styles.statsRoot}>
@@ -2895,8 +3191,11 @@ function ShopTab() {
         { title:"NY Jets Gear", tag:"new+york+jets+jersey+gear+nfl", desc:"Official Jets jerseys and NFL merchandise" },
         { title:"NY Islanders Gear", tag:"new+york+islanders+jersey+gear+nhl", desc:"Official Islanders jerseys and hockey gear" },
         { title:"NJ Devils Gear", tag:"new+jersey+devils+jersey+gear+nhl", desc:"Official Devils jerseys and hockey gear" },
-        { title:"NY Liberty Gear", tag:"new+york+liberty+wnba+jersey+gear", desc:"Official Liberty jerseys and WNBA gear" },
-        { title:"Brooklyn Nets Gear", tag:"brooklyn+nets+jersey+gear+nba", desc:"Official Nets jerseys and NBA merchandise" },
+        { title:"NY Liberty Gear",    tag:"new+york+liberty+wnba+jersey+gear",    desc:"Official Liberty jerseys and WNBA gear — defending champions!" },
+        { title:"Brooklyn Nets Gear", tag:"brooklyn+nets+jersey+gear+nba",         desc:"Official Nets jerseys and NBA merchandise" },
+        { title:"NYCFC Gear",         tag:"nycfc+soccer+jersey+gear+official",     desc:"Official NYCFC jerseys, scarves and MLS merchandise" },
+        { title:"NJ Red Bulls Gear",  tag:"new+york+red+bulls+soccer+jersey",      desc:"Official Red Bulls jerseys and MLS gear" },
+        { title:"Gotham FC Gear",     tag:"gotham+fc+nwsl+jersey+gear",            desc:"Official Gotham FC jerseys — 2x NWSL champions" },
       ].map((g, i) => (
         <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(g.tag)}&tag=nysportsdaily-20`}
           target="_blank" rel="noopener noreferrer"
