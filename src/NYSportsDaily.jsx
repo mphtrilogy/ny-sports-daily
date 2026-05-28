@@ -3017,7 +3017,7 @@ const HOF_DATA = {
     { name:"Bryan Trottier",   inducted:1997, pos:"C",       note:"Hart Trophy — heart of dynasty" },
     { name:"Billy Smith",      inducted:1993, pos:"G",       note:"Battlin' Billy — won all 4 Cups" },
     { name:"Clark Gillies",    inducted:2002, pos:"LW",      note:"Enforcer and power forward of dynasty" },
-    { name:"Bob Nystrom",      inducted:nil,  pos:"RW",      note:"OT Cup winner 1980 — beloved Island icon" },
+    { name:"Bob Nystrom",      inducted:null,  pos:"RW",      note:"OT Cup winner 1980 — beloved Island icon" },
     { name:"Al Arbour",        inducted:1996, pos:"Coach",   note:"Winningest NHL coach of the dynasty era" },
   ],
   Devils: [
@@ -3050,11 +3050,11 @@ const HOF_DATA = {
   Nets: [
     { name:"Julius Erving",    inducted:1993, pos:"F",       note:"Dr. J — ABA legend, 2 titles with Nets" },
     { name:"Drazen Petrovic",  inducted:2002, pos:"G",       note:"Died 1993 — one of the first great European players" },
-    { name:"Buck Williams",    inducted:nil,  pos:"F",       note:"Not yet inducted — should be" },
+    { name:"Buck Williams",    inducted:null,  pos:"F",       note:"Not yet inducted — should be" },
   ],
   Liberty: [
-    { name:"Tina Charles",     inducted:nil,  pos:"C",       note:"Greatest Liberty before Stewart era" },
-    { name:"Cappie Pondexter", inducted:nil,  pos:"G",       note:"2x WNBA champion — franchise stalwart" },
+    { name:"Tina Charles",     inducted:null,  pos:"C",       note:"Greatest Liberty before Stewart era" },
+    { name:"Cappie Pondexter", inducted:null,  pos:"G",       note:"2x WNBA champion — franchise stalwart" },
   ],
 };
 
@@ -6288,6 +6288,7 @@ styleTag.textContent = `
     0%, 100% { transform: translateY(0);   }
     50%       { transform: translateY(3px); }
   }
+  @keyframes fadeUp {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
