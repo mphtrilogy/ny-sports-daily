@@ -829,11 +829,21 @@ export default function NYSportsDaily() {
       {/* ── MAIN CONTENT ── */}
       <main style={styles.main}>
 
-        {/* TAB NAV */}
+        {/* TAB NAV — Primary */}
         <div style={styles.tabNav}>
-          {["SCORES","TV","STANDINGS","SCHEDULE","STATS","HISTORY","NEWS","RADIO","THIS DATE","POLLS","HOF","MISERY","TRIVIA","XWORD","SPIN","SHOP"].map(tab => (
+          {["SCORES","TV","STANDINGS","SCHEDULE","RECAP","NEWS","RADIO","SHOP"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {})}}>
+              style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}),
+                ...(tab==="SHOP" ? {marginLeft:"auto", color:"#c8201c"} : {})}}>
+              {tab === "SHOP" ? "🛒 SHOP" : tab}
+            </button>
+          ))}
+        </div>
+        {/* TAB NAV — Secondary */}
+        <div style={{...styles.tabNav, marginTop:-16, borderBottom:"1px solid #1a1a1a", marginBottom:20}}>
+          {["STATS","HISTORY","THIS DATE","HOF","POLLS","MISERY","TRIVIA","XWORD","SPIN"].map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}), fontSize:9, padding:"7px 10px"}}>
               {tab}
             </button>
           ))}
@@ -923,6 +933,7 @@ export default function NYSportsDaily() {
           <ScheduleTab schedule={schedule} loading={loadingSchedule} />
         )}
         {/* ──── HISTORY TAB ──── */}
+        {activeTab === "RECAP" && <RecapTab scores={scores} />}
         {activeTab === "THIS DATE" && <TodayTab />}
         {activeTab === "POLLS" && <PollsTab />}
         {activeTab === "HOF" && <HofTab />}
@@ -2703,6 +2714,161 @@ function HistoryTab() {
 }
 
 // ─── TODAY IN NY SPORTS ───────────────────────────────────────────────────
+// ─── RECAP TAB ─────────────────────────────────────────────────────────────
+function RecapTab({ scores }) {
+  const [ytResults, setYtResults] = useState({});
+  const [loadingYT, setLoadingYT] = useState(false);
+  const [activeTeam, setActiveTeam] = useState("ALL");
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yDate = yesterday.toLocaleDateString("en-US", {weekday:"long", month:"long", day:"numeric"});
+
+  // NY teams from scores
+  const NY_NAMES = ["yankees","mets","jets","giants","knicks","nets","rangers","islanders","devils","liberty","nycfc","gotham","red bulls"];
+  const yesterdayGames = scores.filter(s => {
+    const d = new Date(s.gameDate || s.date);
+    const isYesterday = d.toDateString() === yesterday.toDateString();
+    const isNY = [s.homeTeam, s.awayTeam].some(t => NY_NAMES.some(n => (t||"").toLowerCase().includes(n)));
+    return isYesterday && isNY;
+  });
+
+  // Fetch YouTube highlights for a team
+  async function fetchYTHighlights(query) {
+    if (ytResults[query]) return;
+    setLoadingYT(true);
+    try {
+      // Use YouTube's oEmbed + no-auth search via public RSS
+      const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&sp=EgIIAQ%3D%3D`;
+      setYtResults(prev => ({...prev, [query]: {url: searchUrl, query}}));
+    } catch(e) {}
+    setLoadingYT(false);
+  }
+
+  const NY_TEAMS_RECAP = [
+    {name:"Yankees",   keywords:"New York Yankees highlights",    color:"#003087", emoji:"⚾"},
+    {name:"Mets",      keywords:"New York Mets highlights",       color:"#FF5910", emoji:"⚾"},
+    {name:"Knicks",    keywords:"New York Knicks highlights",     color:"#006BB6", emoji:"🏀"},
+    {name:"Nets",      keywords:"Brooklyn Nets highlights",       color:"#000000", emoji:"🏀"},
+    {name:"Rangers",   keywords:"New York Rangers highlights",    color:"#0038A8", emoji:"🏒"},
+    {name:"Islanders", keywords:"NY Islanders highlights",        color:"#00539B", emoji:"🏒"},
+    {name:"Devils",    keywords:"New Jersey Devils highlights",   color:"#CE1126", emoji:"🏒"},
+    {name:"Liberty",   keywords:"New York Liberty highlights",    color:"#007A5E", emoji:"🏀"},
+    {name:"Jets",      keywords:"New York Jets highlights",       color:"#125740", emoji:"🏈"},
+    {name:"Giants",    keywords:"New York Giants highlights",     color:"#0B2265", emoji:"🏈"},
+  ];
+
+  return (
+    <div style={styles.statsRoot}>
+      <div style={styles.stdHeader}>
+        <h2 style={styles.stdTitle}>📺 LAST NIGHT'S RECAP</h2>
+        <p style={styles.stdSub}>{yDate.toUpperCase()} · NY SPORTS RESULTS · VIDEO HIGHLIGHTS</p>
+      </div>
+
+      {/* Yesterday's NY scores */}
+      {yesterdayGames.length > 0 ? (
+        <>
+          <div style={styles.stdDivisionHeader}>🏆 YESTERDAY'S NY RESULTS</div>
+          {yesterdayGames.map((g, i) => (
+            <div key={i} style={{...styles.recapScoreRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.recapTeams}>
+                <span style={styles.recapSport}>[{g.sport}]</span>
+                <span style={styles.recapAway}>{g.awayTeam}</span>
+                <span style={styles.recapScore}>{g.awayScore} — {g.homeScore}</span>
+                <span style={styles.recapHome}>{g.homeTeam}</span>
+              </div>
+              {g.statusDesc && <span style={styles.recapStatus}>{g.statusDesc}</span>}
+            </div>
+          ))}
+        </>
+      ) : (
+        <div style={{padding:"12px 0 20px", fontSize:12, color:"#555"}}>
+          No NY games found for yesterday — check ESPN for results or use the SCORES tab.
+        </div>
+      )}
+
+      {/* Video Highlights */}
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>🎬 VIDEO HIGHLIGHTS — CLICK TO WATCH ON YOUTUBE</div>
+      <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Click any team below to find today's highlights on YouTube. Results open in YouTube — always fresh, always free.</p>
+      </div>
+
+      <div style={styles.ytTeamGrid}>
+        {NY_TEAMS_RECAP.map((t, i) => {
+          const today = new Date();
+          const dateStr = `${today.toLocaleDateString("en-US",{month:"short",day:"numeric"})} ${today.getFullYear()}`;
+          const searchQuery = `${t.keywords} ${dateStr}`;
+          const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}&sp=EgIIAQ%3D%3D`;
+          return (
+            <a key={i} href={ytUrl} target="_blank" rel="noopener noreferrer"
+              style={{...styles.ytTeamCard, background:`linear-gradient(135deg, ${t.color}22 0%, #0a0a0a 100%)`, borderLeft:`3px solid ${t.color}`}}>
+              <span style={styles.ytEmoji}>{t.emoji}</span>
+              <div style={styles.ytInfo}>
+                <span style={styles.ytTeamName}>{t.name}</span>
+                <span style={styles.ytSubtext}>Latest highlights →</span>
+              </div>
+              <span style={{fontSize:18}}>▶</span>
+            </a>
+          );
+        })}
+      </div>
+
+      {/* ESPN Highlights links */}
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>📰 ADDITIONAL RECAP SOURCES</div>
+      {[
+        { name:"ESPN MLB Recap",   url:"https://www.espn.com/mlb/",           desc:"Box scores, highlights and reports from last night's baseball" },
+        { name:"ESPN NBA Recap",   url:"https://www.espn.com/nba/",           desc:"Last night's basketball — scores, standouts and video" },
+        { name:"ESPN NHL Recap",   url:"https://www.espn.com/nhl/",           desc:"Hockey scores, goals and highlights from last night" },
+        { name:"ESPN NFL Recap",   url:"https://www.espn.com/nfl/",           desc:"Latest football news, camp updates and game recaps" },
+        { name:"SNY Yankees/Mets", url:"https://sny.tv/",                     desc:"SNY's NY-focused baseball coverage — best Mets/Yankees recap" },
+        { name:"MSG Knicks/Rangers",url:"https://www.msgnetworks.com/",       desc:"Post-game shows and video highlights from MSG" },
+        { name:"YouTube NY Sports", url:"https://www.youtube.com/results?search_query=new+york+sports+highlights+today&sp=EgIIAQ%3D%3D", desc:"Search YouTube directly for today's NY sports highlights" },
+        { name:"r/NYYankees",      url:"https://reddit.com/r/NYYankees/new/", desc:"Fan reactions, game threads and post-game discussion" },
+        { name:"r/NewYorkMets",    url:"https://reddit.com/r/NewYorkMets/new/",desc:"Mets fans react to last night in real time" },
+        { name:"r/NYKnicks",       url:"https://reddit.com/r/NYKnicks/new/",  desc:"Knicks game threads and post-game breakdowns" },
+      ].map((r, i) => (
+        <a key={i} href={r.url} target="_blank" rel="noopener noreferrer"
+          style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <div style={styles.beatWriterIcon}>🔗</div>
+          <div style={styles.beatWriterInfo}>
+            <span style={styles.beatWriterName}>{r.name}</span>
+            <span style={styles.beatWriterDesc}>{r.desc}</span>
+          </div>
+          <span style={styles.beatWriterArrow}>→</span>
+        </a>
+      ))}
+
+      {/* Tomorrow's big games */}
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>📅 TOMORROW'S NY GAMES</div>
+      {(() => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tmrGames = scores.filter(s => {
+          const d = new Date(s.gameDate || s.date);
+          return d.toDateString() === tomorrow.toDateString() &&
+            [s.homeTeam, s.awayTeam].some(t => NY_NAMES.some(n => (t||"").toLowerCase().includes(n)));
+        });
+        if (!tmrGames.length) return (
+          <p style={{fontSize:12, color:"#555", padding:"8px 0"}}>No NY games scheduled for tomorrow yet — check the SCHEDULE tab.</p>
+        );
+        return tmrGames.map((g, i) => (
+          <div key={i} style={{...styles.recapScoreRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div style={styles.recapTeams}>
+              <span style={styles.recapSport}>[{g.sport}]</span>
+              <span style={styles.recapAway}>{g.awayTeam}</span>
+              <span style={{...styles.recapScore, color:"#888"}}>vs</span>
+              <span style={styles.recapHome}>{g.homeTeam}</span>
+            </div>
+            {g.broadcasts?.length > 0 && (
+              <span style={styles.recapStatus}>📺 {g.broadcasts.join(", ")}</span>
+            )}
+          </div>
+        ));
+      })()}
+    </div>
+  );
+}
+
 const TODAY_IN_NY_SPORTS = [
   // JANUARY
   { month:1,  day:11, year:1969, team:"Jets",      emoji:"🏈", title:"Super Bowl III — Namath's Guarantee Pays Off", desc:"The Jets shock the NFL world, defeating the Baltimore Colts 16-7. Namath's famous guarantee fulfilled. The AFL is validated forever." },
@@ -4177,6 +4343,145 @@ function ShopTab() {
           <span style={styles.shopBtn}>Shop →</span>
         </a>
       ))}
+
+      {/* Vintage Jerseys */}
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>🏆 VINTAGE & THROWBACK JERSEYS</div>
+      {[
+        { title:"Vintage Yankees Jerseys", tag:"new+york+yankees+vintage+throwback+jersey", desc:"Classic pinstripes — Mantle, Jeter, Ruth throwbacks" },
+        { title:"Vintage Mets Jerseys", tag:"new+york+mets+vintage+throwback+jersey", desc:"1969 Miracle Mets, 1986 championship throwbacks" },
+        { title:"Vintage Knicks Jerseys", tag:"new+york+knicks+vintage+throwback+jersey", desc:"Reed, Frazier, Ewing 70s classic Knicks jerseys" },
+        { title:"Islanders Dynasty Jerseys", tag:"new+york+islanders+vintage+throwback+jersey+dynasty", desc:"1980s dynasty throwbacks — Bossy, Trottier, Potvin" },
+        { title:"Vintage Rangers Jerseys", tag:"new+york+rangers+vintage+throwback+jersey", desc:"Classic Broadway Blue — Messier, Leetch, Gilbert" },
+        { title:"Vintage Jets Jerseys", tag:"new+york+jets+vintage+throwback+jersey+namath", desc:"Broadway Joe era and Gang Green throwbacks" },
+        { title:"Vintage Giants Jerseys", tag:"new+york+giants+vintage+throwback+jersey+LT", desc:"LT era and classic Big Blue throwbacks" },
+      ].map((v, i) => (
+        <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(v.tag)}&tag=nysportsdaily-20`}
+          target="_blank" rel="noopener noreferrer"
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <span style={styles.shopEmoji}>🏆</span>
+          <div style={styles.shopInfo}>
+            <span style={styles.shopTitle}>{v.title}</span>
+            <span style={styles.shopDesc}>{v.desc}</span>
+          </div>
+          <span style={styles.shopBtn}>Shop →</span>
+        </a>
+      ))}
+
+      {/* Memorabilia */}
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>✍️ AUTOGRAPHS & MEMORABILIA</div>
+      {[
+        { title:"Signed Derek Jeter Items", tag:"derek+jeter+autograph+signed+baseball", desc:"Authenticated Jeter autographs — baseballs, photos, bats" },
+        { title:"Joe Namath Autographed Items", tag:"joe+namath+autograph+signed+football", desc:"Broadway Joe signed helmets, footballs, photos" },
+        { title:"Yankees Memorabilia", tag:"new+york+yankees+memorabilia+autograph+signed", desc:"Signed Yankees items — frames, display pieces" },
+        { title:"Mets Memorabilia", tag:"new+york+mets+memorabilia+autograph+signed", desc:"Authentic Mets signed memorabilia" },
+        { title:"NY Sports Framed Art", tag:"new+york+sports+framed+photo+art+print", desc:"Stadium photos, championship prints, framed art" },
+      ].map((m, i) => (
+        <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(m.tag)}&tag=nysportsdaily-20`}
+          target="_blank" rel="noopener noreferrer"
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <span style={styles.shopEmoji}>✍️</span>
+          <div style={styles.shopInfo}>
+            <span style={styles.shopTitle}>{m.title}</span>
+            <span style={styles.shopDesc}>{m.desc}</span>
+          </div>
+          <span style={styles.shopBtn}>Shop →</span>
+        </a>
+      ))}
+
+      {/* Home Decor */}
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>🏠 HOME DECOR & BAR SIGNS</div>
+      {[
+        { title:"Yankees Man Cave Signs", tag:"new+york+yankees+man+cave+bar+sign+decor", desc:"Yankee Stadium bar signs, neon, sports room decor" },
+        { title:"Mets Home Decor", tag:"new+york+mets+home+decor+sign+bar", desc:"Queens sports room essentials — pillows, flags, signs" },
+        { title:"Knicks Bar Signs", tag:"new+york+knicks+bar+sign+decor+man+cave", desc:"MSG-style Knicks bar and game room decor" },
+        { title:"Rangers Hockey Decor", tag:"new+york+rangers+hockey+bar+sign+decor", desc:"Rangers puck holders, banners, bar signs" },
+        { title:"NY Sports Barware", tag:"new+york+sports+pint+glass+mug+barware", desc:"Pint glasses, mugs, bottle openers for game day" },
+        { title:"Stadium Blueprint Art", tag:"yankee+stadium+shea+stadium+blueprint+art+print", desc:"Architect blueprints of Yankee Stadium, MSG, Shea — incredible wall art" },
+      ].map((d, i) => (
+        <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(d.tag)}&tag=nysportsdaily-20`}
+          target="_blank" rel="noopener noreferrer"
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <span style={styles.shopEmoji}>🏠</span>
+          <div style={styles.shopInfo}>
+            <span style={styles.shopTitle}>{d.title}</span>
+            <span style={styles.shopDesc}>{d.desc}</span>
+          </div>
+          <span style={styles.shopBtn}>Shop →</span>
+        </a>
+      ))}
+
+      {/* Kids Books */}
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>👦 KIDS SPORTS BOOKS — FOR THE NEXT GENERATION</div>
+      {[
+        { title:"Derek Jeter's Little League Series", tag:"derek+jeter+little+league+book+kids", desc:"Jeter's children's book series — perfect for young fans" },
+        { title:"R is for Rangers", tag:"new+york+rangers+hockey+kids+book", desc:"Alphabet books and kids guides for young Rangers fans" },
+        { title:"Yankees Kids Books", tag:"new+york+yankees+kids+childrens+book+baseball", desc:"Children's books about the Yankees — Mantle, Ruth, Jeter" },
+        { title:"Amazing Athletes Baseball", tag:"baseball+amazing+athletes+kids+book", desc:"Kids sports biographies — perfect for grandkids" },
+        { title:"Mets Kids Books", tag:"new+york+mets+kids+childrens+book", desc:"Books for young Mets fans — learn the history" },
+        { title:"NFL for Kids", tag:"football+nfl+kids+childrens+book+giants+jets", desc:"Giants and Jets books for the little ones" },
+      ].map((k, i) => (
+        <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(k.tag)}&tag=nysportsdaily-20`}
+          target="_blank" rel="noopener noreferrer"
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <span style={styles.shopEmoji}>👦</span>
+          <div style={styles.shopInfo}>
+            <span style={styles.shopTitle}>{k.title}</span>
+            <span style={styles.shopDesc}>{k.desc}</span>
+          </div>
+          <span style={styles.shopBtn}>Shop →</span>
+        </a>
+      ))}
+
+      {/* Stadium Experiences */}
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>🏟️ STADIUM TOURS & LIVE EXPERIENCES</div>
+      {[
+        { name:"Yankee Stadium Tours",   url:"https://www.mlb.com/yankees/ballpark/tours",                         desc:"Behind-the-scenes tours of The Bronx — Monument Park, dugout, press box" },
+        { name:"Citi Field Tours",       url:"https://www.mlb.com/mets/ballpark/tours",                           desc:"Mets stadium tours — field access, clubhouse, history exhibit" },
+        { name:"Madison Square Garden", url:"https://www.thegarden.com/venue/guided-tours.html",                  desc:"The World's Most Famous Arena — Knicks and Rangers tours" },
+        { name:"MetLife Stadium Tours",  url:"https://www.metlifestadium.com/the-stadium/tours",                  desc:"Giants/Jets stadium — Super Bowl XLVIII venue tours" },
+        { name:"UBS Arena Tours",        url:"https://www.ubsarena.com",                                           desc:"Brand new Islanders arena at Belmont Park — stunning facility" },
+        { name:"StubHub — NY Sports",    url:"https://www.stubhub.com/new-york-teams-tickets",                    desc:"Get tickets to any NY game — Yankees, Mets, Knicks, Rangers and more" },
+        { name:"SeatGeek — NY Sports",   url:"https://seatgeek.com/new-york-sports-tickets",                     desc:"Best seats finder — compare prices across all NY venues" },
+      ].map((s, i) => (
+        <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <span style={styles.shopEmoji}>🏟️</span>
+          <div style={styles.shopInfo}>
+            <span style={styles.shopTitle}>{s.name}</span>
+            <span style={styles.shopDesc}>{s.desc}</span>
+          </div>
+          <span style={styles.shopBtn}>Visit →</span>
+        </a>
+      ))}
+
+      {/* Best Sports Bars */}
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>🍺 BEST NY SPORTS BARS BY TEAM</div>
+      {[
+        { name:"Nevada Smiths (Soccer)",   area:"Manhattan · E Village", desc:"NYC's best soccer bar — all NY soccer teams and international" },
+        { name:"Foley's NY Pub",           area:"Manhattan · Midtown",   desc:"Baseball shrine — Yankees and Mets memorabilia covering every inch" },
+        { name:"Brother Jimmy's",          area:"Manhattan · Multiple",  desc:"Known for Jets and Giants crowds — all NFL, great game day atmosphere" },
+        { name:"Professor Thom's",         area:"Manhattan · E Village", desc:"Red Sox bar that gets louder when the Yankees win" },
+        { name:"Standings Bar",            area:"Manhattan · Lower East", desc:"Sports bar known for hockey — Rangers watch parties" },
+        { name:"McSorley's Old Ale House", area:"Manhattan · E Village", desc:"Historic NY bar — beloved by all NY sports fans for decades" },
+        { name:"Legends NYC",              area:"Manhattan · Hell's Kitchen", desc:"Yankees-themed bar right in Times Square area" },
+        { name:"The Irish Exit",           area:"Brooklyn",              desc:"Nets and Brooklyn-centric sports bar" },
+      ].map((b, i) => (
+        <a key={i} href={`https://www.google.com/search?q=${encodeURIComponent(b.name + " " + b.area + " sports bar")}`}
+          target="_blank" rel="noopener noreferrer"
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <span style={styles.shopEmoji}>🍺</span>
+          <div style={styles.shopInfo}>
+            <span style={styles.shopTitle}>{b.name}</span>
+            <span style={styles.shopAuthor}>{b.area}</span>
+            <span style={styles.shopDesc}>{b.desc}</span>
+          </div>
+          <span style={styles.shopBtn}>Find →</span>
+        </a>
+      ))}
+
+      <div style={{marginTop:20, padding:"12px 14px", background:"#0f0f0f", fontSize:10, color:"#555"}}>
+        As an Amazon Associate, NY Sports Daily earns from qualifying purchases at no extra cost to you. Bar recommendations are independent — no paid placement.
+      </div>
     </div>
   );
 }
@@ -5918,6 +6223,21 @@ const styles = {
     fontSize:10, fontWeight:700, letterSpacing:"0.05em",
     transition:"border-color 0.15s",
   },
+
+  // RECAP TAB
+  recapScoreRow: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderTop:"1px solid #1a1a1a", flexWrap:"wrap", gap:8 },
+  recapTeams: { display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" },
+  recapSport: { fontSize:9, color:"#666", fontWeight:900, letterSpacing:"0.1em" },
+  recapAway: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  recapScore: { fontSize:14, fontWeight:900, color:"#c8201c", fontFamily:"'Georgia',serif" },
+  recapHome: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  recapStatus: { fontSize:10, color:"#888" },
+  ytTeamGrid: { display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))", gap:8 },
+  ytTeamCard: { display:"flex", alignItems:"center", gap:12, padding:"12px 14px", textDecoration:"none", border:"1px solid #2a2a2a" },
+  ytEmoji: { fontSize:24, flexShrink:0 },
+  ytInfo: { flex:1, display:"flex", flexDirection:"column", gap:2 },
+  ytTeamName: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  ytSubtext: { fontSize:9, color:"#888" },
 
   // TODAY IN NY SPORTS
   todayCard: { display:"flex", gap:14, padding:"14px 16px", borderTop:"1px solid #1a1a1a" },
