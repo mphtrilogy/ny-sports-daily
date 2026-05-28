@@ -653,6 +653,47 @@ async function fetchNYNews() {
     });
   }));
 
+  // Reddit team subreddits — top posts of the day
+  const REDDIT_SUBS = [
+    { sub:"NYYankees",      team:"Yankees"  },
+    { sub:"NewYorkMets",    team:"Mets"     },
+    { sub:"nyjets",         team:"Jets"     },
+    { sub:"NYGiants",       team:"Giants"   },
+    { sub:"NYKnicks",       team:"Knicks"   },
+    { sub:"GoNets",         team:"Nets"     },
+    { sub:"rangers",        team:"Rangers"  },
+    { sub:"NewYorkIslanders",team:"Islanders"},
+    { sub:"devils",         team:"Devils"   },
+    { sub:"nyliberty",      team:"Liberty"  },
+  ];
+  await Promise.all(REDDIT_SUBS.map(async ({ sub, team }) => {
+    const json = await safeFetch(`https://www.reddit.com/r/${sub}/top.json?limit=5&t=day`);
+    if (!json?.data?.children) return;
+    json.data.children.forEach(post => {
+      const p = post.data;
+      if (!p || p.stickied || p.over_18) return;
+      const title = p.title;
+      if (!title || seen.has(title)) return;
+      // Skip pure discussion threads / game threads / lineup threads
+      const lowerTitle = title.toLowerCase();
+      if (lowerTitle.includes("game thread") || lowerTitle.includes("post-game thread") ||
+          lowerTitle.includes("daily discussion") || lowerTitle.includes("lineup thread") ||
+          lowerTitle.includes("pre-game thread")) return;
+      seen.add(title);
+      results.push({
+        title,
+        link:   `https://reddit.com${p.permalink}`,
+        desc:   p.selftext ? p.selftext.slice(0,200) : "",
+        pub:    new Date(p.created_utc * 1000).toISOString(),
+        source: `Reddit · r/${sub}`,
+        team,
+        sport:  team,
+        isNY:   true,
+        upvotes: p.ups,
+      });
+    });
+  }));
+
   return results.sort((a,b) => new Date(b.pub) - new Date(a.pub));
 }
 
@@ -1300,11 +1341,14 @@ function NewsCardSmall({ item, index }) {
 }
 
 function NewsTab({ news, loading }) {
+  const [section, setSection] = useState("HEADLINES");
   const [filter, setFilter] = useState("NY");
   const [sport,  setSport]  = useState("ALL");
+  const [teamFilter, setTeamFilter] = useState("ALL");
 
   const NY_KEYWORDS_CHECK = ["yankees","mets","knicks","nets","rangers","islanders","devils","liberty","nycfc","red bulls","gotham","new york","brooklyn","bronx","queens"];
   const SPORTS = ["ALL","MLB","NFL","NBA","NHL","WNBA","MLS"];
+  const TEAMS  = ["ALL","Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty","NYCFC","Gotham FC"];
 
   const SPORT_KEYWORDS = {
     MLB:  ["mlb","baseball","yankees","mets","cubs","dodgers","red sox"],
@@ -1317,53 +1361,222 @@ function NewsTab({ news, loading }) {
 
   const filtered = news.filter(item => {
     const combined = (item.title + " " + (item.desc||"") + " " + (item.source||"")).toLowerCase();
-    // Use pre-computed isNY flag OR check keywords
     const isNY = item.isNY || NY_KEYWORDS_CHECK.some(kw => combined.includes(kw));
     if (filter === "NY" && !isNY) return false;
     if (sport !== "ALL") {
       const sportKws = SPORT_KEYWORDS[sport] || [];
       if (!sportKws.some(kw => combined.includes(kw))) return false;
     }
+    if (teamFilter !== "ALL") {
+      const tf = teamFilter.toLowerCase();
+      if (!combined.includes(tf)) return false;
+    }
     return true;
   });
 
+  // Group news by source type for the dashboard view
+  const espnNews = filtered.filter(n => n.source?.startsWith("ESPN"));
+  const redditNews = filtered.filter(n => n.source?.startsWith("Reddit"));
+
   return (
     <div>
-      <div style={{display:"flex", gap:8, flexWrap:"wrap", marginBottom:16, alignItems:"center"}}>
-        {/* NY/ALL toggle */}
-        <div style={{display:"flex", gap:4, marginRight:8}}>
-          {["NY","ALL"].map(f => (
-            <button key={f} onClick={() => setFilter(f)}
-              style={{...styles.filterBtn, ...(filter===f ? styles.filterBtnActive : {})}}>
-              {f === "NY" ? "🗽 NY ONLY" : "🌐 ALL SPORTS"}
-            </button>
-          ))}
-        </div>
-        {/* Sport filter */}
-        {SPORTS.map(s => (
-          <button key={s} onClick={() => setSport(s)}
-            style={{...styles.filterBtn, ...(sport===s ? styles.filterBtnActive : {}), fontSize:9}}>
+      {/* Section toggle */}
+      <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:16, borderBottom:"1px solid #2a2a2a", paddingBottom:12}}>
+        {["HEADLINES","BEAT WRITERS","FAN COMMUNITIES","NY SPORTS SITES"].map(s => (
+          <button key={s} onClick={() => setSection(s)}
+            style={{...styles.filterBtn, ...(section===s ? styles.filterBtnActive : {})}}>
             {s}
           </button>
         ))}
-        <span style={{fontSize:9, color:"#555", marginLeft:"auto"}}>{filtered.length} STORIES</span>
       </div>
 
-      {loading ? (
-        <div style={styles.loading}>
-          <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
-          <p style={styles.loadingText}>LOADING HEADLINES...</p>
+      {/* HEADLINES SECTION */}
+      {section === "HEADLINES" && (
+        <>
+          <div style={{display:"flex", gap:8, flexWrap:"wrap", marginBottom:12, alignItems:"center"}}>
+            <div style={{display:"flex", gap:4, marginRight:8}}>
+              {["NY","ALL"].map(f => (
+                <button key={f} onClick={() => setFilter(f)}
+                  style={{...styles.filterBtn, ...(filter===f ? styles.filterBtnActive : {})}}>
+                  {f === "NY" ? "🗽 NY ONLY" : "🌐 ALL SPORTS"}
+                </button>
+              ))}
+            </div>
+            {SPORTS.map(s => (
+              <button key={s} onClick={() => setSport(s)}
+                style={{...styles.filterBtn, ...(sport===s ? styles.filterBtnActive : {}), fontSize:9}}>
+                {s}
+              </button>
+            ))}
+            <span style={{fontSize:9, color:"#555", marginLeft:"auto"}}>{filtered.length} STORIES</span>
+          </div>
+
+          {/* Team filter */}
+          <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:16, paddingBottom:8, borderBottom:"1px solid #1a1a1a"}}>
+            <span style={{fontSize:9, color:"#555", letterSpacing:"0.1em", alignSelf:"center", flexShrink:0, marginRight:4}}>TEAM:</span>
+            {TEAMS.map(t => (
+              <button key={t} onClick={() => setTeamFilter(t)}
+                style={{...styles.filterBtn, ...(teamFilter===t ? styles.filterBtnActive : {}), fontSize:9}}>
+                {t}
+              </button>
+            ))}
+          </div>
+
+          {loading ? (
+            <div style={styles.loading}>
+              <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
+              <p style={styles.loadingText}>LOADING HEADLINES...</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={styles.empty}>
+              <span style={styles.emptyIcon}>📰</span>
+              <p style={styles.emptyText}>NO STORIES — TRY DIFFERENT FILTERS</p>
+            </div>
+          ) : (
+            <div style={styles.newsGrid}>
+              {filtered.slice(0,4).map((item,i) => <NewsCardFeatured key={i} item={item} />)}
+              <div style={styles.newsDivider}><span style={styles.newsDividerText}>MORE STORIES</span></div>
+              {filtered.slice(4,80).map((item,i) => <NewsCardSmall key={i} item={item} index={i} />)}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* BEAT WRITERS SECTION */}
+      {section === "BEAT WRITERS" && (
+        <div>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>The reporters who break news on NY teams. Follow them for breaking stories, lineups, and inside scoops.</p>
+          </div>
+          {[
+            { name:"Joel Sherman",    outlet:"NY Post",      teams:"Yankees · MLB",     handle:"@Joelsherman1",     url:"https://twitter.com/Joelsherman1",     desc:"Yankees insider. Breaks the biggest baseball deals." },
+            { name:"Jon Heyman",      outlet:"NY Post",      teams:"MLB · Yankees",     handle:"@JonHeyman",        url:"https://twitter.com/JonHeyman",        desc:"Hall of Fame MLB reporter — broke Aaron Judge contract" },
+            { name:"Bob Klapisch",    outlet:"NJ Advance",   teams:"Yankees · Mets",    handle:"@BobKlap",          url:"https://twitter.com/BobKlap",          desc:"Veteran NY baseball columnist" },
+            { name:"Andy Martino",    outlet:"SNY",          teams:"Mets · Yankees",    handle:"@martinonyc",       url:"https://twitter.com/martinonyc",       desc:"SNY Mets insider — breaks Steve Cohen moves" },
+            { name:"Anthony DiComo",  outlet:"MLB.com",      teams:"Mets",              handle:"@AnthonyDiComo",    url:"https://twitter.com/AnthonyDiComo",    desc:"Official Mets beat reporter" },
+            { name:"Bryan Hoch",      outlet:"MLB.com",      teams:"Yankees",           handle:"@BryanHoch",        url:"https://twitter.com/BryanHoch",        desc:"Official Yankees beat reporter" },
+            { name:"Manish Mehta",    outlet:"NY Daily News",teams:"Jets",              handle:"@MMehtaNYDN",       url:"https://twitter.com/MMehtaNYDN",       desc:"Jets beat — never afraid to call it as he sees it" },
+            { name:"Connor Hughes",   outlet:"SNY",          teams:"Jets",              handle:"@Connor_J_Hughes",  url:"https://twitter.com/Connor_J_Hughes",  desc:"SNY Jets reporter" },
+            { name:"Rich Cimini",     outlet:"ESPN",         teams:"Jets",              handle:"@RichCimini",       url:"https://twitter.com/RichCimini",       desc:"ESPN's veteran Jets reporter" },
+            { name:"Jordan Raanan",   outlet:"ESPN",         teams:"Giants",            handle:"@JordanRaanan",     url:"https://twitter.com/JordanRaanan",     desc:"ESPN Giants insider" },
+            { name:"Ralph Vacchiano", outlet:"FOX Sports",   teams:"Giants",            handle:"@RVacchianoSNY",    url:"https://twitter.com/RVacchianoSNY",    desc:"Giants beat veteran" },
+            { name:"Ian Begley",      outlet:"SNY",          teams:"Knicks",            handle:"@IanBegley",        url:"https://twitter.com/IanBegley",        desc:"Top Knicks reporter — Brunson era insider" },
+            { name:"Marc Berman",     outlet:"NY Post",      teams:"Knicks",            handle:"@NYPost_Berman",    url:"https://twitter.com/NYPost_Berman",    desc:"Knicks beat for the NY Post" },
+            { name:"Stefan Bondy",    outlet:"NY Post",      teams:"Knicks · Nets",     handle:"@SbondyNYP",        url:"https://twitter.com/SbondyNYP",        desc:"NBA NY coverage" },
+            { name:"Brett Cyrgalis",  outlet:"NY Post",      teams:"Rangers",           handle:"@BrettCyrgalis",    url:"https://twitter.com/BrettCyrgalis",    desc:"Rangers beat reporter" },
+            { name:"Larry Brooks",    outlet:"NY Post",      teams:"Rangers · NHL",     handle:"@NYP_Brooksie",     url:"https://twitter.com/NYP_Brooksie",     desc:"Legendary NY hockey columnist" },
+            { name:"Andrew Gross",    outlet:"Newsday",      teams:"Islanders",         handle:"@AGrossNewsday",    url:"https://twitter.com/AGrossNewsday",    desc:"Newsday Islanders beat" },
+            { name:"Stefen Rosner",   outlet:"NY Hockey Now",teams:"Islanders",         handle:"@SRosner91",        url:"https://twitter.com/SRosner91",        desc:"Islanders deep coverage" },
+            { name:"Amanda Stein",    outlet:"Devils",       teams:"Devils",            handle:"@AmandaCStein",     url:"https://twitter.com/AmandaCStein",     desc:"Devils studio host and reporter" },
+            { name:"Howie Kussoy",    outlet:"NY Post",      teams:"All NY",            handle:"@HowieKussoy",      url:"https://twitter.com/HowieKussoy",      desc:"NY Post sports columnist" },
+          ].map((w, i) => (
+            <a key={i} href={w.url} target="_blank" rel="noopener noreferrer"
+              style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.beatWriterIcon}>🐦</div>
+              <div style={styles.beatWriterInfo}>
+                <div style={styles.beatWriterTopLine}>
+                  <span style={styles.beatWriterName}>{w.name}</span>
+                  <span style={styles.beatWriterHandle}>{w.handle}</span>
+                </div>
+                <div style={styles.beatWriterMeta}>
+                  <span style={styles.beatWriterOutlet}>{w.outlet}</span>
+                  <span style={styles.beatWriterTeams}>{w.teams}</span>
+                </div>
+                <span style={styles.beatWriterDesc}>{w.desc}</span>
+              </div>
+              <span style={styles.beatWriterArrow}>→</span>
+            </a>
+          ))}
         </div>
-      ) : filtered.length === 0 ? (
-        <div style={styles.empty}>
-          <span style={styles.emptyIcon}>📰</span>
-          <p style={styles.emptyText}>NO STORIES — TRY "ALL SPORTS" FILTER</p>
+      )}
+
+      {/* FAN COMMUNITIES SECTION */}
+      {section === "FAN COMMUNITIES" && (
+        <div>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>Reddit subreddits and fan communities where NY sports fans hang out daily. Join the conversation.</p>
+          </div>
+          <div style={styles.stdDivisionHeader}>🗣️ TEAM SUBREDDITS</div>
+          {[
+            { name:"r/NYYankees",       team:"Yankees ⚾",  members:"185K",  url:"https://reddit.com/r/NYYankees",       desc:"The biggest Yankees fan community on Reddit" },
+            { name:"r/NewYorkMets",     team:"Mets ⚾",     members:"165K",  url:"https://reddit.com/r/NewYorkMets",     desc:"Mets fans — game threads, memes, and inside jokes" },
+            { name:"r/nyjets",          team:"Jets 🏈",     members:"148K",  url:"https://reddit.com/r/nyjets",          desc:"Long-suffering Jets fan central" },
+            { name:"r/NYGiants",        team:"Giants 🏈",   members:"160K",  url:"https://reddit.com/r/NYGiants",        desc:"Big Blue fan headquarters" },
+            { name:"r/NYKnicks",        team:"Knicks 🏀",   members:"385K",  url:"https://reddit.com/r/NYKnicks",        desc:"Brunson era is in full effect" },
+            { name:"r/GoNets",          team:"Nets 🏀",     members:"68K",   url:"https://reddit.com/r/GoNets",          desc:"Brooklyn Nets community" },
+            { name:"r/rangers",         team:"Rangers 🏒",  members:"95K",   url:"https://reddit.com/r/rangers",         desc:"Broadway Blueshirts fans" },
+            { name:"r/NewYorkIslanders",team:"Islanders 🏒",members:"42K",   url:"https://reddit.com/r/NewYorkIslanders",desc:"Isles diehards — Schaefer era begins" },
+            { name:"r/devils",          team:"Devils 🏒",   members:"48K",   url:"https://reddit.com/r/devils",          desc:"NJ Devils fans — Hughes brothers era" },
+            { name:"r/nyliberty",       team:"Liberty 🏀",  members:"15K",   url:"https://reddit.com/r/nyliberty",       desc:"WNBA champion NY Liberty fans" },
+            { name:"r/NYCFC",           team:"NYCFC ⚽",    members:"18K",   url:"https://reddit.com/r/NYCFC",           desc:"The Pigeons community" },
+            { name:"r/baseball",        team:"All MLB",     members:"3.2M",  url:"https://reddit.com/r/baseball",        desc:"All MLB news and discussion" },
+            { name:"r/nfl",             team:"All NFL",     members:"8.4M",  url:"https://reddit.com/r/nfl",             desc:"Biggest NFL community on Reddit" },
+            { name:"r/nba",             team:"All NBA",     members:"6.8M",  url:"https://reddit.com/r/nba",             desc:"All NBA news and game threads" },
+            { name:"r/hockey",          team:"All NHL",     members:"1.4M",  url:"https://reddit.com/r/hockey",          desc:"All NHL discussion" },
+          ].map((s, i) => (
+            <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+              style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.beatWriterIcon}>💬</div>
+              <div style={styles.beatWriterInfo}>
+                <div style={styles.beatWriterTopLine}>
+                  <span style={styles.beatWriterName}>{s.name}</span>
+                  <span style={styles.beatWriterHandle}>{s.members} members</span>
+                </div>
+                <div style={styles.beatWriterMeta}>
+                  <span style={styles.beatWriterOutlet}>{s.team}</span>
+                </div>
+                <span style={styles.beatWriterDesc}>{s.desc}</span>
+              </div>
+              <span style={styles.beatWriterArrow}>→</span>
+            </a>
+          ))}
         </div>
-      ) : (
-        <div style={styles.newsGrid}>
-          {filtered.slice(0,4).map((item,i) => <NewsCardFeatured key={i} item={item} />)}
-          <div style={styles.newsDivider}><span style={styles.newsDividerText}>MORE STORIES</span></div>
-          {filtered.slice(4,60).map((item,i) => <NewsCardSmall key={i} item={item} index={i} />)}
+      )}
+
+      {/* NY SPORTS SITES SECTION */}
+      {section === "NY SPORTS SITES" && (
+        <div>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>The best independent NY sports sites — deep coverage, opinion, and analysis.</p>
+          </div>
+          <div style={styles.stdDivisionHeader}>📰 INDEPENDENT NY SPORTS SITES</div>
+          {[
+            { name:"NY Post Sports",      team:"All NY",        url:"https://nypost.com/sports/",                desc:"Tabloid coverage of every NY team — strong opinions" },
+            { name:"NY Daily News Sports",team:"All NY",        url:"https://www.nydailynews.com/sports/",       desc:"NY tabloid sports — long-running NY coverage" },
+            { name:"Newsday Sports",      team:"All NY · LI",   url:"https://www.newsday.com/sports",            desc:"Long Island's paper — strong Yankees, Mets, Islanders" },
+            { name:"SNY",                 team:"Mets + All NY", url:"https://sny.tv/",                           desc:"Best Mets coverage anywhere, plus all NY teams" },
+            { name:"YES Network",         team:"Yankees",       url:"https://www.yesnetwork.com/",               desc:"Yankees official network — videos, stats, columns" },
+            { name:"MSG Networks",        team:"Knicks · Rangers",url:"https://www.msgnetworks.com/",            desc:"Knicks and Rangers home — exclusive content" },
+            { name:"Pinstripe Alley",     team:"Yankees",       url:"https://www.pinstripealley.com/",           desc:"SB Nation Yankees blog — fan analysis and stats" },
+            { name:"Amazin' Avenue",      team:"Mets",          url:"https://www.amazinavenue.com/",             desc:"SB Nation Mets community — fan voices" },
+            { name:"Gang Green Nation",   team:"Jets",          url:"https://www.ganggreennation.com/",          desc:"SB Nation Jets — long-suffering fan deep dives" },
+            { name:"Big Blue View",       team:"Giants",        url:"https://www.bigblueview.com/",              desc:"SB Nation Giants — Ed Valentine's deep analysis" },
+            { name:"Posting and Toasting",team:"Knicks",        url:"https://www.postingandtoasting.com/",       desc:"SB Nation Knicks — Garden faithful" },
+            { name:"Blueshirt Banter",    team:"Rangers",       url:"https://www.blueshirtbanter.com/",          desc:"SB Nation Rangers — broadway hockey analysis" },
+            { name:"Lighthouse Hockey",   team:"Islanders",     url:"https://www.lighthousehockey.com/",         desc:"SB Nation Islanders fan community" },
+            { name:"All About The Jersey",team:"Devils",        url:"https://www.allaboutthejersey.com/",        desc:"SB Nation Devils analysis and coverage" },
+            { name:"NetsDaily",           team:"Nets",          url:"https://www.netsdaily.com/",                desc:"SB Nation Nets — Brooklyn coverage" },
+            { name:"Empire of the Kniks", team:"Knicks",        url:"https://empireoftheknicks.com/",            desc:"Independent Knicks blog with stats focus" },
+            { name:"NY Hockey Now",       team:"Rangers · Isles · Devils", url:"https://nyhockeynow.com/",       desc:"Cross-NY-area hockey coverage" },
+            { name:"Empire Sports Media", team:"All NY",        url:"https://empiresportsmedia.com/",            desc:"All NY teams — opinion and breakdowns" },
+            { name:"Jets Wire",           team:"Jets",          url:"https://jetswire.usatoday.com/",            desc:"USA Today Jets coverage" },
+            { name:"Giants Wire",         team:"Giants",        url:"https://giantswire.usatoday.com/",          desc:"USA Today Giants coverage" },
+          ].map((s, i) => (
+            <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+              style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.beatWriterIcon}>📰</div>
+              <div style={styles.beatWriterInfo}>
+                <div style={styles.beatWriterTopLine}>
+                  <span style={styles.beatWriterName}>{s.name}</span>
+                </div>
+                <div style={styles.beatWriterMeta}>
+                  <span style={styles.beatWriterOutlet}>{s.team}</span>
+                </div>
+                <span style={styles.beatWriterDesc}>{s.desc}</span>
+              </div>
+              <span style={styles.beatWriterArrow}>→</span>
+            </a>
+          ))}
         </div>
       )}
     </div>
@@ -5152,6 +5365,19 @@ const styles = {
 
   // RADIO
   radioRow: { display:"flex", alignItems:"center", gap:12, padding:"10px 14px", textDecoration:"none", borderTop:"1px solid #1a1a1a" },
+  
+  // BEAT WRITERS / FAN COMMUNITIES / NY SITES
+  beatWriterRow: { display:"flex", alignItems:"center", gap:12, padding:"10px 14px", textDecoration:"none", borderTop:"1px solid #1a1a1a" },
+  beatWriterIcon: { fontSize:22, flexShrink:0, width:30, textAlign:"center" },
+  beatWriterInfo: { flex:1, display:"flex", flexDirection:"column", gap:3 },
+  beatWriterTopLine: { display:"flex", gap:10, alignItems:"baseline" },
+  beatWriterName: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  beatWriterHandle: { fontSize:10, color:"#888" },
+  beatWriterMeta: { display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" },
+  beatWriterOutlet: { fontSize:10, color:"#c8201c", fontWeight:900, letterSpacing:"0.05em" },
+  beatWriterTeams: { fontSize:9, color:"#666" },
+  beatWriterDesc: { fontSize:10, color:"#888", fontStyle:"italic" },
+  beatWriterArrow: { fontSize:14, color:"#c8201c", fontWeight:900, flexShrink:0 },
   radioIcon: { fontSize:20, flexShrink:0 },
   radioInfo: { flex:1, display:"flex", flexDirection:"column", gap:2 },
   radioName: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
