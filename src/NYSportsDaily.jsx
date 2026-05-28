@@ -407,30 +407,30 @@ function getDailyQuote() {
 
 // ─── DAILY PLAYER SPOTLIGHT ───────────────────────────────────────────────
 const DAILY_PLAYERS = [
-  { name:"Derek Jeter",    team:"Yankees",   sport:"MLB", pos:"SS",  emoji:"⚾", number:"2",  active:false, era:"1995–2014", stats:"3,465 H · .310 AVG · 260 HR · 14× All-Star", fact:"The only Yankee to win 5 World Series rings AND be drafted by the team. Made the flip, the dive, and Mr. November moments.", wiki:"https://en.wikipedia.org/wiki/Derek_Jeter" },
-  { name:"Mike Piazza",    team:"Mets",      sport:"MLB", pos:"C",   emoji:"⚾", number:"31", active:false, era:"1998–2005", stats:"220 HR · .296 AVG · 655 RBI as a Met", fact:"His 9/11 home run on September 21, 2001 is the most emotional moment in Mets history. Greatest hitting catcher ever.", wiki:"https://en.wikipedia.org/wiki/Mike_Piazza" },
-  { name:"Joe Namath",     team:"Jets",      sport:"NFL", pos:"QB",  emoji:"🏈", number:"12", active:false, era:"1965–1976", stats:"27,057 yds · 173 TD · Super Bowl III MVP", fact:"Guaranteed a Super Bowl win as a 17-point underdog then delivered. Changed professional football forever with one press conference.", wiki:"https://en.wikipedia.org/wiki/Joe_Namath" },
-  { name:"Lawrence Taylor", team:"Giants",   sport:"NFL", pos:"LB",  emoji:"🏈", number:"56", active:false, era:"1981–1993", stats:"132.5 sacks · 2× SB · NFL MVP 1986", fact:"The NFL changed its blocking rules because of him. Every modern edge rusher is chasing his ghost.", wiki:"https://en.wikipedia.org/wiki/Lawrence_Taylor" },
-  { name:"Patrick Ewing",  team:"Knicks",   sport:"NBA", pos:"C",   emoji:"🏀", number:"33", active:false, era:"1985–2000", stats:"23,665 pts · 10,759 reb · 11× All-Star", fact:"First ever NBA lottery pick. Led the Knicks for 15 years and came heartbreakingly close to a championship in 1994.", wiki:"https://en.wikipedia.org/wiki/Patrick_Ewing" },
-  { name:"Walt Frazier",   team:"Knicks",   sport:"NBA", pos:"G",   emoji:"🏀", number:"10", active:false, era:"1967–1977", stats:"14,617 pts · 4,791 ast · 2× NBA Champion", fact:"Scored 36 points in the famous Willis Reed Game 7. The most stylishly dressed player in NBA history.", wiki:"https://en.wikipedia.org/wiki/Walt_Frazier" },
-  { name:"Mark Messier",   team:"Rangers",  sport:"NHL", pos:"C",   emoji:"🏒", number:"11", active:false, era:"1991–2004", stats:"851 pts as a Ranger · 6× Stanley Cup champion", fact:"Guaranteed a Game 6 win against the Devils when down 3-2. Then scored a hat trick. The greatest captain in hockey history.", wiki:"https://en.wikipedia.org/wiki/Mark_Messier" },
-  { name:"Mike Bossy",     team:"Islanders",sport:"NHL", pos:"RW",  emoji:"🏒", number:"22", active:false, era:"1977–1987", stats:"573 G · 9 straight 50-goal seasons · 4× Cup", fact:"Matched Rocket Richard's 50 in 50 in 1981. Retired at 30 due to back injuries — may have been even greater.", wiki:"https://en.wikipedia.org/wiki/Mike_Bossy" },
-  { name:"Bryan Trottier", team:"Islanders",sport:"NHL", pos:"C",   emoji:"🏒", number:"19", active:false, era:"1975–1990", stats:"1,353 pts · 4× Cup · Hart Trophy 1979", fact:"Won 4 Cups with the Islanders then 2 more with Pittsburgh. The engine of the greatest dynasty in NHL history.", wiki:"https://en.wikipedia.org/wiki/Bryan_Trottier" },
-  { name:"Tom Seaver",     team:"Mets",     sport:"MLB", pos:"SP",  emoji:"⚾", number:"41", active:false, era:"1967–1983", stats:"311 W · 2.86 ERA · 3,272 K · 3× Cy Young", fact:"Led the Miracle Mets to the 1969 World Series. Tom Terrific is the greatest Met of all time — not even close.", wiki:"https://en.wikipedia.org/wiki/Tom_Seaver" },
-  { name:"Babe Ruth",      team:"Yankees",  sport:"MLB", pos:"RF",  emoji:"⚾", number:"3",  active:false, era:"1920–1934", stats:"659 HR as Yankee · .349 AVG · 7× WS", fact:"Was sold by Boston for $100,000 in 1920 — cursing them for 86 years. Possibly the most impactful transaction in sports history.", wiki:"https://en.wikipedia.org/wiki/Babe_Ruth" },
-  { name:"Lou Gehrig",     team:"Yankees",  sport:"MLB", pos:"1B",  emoji:"⚾", number:"4",  active:false, era:"1923–1939", stats:"2,721 H · 1,995 RBI · .340 AVG · 7× All-Star", fact:"Played 2,130 consecutive games as the Iron Horse. His farewell speech — 'luckiest man' — is the most powerful in sports history.", wiki:"https://en.wikipedia.org/wiki/Lou_Gehrig" },
-  { name:"Willis Reed",    team:"Knicks",   sport:"NBA", pos:"C",   emoji:"🏀", number:"19", active:false, era:"1964–1974", stats:"12,183 pts · 8,414 reb · 2× NBA Champion", fact:"Limped onto the Garden floor on a torn thigh muscle for Game 7. The crowd went insane. The Knicks won. Frazier scored 36.", wiki:"https://en.wikipedia.org/wiki/Willis_Reed" },
-  { name:"Denis Potvin",   team:"Islanders",sport:"NHL", pos:"D",   emoji:"🏒", number:"5",  active:false, era:"1973–1988", stats:"1,052 pts · 3× Norris · 4× Cup", fact:"Broke Bobby Orr's career points record for defensemen. Captained four consecutive Stanley Cup champions.", wiki:"https://en.wikipedia.org/wiki/Denis_Potvin" },
-  { name:"Phil Simms",     team:"Giants",   sport:"NFL", pos:"QB",  emoji:"🏈", number:"11", active:false, era:"1979–1993", stats:"33,462 yds · 199 TD · Super Bowl XXI MVP", fact:"Completed 22 of 25 passes (88%) in Super Bowl XXI — still the record completion percentage in Super Bowl history.", wiki:"https://en.wikipedia.org/wiki/Phil_Simms" },
-  { name:"Don Mattingly",  team:"Yankees",  sport:"MLB", pos:"1B",  emoji:"⚾", number:"23", active:false, era:"1982–1995", stats:"2,153 H · 9× Gold Glove · .307 career AVG", fact:"The most beloved Yankee of the 1980s never won a World Series ring. Finally made the playoffs in his last season.", wiki:"https://en.wikipedia.org/wiki/Don_Mattingly" },
-  { name:"Joe DiMaggio",   team:"Yankees",  sport:"MLB", pos:"CF",  emoji:"⚾", number:"5",  active:false, era:"1936–1951", stats:"361 HR · .325 AVG · 9× WS · 3× MVP", fact:"Hit safely in 56 consecutive games in 1941. Mathematical models suggest the odds of that ever happening are less than 1 in 1,000.", wiki:"https://en.wikipedia.org/wiki/Joe_DiMaggio" },
-  { name:"Dwight Gooden",  team:"Mets",     sport:"MLB", pos:"SP",  emoji:"⚾", number:"16", active:false, era:"1984–1994", stats:"194 W · 1.53 ERA in 1985 · Cy Young 1985", fact:"At age 20, went 24-4 with 1.53 ERA. Batters said facing him was like hitting against a wall. What could have been the greatest career.", wiki:"https://en.wikipedia.org/wiki/Dwight_Gooden" },
-  { name:"Eli Manning",    team:"Giants",   sport:"NFL", pos:"QB",  emoji:"🏈", number:"10", active:false, era:"2004–2019", stats:"57,023 yds · 366 TD · 2× Super Bowl MVP", fact:"Beat the undefeated Patriots twice in the Super Bowl. Made the pass to David Tyree and the throw to Mario Manningham.", wiki:"https://en.wikipedia.org/wiki/Eli_Manning" },
-  { name:"Mariano Rivera",  team:"Yankees", sport:"MLB", pos:"RP",  emoji:"⚾", number:"42", active:false, era:"1995–2013", stats:"652 SV · 2.21 ERA · 5× WS · ALCS MVP 2003", fact:"Unanimous Hall of Fame election — first ever. Threw one pitch (cutter) his entire career. The greatest closer in baseball history.", wiki:"https://en.wikipedia.org/wiki/Mariano_Rivera" },
-  { name:"Jalen Brunson",  team:"Knicks",   sport:"NBA", pos:"PG",  emoji:"🏀", number:"11", active:true,  era:"2022–present", stats:"28+ PPG · 6+ APG · MSG's new hero", fact:"Turned down a max contract extension, then got a bigger one. Breathed new life into Knicks basketball in a way the Garden hasn't seen since Ewing.", wiki:"https://en.wikipedia.org/wiki/Jalen_Brunson" },
-  { name:"Pete Alonso",    team:"Mets",     sport:"MLB", pos:"1B",  emoji:"⚾", number:"20", active:true,  era:"2019–present", stats:"240+ HR · 53 HR in 2019 (rookie record)", fact:"The Polar Bear broke the MLB rookie home run record in 2019. Now leads the Mets all-time home run list, ahead of Darryl Strawberry.", wiki:"https://en.wikipedia.org/wiki/Pete_Alonso" },
-  { name:"Aaron Judge",    team:"Yankees",  sport:"MLB", pos:"RF",  emoji:"⚾", number:"99", active:true,  era:"2016–present", stats:"60+ HR seasons · .280+ AVG · AL MVP 2017, 2022", fact:"Hit 62 home runs in 2022 — the American League single-season record. The current face of the Yankees dynasty.", wiki:"https://en.wikipedia.org/wiki/Aaron_Judge" },
-  { name:"Breanna Stewart", team:"Liberty", sport:"WNBA",pos:"F",  emoji:"🏀", number:"30", active:true,  era:"2023–present", stats:"2× WNBA Champion · Finals MVP", fact:"Came to New York to win and delivered back-to-back championships. The best player in women's basketball history.", wiki:"https://en.wikipedia.org/wiki/Breanna_Stewart" },
+  { name:"Derek Jeter",    team:"Yankees",   sport:"MLB", pos:"SS",  emoji:"⚾", number:"2",  active:false, era:"1995–2014", stats:"3,465 H · .310 AVG · 260 HR · 14× All-Star", fact:"The only Yankee to win 5 World Series rings AND be drafted by the team. Made the flip, the dive, and Mr. November moments.", wiki:"https://en.wikipedia.org/wiki/Derek_Jeter", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Derek_Jeter_2007.jpg/256px-Derek_Jeter_2007.jpg", cardColor:"#003087" },
+  { name:"Mike Piazza",    team:"Mets",      sport:"MLB", pos:"C",   emoji:"⚾", number:"31", active:false, era:"1998–2005", stats:"220 HR · .296 AVG · 655 RBI as a Met", fact:"His 9/11 home run on September 21, 2001 is the most emotional moment in Mets history. Greatest hitting catcher ever.", wiki:"https://en.wikipedia.org/wiki/Mike_Piazza", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Mike_Piazza_2013.jpg/256px-Mike_Piazza_2013.jpg", cardColor:"#FF5910" },
+  { name:"Joe Namath",     team:"Jets",      sport:"NFL", pos:"QB",  emoji:"🏈", number:"12", active:false, era:"1965–1976", stats:"27,057 yds · 173 TD · Super Bowl III MVP", fact:"Guaranteed a Super Bowl win as a 17-point underdog then delivered. Changed professional football forever with one press conference.", wiki:"https://en.wikipedia.org/wiki/Joe_Namath", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Joe_Namath_1965.jpg/256px-Joe_Namath_1965.jpg", cardColor:"#125740" },
+  { name:"Lawrence Taylor", team:"Giants",   sport:"NFL", pos:"LB",  emoji:"🏈", number:"56", active:false, era:"1981–1993", stats:"132.5 sacks · 2× SB · NFL MVP 1986", fact:"The NFL changed its blocking rules because of him. Every modern edge rusher is chasing his ghost.", wiki:"https://en.wikipedia.org/wiki/Lawrence_Taylor", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Lawrence_Taylor_2009.jpg/256px-Lawrence_Taylor_2009.jpg", cardColor:"#0B2265" },
+  { name:"Patrick Ewing",  team:"Knicks",   sport:"NBA", pos:"C",   emoji:"🏀", number:"33", active:false, era:"1985–2000", stats:"23,665 pts · 10,759 reb · 11× All-Star", fact:"First ever NBA lottery pick. Led the Knicks for 15 years and came heartbreakingly close to a championship in 1994.", wiki:"https://en.wikipedia.org/wiki/Patrick_Ewing", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Patrick_Ewing_2008.jpg/256px-Patrick_Ewing_2008.jpg", cardColor:"#006BB6" },
+  { name:"Walt Frazier",   team:"Knicks",   sport:"NBA", pos:"G",   emoji:"🏀", number:"10", active:false, era:"1967–1977", stats:"14,617 pts · 4,791 ast · 2× NBA Champion", fact:"Scored 36 points in the famous Willis Reed Game 7. The most stylishly dressed player in NBA history.", wiki:"https://en.wikipedia.org/wiki/Walt_Frazier", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Walt_Frazier_1972.jpg/256px-Walt_Frazier_1972.jpg", cardColor:"#006BB6" },
+  { name:"Mark Messier",   team:"Rangers",  sport:"NHL", pos:"C",   emoji:"🏒", number:"11", active:false, era:"1991–2004", stats:"851 pts as a Ranger · 6× Stanley Cup champion", fact:"Guaranteed a Game 6 win against the Devils when down 3-2. Then scored a hat trick. The greatest captain in hockey history.", wiki:"https://en.wikipedia.org/wiki/Mark_Messier", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Mark_Messier_2014.jpg/256px-Mark_Messier_2014.jpg", cardColor:"#0038A8" },
+  { name:"Mike Bossy",     team:"Islanders",sport:"NHL", pos:"RW",  emoji:"🏒", number:"22", active:false, era:"1977–1987", stats:"573 G · 9 straight 50-goal seasons · 4× Cup", fact:"Matched Rocket Richard's 50 in 50 in 1981. Retired at 30 due to back injuries — may have been even greater.", wiki:"https://en.wikipedia.org/wiki/Mike_Bossy", photo:"https://upload.wikimedia.org/wikipedia/en/thumb/8/8d/Mike_Bossy.jpg/256px-Mike_Bossy.jpg", cardColor:"#00539B" },
+  { name:"Bryan Trottier", team:"Islanders",sport:"NHL", pos:"C",   emoji:"🏒", number:"19", active:false, era:"1975–1990", stats:"1,353 pts · 4× Cup · Hart Trophy 1979", fact:"Won 4 Cups with the Islanders then 2 more with Pittsburgh. The engine of the greatest dynasty in NHL history.", wiki:"https://en.wikipedia.org/wiki/Bryan_Trottier", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Bryan_Trottier_2018.jpg/256px-Bryan_Trottier_2018.jpg", cardColor:"#00539B" },
+  { name:"Tom Seaver",     team:"Mets",     sport:"MLB", pos:"SP",  emoji:"⚾", number:"41", active:false, era:"1967–1983", stats:"311 W · 2.86 ERA · 3,272 K · 3× Cy Young", fact:"Led the Miracle Mets to the 1969 World Series. Tom Terrific is the greatest Met of all time — not even close.", wiki:"https://en.wikipedia.org/wiki/Tom_Seaver", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Tom_Seaver_1979.jpg/256px-Tom_Seaver_1979.jpg", cardColor:"#FF5910" },
+  { name:"Babe Ruth",      team:"Yankees",  sport:"MLB", pos:"RF",  emoji:"⚾", number:"3",  active:false, era:"1920–1934", stats:"659 HR as Yankee · .349 AVG · 7× WS", fact:"Was sold by Boston for $100,000 in 1920 — cursing them for 86 years. Possibly the most impactful transaction in sports history.", wiki:"https://en.wikipedia.org/wiki/Babe_Ruth", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Babe_Ruth2.jpg/256px-Babe_Ruth2.jpg", cardColor:"#003087" },
+  { name:"Lou Gehrig",     team:"Yankees",  sport:"MLB", pos:"1B",  emoji:"⚾", number:"4",  active:false, era:"1923–1939", stats:"2,721 H · 1,995 RBI · .340 AVG · 7× All-Star", fact:"Played 2,130 consecutive games as the Iron Horse. His farewell speech — 'luckiest man' — is the most powerful in sports history.", wiki:"https://en.wikipedia.org/wiki/Lou_Gehrig", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Lou_Gehrig_as_a_New_York_Yankee.jpg/256px-Lou_Gehrig_as_a_New_York_Yankee.jpg", cardColor:"#003087" },
+  { name:"Willis Reed",    team:"Knicks",   sport:"NBA", pos:"C",   emoji:"🏀", number:"19", active:false, era:"1964–1974", stats:"12,183 pts · 8,414 reb · 2× NBA Champion", fact:"Limped onto the Garden floor on a torn thigh muscle for Game 7. The crowd went insane. The Knicks won. Frazier scored 36.", wiki:"https://en.wikipedia.org/wiki/Willis_Reed", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Willis_Reed.jpg/256px-Willis_Reed.jpg", cardColor:"#006BB6" },
+  { name:"Denis Potvin",   team:"Islanders",sport:"NHL", pos:"D",   emoji:"🏒", number:"5",  active:false, era:"1973–1988", stats:"1,052 pts · 3× Norris · 4× Cup", fact:"Broke Bobby Orr's career points record for defensemen. Captained four consecutive Stanley Cup champions.", wiki:"https://en.wikipedia.org/wiki/Denis_Potvin", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Denis_Potvin_2009.jpg/256px-Denis_Potvin_2009.jpg", cardColor:"#00539B" },
+  { name:"Phil Simms",     team:"Giants",   sport:"NFL", pos:"QB",  emoji:"🏈", number:"11", active:false, era:"1979–1993", stats:"33,462 yds · 199 TD · Super Bowl XXI MVP", fact:"Completed 22 of 25 passes (88%) in Super Bowl XXI — still the record completion percentage in Super Bowl history.", wiki:"https://en.wikipedia.org/wiki/Phil_Simms", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Phil_Simms_2015.jpg/256px-Phil_Simms_2015.jpg", cardColor:"#0B2265" },
+  { name:"Don Mattingly",  team:"Yankees",  sport:"MLB", pos:"1B",  emoji:"⚾", number:"23", active:false, era:"1982–1995", stats:"2,153 H · 9× Gold Glove · .307 career AVG", fact:"The most beloved Yankee of the 1980s never won a World Series ring. Finally made the playoffs in his last season.", wiki:"https://en.wikipedia.org/wiki/Don_Mattingly", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Don_Mattingly_2011.jpg/256px-Don_Mattingly_2011.jpg", cardColor:"#003087" },
+  { name:"Joe DiMaggio",   team:"Yankees",  sport:"MLB", pos:"CF",  emoji:"⚾", number:"5",  active:false, era:"1936–1951", stats:"361 HR · .325 AVG · 9× WS · 3× MVP", fact:"Hit safely in 56 consecutive games in 1941. Mathematical models suggest the odds of that ever happening are less than 1 in 1,000.", wiki:"https://en.wikipedia.org/wiki/Joe_DiMaggio", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Joe_DiMaggio_1951.jpg/256px-Joe_DiMaggio_1951.jpg", cardColor:"#003087" },
+  { name:"Dwight Gooden",  team:"Mets",     sport:"MLB", pos:"SP",  emoji:"⚾", number:"16", active:false, era:"1984–1994", stats:"194 W · 1.53 ERA in 1985 · Cy Young 1985", fact:"At age 20, went 24-4 with 1.53 ERA. Batters said facing him was like hitting against a wall. What could have been the greatest career.", wiki:"https://en.wikipedia.org/wiki/Dwight_Gooden", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Dwight_Gooden_2009.jpg/256px-Dwight_Gooden_2009.jpg", cardColor:"#FF5910" },
+  { name:"Eli Manning",    team:"Giants",   sport:"NFL", pos:"QB",  emoji:"🏈", number:"10", active:false, era:"2004–2019", stats:"57,023 yds · 366 TD · 2× Super Bowl MVP", fact:"Beat the undefeated Patriots twice in the Super Bowl. Made the pass to David Tyree and the throw to Mario Manningham.", wiki:"https://en.wikipedia.org/wiki/Eli_Manning", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Eli_Manning_2019.jpg/256px-Eli_Manning_2019.jpg", cardColor:"#0B2265" },
+  { name:"Mariano Rivera", team:"Yankees", sport:"MLB", pos:"RP",  emoji:"⚾", number:"42", active:false, era:"1995–2013", stats:"652 SV · 2.21 ERA · 5× WS · ALCS MVP 2003", fact:"Unanimous Hall of Fame election — first ever. Threw one pitch (cutter) his entire career. The greatest closer in baseball history.", wiki:"https://en.wikipedia.org/wiki/Mariano_Rivera", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Mariano_Rivera_2008.jpg/256px-Mariano_Rivera_2008.jpg", cardColor:"#003087" },
+  { name:"Jalen Brunson",  team:"Knicks",   sport:"NBA", pos:"PG",  emoji:"🏀", number:"11", active:true,  era:"2022–present", stats:"28+ PPG · 6+ APG · MSG's new hero", fact:"Turned down a max contract extension, then got a bigger one. Breathed new life into Knicks basketball in a way the Garden hasn't seen since Ewing.", wiki:"https://en.wikipedia.org/wiki/Jalen_Brunson", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Jalen_Brunson_2024.jpg/256px-Jalen_Brunson_2024.jpg", cardColor:"#006BB6" },
+  { name:"Pete Alonso",    team:"Mets",     sport:"MLB", pos:"1B",  emoji:"⚾", number:"20", active:true,  era:"2019–present", stats:"240+ HR · 53 HR in 2019 (rookie record)", fact:"The Polar Bear broke the MLB rookie home run record in 2019. Now leads the Mets all-time home run list, ahead of Darryl Strawberry.", wiki:"https://en.wikipedia.org/wiki/Pete_Alonso", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Pete_Alonso_in_2021.jpg/256px-Pete_Alonso_in_2021.jpg", cardColor:"#FF5910" },
+  { name:"Aaron Judge",    team:"Yankees",  sport:"MLB", pos:"RF",  emoji:"⚾", number:"99", active:true,  era:"2016–present", stats:"60+ HR seasons · .280+ AVG · AL MVP 2017, 2022", fact:"Hit 62 home runs in 2022 — the American League single-season record. The current face of the Yankees dynasty.", wiki:"https://en.wikipedia.org/wiki/Aaron_Judge", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Aaron_Judge_2017.jpg/256px-Aaron_Judge_2017.jpg", cardColor:"#003087" },
+  { name:"Breanna Stewart",team:"Liberty", sport:"WNBA",pos:"F",  emoji:"🏀", number:"30", active:true,  era:"2023–present", stats:"2× WNBA Champion · Finals MVP", fact:"Came to New York to win and delivered back-to-back championships. The best player in women's basketball history.", wiki:"https://en.wikipedia.org/wiki/Breanna_Stewart", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Breanna_Stewart_2024.jpg/256px-Breanna_Stewart_2024.jpg", cardColor:"#007A5E" },
 ];
 
 function getDailyPlayer() {
@@ -440,42 +440,85 @@ function getDailyPlayer() {
 
 function PlayerSpotlight() {
   const [flipped, setFlipped] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const p = getDailyPlayer();
+  const cardColor = p.cardColor || "#c8201c";
+
   return (
-    <div style={styles.spotlightWrap} onClick={() => setFlipped(!flipped)}>
-      <div style={styles.spotlightCard}>
-        {!flipped ? (
-          // Front — card face
-          <div style={styles.spotlightFront}>
-            <div style={styles.spotlightHeader}>
-              <span style={styles.spotlightBadge}>⭐ DAILY SPOTLIGHT</span>
-              <span style={styles.spotlightTap}>tap to flip →</span>
-            </div>
-            <div style={styles.spotlightEmoji}>{p.emoji}</div>
-            <div style={styles.spotlightName}>{p.name}</div>
-            <div style={styles.spotlightMeta}>
-              <span style={styles.spotlightTeam}>{p.team}</span>
-              <span style={styles.spotlightPos}>#{p.number} · {p.pos}</span>
-              {p.active && <span style={styles.spotlightActive}>● ACTIVE</span>}
-            </div>
-            <div style={styles.spotlightEra}>{p.era}</div>
-            <div style={styles.spotlightStats}>{p.stats}</div>
-          </div>
-        ) : (
-          // Back — fact + links
-          <div style={styles.spotlightBack}>
-            <div style={styles.spotlightHeader}>
-              <span style={styles.spotlightBadge}>{p.name}</span>
-              <span style={styles.spotlightTap}>← flip back</span>
-            </div>
-            <p style={styles.spotlightFact}>{p.fact}</p>
-            <div style={styles.spotlightLinks}>
-              <a href={p.wiki} target="_blank" rel="noopener noreferrer" style={styles.spotlightLink} onClick={e=>e.stopPropagation()}>📖 Wikipedia</a>
-              <a href={googleUrl(`${p.name} ${p.team} stats career`)} target="_blank" rel="noopener noreferrer" style={styles.spotlightLink} onClick={e=>e.stopPropagation()}>🔍 Google</a>
-              <a href={`https://www.amazon.com/s?k=${encodeURIComponent(p.name+" biography")}&tag=nysportsdaily-20`} target="_blank" rel="noopener noreferrer" style={styles.spotlightLink} onClick={e=>e.stopPropagation()}>📚 Books</a>
-            </div>
-          </div>
-        )}
+    <div style={styles.tcardWrap} onClick={() => setFlipped(!flipped)}>
+      <div style={{...styles.tcardOuter, background:`linear-gradient(135deg, ${cardColor} 0%, #000 70%)`}}>
+        <div style={styles.tcardInner}>
+          {!flipped ? (
+            <>
+              {/* TOP BAR */}
+              <div style={styles.tcardTopBar}>
+                <span style={styles.tcardBadge}>⭐ DAILY SPOTLIGHT</span>
+                <span style={styles.tcardYear}>NY SPORTS DAILY</span>
+              </div>
+
+              {/* PHOTO FRAME */}
+              <div style={{...styles.tcardPhotoFrame, background:cardColor}}>
+                {p.photo && !imgError ? (
+                  <img src={p.photo} alt={p.name}
+                    style={styles.tcardPhoto}
+                    onError={() => setImgError(true)} />
+                ) : (
+                  <div style={styles.tcardPhotoFallback}>
+                    <span style={{fontSize:60}}>{p.emoji}</span>
+                  </div>
+                )}
+                <div style={styles.tcardJerseyNum}>#{p.number}</div>
+              </div>
+
+              {/* NAME PLATE */}
+              <div style={styles.tcardNamePlate}>
+                <div style={styles.tcardName}>{p.name}</div>
+                <div style={styles.tcardTeamRow}>
+                  <span style={{...styles.tcardTeamBadge, background:cardColor}}>{p.team.toUpperCase()}</span>
+                  <span style={styles.tcardPos}>{p.pos} · {p.sport}</span>
+                  {p.active && <span style={styles.tcardActiveDot}>● ACTIVE</span>}
+                </div>
+              </div>
+
+              {/* STATS LINE */}
+              <div style={styles.tcardStatsLine}>
+                <span style={styles.tcardEraLabel}>{p.era}</span>
+                <span style={styles.tcardStats}>{p.stats}</span>
+              </div>
+
+              <div style={styles.tcardFlipHint}>tap card to flip →</div>
+            </>
+          ) : (
+            <>
+              <div style={styles.tcardTopBar}>
+                <span style={styles.tcardBadge}>{p.name.toUpperCase()}</span>
+                <span style={styles.tcardYear}>← FLIP BACK</span>
+              </div>
+              <div style={styles.tcardBackBody}>
+                <p style={styles.tcardFact}>{p.fact}</p>
+                <div style={styles.tcardBackStats}>
+                  <div style={styles.tcardBackStatItem}>
+                    <span style={styles.tcardBackStatLabel}>POSITION</span>
+                    <span style={styles.tcardBackStatVal}>{p.pos}</span>
+                  </div>
+                  <div style={styles.tcardBackStatItem}>
+                    <span style={styles.tcardBackStatLabel}>NUMBER</span>
+                    <span style={styles.tcardBackStatVal}>#{p.number}</span>
+                  </div>
+                  <div style={styles.tcardBackStatItem}>
+                    <span style={styles.tcardBackStatLabel}>ERA</span>
+                    <span style={styles.tcardBackStatVal}>{p.era}</span>
+                  </div>
+                </div>
+                <div style={styles.tcardLinks}>
+                  <a href={p.wiki} target="_blank" rel="noopener noreferrer" style={styles.tcardLink} onClick={e=>e.stopPropagation()}>📖 Wikipedia</a>
+                  <a href={googleUrl(`${p.name} ${p.team} career stats`)} target="_blank" rel="noopener noreferrer" style={styles.tcardLink} onClick={e=>e.stopPropagation()}>🔍 Google</a>
+                  <a href={`https://www.amazon.com/s?k=${encodeURIComponent(p.name+" biography")}&tag=nysportsdaily-20`} target="_blank" rel="noopener noreferrer" style={styles.tcardLink} onClick={e=>e.stopPropagation()}>📚 Books</a>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -554,57 +597,60 @@ async function fetchNYNews() {
   const results = [];
   const seen = new Set();
 
+  // Helper to safely fetch with timeout fallback
+  async function safeFetch(url) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      return await res.json();
+    } catch(e) { return null; }
+  }
+
   // Team-specific ESPN news — always NY relevant, no keyword filtering needed
   const allTeams = [...NY_TEAM_NEWS, ...NY_EXTRA_NEWS];
   await Promise.all(allTeams.map(async ({ sport, league, id, name }) => {
-    try {
-      const res  = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=8`,
-        { signal: AbortSignal.timeout(5000) }
-      );
-      const json = await res.json();
-      (json.articles || []).forEach(a => {
-        const title = a.headline || a.title || "";
-        if (!title || seen.has(title)) return;
-        seen.add(title);
-        results.push({
-          title,
-          link:   a.links?.web?.href || "#",
-          desc:   a.description || "",
-          pub:    a.published || a.lastModified || "",
-          source: `ESPN · ${name}`,
-          team:   name,
-          isNY:   true,
-        });
+    const json = await safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=10`);
+    if (!json) return;
+    (json.articles || []).forEach(a => {
+      const title = a.headline || a.title || "";
+      if (!title || seen.has(title)) return;
+      seen.add(title);
+      results.push({
+        title,
+        link:   a.links?.web?.href || "#",
+        desc:   a.description || "",
+        pub:    a.published || a.lastModified || "",
+        source: `ESPN · ${name}`,
+        team:   name,
+        sport:  league.toUpperCase(),
+        isNY:   true,
       });
-    } catch(e) {}
+    });
   }));
 
-  // League-level ESPN news — store ALL articles, let NewsTab filter
+  // League-level ESPN news — store ALL articles, mark isNY based on keywords
   await Promise.all(NY_NEWS_ENDPOINTS.map(async ({ sport, league, name }) => {
-    try {
-      const res  = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=20`,
-        { signal: AbortSignal.timeout(5000) }
-      );
-      const json = await res.json();
-      (json.articles || []).forEach(a => {
-        const title = a.headline || a.title || "";
-        if (!title || seen.has(title)) return;
-        const desc = a.description || "";
-        seen.add(title);
-        const combined = (title + " " + desc).toLowerCase();
-        const isNY = NY_KEYWORDS.some(kw => combined.includes(kw));
-        results.push({
-          title,
-          link:   a.links?.web?.href || "#",
-          desc,
-          pub:    a.published || a.lastModified || "",
-          source: `ESPN · ${name}`,
-          isNY,
-        });
+    const json = await safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=25`);
+    if (!json) return;
+    (json.articles || []).forEach(a => {
+      const title = a.headline || a.title || "";
+      if (!title || seen.has(title)) return;
+      const desc = a.description || "";
+      seen.add(title);
+      const combined = (title + " " + desc).toLowerCase();
+      const isNY = NY_KEYWORDS.some(kw => combined.includes(kw));
+      results.push({
+        title,
+        link:   a.links?.web?.href || "#",
+        desc,
+        pub:    a.published || a.lastModified || "",
+        source: `ESPN · ${name}`,
+        sport:  name,
+        isNY,
       });
-    } catch(e) {}
+    });
   }));
 
   return results.sort((a,b) => new Date(b.pub) - new Date(a.pub));
@@ -1357,6 +1403,49 @@ function getChannelStyle(name) {
   return CHANNEL_STYLES[upper] || { ...CHANNEL_STYLES.DEFAULT, label: name };
 }
 
+function getChannelURL(name) {
+  const upper = (name || "").toUpperCase().replace(/\s+/g,"");
+  const URLS = {
+    ESPN:    "https://www.espn.com/watch/",
+    ESPN2:   "https://www.espn.com/watch/",
+    ESPNU:   "https://www.espn.com/watch/",
+    ABC:     "https://abc.com/sports",
+    NBC:     "https://www.nbcsports.com/",
+    NBCSN:   "https://www.nbcsports.com/",
+    FOX:     "https://www.foxsports.com/",
+    FS1:     "https://www.foxsports.com/",
+    FS2:     "https://www.foxsports.com/",
+    CBS:     "https://www.cbssports.com/",
+    TNT:     "https://www.tntdrama.com/sports",
+    TBS:     "https://www.tbs.com/sports",
+    MLB:     "https://www.mlb.com/tv",
+    MLBN:    "https://www.mlb.com/network",
+    MLBNETWORK:"https://www.mlb.com/network",
+    NBA:     "https://www.nba.com/watch",
+    NBATV:   "https://www.nba.com/nbatv",
+    NHL:     "https://www.nhl.com/tv",
+    NHLN:    "https://www.nhl.com/network",
+    NHLNETWORK:"https://www.nhl.com/network",
+    NFL:     "https://www.nfl.com/network",
+    NFLN:    "https://www.nfl.com/network",
+    NFLNETWORK:"https://www.nfl.com/network",
+    SNY:     "https://sny.tv/",
+    YES:     "https://www.yesnetwork.com/",
+    YESNETWORK:"https://www.yesnetwork.com/",
+    MSG:     "https://www.msgnetworks.com/",
+    MSG2:    "https://www.msgnetworks.com/",
+    MSGSN:   "https://www.msgnetworks.com/",
+    MSGNETWORK:"https://www.msgnetworks.com/",
+    PEACOCK: "https://www.peacocktv.com/sports",
+    PARAMOUNT:"https://www.paramountplus.com/sports/",
+    PRIME:   "https://www.amazon.com/dp/B0BSGRDLPS?tag=nysportsdaily-20",
+    APPLE:   "https://tv.apple.com/us/sports",
+    APPLETV: "https://tv.apple.com/us/sports",
+    MAX:     "https://www.max.com/sports",
+  };
+  return URLS[upper] || `https://www.google.com/search?q=${encodeURIComponent("watch " + name + " live stream")}`;
+}
+
 const SPORT_ICONS_TV = { NFL:"🏈", MLB:"⚾", NBA:"🏀", NHL:"🏒", WNBA:"🏀", MLS:"⚽" };
 
 // ─── TV SCHEDULE COMPONENT ─────────────────────────────────────────────────
@@ -1483,9 +1572,10 @@ function TVGameRow({ game, featured }) {
           game.broadcasts.map((ch, i) => {
             const cs = getChannelStyle(ch);
             return (
-              <span key={i} style={{...styles.tvChannelBadge, background: cs.bg, color: cs.text}}>
+              <a key={i} href={getChannelURL(ch)} target="_blank" rel="noopener noreferrer"
+                style={{...styles.tvChannelBadge, background: cs.bg, color: cs.text, textDecoration:"none", cursor:"pointer"}}>
                 {cs.label || ch}
-              </span>
+              </a>
             );
           })
         ) : (
@@ -1825,6 +1915,30 @@ const HISTORY_LISTS = {
       { rank:8,  name:"Roger Neilson",   value:"0 · .511",        years:"1989–1993" },
       { rank:9,  name:"Phil Watson",     value:"0 · .508",        years:"1955–1960" },
       { rank:10, name:"Frank Boucher",   value:"0 · .490",        years:"1939–1948" },
+    ]},
+    { title: "All-Time Islanders Head Coaches", items: [
+      { rank:1,  name:"Al Arbour",       value:"4 Cups · .598",   years:"1973–1986, 1988–1994 · Greatest coach in Isles history" },
+      { rank:2,  name:"Mike Milbury",    value:"0 · .393",        years:"1995–1999 · Player turned coach" },
+      { rank:3,  name:"Ted Nolan",       value:"0 · .500",        years:"2006–2008 · Brought playoff hockey back briefly" },
+      { rank:4,  name:"Jack Capuano",    value:"0 · .500",        years:"2010–2017 · Tavares era" },
+      { rank:5,  name:"Doug Weight",     value:"0 · .500",        years:"2017–2018 · Bridge coach" },
+      { rank:6,  name:"Barry Trotz",     value:"0 · .596",        years:"2018–2022 · 2 Conf Finals appearances" },
+      { rank:7,  name:"Lane Lambert",    value:"0 · .530",        years:"2022–2024" },
+      { rank:8,  name:"Patrick Roy",     value:"0 · Active",      years:"2024–present · Legendary goalie now coaching" },
+      { rank:9,  name:"Earl Ingarfield", value:"0 · .500",        years:"1972–1973 · First Islanders coach" },
+      { rank:10, name:"Brian Kilrea",    value:"0 · Brief",       years:"1973 · Pre-Arbour interim" },
+    ]},
+    { title: "All-Time Devils Head Coaches", items: [
+      { rank:1,  name:"Jacques Lemaire", value:"1 Cup · .569",    years:"1993–1998, 2009–2011 · 1995 Stanley Cup, trap defense" },
+      { rank:2,  name:"Larry Robinson",  value:"1 Cup · .597",    years:"1995–2000, 2005–2006 · 2000 Stanley Cup" },
+      { rank:3,  name:"Pat Burns",       value:"1 Cup · .598",    years:"2002–2004 · 2003 Stanley Cup, Jack Adams" },
+      { rank:4,  name:"Lou Lamoriello",  value:"GM Legend",       years:"1987–2015 · Architect of all 3 Cups" },
+      { rank:5,  name:"Lindy Ruff",      value:"0 · .553",        years:"2020–2024 · Built current Devils contender" },
+      { rank:6,  name:"Sheldon Keefe",   value:"0 · Active",      years:"2024–present · Hughes brothers era" },
+      { rank:7,  name:"Brent Sutter",    value:"0 · .500",        years:"2007–2009" },
+      { rank:8,  name:"Robbie Ftorek",   value:"0 · .603",        years:"1998–2000 · Pre-Cup era" },
+      { rank:9,  name:"Peter DeBoer",    value:"0 · .537",        years:"2011–2014 · 2012 Stanley Cup Finals" },
+      { rank:10, name:"Tom McVie",       value:"0 · Bridge",      years:"1991–1992 · Built foundation" },
     ]},
   ],
   "Jets & Giants": [
@@ -4645,7 +4759,96 @@ const styles = {
     borderTop: "1px solid #1a1a1a", paddingTop: 12,
   },
 
-  // PLAYER SPOTLIGHT
+  // TRADING CARD STYLE PLAYER SPOTLIGHT
+  tcardWrap: { cursor:"pointer", userSelect:"none", maxWidth:280 },
+  tcardOuter: {
+    padding:6, borderRadius:8,
+    boxShadow:"0 4px 20px rgba(0,0,0,0.6)",
+  },
+  tcardInner: {
+    background:"#0a0a0a", borderRadius:4,
+    padding:"10px 12px 12px",
+    border:"1px solid rgba(255,255,255,0.08)",
+  },
+  tcardTopBar: {
+    display:"flex", justifyContent:"space-between", alignItems:"center",
+    marginBottom:8,
+  },
+  tcardBadge: {
+    fontSize:8, fontWeight:900, color:"#FFD700",
+    letterSpacing:"0.15em",
+  },
+  tcardYear: {
+    fontSize:7, color:"#666", letterSpacing:"0.1em", fontWeight:700,
+  },
+  tcardPhotoFrame: {
+    position:"relative", height:160, marginBottom:8,
+    borderRadius:4, overflow:"hidden",
+    border:"2px solid rgba(255,215,0,0.4)",
+    display:"flex", alignItems:"center", justifyContent:"center",
+  },
+  tcardPhoto: {
+    width:"100%", height:"100%", objectFit:"cover", objectPosition:"center top",
+  },
+  tcardPhotoFallback: {
+    width:"100%", height:"100%",
+    display:"flex", alignItems:"center", justifyContent:"center",
+    background:"rgba(0,0,0,0.3)",
+  },
+  tcardJerseyNum: {
+    position:"absolute", bottom:4, right:6,
+    fontSize:32, fontWeight:900, color:"rgba(255,255,255,0.85)",
+    fontFamily:"'Georgia',serif",
+    textShadow:"2px 2px 4px rgba(0,0,0,0.9)",
+    lineHeight:1,
+  },
+  tcardNamePlate: {
+    background:"#0a0a0a", padding:"4px 0 6px",
+    borderTop:"1px solid rgba(255,215,0,0.3)",
+    borderBottom:"1px solid rgba(255,215,0,0.3)",
+  },
+  tcardName: {
+    fontSize:16, fontWeight:900, color:"#e8e0d0",
+    fontFamily:"'Georgia',serif", lineHeight:1.1, marginBottom:3,
+  },
+  tcardTeamRow: { display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" },
+  tcardTeamBadge: {
+    fontSize:8, fontWeight:900, padding:"2px 6px",
+    color:"#fff", letterSpacing:"0.08em",
+  },
+  tcardPos: { fontSize:9, color:"#888", fontWeight:700 },
+  tcardActiveDot: { fontSize:8, color:"#4ade80", fontWeight:900 },
+  tcardStatsLine: { paddingTop:6 },
+  tcardEraLabel: {
+    display:"block", fontSize:8, color:"#FFD700",
+    letterSpacing:"0.1em", fontWeight:700, marginBottom:3,
+  },
+  tcardStats: {
+    display:"block", fontSize:10, color:"#bbb", lineHeight:1.5,
+  },
+  tcardFlipHint: {
+    fontSize:8, color:"#444", fontStyle:"italic",
+    marginTop:6, textAlign:"right",
+  },
+  tcardBackBody: { display:"flex", flexDirection:"column", gap:12, minHeight:160 },
+  tcardFact: {
+    margin:0, fontSize:12, color:"#bbb", lineHeight:1.6,
+    fontFamily:"'Georgia',serif",
+  },
+  tcardBackStats: {
+    display:"flex", gap:8, padding:"8px 0",
+    borderTop:"1px solid rgba(255,215,0,0.2)",
+    borderBottom:"1px solid rgba(255,215,0,0.2)",
+  },
+  tcardBackStatItem: {
+    flex:1, display:"flex", flexDirection:"column", gap:2, alignItems:"center",
+  },
+  tcardBackStatLabel: { fontSize:7, color:"#666", letterSpacing:"0.1em", fontWeight:700 },
+  tcardBackStatVal: { fontSize:11, color:"#e8e0d0", fontWeight:900 },
+  tcardLinks: { display:"flex", gap:10, flexWrap:"wrap" },
+  tcardLink: { fontSize:10, color:"#FFD700", fontWeight:700, textDecoration:"none" },
+
+  // PLAYER SPOTLIGHT (old)
   spotlightWrap: { cursor:"pointer", userSelect:"none" },
   spotlightCard: {
     background:"#161616", border:"1px solid #2a2a2a",
