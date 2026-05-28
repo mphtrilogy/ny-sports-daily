@@ -831,7 +831,7 @@ export default function NYSportsDaily() {
 
         {/* TAB NAV */}
         <div style={styles.tabNav}>
-          {["SCORES","TV","STANDINGS","SCHEDULE","STATS","HISTORY","NEWS","RADIO","TRIVIA","XWORD","SPIN","SHOP"].map(tab => (
+          {["SCORES","TV","STANDINGS","SCHEDULE","STATS","HISTORY","NEWS","RADIO","TODAY","POLLS","HOF","MISERY","TRIVIA","XWORD","SPIN","SHOP"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {})}}>
               {tab}
@@ -923,6 +923,10 @@ export default function NYSportsDaily() {
           <ScheduleTab schedule={schedule} loading={loadingSchedule} />
         )}
         {/* ──── HISTORY TAB ──── */}
+        {activeTab === "TODAY" && <TodayTab />}
+        {activeTab === "POLLS" && <PollsTab />}
+        {activeTab === "HOF" && <HofTab />}
+        {activeTab === "MISERY" && <MiseryTab />}
         {activeTab === "HISTORY" && (
           <HistoryTab />
         )}
@@ -1455,9 +1459,9 @@ function NewsTab({ news, loading }) {
             { name:"Andy Martino",    outlet:"SNY",          teams:"Mets · Yankees",    handle:"@martinonyc",       url:"https://twitter.com/martinonyc",       desc:"SNY Mets insider — breaks Steve Cohen moves" },
             { name:"Anthony DiComo",  outlet:"MLB.com",      teams:"Mets",              handle:"@AnthonyDiComo",    url:"https://twitter.com/AnthonyDiComo",    desc:"Official Mets beat reporter" },
             { name:"Bryan Hoch",      outlet:"MLB.com",      teams:"Yankees",           handle:"@BryanHoch",        url:"https://twitter.com/BryanHoch",        desc:"Official Yankees beat reporter" },
-            { name:"Manish Mehta",    outlet:"NY Daily News",teams:"Jets",              handle:"@MMehtaNYDN",       url:"https://twitter.com/MMehtaNYDN",       desc:"Jets beat — never afraid to call it as he sees it" },
-            { name:"Connor Hughes",   outlet:"SNY",          teams:"Jets",              handle:"@Connor_J_Hughes",  url:"https://twitter.com/Connor_J_Hughes",  desc:"SNY Jets reporter" },
-            { name:"Rich Cimini",     outlet:"ESPN",         teams:"Jets",              handle:"@RichCimini",       url:"https://twitter.com/RichCimini",       desc:"ESPN's veteran Jets reporter" },
+            { name:"Zach Rozenblatt",  outlet:"NY Times",     teams:"Jets",              handle:"@ZachRozenblatt",   url:"https://twitter.com/ZachRozenblatt",   desc:"NY Times Jets reporter — thorough, credible coverage" },
+            { name:"Brian Costello",   outlet:"NY Post",      teams:"Jets",              handle:"@BrianCoz",         url:"https://twitter.com/BrianCoz",         desc:"NY Post Jets beat — strong insider access" },
+            { name:"Rich Cimini",      outlet:"ESPN",         teams:"Jets",              handle:"@RichCimini",       url:"https://twitter.com/RichCimini",       desc:"ESPN's veteran Jets reporter — decades of coverage" },
             { name:"Jordan Raanan",   outlet:"ESPN",         teams:"Giants",            handle:"@JordanRaanan",     url:"https://twitter.com/JordanRaanan",     desc:"ESPN Giants insider" },
             { name:"Ralph Vacchiano", outlet:"FOX Sports",   teams:"Giants",            handle:"@RVacchianoSNY",    url:"https://twitter.com/RVacchianoSNY",    desc:"Giants beat veteran" },
             { name:"Ian Begley",      outlet:"SNY",          teams:"Knicks",            handle:"@IanBegley",        url:"https://twitter.com/IanBegley",        desc:"Top Knicks reporter — Brunson era insider" },
@@ -2694,6 +2698,528 @@ function HistoryTab() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── TODAY IN NY SPORTS ───────────────────────────────────────────────────
+const TODAY_IN_NY_SPORTS = [
+  { month:1,  day:1,  year:1902, team:"Giants",    emoji:"🏈", title:"Giants Founded", desc:"New York Giants NFL franchise established, becoming one of the original NFL franchises." },
+  { month:1,  day:11, year:1969, team:"Jets",       emoji:"🏈", title:"Namath's Guarantee Pays Off", desc:"The Jets defeat the Baltimore Colts 16-7 in Super Bowl III. Namath's famous guarantee fulfilled." },
+  { month:1,  day:25, year:1987, team:"Giants",     emoji:"🏈", title:"Giants Win Super Bowl XXI", desc:"Phil Simms goes 22-for-25 (88%) as the Giants crush the Denver Broncos 39-20." },
+  { month:2,  day:3,  year:2008, team:"Giants",     emoji:"🏈", title:"The Helmet Catch", desc:"Eli Manning to David Tyree — the greatest play in Super Bowl history ruins the Patriots' perfect season." },
+  { month:2,  day:5,  year:2012, team:"Giants",     emoji:"🏈", title:"Giants Win Super Bowl XLVI", desc:"Eli Manning leads the Giants to their second upset of the Patriots. Bradshaw's accidental TD wins it." },
+  { month:3,  day:6,  year:1961, team:"Yankees",    emoji:"⚾", title:"Roger Maris Signs", desc:"Maris signs with the Yankees setting up his historic 61 HR season." },
+  { month:3,  day:28, year:1973, team:"Yankees",    emoji:"⚾", title:"George Steinbrenner Buys Yankees", desc:"A group led by George Steinbrenner purchases the Yankees for $10 million. The Boss era begins." },
+  { month:4,  day:8,  year:1969, team:"Mets",       emoji:"⚾", title:"Miracle Mets Opening Day", desc:"The Mets begin their miraculous 1969 season with hopes nobody expected to be fulfilled." },
+  { month:4,  day:18, year:1923, team:"Yankees",    emoji:"⚾", title:"Yankee Stadium Opens", desc:"Babe Ruth hits a three-run homer in the first game at the original Yankee Stadium — 'The House That Ruth Built.'" },
+  { month:4,  day:22, year:1970, team:"Mets",       emoji:"⚾", title:"Seaver Strikes Out 19", desc:"Tom Seaver fans 19 Padres including 10 straight to end the game — then the greatest single pitching performance in Mets history." },
+  { month:5,  day:17, year:1998, team:"Yankees",    emoji:"⚾", title:"David Wells Perfect Game", desc:"Wells retires all 27 Twins he faces — only the 15th perfect game in MLB history." },
+  { month:5,  day:28, year:2026, team:"NY Sports",  emoji:"🗽", title:"NY Sports Daily Launches!", desc:"nysportsdaily.com goes live — the definitive destination for obsessed NY sports fans." },
+  { month:6,  day:14, year:1994, team:"Rangers",    emoji:"🏒", title:"Rangers Win the Stanley Cup", desc:"Mark Messier's Rangers end a 54-year drought, defeating the Canucks. 'The Curse of 1940' is over." },
+  { month:6,  day:19, year:1994, team:"Knicks",     emoji:"🏀", title:"OJ Simpson Chase Interrupts Knicks", desc:"The Knicks' NBA Finals Game 5 vs Rockets was interrupted on TV by the OJ Simpson Bronco chase." },
+  { month:7,  day:4,  year:1939, team:"Yankees",    emoji:"⚾", title:"Lou Gehrig's Farewell Speech", desc:"'Today I consider myself the luckiest man on the face of the earth.' Gehrig's iconic goodbye at Yankee Stadium." },
+  { month:7,  day:18, year:1999, team:"Yankees",    emoji:"⚾", title:"David Cone Perfect Game", desc:"On Yogi Berra Day, with Don Larsen in attendance, Cone throws a perfect game against the Expos." },
+  { month:7,  day:24, year:1983, team:"Yankees",    emoji:"⚾", title:"The Pine Tar Game", desc:"George Brett's homer is nullified. Billy Martin's scheming at its finest — Yankees win the protest, then lose the replay." },
+  { month:8,  day:19, year:1951, team:"Giants",     emoji:"⚾", title:"Bobby Thomson Signs", desc:"Bobby Thomson, who will hit the Shot Heard Round the World, joins the Giants roster." },
+  { month:9,  day:21, year:2001, team:"Mets",       emoji:"⚾", title:"Piazza's 9/11 Home Run", desc:"With NYC still in mourning, Mike Piazza's 8th inning solo shot off Steve Karsay lifts the Mets over the Braves — the most emotional home run in baseball history." },
+  { month:9,  day:28, year:1941, team:"Yankees",    emoji:"⚾", title:"DiMaggio's Season Ends", desc:"Joe DiMaggio's 56-game hitting streak had ended two months earlier — still the most unbreakable record in sports." },
+  { month:10, day:1,  year:1961, team:"Yankees",    emoji:"⚾", title:"Roger Maris Hits #61", desc:"On the final day of the season, Maris breaks Babe Ruth's 34-year-old single-season home run record." },
+  { month:10, day:8,  year:1956, team:"Yankees",    emoji:"⚾", title:"Don Larsen's Perfect Game", desc:"Larsen retires all 27 Brooklyn Dodgers he faces in Game 5 of the World Series — the only perfect game in postseason history." },
+  { month:10, day:16, year:1969, team:"Mets",       emoji:"⚾", title:"Miracle Mets Win the World Series", desc:"The Amazin' Mets defeat the Baltimore Orioles in 5 games. The impossible happened." },
+  { month:10, day:17, year:1977, team:"Yankees",    emoji:"⚾", title:"Reggie Jackson's 3 Home Runs", desc:"Mr. October hits 3 home runs on 3 consecutive pitches from 3 different pitchers in the World Series clincher." },
+  { month:10, day:25, year:1986, team:"Mets",       emoji:"⚾", title:"Mookie Wilson's Grounder", desc:"Bill Buckner's error. Mookie's grounder. The Mets live to fight another day — and then win the World Series." },
+  { month:11, day:1,  year:2001, team:"Yankees",    emoji:"⚾", title:"Mr. November", desc:"Derek Jeter hits a walk-off home run in the 10th inning, crossing into November — the most dramatic walk-off in Yankees history." },
+  { month:11, day:18, year:1985, team:"Giants",     emoji:"🏈", title:"LT Breaks Theismann's Leg", desc:"Lawrence Taylor's hit on Monday Night Football shatters Joe Theismann's leg and changes NFL history." },
+  { month:12, day:28, year:1958, team:"Giants",     emoji:"🏈", title:"The Greatest Game Ever Played", desc:"The Baltimore Colts defeat the New York Giants 23-17 in sudden death OT — the game that made the NFL the dominant American sport." },
+];
+
+function TodayTab() {
+  const [teamFilter, setTeamFilter] = useState("ALL");
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+
+  const TEAMS = ["ALL","Yankees","Mets","Jets","Giants","Knicks","Rangers","Islanders","Devils","Nets","Liberty"];
+
+  const todayMoments = TODAY_IN_NY_SPORTS.filter(m => m.month === month && m.day === day);
+  const nearbyMoments = TODAY_IN_NY_SPORTS.filter(m => {
+    const diff = Math.abs((m.month - month) * 30 + (m.day - day));
+    return diff <= 7 && diff > 0;
+  }).sort((a,b) => Math.abs((a.month-month)*30+(a.day-day)) - Math.abs((b.month-month)*30+(b.day-day)));
+
+  const allFiltered = teamFilter === "ALL" ? TODAY_IN_NY_SPORTS :
+    TODAY_IN_NY_SPORTS.filter(m => m.team.includes(teamFilter));
+
+  return (
+    <div style={styles.statsRoot}>
+      <div style={styles.stdHeader}>
+        <h2 style={styles.stdTitle}>📅 TODAY IN NY SPORTS HISTORY</h2>
+        <p style={styles.stdSub}>ON THIS DATE · NEARBY ANNIVERSARIES · FULL CALENDAR</p>
+      </div>
+
+      {/* Today's moments */}
+      <div style={styles.stdDivisionHeader}>
+        🗽 ON THIS DATE — {now.toLocaleDateString("en-US",{month:"long",day:"numeric"})}
+      </div>
+      {todayMoments.length === 0 ? (
+        <div style={{padding:"16px 0", fontSize:12, color:"#555"}}>
+          No major NY sports anniversaries on record for today — check back or browse the full calendar below.
+        </div>
+      ) : todayMoments.map((m, i) => (
+        <div key={i} style={{...styles.todayCard, borderLeft:`3px solid #c8201c`}}>
+          <div style={styles.todayEmoji}>{m.emoji}</div>
+          <div style={styles.todayBody}>
+            <div style={styles.todayHeader}>
+              <span style={styles.todayYear}>{m.year}</span>
+              <span style={styles.todayTeam}>{m.team}</span>
+            </div>
+            <div style={styles.todayTitle}>{m.title}</div>
+            <p style={styles.todayDesc}>{m.desc}</p>
+            <div style={{display:"flex", gap:10}}>
+              <a href={googleUrl(`${m.title} ${m.team} ${m.year}`)} target="_blank" rel="noopener noreferrer" style={styles.histLink}>🔍 Google</a>
+              <a href={wikiUrl(`${m.title}`)} target="_blank" rel="noopener noreferrer" style={styles.histLink}>📖 Wiki</a>
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* Nearby */}
+      {nearbyMoments.length > 0 && (
+        <>
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>📆 COMING UP THIS WEEK</div>
+          {nearbyMoments.slice(0,5).map((m, i) => (
+            <div key={i} style={{...styles.todayCard, ...(i%2===0?{}:{background:"#0f0f0f"}), borderLeft:"3px solid #333"}}>
+              <div style={styles.todayEmoji}>{m.emoji}</div>
+              <div style={styles.todayBody}>
+                <div style={styles.todayHeader}>
+                  <span style={{...styles.todayYear, color:"#888"}}>{m.month}/{m.day}/{m.year}</span>
+                  <span style={styles.todayTeam}>{m.team}</span>
+                </div>
+                <div style={styles.todayTitle}>{m.title}</div>
+                <p style={styles.todayDesc}>{m.desc}</p>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* Full calendar filter */}
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>📚 BROWSE ALL MOMENTS</div>
+      <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:12}}>
+        {TEAMS.map(t => (
+          <button key={t} onClick={() => setTeamFilter(t)}
+            style={{...styles.filterBtn, ...(teamFilter===t?styles.filterBtnActive:{}), fontSize:9}}>
+            {t}
+          </button>
+        ))}
+      </div>
+      {allFiltered.sort((a,b) => a.month*100+a.day - (b.month*100+b.day)).map((m, i) => (
+        <div key={i} style={{...styles.todayCard, ...(i%2===0?{}:{background:"#0f0f0f"}), borderLeft:`3px solid #2a2a2a`}}>
+          <div style={{...styles.todayEmoji, fontSize:20}}>{m.emoji}</div>
+          <div style={styles.todayBody}>
+            <div style={styles.todayHeader}>
+              <span style={{...styles.todayYear, fontSize:10, color:"#888"}}>{m.month}/{m.day}/{m.year}</span>
+              <span style={styles.todayTeam}>{m.team}</span>
+            </div>
+            <div style={{...styles.todayTitle, fontSize:12}}>{m.title}</div>
+            <p style={{...styles.todayDesc, fontSize:10}}>{m.desc}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── POLLS TAB ─────────────────────────────────────────────────────────────
+function PollsTab() {
+  const [votes, setVotes] = useState({});
+  const [voted, setVoted] = useState({});
+
+  const POLLS = [
+    {
+      id:"goat_yankee", question:"Who is the greatest Yankee of all time?",
+      options:["Babe Ruth","Lou Gehrig","Mickey Mantle","Joe DiMaggio","Derek Jeter"],
+    },
+    {
+      id:"goat_met", question:"Who is the greatest Met of all time?",
+      options:["Tom Seaver","Mike Piazza","Dwight Gooden","David Wright","Pete Alonso"],
+    },
+    {
+      id:"goat_knick", question:"Who is the greatest Knick of all time?",
+      options:["Patrick Ewing","Walt Frazier","Willis Reed","Carmelo Anthony","Jalen Brunson"],
+    },
+    {
+      id:"goat_jet", question:"Who is the greatest Jet of all time?",
+      options:["Joe Namath","Curtis Martin","Don Maynard","Darrelle Revis","Mark Gastineau"],
+    },
+    {
+      id:"goat_giant", question:"Who is the greatest Giant of all time?",
+      options:["Lawrence Taylor","Eli Manning","Frank Gifford","Phil Simms","Saquon Barkley"],
+    },
+    {
+      id:"goat_ranger", question:"Who is the greatest Ranger of all time?",
+      options:["Mark Messier","Brian Leetch","Rod Gilbert","Mike Richter","Henrik Lundqvist"],
+    },
+    {
+      id:"goat_islander", question:"Who is the greatest Islander of all time?",
+      options:["Bryan Trottier","Mike Bossy","Denis Potvin","Billy Smith","John Tavares"],
+    },
+    {
+      id:"best_moment", question:"Greatest NY sports moment ever?",
+      options:["1969 Mets WS","Namath Guarantee","Rangers 1994 Cup","Helmet Catch","Piazza 9/11 HR"],
+    },
+    {
+      id:"best_stadium", question:"Best NY sports venue?",
+      options:["Yankee Stadium","Madison Square Garden","MetLife Stadium","Citi Field","UBS Arena"],
+    },
+    {
+      id:"misery_leader", question:"Which NY team makes you suffer the most?",
+      options:["Jets","Mets","Knicks","Islanders","Rangers"],
+    },
+    {
+      id:"mt_rushmore", question:"NY Sports Mt. Rushmore — who's on it?",
+      options:["Ruth/Namath/LT/Messier","Jeter/Ewing/Messier/LT","Ruth/DiMaggio/Namath/Ewing","Mantle/Seaver/Reed/Bossy"],
+    },
+  ];
+
+  function handleVote(pollId, option) {
+    if (voted[pollId]) return;
+    setVotes(v => ({...v, [pollId]: {...(v[pollId]||{}), [option]: ((v[pollId]||{})[option]||0)+1}}));
+    setVoted(v => ({...v, [pollId]: option}));
+  }
+
+  function getTotal(pollId) {
+    return Object.values(votes[pollId]||{}).reduce((a,b)=>a+b,0);
+  }
+
+  function getPct(pollId, option) {
+    const total = getTotal(pollId);
+    if (!total) return 0;
+    return Math.round(((votes[pollId]||{})[option]||0) / total * 100);
+  }
+
+  return (
+    <div style={styles.statsRoot}>
+      <div style={styles.stdHeader}>
+        <h2 style={styles.stdTitle}>🗳️ NY SPORTS POLLS</h2>
+        <p style={styles.stdSub}>VOTE · DEBATE · SETTLE THE ARGUMENT</p>
+      </div>
+      <div style={{marginBottom:20, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Vote in each poll — results shown after you pick. Polls reset when you reload. Have your say!</p>
+      </div>
+      <div style={{display:"flex", flexDirection:"column", gap:20}}>
+        {POLLS.map(poll => {
+          const hasVoted = voted[poll.id];
+          const total = getTotal(poll.id);
+          return (
+            <div key={poll.id} style={styles.pollCard}>
+              <div style={styles.pollQuestion}>{poll.question}</div>
+              <div style={styles.pollOptions}>
+                {poll.options.map((opt, i) => {
+                  const pct = getPct(poll.id, opt);
+                  const isWinner = hasVoted && pct === Math.max(...poll.options.map(o => getPct(poll.id, o)));
+                  const isMyVote = voted[poll.id] === opt;
+                  return (
+                    <div key={i} style={styles.pollOptionWrap}>
+                      <button
+                        onClick={() => handleVote(poll.id, opt)}
+                        disabled={!!hasVoted}
+                        style={{
+                          ...styles.pollOption,
+                          ...(isMyVote ? styles.pollOptionVoted : {}),
+                          ...(hasVoted && !isMyVote ? styles.pollOptionDisabled : {}),
+                          cursor: hasVoted ? "default" : "pointer",
+                        }}>
+                        {hasVoted && (
+                          <div style={{...styles.pollBar, width:`${pct}%`, background: isWinner?"#c8201c":"#2a2a2a"}} />
+                        )}
+                        <span style={styles.pollOptionText}>
+                          {isMyVote && "✓ "}{opt}
+                        </span>
+                        {hasVoted && <span style={styles.pollPct}>{pct}%</span>}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              {hasVoted && <div style={styles.pollMeta}>{total} vote{total!==1?"s":""} · you voted: {voted[poll.id]}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── HALL OF FAME TAB ──────────────────────────────────────────────────────
+const HOF_DATA = {
+  Yankees: [
+    { name:"Babe Ruth",        inducted:1936, pos:"RF",      note:"First class inductee — the greatest" },
+    { name:"Lou Gehrig",       inducted:1939, pos:"1B",      note:"Special election after ALS diagnosis" },
+    { name:"Joe DiMaggio",     inducted:1955, pos:"CF",      note:"Yankee Clipper — unanimous" },
+    { name:"Bill Dickey",      inducted:1954, pos:"C",       note:"8x All-Star catcher" },
+    { name:"Lefty Gomez",      inducted:1972, pos:"SP",      note:"El Goofy — 5x World Series" },
+    { name:"Red Ruffing",      inducted:1967, pos:"SP",      note:"6x All-Star — 4 straight WS" },
+    { name:"Yogi Berra",       inducted:1972, pos:"C",       note:"10 World Series rings" },
+    { name:"Mickey Mantle",    inducted:1974, pos:"CF",      note:"The Commerce Comet — 536 HR" },
+    { name:"Whitey Ford",      inducted:1974, pos:"SP",      note:"Chairman of the Board — .690 WS pct" },
+    { name:"Phil Rizzuto",     inducted:1994, pos:"SS",      note:"Holy Cow — waited 28 years" },
+    { name:"Reggie Jackson",   inducted:1993, pos:"RF",      note:"Mr. October — inducted as a Yankee" },
+    { name:"Don Mattingly",    inducted:2020, pos:"1B",      note:"Donnie Baseball — Pinstripe icon" },
+    { name:"Derek Jeter",      inducted:2020, pos:"SS",      note:"99.75% of vote — only missed 1 ballot" },
+    { name:"Mariano Rivera",   inducted:2019, pos:"RP",      note:"Unanimous — first ever" },
+    { name:"Dave Winfield",    inducted:2001, pos:"RF",      note:"Asked to go in as a Yankee" },
+    { name:"Goose Gossage",    inducted:2008, pos:"RP",      note:"The Goose — dominant closer" },
+    { name:"Catfish Hunter",   inducted:1987, pos:"SP",      note:"Key part of 70s dynasty" },
+    { name:"Tony Lazzeri",     inducted:1991, pos:"2B",      note:"First Italian-American HOFer" },
+    { name:"Earle Combs",      inducted:1970, pos:"CF",      note:"Leadoff of Murderers Row" },
+    { name:"Joe Gordon",       inducted:2009, pos:"2B",      note:"1942 AL MVP" },
+    { name:"Herb Pennock",     inducted:1948, pos:"SP",      note:"Key to 1920s dynasty" },
+    { name:"Waite Hoyt",       inducted:1969, pos:"SP",      note:"1920s dynasty anchor" },
+  ],
+  Mets: [
+    { name:"Tom Seaver",       inducted:1992, pos:"SP",      note:"98.84% of the vote — Tom Terrific" },
+    { name:"Mike Piazza",      inducted:2016, pos:"C",       note:"Inducted as a Met — greatest hitting C" },
+    { name:"Casey Stengel",    inducted:1966, pos:"Manager", note:"Original Mets manager — 7 WS as Yankee skipper" },
+    { name:"Willie Mays",      inducted:1979, pos:"CF",      note:"Say Hey Kid ended career with Mets 1972-73" },
+    { name:"Richie Ashburn",   inducted:1995, pos:"CF",      note:"Original 1962 Met — first HOFer on the roster" },
+    { name:"Duke Snider",      inducted:1980, pos:"CF",      note:"Brooklyn legend ended career as a Met" },
+    { name:"Yogi Berra",       inducted:1972, pos:"Coach",   note:"Mets coach and beloved figure" },
+  ],
+  Knicks: [
+    { name:"Willis Reed",      inducted:1982, pos:"C",       note:"Two-time Finals MVP — Game 7 legend" },
+    { name:"Walt Frazier",     inducted:1987, pos:"G",       note:"Clyde — the most stylish Knick ever" },
+    { name:"Dave DeBusschere", inducted:1982, pos:"F",       note:"Won two rings with New York" },
+    { name:"Bill Bradley",     inducted:1982, pos:"F",       note:"Dollar Bill — later Senator from NJ" },
+    { name:"Patrick Ewing",    inducted:2008, pos:"C",       note:"Greatest Knick ever — 15 seasons" },
+    { name:"Earl Monroe",      inducted:1990, pos:"G",       note:"The Pearl — pure playground magic" },
+    { name:"Red Holzman",      inducted:1986, pos:"Coach",   note:"Two championship coach" },
+    { name:"Richie Guerin",    inducted:2013, pos:"G",       note:"6-time All-Star Knick" },
+    { name:"Dick McGuire",     inducted:1993, pos:"G",       note:"Tricky Dick — 8 seasons as Knick" },
+    { name:"Harry Gallatin",   inducted:1991, pos:"C",       note:"Iron Man — never missed a game" },
+  ],
+  Rangers: [
+    { name:"Mark Messier",     inducted:2007, pos:"C",       note:"The Captain — guaranteed and delivered" },
+    { name:"Brian Leetch",     inducted:2009, pos:"D",       note:"Conn Smythe 1994 — American-born great" },
+    { name:"Rod Gilbert",      inducted:1982, pos:"RW",      note:"Franchise all-time scoring leader" },
+    { name:"Eddie Giacomin",   inducted:1987, pos:"G",       note:"Fast Eddie — 8 seasons in goal" },
+    { name:"Andy Bathgate",    inducted:1978, pos:"RW",      note:"Hart Trophy 1959" },
+    { name:"Harry Howell",     inducted:1979, pos:"D",       note:"Norris Trophy 1967" },
+    { name:"Brad Park",        inducted:1988, pos:"D",       note:"Norris runner-up 5 times as Ranger" },
+    { name:"Jean Ratelle",     inducted:1985, pos:"C",       note:"GAG Line center — Lady Byng 4x" },
+    { name:"Lester Patrick",   inducted:1947, pos:"Coach",   note:"Original Rangers founder-coach" },
+    { name:"Frank Boucher",    inducted:1958, pos:"C",       note:"Lady Byng 7 of 8 years" },
+  ],
+  Islanders: [
+    { name:"Denis Potvin",     inducted:1991, pos:"D",       note:"Broke Orr's record — captained 4 Cups" },
+    { name:"Mike Bossy",       inducted:1991, pos:"RW",      note:"573 goals — 50 in 50 — pure scorer" },
+    { name:"Bryan Trottier",   inducted:1997, pos:"C",       note:"Hart Trophy — heart of dynasty" },
+    { name:"Billy Smith",      inducted:1993, pos:"G",       note:"Battlin' Billy — won all 4 Cups" },
+    { name:"Clark Gillies",    inducted:2002, pos:"LW",      note:"Enforcer and power forward of dynasty" },
+    { name:"Bob Nystrom",      inducted:nil,  pos:"RW",      note:"OT Cup winner 1980 — beloved Island icon" },
+    { name:"Al Arbour",        inducted:1996, pos:"Coach",   note:"Winningest NHL coach of the dynasty era" },
+  ],
+  Devils: [
+    { name:"Martin Brodeur",   inducted:2018, pos:"G",       note:"All-time NHL wins and shutouts leader" },
+    { name:"Scott Stevens",    inducted:2007, pos:"D",       note:"Most feared hitter — 3 Cup champion" },
+    { name:"Scott Niedermayer",inducted:2013, pos:"D",       note:"3 Cups with NJ, 1 more with Anaheim" },
+    { name:"Pat Burns",        inducted:2014, pos:"Coach",   note:"Jack Adams winner — coached 2003 Cup" },
+  ],
+  Giants: [
+    { name:"Lawrence Taylor",  inducted:1999, pos:"LB",      note:"Greatest defensive player ever" },
+    { name:"Frank Gifford",    inducted:1977, pos:"HB",      note:"Mr. Giant — broadcaster, icon" },
+    { name:"Mel Hein",         inducted:1963, pos:"C",       note:"Most valuable player in NFL history 1938" },
+    { name:"Sam Huff",         inducted:1982, pos:"LB",      note:"First LB to have a TV special about him" },
+    { name:"Y.A. Tittle",      inducted:1971, pos:"QB",      note:"49 TD in 1963 — unforgettable image bloodied" },
+    { name:"Roosevelt Brown",  inducted:1975, pos:"OT",      note:"22nd round draft pick — became HOFer" },
+    { name:"Emlen Tunnell",    inducted:1967, pos:"S",       note:"First Black player inducted into HOF" },
+    { name:"Andy Robustelli",  inducted:1971, pos:"DE",      note:"7x Pro Bowl — Giants dynasty defender" },
+    { name:"Tuffy Leemans",    inducted:1978, pos:"RB",      note:"1936 leader in rushing as a rookie" },
+    { name:"Arnie Weinmeister", inducted:1984, pos:"DT",     note:"4x Pro Bowl — dominant in 1950s" },
+    { name:"Bill Parcells",    inducted:2013, pos:"Coach",   note:"2x Super Bowl — greatest Giants coach" },
+    { name:"Tom Landry",       inducted:1990, pos:"Coach",   note:"Giants DC before Cowboys dynasty" },
+  ],
+  Jets: [
+    { name:"Joe Namath",       inducted:1985, pos:"QB",      note:"Broadway Joe — guaranteed Super Bowl" },
+    { name:"Don Maynard",      inducted:1987, pos:"WR",      note:"First AFL WR to 1,000 receiving yards" },
+    { name:"Curtis Martin",    inducted:2012, pos:"RB",      note:"4x Pro Bowl — Hall of Very Good to HOFer" },
+    { name:"Weeb Ewbank",      inducted:1978, pos:"Coach",   note:"Only coach to win NFL and AFL titles" },
+    { name:"Winston Hill",     inducted:2020, pos:"OT",      note:"Namath's blindside protector" },
+  ],
+  Nets: [
+    { name:"Julius Erving",    inducted:1993, pos:"F",       note:"Dr. J — ABA legend, 2 titles with Nets" },
+    { name:"Drazen Petrovic",  inducted:2002, pos:"G",       note:"Died 1993 — one of the first great European players" },
+    { name:"Buck Williams",    inducted:nil,  pos:"F",       note:"Not yet inducted — should be" },
+  ],
+  Liberty: [
+    { name:"Tina Charles",     inducted:nil,  pos:"C",       note:"Greatest Liberty before Stewart era" },
+    { name:"Cappie Pondexter", inducted:nil,  pos:"G",       note:"2x WNBA champion — franchise stalwart" },
+  ],
+};
+
+function HofTab() {
+  const [activeTeam, setActiveTeam] = useState("Yankees");
+  const TEAMS = Object.keys(HOF_DATA);
+  const players = HOF_DATA[activeTeam] || [];
+
+  return (
+    <div style={styles.statsRoot}>
+      <div style={styles.stdHeader}>
+        <h2 style={styles.stdTitle}>🏛️ NY SPORTS HALL OF FAME</h2>
+        <p style={styles.stdSub}>HALL OF FAMERS BY TEAM · LEGENDS · IMMORTALS</p>
+      </div>
+      <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Every Hall of Famer with a connection to a New York team. Multiple inductees appear on multiple teams.</p>
+      </div>
+      <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:20}}>
+        {TEAMS.map(t => (
+          <button key={t} onClick={() => setActiveTeam(t)}
+            style={{...styles.filterBtn, ...(activeTeam===t?styles.filterBtnActive:{})}}>
+            {t} <span style={{fontSize:9, color:"#666", marginLeft:4}}>({HOF_DATA[t]?.length})</span>
+          </button>
+        ))}
+      </div>
+      <div style={styles.stdDivisionHeader}>{activeTeam.toUpperCase()} HALL OF FAMERS ({players.length})</div>
+      {players.map((p, i) => (
+        <div key={i} style={{...styles.hofRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <div style={styles.hofEmoji}>🏛️</div>
+          <div style={styles.hofInfo}>
+            <div style={styles.hofHeader}>
+              <span style={styles.hofName}>{p.name}</span>
+              <span style={styles.hofPos}>{p.pos}</span>
+              {p.inducted && <span style={styles.hofYear}>{p.inducted}</span>}
+            </div>
+            <p style={styles.hofNote}>{p.note}</p>
+            <div style={{display:"flex", gap:10}}>
+              <a href={googleUrl(`${p.name} Hall of Fame ${activeTeam}`)} target="_blank" rel="noopener noreferrer" style={styles.histLink}>🔍 Google</a>
+              <a href={wikiUrl(p.name)} target="_blank" rel="noopener noreferrer" style={styles.histLink}>📖 Wiki</a>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── MISERY INDEX TAB ──────────────────────────────────────────────────────
+function MiseryTab() {
+  const MISERY_DATA = [
+    {
+      team:"Jets", emoji:"🏈", color:"#125740",
+      score:98,
+      title:"DEFCON 1 — MAXIMUM SUFFERING",
+      last:"1969", drought:57,
+      lowlights:["56 years without a Super Bowl — longest drought in the NFL","Missed on Dan Marino in 1983 (took Ken O'Brien)","Brett Favre torn Achilles Week 4, 2008","Sanchez Butt Fumble on national TV 2012","Sam Darnold's ghost haunts every draft pick","Aaron Rodgers: Achilles in Week 1, 2023"],
+      brightside:"They do have Joe Namath — and Aaron Rodgers is still standing.",
+    },
+    {
+      team:"Knicks", emoji:"🏀", color:"#006BB6",
+      score:91,
+      title:"CHRONIC HEARTBREAK",
+      last:"1973", drought:53,
+      lowlights:["52 years without an NBA title","1994 Finals — Ewing's closest call, lost to Rockets","7 shots at the playoffs in the Isiah Thomas era","James Dolan's endless ownership chaos","Carmelo Anthony's best years wasted","Kristaps Porzingis traded for nothing tangible"],
+      brightside:"Brunson has MSG rocking again. Real hope for the first time in decades.",
+    },
+    {
+      team:"Mets", emoji:"⚾", color:"#FF5910",
+      score:85,
+      title:"HIGH SUFFERING",
+      last:"1986", drought:40,
+      lowlights:["Bill Buckner's error — and then they STILL blew it later","1988: 100 wins, lost in NLCS to the Dodgers","Generation K: Wilson, Pulsipher, Isringhausen — all busted","2007: 7 game collapse with 17 games to play","2015: Harvey's arm, one strike away, Familia blows it","Bobby Bonilla Day — paid $1.19M every July 1 through 2035"],
+      brightside:"Steve Cohen's money. Pete Alonso. Citi Field rocking in 2025-26.",
+    },
+    {
+      team:"Rangers", emoji:"🏒", color:"#0038A8",
+      score:72,
+      title:"ELEVATED SUFFERING",
+      last:"1994", drought:32,
+      lowlights:["54-year drought before 1994","2014 Finals loss to the LA Kings","2022 Conference Finals loss to Lightning","Losing Messier's free agent negotiations","Trading Rick Middleton for Ken Hodge — criminal"],
+      brightside:"1994 happened. Panarin/Fox core is legitimate. The drought feels manageable.",
+    },
+    {
+      team:"Giants", emoji:"🏈", color:"#0B2265",
+      score:65,
+      title:"MODERATE SUFFERING",
+      last:"2012", drought:14,
+      lowlights:["Back-to-back losing seasons 2017-2023","Daniel Jones experiment cost 3 years","Saquon Barkley left for Philadelphia and immediately won","Odell Beckham traded away","McAdoo benched Eli Manning — immediate fan revolt"],
+      brightside:"4 Super Bowls. Two miracle upsets of the Patriots. LT. The resume is elite.",
+    },
+    {
+      team:"Islanders", emoji:"🏒", color:"#00539B",
+      score:62,
+      title:"MODERATE SUFFERING",
+      last:"1983", drought:43,
+      lowlights:["John Tavares left for Toronto in free agency — broke hearts","Rick DiPietro 15-year $67.5M contract — disaster","Years of arena uncertainty (Nassau vs Brooklyn vs UBS)","Mike Milbury's trades still echoing","No Cup since the dynasty ended in 1983"],
+      brightside:"Matthew Schaefer #1 overall. Barry Trotz era nearly made it. Patrick Roy coaching.",
+    },
+    {
+      team:"Nets", emoji:"🏀", color:"#000000",
+      score:55,
+      title:"EXISTENTIAL CONFUSION",
+      last:"Never (NBA)", drought:999,
+      lowlights:["Never won an NBA championship","Dr. J sold to 76ers to pay the ABA-NBA merger fee","KD/Kyrie/Harden Big 3 never won a single playoff round","Moved from Jersey to Brooklyn — identity crisis","Brook Lopez era was good but not good enough"],
+      brightside:"Dr. J's two ABA titles count. Barclays Center is beautiful. Mikal Bridges/Cam Johnson core.",
+    },
+    {
+      team:"Yankees", emoji:"⚾", color:"#003087",
+      score:35,
+      title:"BASELINE SUFFERING",
+      last:"2009", drought:17,
+      lowlights:["17 years since last World Series — a LONG time by Yankee standards","2004 ALCS: blew 3-0 series lead to Red Sox","ARod's steroid legacy taints multiple eras","2022 ALCS: 7 games, Judge and Stanton disappear","Gerrit Cole's spider tack suspension embarrassment"],
+      brightside:"27 championships. Aaron Judge. They're always in contention. The standard is the standard.",
+    },
+    {
+      team:"Liberty", emoji:"🏀", color:"#007A5E",
+      score:15,
+      title:"REIGNING CHAMPIONS",
+      last:"2025", drought:0,
+      lowlights:["Years of irrelevance before Stewart's arrival","Played second fiddle to the Knicks for decades","Had to fight for visibility in NY sports media"],
+      brightside:"Back-to-back WNBA champions. Breanna Stewart. Sabrina Ionescu. The best team in women's basketball.",
+    },
+    {
+      team:"Devils", emoji:"🏒", color:"#CE1126",
+      score:22,
+      title:"SURPRISINGLY MANAGEABLE",
+      last:"2003", drought:23,
+      lowlights:["23 years since last Cup despite 3 championships","Patrik Elias retired without enough recognition","Zach Parise left for Minnesota, never won","2012 Finals loss to Kings after incredible playoff run","Jack Hughes growing pains"],
+      brightside:"Three Cups in 9 years (1995-2003). Brodeur's records forever. Hughes brothers era dawning.",
+    },
+  ];
+
+  return (
+    <div style={styles.statsRoot}>
+      <div style={styles.stdHeader}>
+        <h2 style={styles.stdTitle}>😩 THE NY SPORTS MISERY INDEX</h2>
+        <p style={styles.stdSub}>RANKED FROM MOST TO LEAST SUFFERING</p>
+      </div>
+      <div style={{marginBottom:20, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Every NY team ranked by how much they've made their fans suffer. The higher the score, the deeper the pain. A badge of honor for true NY fans.</p>
+      </div>
+      {MISERY_DATA.sort((a,b)=>b.score-a.score).map((t, i) => (
+        <div key={i} style={{...styles.miseryCard, borderLeft:`4px solid ${t.color}`}}>
+          <div style={styles.miseryHeader}>
+            <span style={styles.miseryRank}>#{i+1}</span>
+            <span style={styles.miseryEmoji}>{t.emoji}</span>
+            <div style={styles.miseryTeamInfo}>
+              <span style={styles.miseryTeamName}>{t.team}</span>
+              <span style={styles.miseryTitle}>{t.title}</span>
+            </div>
+            <div style={styles.miseryScoreBox}>
+              <div style={{...styles.miseryScoreFill, width:`${t.score}%`, background:t.score>80?"#c8201c":t.score>50?"#cc8800":"#2d8a50"}} />
+              <span style={styles.miseryScore}>{t.score}</span>
+            </div>
+          </div>
+          <div style={styles.miseryMeta}>
+            <span style={{color:"#888", fontSize:10}}>Last title: <strong style={{color:"#e8e0d0"}}>{t.last}</strong></span>
+            {t.drought > 0 && <span style={{color:"#888", fontSize:10}}>Drought: <strong style={{color:"#c8201c"}}>{t.drought} years</strong></span>}
+          </div>
+          <div style={styles.miseryLowlights}>
+            {t.lowlights.map((l, j) => <div key={j} style={styles.miseryLow}>😭 {l}</div>)}
+          </div>
+          <div style={styles.miseryBright}>☀️ {t.brightside}</div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -5362,6 +5888,60 @@ const styles = {
     fontSize:10, fontWeight:700, letterSpacing:"0.05em",
     transition:"border-color 0.15s",
   },
+
+  // TODAY IN NY SPORTS
+  todayCard: { display:"flex", gap:14, padding:"14px 16px", borderTop:"1px solid #1a1a1a" },
+  todayEmoji: { fontSize:28, flexShrink:0, paddingTop:2 },
+  todayBody: { flex:1 },
+  todayHeader: { display:"flex", gap:10, alignItems:"center", marginBottom:4 },
+  todayYear: { fontSize:16, fontWeight:900, color:"#c8201c", fontFamily:"'Georgia',serif" },
+  todayTeam: { fontSize:10, color:"#888", fontWeight:700, letterSpacing:"0.08em" },
+  todayTitle: { fontSize:14, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", marginBottom:6 },
+  todayDesc: { margin:"0 0 8px", fontSize:11, color:"#aaa", lineHeight:1.6 },
+
+  // POLLS
+  pollCard: { background:"#161616", border:"1px solid #2a2a2a", padding:"16px" },
+  pollQuestion: { fontSize:14, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", marginBottom:12 },
+  pollOptions: { display:"flex", flexDirection:"column", gap:6 },
+  pollOptionWrap: { position:"relative" },
+  pollOption: {
+    display:"flex", alignItems:"center", width:"100%", padding:"8px 12px",
+    background:"#1a1a1a", border:"1px solid #333", color:"#e8e0d0",
+    fontSize:11, fontWeight:700, textAlign:"left", position:"relative", overflow:"hidden",
+    transition:"border-color 0.15s",
+  },
+  pollOptionVoted: { border:"1px solid #c8201c", color:"#fff" },
+  pollOptionDisabled: { color:"#888" },
+  pollBar: { position:"absolute", left:0, top:0, bottom:0, opacity:0.2, transition:"width 0.4s" },
+  pollOptionText: { position:"relative", zIndex:1, flex:1 },
+  pollPct: { position:"relative", zIndex:1, fontSize:12, fontWeight:900, color:"#c8201c" },
+  pollMeta: { marginTop:8, fontSize:9, color:"#555", letterSpacing:"0.08em" },
+
+  // HALL OF FAME
+  hofRow: { display:"flex", gap:14, padding:"12px 14px", borderTop:"1px solid #1a1a1a" },
+  hofEmoji: { fontSize:22, flexShrink:0, paddingTop:2 },
+  hofInfo: { flex:1 },
+  hofHeader: { display:"flex", alignItems:"center", gap:10, flexWrap:"wrap", marginBottom:4 },
+  hofName: { fontSize:14, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  hofPos: { fontSize:10, color:"#c8201c", fontWeight:900 },
+  hofYear: { fontSize:10, color:"#888" },
+  hofNote: { margin:"0 0 6px", fontSize:11, color:"#aaa" },
+
+  // MISERY INDEX
+  miseryCard: { background:"#161616", border:"1px solid #2a2a2a", padding:"14px 16px", marginBottom:12 },
+  miseryHeader: { display:"flex", alignItems:"center", gap:12, marginBottom:8 },
+  miseryRank: { fontSize:20, fontWeight:900, color:"#666", fontFamily:"'Georgia',serif", minWidth:28 },
+  miseryEmoji: { fontSize:28, flexShrink:0 },
+  miseryTeamInfo: { flex:1 },
+  miseryTeamName: { display:"block", fontSize:16, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  miseryTitle: { display:"block", fontSize:9, color:"#c8201c", fontWeight:900, letterSpacing:"0.1em" },
+  miseryScoreBox: { minWidth:80, position:"relative", height:20, background:"#1a1a1a", flexShrink:0 },
+  miseryScoreFill: { position:"absolute", left:0, top:0, bottom:0, transition:"width 0.5s" },
+  miseryScore: { position:"absolute", right:6, top:"50%", transform:"translateY(-50%)", fontSize:12, fontWeight:900, color:"#fff" },
+  miseryMeta: { display:"flex", gap:16, marginBottom:8 },
+  miseryLowlights: { display:"flex", flexDirection:"column", gap:4, marginBottom:8 },
+  miseryLow: { fontSize:11, color:"#aaa", paddingLeft:4 },
+  miseryBright: { fontSize:11, color:"#4ade80", fontStyle:"italic", paddingTop:8, borderTop:"1px solid #1a1a1a" },
 
   // RADIO
   radioRow: { display:"flex", alignItems:"center", gap:12, padding:"10px 14px", textDecoration:"none", borderTop:"1px solid #1a1a1a" },
