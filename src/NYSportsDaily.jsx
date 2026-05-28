@@ -416,7 +416,7 @@ const DAILY_PLAYERS = [
   { name:"Mark Messier",   team:"Rangers",  sport:"NHL", pos:"C",   emoji:"🏒", number:"11", active:false, era:"1991–2004", stats:"851 pts as a Ranger · 6× Stanley Cup champion", fact:"Guaranteed a Game 6 win against the Devils when down 3-2. Then scored a hat trick. The greatest captain in hockey history.", wiki:"https://en.wikipedia.org/wiki/Mark_Messier", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Mark_Messier_2014.jpg/256px-Mark_Messier_2014.jpg", cardColor:"#0038A8" },
   { name:"Mike Bossy",     team:"Islanders",sport:"NHL", pos:"RW",  emoji:"🏒", number:"22", active:false, era:"1977–1987", stats:"573 G · 9 straight 50-goal seasons · 4× Cup", fact:"Matched Rocket Richard's 50 in 50 in 1981. Retired at 30 due to back injuries — may have been even greater.", wiki:"https://en.wikipedia.org/wiki/Mike_Bossy", photo:"https://upload.wikimedia.org/wikipedia/en/thumb/8/8d/Mike_Bossy.jpg/256px-Mike_Bossy.jpg", cardColor:"#00539B" },
   { name:"Bryan Trottier", team:"Islanders",sport:"NHL", pos:"C",   emoji:"🏒", number:"19", active:false, era:"1975–1990", stats:"1,353 pts · 4× Cup · Hart Trophy 1979", fact:"Won 4 Cups with the Islanders then 2 more with Pittsburgh. The engine of the greatest dynasty in NHL history.", wiki:"https://en.wikipedia.org/wiki/Bryan_Trottier", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Bryan_Trottier_2018.jpg/256px-Bryan_Trottier_2018.jpg", cardColor:"#00539B" },
-  { name:"Tom Seaver",     team:"Mets",     sport:"MLB", pos:"SP",  emoji:"⚾", number:"41", active:false, era:"1967–1983", stats:"311 W · 2.86 ERA · 3,272 K · 3× Cy Young", fact:"Led the Miracle Mets to the 1969 World Series. Tom Terrific is the greatest Met of all time — not even close.", wiki:"https://en.wikipedia.org/wiki/Tom_Seaver", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Tom_Seaver_1979.jpg/256px-Tom_Seaver_1979.jpg", cardColor:"#FF5910" },
+  { name:"Tom Seaver",     team:"Mets",     sport:"MLB", pos:"SP",  emoji:"⚾", number:"41", active:false, era:"1967–1983", stats:"311 W · 2.57 ERA · 2,541 K · 3× Cy Young", fact:"Led the Miracle Mets to the 1969 World Series. Tom Terrific is the greatest Met of all time — not even close. Holds Mets records for wins, Ks and innings pitched.", wiki:"https://en.wikipedia.org/wiki/Tom_Seaver", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Tom_Seaver_1972.jpg/256px-Tom_Seaver_1972.jpg", cardColor:"#FF5910" },
   { name:"Babe Ruth",      team:"Yankees",  sport:"MLB", pos:"RF",  emoji:"⚾", number:"3",  active:false, era:"1920–1934", stats:"659 HR as Yankee · .349 AVG · 7× WS", fact:"Was sold by Boston for $100,000 in 1920 — cursing them for 86 years. Possibly the most impactful transaction in sports history.", wiki:"https://en.wikipedia.org/wiki/Babe_Ruth", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Babe_Ruth2.jpg/256px-Babe_Ruth2.jpg", cardColor:"#003087" },
   { name:"Lou Gehrig",     team:"Yankees",  sport:"MLB", pos:"1B",  emoji:"⚾", number:"4",  active:false, era:"1923–1939", stats:"2,721 H · 1,995 RBI · .340 AVG · 7× All-Star", fact:"Played 2,130 consecutive games as the Iron Horse. His farewell speech — 'luckiest man' — is the most powerful in sports history.", wiki:"https://en.wikipedia.org/wiki/Lou_Gehrig", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Lou_Gehrig_as_a_New_York_Yankee.jpg/256px-Lou_Gehrig_as_a_New_York_Yankee.jpg", cardColor:"#003087" },
   { name:"Willis Reed",    team:"Knicks",   sport:"NBA", pos:"C",   emoji:"🏀", number:"19", active:false, era:"1964–1974", stats:"12,183 pts · 8,414 reb · 2× NBA Champion", fact:"Limped onto the Garden floor on a torn thigh muscle for Game 7. The crowd went insane. The Knicks won. Frazier scored 36.", wiki:"https://en.wikipedia.org/wiki/Willis_Reed", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Willis_Reed.jpg/256px-Willis_Reed.jpg", cardColor:"#006BB6" },
@@ -428,7 +428,7 @@ const DAILY_PLAYERS = [
   { name:"Eli Manning",    team:"Giants",   sport:"NFL", pos:"QB",  emoji:"🏈", number:"10", active:false, era:"2004–2019", stats:"57,023 yds · 366 TD · 2× Super Bowl MVP", fact:"Beat the undefeated Patriots twice in the Super Bowl. Made the pass to David Tyree and the throw to Mario Manningham.", wiki:"https://en.wikipedia.org/wiki/Eli_Manning", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Eli_Manning_2019.jpg/256px-Eli_Manning_2019.jpg", cardColor:"#0B2265" },
   { name:"Mariano Rivera", team:"Yankees", sport:"MLB", pos:"RP",  emoji:"⚾", number:"42", active:false, era:"1995–2013", stats:"652 SV · 2.21 ERA · 5× WS · ALCS MVP 2003", fact:"Unanimous Hall of Fame election — first ever. Threw one pitch (cutter) his entire career. The greatest closer in baseball history.", wiki:"https://en.wikipedia.org/wiki/Mariano_Rivera", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Mariano_Rivera_2008.jpg/256px-Mariano_Rivera_2008.jpg", cardColor:"#003087" },
   { name:"Jalen Brunson",  team:"Knicks",   sport:"NBA", pos:"PG",  emoji:"🏀", number:"11", active:true,  era:"2022–present", stats:"28+ PPG · 6+ APG · MSG's new hero", fact:"Turned down a max contract extension, then got a bigger one. Breathed new life into Knicks basketball in a way the Garden hasn't seen since Ewing.", wiki:"https://en.wikipedia.org/wiki/Jalen_Brunson", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Jalen_Brunson_2024.jpg/256px-Jalen_Brunson_2024.jpg", cardColor:"#006BB6" },
-  { name:"Pete Alonso",    team:"Mets",     sport:"MLB", pos:"1B",  emoji:"⚾", number:"20", active:true,  era:"2019–present", stats:"240+ HR · 53 HR in 2019 (rookie record)", fact:"The Polar Bear broke the MLB rookie home run record in 2019. Now leads the Mets all-time home run list, ahead of Darryl Strawberry.", wiki:"https://en.wikipedia.org/wiki/Pete_Alonso", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Pete_Alonso_in_2021.jpg/256px-Pete_Alonso_in_2021.jpg", cardColor:"#FF5910" },
+  { name:"Pete Alonso",    team:"Mets",     sport:"MLB", pos:"1B",  emoji:"⚾", number:"20", active:true,  era:"2019–present", stats:"254+ HR · Mets All-Time HR Record · 53 HR rookie record 2019", fact:"The Polar Bear broke the MLB rookie home run record in 2019 with 53 HR. On Aug 12, 2025 he broke Darryl Strawberry's Mets all-time record of 252. The franchise's home run king.", wiki:"https://en.wikipedia.org/wiki/Pete_Alonso", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Pete_Alonso_in_2021.jpg/256px-Pete_Alonso_in_2021.jpg", cardColor:"#FF5910" },
   { name:"Aaron Judge",    team:"Yankees",  sport:"MLB", pos:"RF",  emoji:"⚾", number:"99", active:true,  era:"2016–present", stats:"60+ HR seasons · .280+ AVG · AL MVP 2017, 2022", fact:"Hit 62 home runs in 2022 — the American League single-season record. The current face of the Yankees dynasty.", wiki:"https://en.wikipedia.org/wiki/Aaron_Judge", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Aaron_Judge_2017.jpg/256px-Aaron_Judge_2017.jpg", cardColor:"#003087" },
   { name:"Breanna Stewart",team:"Liberty", sport:"WNBA",pos:"F",  emoji:"🏀", number:"30", active:true,  era:"2023–present", stats:"2× WNBA Champion · Finals MVP", fact:"Came to New York to win and delivered back-to-back championships. The best player in women's basketball history.", wiki:"https://en.wikipedia.org/wiki/Breanna_Stewart", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Breanna_Stewart_2024.jpg/256px-Breanna_Stewart_2024.jpg", cardColor:"#007A5E" },
 ];
@@ -831,7 +831,7 @@ export default function NYSportsDaily() {
 
         {/* TAB NAV */}
         <div style={styles.tabNav}>
-          {["SCORES","TV","STANDINGS","SCHEDULE","STATS","HISTORY","NEWS","RADIO","TODAY","POLLS","HOF","MISERY","TRIVIA","XWORD","SPIN","SHOP"].map(tab => (
+          {["SCORES","TV","STANDINGS","SCHEDULE","STATS","HISTORY","NEWS","RADIO","THIS DATE","POLLS","HOF","MISERY","TRIVIA","XWORD","SPIN","SHOP"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {})}}>
               {tab}
@@ -923,7 +923,7 @@ export default function NYSportsDaily() {
           <ScheduleTab schedule={schedule} loading={loadingSchedule} />
         )}
         {/* ──── HISTORY TAB ──── */}
-        {activeTab === "TODAY" && <TodayTab />}
+        {activeTab === "THIS DATE" && <TodayTab />}
         {activeTab === "POLLS" && <PollsTab />}
         {activeTab === "HOF" && <HofTab />}
         {activeTab === "MISERY" && <MiseryTab />}
@@ -1900,16 +1900,16 @@ const HISTORY_LISTS = {
   ],
   "Mets": [
     { title: "All-Time Mets HR Leaders", items: [
-      { rank:1,  name:"Pete Alonso",       value:"240+ HR", years:"2019–present" },
+      { rank:1,  name:"Pete Alonso",       value:"254+ HR", years:"2019–present · Mets all-time record set Aug 12, 2025" },
       { rank:2,  name:"Darryl Strawberry", value:"252 HR",  years:"1983–1990" },
-      { rank:3,  name:"Mike Piazza",       value:"220 HR",  years:"1998–2005" },
-      { rank:4,  name:"Howard Johnson",    value:"192 HR",  years:"1985–1993" },
-      { rank:5,  name:"Dave Kingman",      value:"154 HR",  years:"1975–77, 1981–83" },
-      { rank:6,  name:"Todd Hundley",      value:"124 HR",  years:"1990–1998" },
-      { rank:7,  name:"Carlos Delgado",    value:"104 HR",  years:"2006–2009" },
-      { rank:8,  name:"Lucas Duda",        value:"100 HR",  years:"2010–2017" },
-      { rank:9,  name:"Cleon Jones",       value:"93 HR",   years:"1963–1975" },
-      { rank:10, name:"John Olerud",       value:"63 HR",   years:"1997–1999" },
+      { rank:3,  name:"David Wright",      value:"242 HR",  years:"2004–2018" },
+      { rank:4,  name:"Mike Piazza",       value:"220 HR",  years:"1998–2005" },
+      { rank:5,  name:"Howard Johnson",    value:"192 HR",  years:"1985–1993" },
+      { rank:6,  name:"Dave Kingman",      value:"154 HR",  years:"1975–77, 1981–83" },
+      { rank:7,  name:"Todd Hundley",      value:"124 HR",  years:"1990–1998" },
+      { rank:8,  name:"Carlos Delgado",    value:"104 HR",  years:"2006–2009" },
+      { rank:9,  name:"Lucas Duda",        value:"100 HR",  years:"2010–2017" },
+      { rank:10, name:"Cleon Jones",       value:"93 HR",   years:"1963–1975" },
     ]},
     { title: "All-Time Mets RBI Leaders", items: [
       { rank:1,  name:"Darryl Strawberry", value:"733 RBI", years:"1983–1990" },
@@ -1951,11 +1951,11 @@ const HISTORY_LISTS = {
       { rank:1,  name:"Tom Seaver",        value:"2,541 K", years:"1967–1983" },
       { rank:2,  name:"Dwight Gooden",     value:"1,875 K", years:"1984–1994" },
       { rank:3,  name:"Jerry Koosman",     value:"1,799 K", years:"1967–1978" },
-      { rank:4,  name:"Jacob deGrom",      value:"1,228 K", years:"2014–2022" },
+      { rank:4,  name:"Jacob deGrom",      value:"1,607 K", years:"2014–2022" },
       { rank:5,  name:"Sid Fernandez",     value:"1,449 K", years:"1983–1993" },
       { rank:6,  name:"Ron Darling",       value:"1,172 K", years:"1983–1991" },
-      { rank:7,  name:"Noah Syndergaard",  value:"855 K",   years:"2015–2021" },
-      { rank:8,  name:"David Cone",        value:"1,172 K", years:"1987–1992, 2003" },
+      { rank:7,  name:"David Cone",        value:"1,172 K", years:"1987–1992, 2003" },
+      { rank:8,  name:"Noah Syndergaard",  value:"855 K",   years:"2015–2021" },
       { rank:9,  name:"Bobby Jones",       value:"669 K",   years:"1993–2000" },
       { rank:10, name:"Tug McGraw",        value:"618 K",   years:"1965–1974" },
     ]},
@@ -2316,7 +2316,7 @@ const HISTORY_LISTS = {
       { rank:4,  name:"Aaron Judge — 62 HR (AL Record)",       value:"Yankees", years:"2022 — current American League single-season record" },
       { rank:5,  name:"Derek Jeter — Most Yankees Hits",       value:"Yankees", years:"3,465 hits — all-time Yankee franchise record" },
       { rank:6,  name:"Mariano Rivera — 652 Saves",            value:"Yankees", years:"All-time MLB saves record" },
-      { rank:7,  name:"Pete Alonso — Rookie HR Record (53)",   value:"Mets",    years:"2019 — broke Mark McGwire's rookie record" },
+      { rank:7,  name:"Pete Alonso — Rookie HR Record + Mets All-Time Record", value:"Mets",    years:"53 HR in 2019 rookie record; 254+ HR all-time Mets franchise record set Aug 2025" },
       { rank:8,  name:"Tom Seaver — 3 Cy Young Awards (Mets)", value:"Mets",    years:"Most Cy Youngs by a Met — 1969, 1973, 1975" },
       { rank:9,  name:"Jack Chesbro — 41 Wins (1904)",         value:"Yankees", years:"Modern era single-season wins record (pre-Yankees)" },
       { rank:10, name:"Whitey Ford — 10 WS Wins",              value:"Yankees", years:"Most World Series pitching wins ever" },
@@ -2704,34 +2704,64 @@ function HistoryTab() {
 
 // ─── TODAY IN NY SPORTS ───────────────────────────────────────────────────
 const TODAY_IN_NY_SPORTS = [
-  { month:1,  day:1,  year:1902, team:"Giants",    emoji:"🏈", title:"Giants Founded", desc:"New York Giants NFL franchise established, becoming one of the original NFL franchises." },
-  { month:1,  day:11, year:1969, team:"Jets",       emoji:"🏈", title:"Namath's Guarantee Pays Off", desc:"The Jets defeat the Baltimore Colts 16-7 in Super Bowl III. Namath's famous guarantee fulfilled." },
-  { month:1,  day:25, year:1987, team:"Giants",     emoji:"🏈", title:"Giants Win Super Bowl XXI", desc:"Phil Simms goes 22-for-25 (88%) as the Giants crush the Denver Broncos 39-20." },
-  { month:2,  day:3,  year:2008, team:"Giants",     emoji:"🏈", title:"The Helmet Catch", desc:"Eli Manning to David Tyree — the greatest play in Super Bowl history ruins the Patriots' perfect season." },
-  { month:2,  day:5,  year:2012, team:"Giants",     emoji:"🏈", title:"Giants Win Super Bowl XLVI", desc:"Eli Manning leads the Giants to their second upset of the Patriots. Bradshaw's accidental TD wins it." },
-  { month:3,  day:6,  year:1961, team:"Yankees",    emoji:"⚾", title:"Roger Maris Signs", desc:"Maris signs with the Yankees setting up his historic 61 HR season." },
-  { month:3,  day:28, year:1973, team:"Yankees",    emoji:"⚾", title:"George Steinbrenner Buys Yankees", desc:"A group led by George Steinbrenner purchases the Yankees for $10 million. The Boss era begins." },
-  { month:4,  day:8,  year:1969, team:"Mets",       emoji:"⚾", title:"Miracle Mets Opening Day", desc:"The Mets begin their miraculous 1969 season with hopes nobody expected to be fulfilled." },
-  { month:4,  day:18, year:1923, team:"Yankees",    emoji:"⚾", title:"Yankee Stadium Opens", desc:"Babe Ruth hits a three-run homer in the first game at the original Yankee Stadium — 'The House That Ruth Built.'" },
-  { month:4,  day:22, year:1970, team:"Mets",       emoji:"⚾", title:"Seaver Strikes Out 19", desc:"Tom Seaver fans 19 Padres including 10 straight to end the game — then the greatest single pitching performance in Mets history." },
-  { month:5,  day:17, year:1998, team:"Yankees",    emoji:"⚾", title:"David Wells Perfect Game", desc:"Wells retires all 27 Twins he faces — only the 15th perfect game in MLB history." },
-  { month:5,  day:28, year:2026, team:"NY Sports",  emoji:"🗽", title:"NY Sports Daily Launches!", desc:"nysportsdaily.com goes live — the definitive destination for obsessed NY sports fans." },
-  { month:6,  day:14, year:1994, team:"Rangers",    emoji:"🏒", title:"Rangers Win the Stanley Cup", desc:"Mark Messier's Rangers end a 54-year drought, defeating the Canucks. 'The Curse of 1940' is over." },
-  { month:6,  day:19, year:1994, team:"Knicks",     emoji:"🏀", title:"OJ Simpson Chase Interrupts Knicks", desc:"The Knicks' NBA Finals Game 5 vs Rockets was interrupted on TV by the OJ Simpson Bronco chase." },
-  { month:7,  day:4,  year:1939, team:"Yankees",    emoji:"⚾", title:"Lou Gehrig's Farewell Speech", desc:"'Today I consider myself the luckiest man on the face of the earth.' Gehrig's iconic goodbye at Yankee Stadium." },
-  { month:7,  day:18, year:1999, team:"Yankees",    emoji:"⚾", title:"David Cone Perfect Game", desc:"On Yogi Berra Day, with Don Larsen in attendance, Cone throws a perfect game against the Expos." },
-  { month:7,  day:24, year:1983, team:"Yankees",    emoji:"⚾", title:"The Pine Tar Game", desc:"George Brett's homer is nullified. Billy Martin's scheming at its finest — Yankees win the protest, then lose the replay." },
-  { month:8,  day:19, year:1951, team:"Giants",     emoji:"⚾", title:"Bobby Thomson Signs", desc:"Bobby Thomson, who will hit the Shot Heard Round the World, joins the Giants roster." },
-  { month:9,  day:21, year:2001, team:"Mets",       emoji:"⚾", title:"Piazza's 9/11 Home Run", desc:"With NYC still in mourning, Mike Piazza's 8th inning solo shot off Steve Karsay lifts the Mets over the Braves — the most emotional home run in baseball history." },
-  { month:9,  day:28, year:1941, team:"Yankees",    emoji:"⚾", title:"DiMaggio's Season Ends", desc:"Joe DiMaggio's 56-game hitting streak had ended two months earlier — still the most unbreakable record in sports." },
-  { month:10, day:1,  year:1961, team:"Yankees",    emoji:"⚾", title:"Roger Maris Hits #61", desc:"On the final day of the season, Maris breaks Babe Ruth's 34-year-old single-season home run record." },
-  { month:10, day:8,  year:1956, team:"Yankees",    emoji:"⚾", title:"Don Larsen's Perfect Game", desc:"Larsen retires all 27 Brooklyn Dodgers he faces in Game 5 of the World Series — the only perfect game in postseason history." },
-  { month:10, day:16, year:1969, team:"Mets",       emoji:"⚾", title:"Miracle Mets Win the World Series", desc:"The Amazin' Mets defeat the Baltimore Orioles in 5 games. The impossible happened." },
-  { month:10, day:17, year:1977, team:"Yankees",    emoji:"⚾", title:"Reggie Jackson's 3 Home Runs", desc:"Mr. October hits 3 home runs on 3 consecutive pitches from 3 different pitchers in the World Series clincher." },
-  { month:10, day:25, year:1986, team:"Mets",       emoji:"⚾", title:"Mookie Wilson's Grounder", desc:"Bill Buckner's error. Mookie's grounder. The Mets live to fight another day — and then win the World Series." },
-  { month:11, day:1,  year:2001, team:"Yankees",    emoji:"⚾", title:"Mr. November", desc:"Derek Jeter hits a walk-off home run in the 10th inning, crossing into November — the most dramatic walk-off in Yankees history." },
-  { month:11, day:18, year:1985, team:"Giants",     emoji:"🏈", title:"LT Breaks Theismann's Leg", desc:"Lawrence Taylor's hit on Monday Night Football shatters Joe Theismann's leg and changes NFL history." },
-  { month:12, day:28, year:1958, team:"Giants",     emoji:"🏈", title:"The Greatest Game Ever Played", desc:"The Baltimore Colts defeat the New York Giants 23-17 in sudden death OT — the game that made the NFL the dominant American sport." },
+  // JANUARY
+  { month:1,  day:11, year:1969, team:"Jets",      emoji:"🏈", title:"Super Bowl III — Namath's Guarantee Pays Off", desc:"The Jets shock the NFL world, defeating the Baltimore Colts 16-7. Namath's famous guarantee fulfilled. The AFL is validated forever." },
+  { month:1,  day:19, year:1994, team:"Rangers",   emoji:"🏒", title:"Mark Messier Signs Contract Extension", desc:"The Captain agrees to stay in New York — the move that would directly lead to the 1994 Stanley Cup." },
+  { month:1,  day:25, year:1987, team:"Giants",    emoji:"🏈", title:"Giants Win Super Bowl XXI", desc:"Phil Simms goes 22-for-25 (88%) — still the Super Bowl record. Giants crush the Denver Broncos 39-20. LT and the Big Blue are champions." },
+  { month:1,  day:27, year:2008, team:"Giants",    emoji:"🏈", title:"Giants Reach Super Bowl XLII", desc:"Eli Manning leads a stunning upset of the 18-0 New England Patriots in Super Bowl XLII — one of the greatest games ever played." },
+  // FEBRUARY
+  { month:2,  day:3,  year:2008, team:"Giants",    emoji:"🏈", title:"The Helmet Catch — Giants Stun Patriots", desc:"Eli to David Tyree. On 4th and 1 with 1:15 left. The catch that defines improbable. 17-14 Giants over the perfect Patriots." },
+  { month:2,  day:5,  year:2012, team:"Giants",    emoji:"🏈", title:"Giants Win Super Bowl XLVI", desc:"Second Patriots upset in 4 years. Bradshaw's reluctant TD seals it 21-17. Eli Manning is a two-time Super Bowl MVP." },
+  { month:2,  day:10, year:1985, team:"Mets",      emoji:"⚾", title:"Dwight Gooden Wins NL Cy Young Award", desc:"Doc at age 20 — 24-4, 1.53 ERA. The youngest Cy Young winner in history. The most dominant season by a Mets pitcher ever." },
+  // MARCH
+  { month:3,  day:6,  year:1961, team:"Yankees",   emoji:"⚾", title:"Roger Maris Returns for Historic Season", desc:"Maris prepares for the 1961 season that will produce 61 home runs — breaking Babe Ruth's 34-year-old record." },
+  { month:3,  day:28, year:1973, team:"Yankees",   emoji:"⚾", title:"George Steinbrenner Buys the Yankees", desc:"A group led by George Steinbrenner purchases the Yankees for $10 million. The Boss era begins. Nothing in NY sports would ever be the same." },
+  { month:3,  day:15, year:1991, team:"Rangers",   emoji:"🏒", title:"Mark Messier Traded to Rangers", desc:"The greatest captain in hockey history arrives in New York. Three years later he ends the 54-year drought." },
+  // APRIL
+  { month:4,  day:6,  year:1973, team:"Yankees",   emoji:"⚾", title:"Ron Blomberg Becomes First DH", desc:"Yankees' Ron Blomberg becomes the first designated hitter in baseball history — forever changing the game." },
+  { month:4,  day:8,  year:1969, team:"Mets",      emoji:"⚾", title:"Miracle Mets Season Opens", desc:"The 1969 Mets begin their miraculous journey as 100-to-1 longshots. The world has no idea what's coming." },
+  { month:4,  day:14, year:2024, team:"Mets",      emoji:"⚾", title:"Mets Retire Dwight Gooden's #16", desc:"Doc's number goes to the rafters at Citi Field — a bittersweet celebration of what might have been the greatest pitching career ever." },
+  { month:4,  day:18, year:1923, team:"Yankees",   emoji:"⚾", title:"Yankee Stadium Opens — Ruth Hits Homer", desc:"Babe Ruth hits a three-run homer in the first game at the original Yankee Stadium — 'The House That Ruth Built.' The shrine is open." },
+  { month:4,  day:22, year:1970, team:"Mets",      emoji:"⚾", title:"Seaver Strikes Out 19 Padres", desc:"Tom Seaver fans 19 Padres — including 10 consecutive to end the game — then the greatest single pitching performance in Mets history." },
+  { month:4,  day:28, year:1973, team:"Mets",      emoji:"⚾", title:"Tug McGraw Utters 'Ya Gotta Believe'", desc:"Tug McGraw fires up his teammates with those three words. The rallying cry that defines Mets fandom forever." },
+  // MAY
+  { month:5,  day:17, year:1998, team:"Yankees",   emoji:"⚾", title:"David Wells Throws a Perfect Game", desc:"Hungover Wells (his words, not ours) retires all 27 Minnesota Twins he faces. The 15th perfect game in MLB history." },
+  { month:5,  day:20, year:1980, team:"Islanders", emoji:"🏒", title:"Bob Nystrom OT Goal — First Dynasty Cup", desc:"Nystrom scores at 7:11 of overtime to give the Islanders their first Stanley Cup, defeating the Flyers. The dynasty is born." },
+  { month:5,  day:28, year:2026, team:"NY Sports", emoji:"🗽", title:"NY Sports Daily Launches!", desc:"nysportsdaily.com goes live — the definitive destination for obsessed NY sports fans everywhere." },
+  { month:5,  day:9,  year:1984, team:"Islanders", emoji:"🏒", title:"Islanders Win 4th Consecutive Cup", desc:"Denis Potvin lifts the Cup after sweeping the Edmonton Oilers — stopping Gretzky's dynasty at its doorstep." },
+  // JUNE
+  { month:6,  day:3,  year:1932, team:"Yankees",   emoji:"⚾", title:"Lou Gehrig Hits 4 Home Runs in a Game", desc:"The Iron Horse hits 4 HRs in a single game — a feat matched but never beaten. Pure power on display at Shibe Park." },
+  { month:6,  day:9,  year:2004, team:"Devils",    emoji:"🏒", title:"Martin Brodeur Named All-Time Wins Leader", desc:"Brodeur breaks Terry Sawchuk's all-time NHL wins record — cementing his status as the greatest goalie in NHL history." },
+  { month:6,  day:14, year:1994, team:"Rangers",   emoji:"🏒", title:"Rangers Win the Stanley Cup — 54-Year Drought Over", desc:"Mark Messier's Rangers defeat the Vancouver Canucks in Game 7. 'The Curse of 1940' is over. MSG goes absolutely insane." },
+  { month:6,  day:14, year:2000, team:"Devils",    emoji:"🏒", title:"Devils Win Second Stanley Cup", desc:"Scott Stevens era peaks — Devils defeat the Dallas Stars. New Jersey's second Cup in 6 years. The dynasty is real." },
+  // JULY
+  { month:7,  day:4,  year:1939, team:"Yankees",   emoji:"⚾", title:"Lou Gehrig's Farewell Speech", desc:"'Today I consider myself the luckiest man on the face of the earth.' Gehrig's iconic goodbye at Yankee Stadium — the most powerful speech in sports history." },
+  { month:7,  day:9,  year:1934, team:"Yankees",   emoji:"⚾", title:"Babe Ruth's 'Called Shot' Anniversary", desc:"Ruth's most legendary act remains debated — but the Babe always insisted he pointed to center field before hitting that home run." },
+  { month:7,  day:17, year:1941, team:"Yankees",   emoji:"⚾", title:"DiMaggio's 56-Game Streak Ends", desc:"Joe DiMaggio's unbelievable run ends in Cleveland — the most unbreakable record in sports is now in the books at 56 games." },
+  { month:7,  day:18, year:1999, team:"Yankees",   emoji:"⚾", title:"David Cone Perfect Game on Yogi Berra Day", desc:"On Yogi Berra Day, with Don Larsen in attendance, Cone throws a perfect game against the Expos. Only in New York." },
+  { month:7,  day:24, year:1983, team:"Yankees",   emoji:"⚾", title:"The Pine Tar Game", desc:"George Brett's homer nullified. Billy Martin's scheming at its finest. Yankees win the protest — then lose the makeup game anyway." },
+  // AUGUST
+  { month:8,  day:12, year:2025, team:"Mets",      emoji:"⚾", title:"Pete Alonso Sets Mets All-Time HR Record", desc:"The Polar Bear hits #253 off Spencer Strider, passing Darryl Strawberry's 37-year-old record. Citi Field erupts. He adds #254 in the same game." },
+  { month:8,  day:19, year:1951, team:"Giants",    emoji:"⚾", title:"Bobby Thomson Joins the Giants Roster", desc:"The man who would hit the Shot Heard Round the World settles into the Giants lineup." },
+  // SEPTEMBER
+  { month:9,  day:8,  year:1985, team:"Yankees",   emoji:"⚾", title:"Don Mattingly Sets AL RBI Record", desc:"Donnie Baseball sets the American League record for RBIs in a season — the most beloved Yankee of his generation at his peak." },
+  { month:9,  day:21, year:2001, team:"Mets",      emoji:"⚾", title:"Piazza's 9/11 Home Run — The Most Emotional HR Ever", desc:"With NYC still in mourning after 9/11, Mike Piazza's solo shot in the 8th inning lifts the Mets over the Braves. The city needed this." },
+  { month:9,  day:28, year:1941, team:"Yankees",   emoji:"⚾", title:"DiMaggio's .357 Season Ends", desc:"Joe DiMaggio finishes one of the great seasons in baseball history — in the same year his 56-game hit streak entranced the nation." },
+  // OCTOBER
+  { month:10, day:1,  year:1961, team:"Yankees",   emoji:"⚾", title:"Roger Maris Hits Home Run #61", desc:"On the final day of the season, Maris breaks Babe Ruth's 34-year-old single-season record. He deserved the asterisk removed — which it finally was." },
+  { month:10, day:8,  year:1956, team:"Yankees",   emoji:"⚾", title:"Don Larsen's Perfect Game in the World Series", desc:"Larsen retires all 27 Brooklyn Dodgers in Game 5 — the only perfect game in postseason history. Roy Campanella called it: 'The impossible has happened.'" },
+  { month:10, day:16, year:1969, team:"Mets",      emoji:"⚾", title:"Miracle Mets Win the World Series", desc:"The Amazin' Mets defeat the Baltimore Orioles in 5 games. The 100-1 longshots pull off the greatest upset in World Series history. Shea Stadium explodes." },
+  { month:10, day:17, year:1977, team:"Yankees",   emoji:"⚾", title:"Reggie Jackson's 3 Home Runs on 3 Consecutive Pitches", desc:"Mr. October hits 3 HRs on 3 pitches from 3 different pitchers in the World Series clincher. The defining image of the Bronx Zoo era." },
+  { month:10, day:21, year:1986, team:"Mets",      emoji:"⚾", title:"Mets Win the 1986 World Series", desc:"After Buckner's error saved their season in Game 6, the Mets beat the Red Sox in Game 7. New York goes wild. The Bad Guys Won." },
+  { month:10, day:25, year:1986, team:"Mets",      emoji:"⚾", title:"Mookie Wilson's Grounder — Game 6 Miracle", desc:"Mookie's grounder to first. Buckner's legs fail him. The Mets survive to play Game 7 in one of the most dramatic moments in baseball history." },
+  { month:10, day:26, year:2003, team:"Devils",    emoji:"🏒", title:"Devils Win Third Stanley Cup", desc:"NJ completes a dynasty — three Cups in 9 years. Pat Burns's masterpiece. Brodeur and Stevens cement their legacies." },
+  // NOVEMBER
+  { month:11, day:1,  year:2001, team:"Yankees",   emoji:"⚾", title:"Mr. November — Jeter's Walk-Off in the World Series", desc:"Derek Jeter hits a walk-off home run in the 10th inning, crossing into November. The most dramatic walk-off in Yankees history in a World Series they ultimately lose." },
+  { month:11, day:4,  year:2001, team:"Yankees",   emoji:"⚾", title:"Yankees Win Game 7 of 2001 World Series... Wait, They Lose", desc:"The Diamondbacks beat Rivera in the 9th inning of Game 7. Luis Gonzalez's bloop single shatters Yankee invincibility. One of the greatest Series ever." },
+  { month:11, day:18, year:1985, team:"Giants",    emoji:"🏈", title:"LT Breaks Theismann's Leg on Monday Night Football", desc:"Lawrence Taylor's hit on Monday Night Football shatters Joe Theismann's leg. The image changes the NFL. LT weeps on the field." },
+  // DECEMBER
+  { month:12, day:19, year:1925, team:"Yankees",   emoji:"⚾", title:"Babe Ruth Sold to Yankees from Red Sox", desc:"The most consequential transaction in sports history — Boston sells Ruth for $100,000, cursing themselves for 86 years." },
+  { month:12, day:28, year:1958, team:"Giants",    emoji:"🏈", title:"The Greatest Game Ever Played", desc:"Baltimore Colts defeat the NY Giants 23-17 in sudden death overtime. The game that made the NFL the dominant American sport. Every sports fan owes this game a debt." },
 ];
 
 function TodayTab() {
@@ -2754,8 +2784,8 @@ function TodayTab() {
   return (
     <div style={styles.statsRoot}>
       <div style={styles.stdHeader}>
-        <h2 style={styles.stdTitle}>📅 TODAY IN NY SPORTS HISTORY</h2>
-        <p style={styles.stdSub}>ON THIS DATE · NEARBY ANNIVERSARIES · FULL CALENDAR</p>
+        <h2 style={styles.stdTitle}>📅 ON THIS DATE IN NY SPORTS</h2>
+        <p style={styles.stdSub}>TODAY'S ANNIVERSARIES · THIS WEEK · FULL HISTORY CALENDAR</p>
       </div>
 
       {/* Today's moments */}
@@ -3111,7 +3141,7 @@ function MiseryTab() {
       title:"DEFCON 1 — MAXIMUM SUFFERING",
       last:"1969", drought:57,
       lowlights:["56 years without a Super Bowl — longest drought in the NFL","Missed on Dan Marino in 1983 (took Ken O'Brien)","Brett Favre torn Achilles Week 4, 2008","Sanchez Butt Fumble on national TV 2012","Sam Darnold's ghost haunts every draft pick","Aaron Rodgers: Achilles in Week 1, 2023"],
-      brightside:"They do have Joe Namath — and Aaron Rodgers is still standing.",
+      brightside:"They do have Joe Namath and Super Bowl III — the greatest moment in franchise history. Aaron Rodgers healthy again gives real hope.",
     },
     {
       team:"Knicks", emoji:"🏀", color:"#006BB6",
@@ -3126,8 +3156,8 @@ function MiseryTab() {
       score:85,
       title:"HIGH SUFFERING",
       last:"1986", drought:40,
-      lowlights:["Bill Buckner's error — and then they STILL blew it later","1988: 100 wins, lost in NLCS to the Dodgers","Generation K: Wilson, Pulsipher, Isringhausen — all busted","2007: 7 game collapse with 17 games to play","2015: Harvey's arm, one strike away, Familia blows it","Bobby Bonilla Day — paid $1.19M every July 1 through 2035"],
-      brightside:"Steve Cohen's money. Pete Alonso. Citi Field rocking in 2025-26.",
+      lowlights:["40 years without a World Series title","1988: 100 wins and still lost to the Dodgers in NLCS","Generation K: Wilson, Pulsipher, Isringhausen — all busted before they started","2007: Collapsed with 17 games to play — 7 game lead vanished","2015: Harvey's arm, one strike away, Familia blows Save","Bobby Bonilla Day — paid $1.19M every July 1 through 2035"],
+      brightside:"Pete Alonso is the all-time HR king. Steve Cohen's money. Soto signed. Juan Soto and Alonso together could finally bring it home.",
     },
     {
       team:"Rangers", emoji:"🏒", color:"#0038A8",
