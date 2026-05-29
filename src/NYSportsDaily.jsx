@@ -1007,7 +1007,7 @@ export default function NYSportsDaily() {
         </div>
         {/* TAB NAV — Secondary */}
         <div style={{...styles.tabNav, marginTop:-16, borderBottom:"1px solid #1a1a1a", marginBottom:20}}>
-          {["STATS","HISTORY","THIS DATE","ICONIC","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","TRIVIA","XWORD","SPIN"].map(tab => (
+          {["STATS","HISTORY","THIS DATE","ICONIC","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","TRIVIA","XWORD","SONGS & FACTS"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}), fontSize:9, padding:"7px 10px"}}>
               {tab}
@@ -1155,7 +1155,7 @@ export default function NYSportsDaily() {
           <CrosswordTab />
         )}
         {/* ──── SPIN TAB ──── */}
-        {activeTab === "SPIN" && (
+        {activeTab === "SONGS & FACTS" && (
           <SpinTab />
         )}
         {/* ──── SHOP TAB ──── */}
@@ -3226,12 +3226,23 @@ function SiteSearch({ query, onSelect }) {
   // Search Walk-up Songs
   const WALKUP_INLINE = [
     { player:"Mariano Rivera", song:"Enter Sandman", artist:"Metallica", team:"Yankees" },
-    { player:"Derek Jeter", song:"Empire State of Mind", artist:"Jay-Z", team:"Yankees" },
+    { player:"Derek Jeter", song:"Empire State of Mind", artist:"Jay-Z Alicia Keys", team:"Yankees" },
+    { player:"Aaron Judge", song:"Swag Surfin", artist:"FLY", team:"Yankees" },
+    { player:"Jazz Chisholm", song:"Various 2026", artist:"Various", team:"Yankees" },
+    { player:"Ben Rice", song:"Feel Good Inc", artist:"Gorillaz", team:"Yankees" },
+    { player:"Francisco Lindor", song:"My Girl", artist:"The Temptations", team:"Mets" },
+    { player:"Francisco Lindor", song:"Ain't No Mountain High Enough", artist:"Marvin Gaye Tammi Terrell", team:"Mets" },
+    { player:"Juan Soto", song:"Empire State of Mind", artist:"Jay-Z Alicia Keys", team:"Mets" },
+    { player:"Juan Soto", song:"Yo Soy Dominicano", artist:"Leo RD Dilon Baby", team:"Mets" },
     { player:"David Wright", song:"New York Groove", artist:"Ace Frehley KISS", team:"Mets" },
-    { player:"Henrik Lundqvist", song:"Welcome to the Jungle", artist:"Guns N Roses", team:"Rangers" },
-    { player:"Patrick Ewing", song:"Welcome to the Terrordome", artist:"Public Enemy", team:"Knicks" },
     { player:"Carlos Beltran", song:"Fuego", artist:"Pitbull", team:"Mets" },
+    { player:"Henrik Lundqvist", song:"Welcome to the Jungle", artist:"Guns N Roses", team:"Rangers" },
+    { player:"Mark Messier", song:"We Are the Champions", artist:"Queen", team:"Rangers" },
+    { player:"Patrick Ewing", song:"Welcome to the Terrordome", artist:"Public Enemy", team:"Knicks" },
     { player:"Curtis Martin", song:"Can't Stop Won't Stop", artist:"Young Jeezy", team:"Jets" },
+    { player:"Gary Sheffield", song:"We're Not Gonna Take It", artist:"Twisted Sister", team:"Yankees" },
+    { player:"Mike Piazza", song:"crowd roar 9/11", artist:"Shea Stadium", team:"Mets" },
+    { player:"Joe Namath", song:"New York New York", artist:"Frank Sinatra", team:"Jets" },
   ];
   WALKUP_INLINE.forEach((s, i) => {
     const text = `${s.player} ${s.song} ${s.artist} ${s.team} walkup walk-up entrance music song`.toLowerCase();
@@ -3239,7 +3250,7 @@ function SiteSearch({ query, onSelect }) {
       type: "WALK-UP SONG", icon: "🎵",
       title: `${s.player} — "${s.song}"`,
       sub: `${s.artist} · ${s.team}`,
-      tab: "SPIN",
+      tab: "SONGS & FACTS",
       highlight: "Find in SPIN tab → Walk-Up Songs section",
     });
   });
@@ -3307,22 +3318,41 @@ function SiteSearch({ query, onSelect }) {
     });
   });
 
-  // Team shortcuts — searching a team name brings up relevant content
-  const TEAM_SHORTCUTS = [
-    { keywords:["yankees","yankee","bronx","pinstripes"],                    tab:"NEWS",    icon:"⚾", title:"Yankees — News & Hub",     sub:"Beat writers · news · history · stats" },
-    { keywords:["mets","queens","flushing","amazins","amazin"],              tab:"NEWS",    icon:"⚾", title:"Mets — News & Hub",         sub:"Beat writers · news · history · stats" },
-    { keywords:["jets","gang green","namath","broadway joe","revis"],        tab:"NEWS",    icon:"🏈", title:"Jets — News & Hub",         sub:"Beat writers · news · history · stats" },
-    { keywords:["giants","big blue","eli","metlife"],                        tab:"NEWS",    icon:"🏈", title:"Giants — News & Hub",       sub:"Beat writers · news · history · stats" },
-    { keywords:["knicks","garden","msg","brunson","ewing"],                  tab:"NEWS",    icon:"🏀", title:"Knicks — News & Hub",       sub:"Beat writers · news · history · stats" },
-    { keywords:["nets","brooklyn","barclays","kidd","dr j","julius erving"], tab:"NEWS",    icon:"🏀", title:"Nets — News & Hub",         sub:"Beat writers · news · history · stats" },
-    { keywords:["rangers","broadway blues","lundqvist","leetch","messier"],  tab:"NEWS",    icon:"🏒", title:"Rangers — News & Hub",      sub:"Beat writers · news · history · stats" },
-    { keywords:["islanders","isles","potvin","bossy","ubs","schaefer"],      tab:"NEWS",    icon:"🏒", title:"Islanders — News & Hub",    sub:"Beat writers · news · history · stats" },
-    { keywords:["devils","brodeur","stevens","prudential","newark"],         tab:"NEWS",    icon:"🏒", title:"Devils — News & Hub",       sub:"Beat writers · news · history · stats" },
-    { keywords:["liberty","wnba","stewart","ionescu","women"],               tab:"NEWS",    icon:"🏀", title:"Liberty — News & Hub",      sub:"Beat writers · news · history · stats" },
+  // Team shortcuts — searching a team name brings multiple relevant results
+  const TEAM_MAP = [
+    { keywords:["yankees","yankee","bronx","pinstripes"],                    team:"Yankees",   icon:"⚾", radio:"YES Network / WFAN 101.9", site:"yesnetwork.com" },
+    { keywords:["mets","queens","flushing","amazins","citi field"],          team:"Mets",      icon:"⚾", radio:"SNY / WFAN 101.9",         site:"sny.tv" },
+    { keywords:["jets","gang green","namath","revis","metlife"],             team:"Jets",      icon:"🏈", radio:"WFAN 101.9 / ESPN 98.7",   site:"newyorkjets.com" },
+    { keywords:["giants","big blue","eli","lawrence taylor","meadowlands"],  team:"Giants",    icon:"🏈", radio:"WFAN 101.9 / ESPN 98.7",   site:"giants.com" },
+    { keywords:["knicks","garden","msg","brunson","ewing","madison square"], team:"Knicks",    icon:"🏀", radio:"MSG Networks / ESPN 98.7",  site:"nba.com/knicks" },
+    { keywords:["nets","brooklyn","barclays","kidd","dr j","julius erving"],  team:"Nets",     icon:"🏀", radio:"YES Network / ESPN 98.7",   site:"nba.com/nets" },
+    { keywords:["rangers","broadway blues","lundqvist","leetch","messier"],  team:"Rangers",   icon:"🏒", radio:"MSG Networks / 98.7 ESPN",  site:"nhl.com/rangers" },
+    { keywords:["islanders","isles","potvin","bossy","ubs arena","schaefer"],team:"Islanders", icon:"🏒", radio:"ESPN 98.7 / MSG+",          site:"nhl.com/islanders" },
+    { keywords:["devils","brodeur","stevens","prudential","newark","hughes"],team:"Devils",    icon:"🏒", radio:"ESPN 98.7 / WFAN",          site:"nhl.com/devils" },
+    { keywords:["liberty","wnba","stewart","ionescu","women","breanna"],     team:"Liberty",   icon:"🏀", radio:"ESPN NY 98.7",               site:"wnba.com/liberty" },
   ];
-  TEAM_SHORTCUTS.forEach(s => {
+  TEAM_MAP.forEach(s => {
     if (s.keywords.some(kw => q.includes(kw) || kw.includes(q))) {
-      results.unshift({ type:"TEAM HUB", icon:s.icon, title:s.title, sub:s.sub, tab:s.tab, highlight:"" });
+      // News hub
+      results.unshift({ type:"TEAM HUB", icon:s.icon,
+        title:`${s.team} — News, Beat Writers & More`,
+        sub:"Latest news · beat writers · Reddit · fan sites",
+        tab:"NEWS", highlight:"" });
+      // Radio
+      results.push({ type:"RADIO / PODCAST", icon:"📻",
+        title:`${s.team} on the Radio`,
+        sub:s.radio,
+        tab:"RADIO", highlight:"Find full station list in RADIO tab" });
+      // History
+      results.push({ type:"HISTORY LIST", icon:"📋",
+        title:`${s.team} All-Time Stats & Leaders`,
+        sub:"Career records, retired numbers, coaches, draft picks",
+        tab:"HISTORY", highlight:"" });
+      // HOF
+      results.push({ type:"HALL OF FAME", icon:"🏛️",
+        title:`${s.team} Hall of Famers`,
+        sub:"Every HOF inductee with a connection to the team",
+        tab:"HOF", highlight:"" });
     }
   });
 
@@ -3341,7 +3371,7 @@ function SiteSearch({ query, onSelect }) {
     { keywords:["history","all time","record","leaders","list","greatest"],   tab:"HISTORY",   icon:"📚", title:"History & Records",         sub:"All-time records, leaders, coaches" },
     { keywords:["this date","anniversary","today in","on this date"],        tab:"THIS DATE", icon:"📅", title:"On This Date",              sub:"NY sports history by date" },
     { keywords:["iconic","tennis","us open","belmont","secretariat","golf","shinnecock","bethpage","winged foot","pga","ryder"], tab:"ICONIC", icon:"🏆", title:"Iconic NY Events", sub:"US Open Tennis, Golf, Belmont Stakes" },
-    { keywords:["spin","random","surprise","lucky"],                          tab:"SPIN",      icon:"🎰", title:"Spin Facts",                sub:"Random NY sports facts" },
+    { keywords:["spin","songs","walk up","walkup","music","facts","random"], tab:"SONGS & FACTS",      icon:"🎰", title:"Spin Facts",                sub:"Random NY sports facts" },
     { keywords:["shop","buy","gear","jersey","memorabilia","book"],           tab:"SHOP",      icon:"🛒", title:"Shop",                      sub:"NY sports gear, books, memorabilia" },
     { keywords:["radio","podcast","listen","wfan","espn radio"],              tab:"RADIO",     icon:"📻", title:"Radio & Podcasts",          sub:"NY sports radio and podcasts" },
     { keywords:["crossword","xword","puzzle","word"],                         tab:"XWORD",     icon:"✏️", title:"Crossword",                 sub:"NY sports crossword puzzle" },
@@ -6187,37 +6217,95 @@ function SpinTab() {
 
       {/* ── WALK-UP SONGS ── */}
       <div style={{marginBottom:24, padding:"14px 16px", background:"#111", border:"1px solid #2a2a2a"}}>
-        <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:10}}>🎵 ICONIC WALK-UP SONGS & ENTRANCE MUSIC</div>
+        <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:4}}>🎵 WALK-UP SONGS & ENTRANCE MUSIC</div>
+        <div style={{fontSize:9, color:"#555", marginBottom:12}}>Current 2026 season songs + all-time NY classics</div>
+
+        <div style={styles.stdDivisionHeader}>⚾ NEW YORK YANKEES — 2026</div>
         {[
-          { player:"Mariano Rivera",    team:"Yankees",  song:"Enter Sandman",              artist:"Metallica",         note:"The most famous walk-up in baseball history. The Stadium went quiet, then LOUD." },
-          { player:"Derek Jeter",       team:"Yankees",  song:"Empire State of Mind",       artist:"Jay-Z & Alicia Keys",note:"NY's anthem for NY's Captain. Chills every time." },
-          { player:"Gary Sheffield",    team:"Yankees",  song:"We're Not Gonna Take It",    artist:"Twisted Sister",    note:"Perfect for one of the most intense hitters of his era." },
-          { player:"David Wright",      team:"Mets",     song:"New York Groove",            artist:"Ace Frehley (KISS)",note:"Mr. Met himself — pure New York." },
-          { player:"Carlos Beltrán",    team:"Mets",     song:"Fuego",                      artist:"Pitbull",           note:"Beltrán's Latin flair at the plate — powerful and cool." },
-          { player:"Pete Alonso",       team:"Mets",     song:"Empire State of Mind / various", artist:"Various",      note:"The Polar Bear's walk-up rotates but always gets the crowd going." },
-          { player:"Jesse Orosco",      team:"Mets",     song:"Mets Fan Crowd Roar",        artist:"Shea Stadium 1986",note:"The sound of the crowd was his music — final out of the 1986 World Series." },
-          { player:"Mark Messier",      team:"Rangers",  song:"We Are the Champions",       artist:"Queen",            note:"The Cup victory song that became the Rangers' anthem in 1994." },
-          { player:"Henrik Lundqvist",  team:"Rangers",  song:"Welcome to the Jungle",      artist:"Guns N' Roses",    note:"The King's entrance at MSG — electric every single game." },
-          { player:"Patrick Ewing",     team:"Knicks",   song:"Welcome to the Terrordome",  artist:"Public Enemy",     note:"90s Knicks era — Ewing walking out to PE at MSG was peak New York." },
-          { player:"John Starks",       team:"Knicks",   song:"Who Let the Dogs Out",       artist:"Baha Men",         note:"Starks's ferocity was perfectly matched by the Garden crowd." },
-          { player:"Curtis Martin",     team:"Jets",     song:"Can't Stop Won't Stop",      artist:"Young Jeezy",      note:"Martin's workman intensity captured in music — no nonsense." },
+          { player:"Aaron Judge",      song:"Swag Surfin'",              artist:"F.L.Y.",           note:"The Captain's swagger anthem — fitting for the AL HR record holder" },
+          { player:"Jazz Chisholm Jr.",song:"TBD 2026",                  artist:"Various",           note:"Jazz's energy is electric — whatever he picks gets the Stadium going" },
+          { player:"Ben Rice",         song:"Feel Good Inc.",             artist:"Gorillaz",          note:"The fan favorite 'Ben Arroz' keeps the Gorillaz classic" },
+          { player:"Cody Bellinger",   song:"TBD 2026",                  artist:"Various",           note:"New Yankee — watch for a big intro song at the Stadium" },
         ].map((s, i) => (
-          <div key={i} style={{display:"flex", gap:12, padding:"8px 0", borderBottom:"1px solid #1a1a1a", flexWrap:"wrap"}}>
-            <div style={{flexShrink:0, width:26, textAlign:"center", fontSize:16}}>🎵</div>
-            <div style={{flex:1}}>
-              <div style={{display:"flex", gap:10, alignItems:"baseline", flexWrap:"wrap", marginBottom:2}}>
-                <span style={{fontSize:12, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
-                <span style={{fontSize:9, color:"#c8201c", fontWeight:700}}>{s.team}</span>
+          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid #1a1a1a", flexWrap:"wrap"}}>
+            <div style={{flexShrink:0, width:22, fontSize:14, textAlign:"center"}}>⚾</div>
+            <div style={{flex:1, minWidth:0}}>
+              <div style={{display:"flex", gap:8, alignItems:"baseline", flexWrap:"wrap", marginBottom:1}}>
+                <span style={{fontSize:11, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                <span style={{fontSize:9, color:"#003087", fontWeight:700}}>Yankees</span>
               </div>
-              <div style={{fontSize:11, color:"#FFD700", marginBottom:2}}>"{s.song}" — {s.artist}</div>
-              <div style={{fontSize:10, color:"#666", fontStyle:"italic"}}>{s.note}</div>
+              <div style={{fontSize:11, color:"#FFD700", marginBottom:1}}>"{s.song}" — {s.artist}</div>
+              <div style={{fontSize:9, color:"#555", fontStyle:"italic"}}>{s.note}</div>
             </div>
-            <a href={`https://www.google.com/search?q=${encodeURIComponent(s.song + " " + s.artist)}`}
+            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
               target="_blank" rel="noopener noreferrer"
-              style={{...styles.histLink, flexShrink:0, alignSelf:"center"}}>▶ Listen</a>
+              style={{...styles.histLink, flexShrink:0, alignSelf:"center", fontSize:9}}>▶ YouTube</a>
           </div>
         ))}
-        <div style={{fontSize:9, color:"#444", marginTop:8, fontStyle:"italic"}}>Walk-up songs change season to season — these are the most iconic pairings in NY sports history.</div>
+
+        <div style={{...styles.stdDivisionHeader, marginTop:14}}>⚾ NEW YORK METS — 2026</div>
+        {[
+          { player:"Francisco Lindor",  song:"My Girl",                    artist:"The Temptations",  note:"Citi Field sings along every single at-bat. The Temptations even performed it live at Citi Field during the 2025 NLCS. A true NY moment." },
+          { player:"Francisco Lindor",  song:"Ain't No Mountain High Enough", artist:"Marvin Gaye & Tammi Terrell", note:"His alternate — he rotates between this and 'My Girl' to keep fans guessing. Both are Motown classics." },
+          { player:"Juan Soto",         song:"Empire State of Mind",        artist:"Jay-Z & Alicia Keys", note:"The $765M man plays NY's anthem when he steps to the plate at Citi Field. Perfect." },
+          { player:"Juan Soto",         song:"Yo Soy Dominicano",           artist:"Leo RD & Dilon Baby",  note:"Soto's Dominican pride walk-up — alternates with Empire State of Mind" },
+          { player:"Pete Alonso",       song:"Various 2026",                artist:"Various",           note:"The Polar Bear's walk-up rotates but always gets the Citi Field crowd going" },
+          { player:"Mark Vientos",      song:"TBD 2026",                    artist:"Various",           note:"The rising star — watch for a standout choice from the young slugger" },
+        ].map((s, i) => (
+          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid #1a1a1a", flexWrap:"wrap"}}>
+            <div style={{flexShrink:0, width:22, fontSize:14, textAlign:"center"}}>⚾</div>
+            <div style={{flex:1, minWidth:0}}>
+              <div style={{display:"flex", gap:8, alignItems:"baseline", flexWrap:"wrap", marginBottom:1}}>
+                <span style={{fontSize:11, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                <span style={{fontSize:9, color:"#FF5910", fontWeight:700}}>Mets</span>
+              </div>
+              <div style={{fontSize:11, color:"#FFD700", marginBottom:1}}>"{s.song}" — {s.artist}</div>
+              <div style={{fontSize:9, color:"#555", fontStyle:"italic"}}>{s.note}</div>
+            </div>
+            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{...styles.histLink, flexShrink:0, alignSelf:"center", fontSize:9}}>▶ YouTube</a>
+          </div>
+        ))}
+
+        <div style={{...styles.stdDivisionHeader, marginTop:14}}>🏆 ALL-TIME ICONIC NY SPORTS ENTRANCE MUSIC</div>
+        {[
+          { player:"Mariano Rivera",    team:"Yankees",   song:"Enter Sandman",              artist:"Metallica",            note:"The most famous walk-up in baseball history. The Stadium went quiet — then DEAFENINGLY loud. Every closer since has been compared to it." },
+          { player:"Derek Jeter",       team:"Yankees",   song:"Empire State of Mind",       artist:"Jay-Z & Alicia Keys",  note:"NY's anthem for NY's Captain. The Stadium sang along. Goosebumps every time." },
+          { player:"Gary Sheffield",    team:"Yankees",   song:"We're Not Gonna Take It",    artist:"Twisted Sister",       note:"Perfect for one of the most intense batting stances — and tempers — in Yankees history." },
+          { player:"Alex Rodriguez",    team:"Yankees",   song:"Thank God I Found You",      artist:"Mariah Carey",          note:"A-Rod's controversial choices extended to his walk-up music. MSG mocked him relentlessly." },
+          { player:"David Wright",      team:"Mets",      song:"New York Groove",            artist:"Ace Frehley (KISS)",   note:"Mr. Met himself — pure New York. KISS meets the Mets." },
+          { player:"Carlos Beltrán",    team:"Mets",      song:"Fuego",                      artist:"Pitbull",              note:"Beltrán's Latin flair at the plate — powerful and cool." },
+          { player:"Jesse Orosco",      team:"Mets",      song:"Crowd Roar — 1986",          artist:"Shea Stadium",         note:"The stadium's own roar was his music — he struck out the final batter of the 1986 World Series." },
+          { player:"Henrik Lundqvist",  team:"Rangers",   song:"Welcome to the Jungle",      artist:"Guns N' Roses",        note:"The King's entrance at MSG — electric every single game for 15 seasons." },
+          { player:"Mark Messier",      team:"Rangers",   song:"We Are the Champions",       artist:"Queen",                note:"The 1994 victory anthem that became the Rangers' forever song." },
+          { player:"Patrick Ewing",     team:"Knicks",    song:"Welcome to the Terrordome",  artist:"Public Enemy",         note:"90s Knicks at MSG — Ewing walking out to PE was peak New York." },
+          { player:"John Starks",       team:"Knicks",    song:"The Garden Roar",            artist:"MSG Faithful",         note:"Starks didn't need a song — the Garden went absolutely nuclear when he was hot." },
+          { player:"Curtis Martin",     team:"Jets",      song:"Can't Stop Won't Stop",      artist:"Young Jeezy",          note:"Martin's workman intensity captured in music — no nonsense, all business." },
+          { player:"Joe Namath",        team:"Jets",      song:"New York, New York",         artist:"Frank Sinatra",        note:"Broadway Joe's era — Sinatra defined the city and Namath defined the Jets." },
+          { player:"Mike Piazza",       team:"Mets",      song:"Crowd Roar — 9/11",          artist:"Shea Stadium",         note:"On September 21, 2001, the crowd gave him his music before he hit the most emotional HR in baseball history." },
+        ].map((s, i) => (
+          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid #1a1a1a", flexWrap:"wrap"}}>
+            <div style={{flexShrink:0, width:22, fontSize:14, textAlign:"center"}}>🎵</div>
+            <div style={{flex:1, minWidth:0}}>
+              <div style={{display:"flex", gap:8, alignItems:"baseline", flexWrap:"wrap", marginBottom:1}}>
+                <span style={{fontSize:11, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                <span style={{fontSize:9, color:"#888", fontWeight:700}}>{s.team}</span>
+              </div>
+              <div style={{fontSize:11, color:"#FFD700", marginBottom:1}}>"{s.song}" — {s.artist}</div>
+              <div style={{fontSize:9, color:"#555", fontStyle:"italic"}}>{s.note}</div>
+            </div>
+            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{...styles.histLink, flexShrink:0, alignSelf:"center", fontSize:9}}>▶ YouTube</a>
+          </div>
+        ))}
+
+        <div style={{display:"flex", gap:10, marginTop:10, flexWrap:"wrap"}}>
+          <a href="https://platemusic.com/team/yankees" target="_blank" rel="noopener noreferrer" style={styles.histLink}>⚾ Full Yankees 2026 Walk-Ups</a>
+          <a href="https://platemusic.com/team/mets" target="_blank" rel="noopener noreferrer" style={styles.histLink}>⚾ Full Mets 2026 Walk-Ups</a>
+          <a href="https://www.mlb.com/yankees/ballpark/music" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🎵 MLB Official Walk-Up Songs</a>
+        </div>
       </div>
 
       <div style={styles.spinLayout}>
