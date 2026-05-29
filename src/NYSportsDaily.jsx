@@ -1048,6 +1048,8 @@ export default function NYSportsDaily() {
                 </div>
               );
             })()}
+            {/* League filter */}
+            <div style={styles.filterBar}>
               <div style={styles.filterGroup}>
                 {allLeagues.map(l => (
                   <button key={l} onClick={() => setActiveLeague(l)}
