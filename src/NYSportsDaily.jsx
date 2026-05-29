@@ -494,7 +494,10 @@ const DAILY_PLAYERS = [
   { name:"Gary Carter",      team:"Mets",   sport:"MLB", pos:"C",  emoji:"⚾", number:"8",  active:false, era:"1985–1989", stats:"168 HR as Met · 3× Gold Glove · 11× All-Star",           fact:"Started the improbable two-out, two-strike 10th inning rally in Game 6 of the 1986 World Series with a single off Calvin Schiraldi. The Kid saved the season.",                         wiki:"https://en.wikipedia.org/wiki/Gary_Carter",     photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Gary_Carter_2010.jpg/256px-Gary_Carter_2010.jpg",                  cardColor:"#FF5910" },
   { name:"Mookie Wilson",    team:"Mets",   sport:"MLB", pos:"CF", emoji:"⚾", number:"1",  active:false, era:"1980–1989", stats:".274 AVG · 327 career SB · 1986 World Series hero",      fact:"His slow roller through Bill Buckner's legs in Game 6 is one of the iconic moments in baseball history. Mookie never hit it hard — it just found its way. Pure Mets magic.",            wiki:"https://en.wikipedia.org/wiki/Mookie_Wilson",   photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Mookie_Wilson_2010.jpg/256px-Mookie_Wilson_2010.jpg",               cardColor:"#FF5910" },
   { name:"Jerry Koosman",    team:"Mets",   sport:"MLB", pos:"SP", emoji:"⚾", number:"36", active:false, era:"1967–1978", stats:"140 W as Met · 1,799 K · 1969 WS Game 5 winner",         fact:"Won the clinching Game 5 of the 1969 World Series against the mighty Orioles. The perfect complement to Seaver — beloved by Mets fans and criminally underappreciated by the rest of baseball.", wiki:"https://en.wikipedia.org/wiki/Jerry_Koosman",   photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Jerry_Koosman_1969.jpg/256px-Jerry_Koosman_1969.jpg",              cardColor:"#FF5910" },
-  { name:"Pete Alonso",      team:"Mets",   sport:"MLB", pos:"1B", emoji:"⚾", number:"20", active:true,  era:"2019–present", stats:"254+ HR · Mets all-time HR record · 53 HR rookie 2019", fact:"Set the MLB rookie HR record with 53 in 2019. On August 12, 2025, hit #253 and #254 in the same game to pass Darryl Strawberry as the Mets' all-time home run king.",             wiki:"https://en.wikipedia.org/wiki/Pete_Alonso",     photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Pete_Alonso_in_2021.jpg/256px-Pete_Alonso_in_2021.jpg",             cardColor:"#FF5910" },
+  { name:"Juan Soto",        team:"Mets",   sport:"MLB", pos:"RF", emoji:"⚾", number:"22", active:true,  era:"2025–present", stats:"$765M contract · 5× All-Star · .400+ OBP career", fact:"Signed the largest contract in baseball history — $765M over 15 years — to come to New York. His signature Soto Shuffle when drawing walks drives opposing pitchers crazy.",             wiki:"https://en.wikipedia.org/wiki/Juan_Soto",       photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Juan_Soto_2023.jpg/256px-Juan_Soto_2023.jpg",               cardColor:"#FF5910" },
+  { name:"Francisco Alvarez",team:"Mets",   sport:"MLB", pos:"C",  emoji:"⚾", number:"4",  active:true,  era:"2022–present", stats:"Franchise catcher · Power from both sides · Future franchise cornerstone", fact:"The Mets' catcher of the future — nicknamed 'Baby Ruth' for his power potential. At 22 he's already one of the best catching prospects the Mets have ever developed.",             wiki:"https://en.wikipedia.org/wiki/Francisco_Alvarez",photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Francisco_Alvarez.jpg/256px-Francisco_Alvarez.jpg",          cardColor:"#FF5910" },
+  { name:"Mark Vientos",     team:"Mets",   sport:"MLB", pos:"1B", emoji:"⚾", number:"27", active:true,  era:"2022–present", stats:"Rising power bat · Filling the Pete Alonso role at 1B", fact:"The heir to the Mets' first base throne after Alonso departed. His raw power and developing plate discipline make him the kind of player Mets fans have been waiting for.",             wiki:"https://en.wikipedia.org/wiki/Mark_Vientos",    photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Mark_Vientos_2024.jpg/256px-Mark_Vientos_2024.jpg",           cardColor:"#FF5910" },
+  { name:"Pete Alonso",      team:"Mets",   sport:"MLB", pos:"1B", emoji:"⚾", number:"20", active:false, era:"2019–2024", stats:"254+ HR · Mets all-time HR record · 53 HR rookie 2019", fact:"Set the MLB rookie HR record with 53 in 2019. On August 12, 2025, hit #253 and #254 in the same game to pass Darryl Strawberry as the Mets' all-time home run king. The Mets' all-time HR leader.",             wiki:"https://en.wikipedia.org/wiki/Pete_Alonso",     photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Pete_Alonso_in_2021.jpg/256px-Pete_Alonso_in_2021.jpg",             cardColor:"#FF5910" },
   { name:"Jacob deGrom",     team:"Mets",   sport:"MLB", pos:"SP", emoji:"⚾", number:"48", active:false, era:"2014–2022", stats:"1,607 K · 2× Cy Young · 2.52 career ERA",               fact:"Won back-to-back Cy Young Awards in 2018 and 2019 on one of the worst-hitting teams in baseball. His 2021 season — 1.08 ERA — may be the most dominant by any pitcher since Sandy Koufax.", wiki:"https://en.wikipedia.org/wiki/Jacob_deGrom",    photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Jacob_deGrom_2017.jpg/256px-Jacob_deGrom_2017.jpg",                cardColor:"#FF5910" },
   { name:"Ron Darling",      team:"Mets",   sport:"MLB", pos:"SP", emoji:"⚾", number:"12", active:false, era:"1983–1991", stats:"99 W as Met · Yale graduate · 1986 WS champion",         fact:"One of the most intellectually engaging players ever to wear a Mets uniform. His Yale education showed in his pitching approach. Now one of the finest baseball analysts on television.", wiki:"https://en.wikipedia.org/wiki/Ron_Darling",     photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Ron_Darling_2010.jpg/256px-Ron_Darling_2010.jpg",                  cardColor:"#FF5910" },
   { name:"Tug McGraw",       team:"Mets",   sport:"MLB", pos:"RP", emoji:"⚾", number:"45", active:false, era:"1965–1974", stats:"86 saves as Met · 1969 and 1973 pennants · Ya Gotta Believe!", fact:"Ya Gotta Believe! His rallying cry launched the 1973 pennant race. Also threw the final pitch of the 1980 World Series as a Phillie — the same man, two different championship moments.", wiki:"https://en.wikipedia.org/wiki/Tug_McGraw",      photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Tug_McGraw_1974.jpg/256px-Tug_McGraw_1974.jpg",                   cardColor:"#FF5910" },
@@ -1007,7 +1010,7 @@ export default function NYSportsDaily() {
         </div>
         {/* TAB NAV — Secondary */}
         <div style={{...styles.tabNav, marginTop:-16, borderBottom:"1px solid #1a1a1a", marginBottom:20}}>
-          {["STATS","HISTORY","THIS DATE","ICONIC","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","TRIVIA","XWORD","SONGS & FACTS"].map(tab => (
+          {["STATS","HISTORY","THIS DATE","ICONIC","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","TRIVIA","XWORD","SONGS & SPIN"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}), fontSize:9, padding:"7px 10px"}}>
               {tab}
@@ -1155,7 +1158,7 @@ export default function NYSportsDaily() {
           <CrosswordTab />
         )}
         {/* ──── SPIN TAB ──── */}
-        {activeTab === "SONGS & FACTS" && (
+        {activeTab === "SONGS & SPIN" && (
           <SpinTab />
         )}
         {/* ──── SHOP TAB ──── */}
@@ -3371,7 +3374,7 @@ function SiteSearch({ query, onSelect }) {
     { keywords:["history","all time","record","leaders","list","greatest"],   tab:"HISTORY",   icon:"📚", title:"History & Records",         sub:"All-time records, leaders, coaches" },
     { keywords:["this date","anniversary","today in","on this date"],        tab:"THIS DATE", icon:"📅", title:"On This Date",              sub:"NY sports history by date" },
     { keywords:["iconic","tennis","us open","belmont","secretariat","golf","shinnecock","bethpage","winged foot","pga","ryder"], tab:"ICONIC", icon:"🏆", title:"Iconic NY Events", sub:"US Open Tennis, Golf, Belmont Stakes" },
-    { keywords:["spin","songs","walk up","walkup","music","facts","random"], tab:"SONGS & FACTS",      icon:"🎰", title:"Spin Facts",                sub:"Random NY sports facts" },
+    { keywords:["spin","songs","walk up","walkup","music","facts","random"], tab:"SONGS & SPIN",      icon:"🎰", title:"Songs & Spin",                sub:"Random NY sports facts" },
     { keywords:["shop","buy","gear","jersey","memorabilia","book"],           tab:"SHOP",      icon:"🛒", title:"Shop",                      sub:"NY sports gear, books, memorabilia" },
     { keywords:["radio","podcast","listen","wfan","espn radio"],              tab:"RADIO",     icon:"📻", title:"Radio & Podcasts",          sub:"NY sports radio and podcasts" },
     { keywords:["crossword","xword","puzzle","word"],                         tab:"XWORD",     icon:"✏️", title:"Crossword",                 sub:"NY sports crossword puzzle" },
@@ -6211,16 +6214,125 @@ function SpinTab() {
   return (
     <div style={styles.spinRoot}>
       <div style={styles.spinHeader}>
-        <h2 style={styles.spinTitle}>SPIN FOR A FUN FACT</h2>
-        <p style={styles.spinSub}>LAND ON A TEAM · GET A PIECE OF NY SPORTS HISTORY</p>
+        <h2 style={styles.spinTitle}>🎵 SONGS & SPIN</h2>
+        <p style={styles.spinSub}>WALK-UP SONGS · ENTRANCE MUSIC · SPIN FOR NY SPORTS FACTS</p>
       </div>
 
       {/* ── WALK-UP SONGS ── */}
       <div style={{marginBottom:24, padding:"14px 16px", background:"#111", border:"1px solid #2a2a2a"}}>
-        <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:4}}>🎵 WALK-UP SONGS & ENTRANCE MUSIC</div>
-        <div style={{fontSize:9, color:"#555", marginBottom:12}}>Current 2026 season songs + all-time NY classics</div>
+        <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:4}}>🎵 WALK-UP SONGS & ENTRANCE MUSIC — 2026 & ALL-TIME</div>
 
-        <div style={styles.stdDivisionHeader}>⚾ NEW YORK YANKEES — 2026</div>
+        {/* PlateMusic links UP TOP */}
+        <div style={{display:"flex", gap:10, flexWrap:"wrap", marginBottom:14, padding:"8px 10px", background:"#0a0a0a", border:"1px solid #2a2a2a"}}>
+          <span style={{fontSize:9, color:"#555", alignSelf:"center", flexShrink:0}}>🔗 FULL ROSTERS:</span>
+          <a href="https://platemusic.com/team/yankees" target="_blank" rel="noopener noreferrer" style={styles.histLink}>⚾ Yankees 2026</a>
+          <a href="https://platemusic.com/team/mets" target="_blank" rel="noopener noreferrer" style={styles.histLink}>⚾ Mets 2026</a>
+          <a href="https://platemusic.com/team" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🎵 All MLB Teams</a>
+          <a href="https://www.mlb.com/yankees/ballpark/music" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🎵 MLB Official</a>
+        </div>
+
+        <div style={styles.stdDivisionHeader}>⚾ NEW YORK YANKEES — 2026 CURRENT ROSTER</div>
+        {[
+          { player:"Aaron Judge",       pos:"RF",  song:"Hot (Remix) feat. Gunna & Travis Scott", artist:"Young Thug",        note:"The Captain's high-energy anthem — fitting for the man who hit 62 HRs in 2022" },
+          { player:"Giancarlo Stanton", pos:"DH",  song:"Dreams and Nightmares",                   artist:"Meek Mill",         note:"Stanton's intimidation factor starts before he steps in the box" },
+          { player:"Paul Goldschmidt",  pos:"1B",  song:"Numb / Encore",                           artist:"Linkin Park",       note:"Goldy brings the Linkin Park classic to the Bronx" },
+          { player:"Cody Bellinger",    pos:"LF",  song:"A Milli",                                 artist:"Lil Wayne",         note:"Bellinger's walk-up matches his big-money arrival in New York" },
+          { player:"Trent Grisham",     pos:"CF",  song:"Easton",                                  artist:"Turnpike Troubadours", note:"Country sounds at Yankee Stadium — the crowd loves the contrast" },
+          { player:"Randal Grichuk",    pos:"RF",  song:"50 Ways to Leave Your Lover",             artist:"Paul Simon",        note:"Classic NY songwriter vibes — a nod to the city's musical heritage" },
+          { player:"Ryan McMahon",      pos:"3B",  song:"Devil's Den",                             artist:"Hippie Sabotage",   note:"The chill electronic intro sets a focused, intense tone" },
+          { player:"Amed Rosario",      pos:"3B",  song:"La Gasolina",                             artist:"Daddy Yankee",      note:"Latin energy at Yankee Stadium" },
+          { player:"Anthony Volpe",     pos:"SS",  song:"Something",                               artist:"John Summit",       note:"The young shortstop's EDM choice gets the Stadium moving" },
+          { player:"Gerrit Cole",       pos:"SP",  song:"Gimme Shelter",                           artist:"The Rolling Stones",note:"The Stones for the ace — legendary taste, legendary pitcher" },
+          { player:"Carlos Rodón",      pos:"SP",  song:"Would?",                                  artist:"Alice in Chains",   note:"Heavy grunge for a hard-throwing lefty — dark and powerful" },
+          { player:"Clarke Schmidt",    pos:"RP",  song:"Hey Ya!",                                 artist:"OutKast",           note:"Unexpected fun — Schmidt walks to the mound with a classic banger" },
+        ].map((s, i) => (
+          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid #1a1a1a", flexWrap:"wrap"}}>
+            <div style={{flexShrink:0, width:22, fontSize:13, textAlign:"center"}}>⚾</div>
+            <div style={{flex:1, minWidth:0}}>
+              <div style={{display:"flex", gap:6, alignItems:"baseline", flexWrap:"wrap", marginBottom:1}}>
+                <span style={{fontSize:11, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                <span style={{fontSize:8, color:"#666"}}>{s.pos}</span>
+                <span style={{fontSize:9, color:"#003087", fontWeight:700}}>Yankees</span>
+              </div>
+              <div style={{fontSize:11, color:"#FFD700", marginBottom:1}}>"{s.song}" — {s.artist}</div>
+              <div style={{fontSize:9, color:"#555", fontStyle:"italic"}}>{s.note}</div>
+            </div>
+            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{...styles.histLink, flexShrink:0, alignSelf:"center", fontSize:9}}>▶</a>
+          </div>
+        ))}
+
+        <div style={{...styles.stdDivisionHeader, marginTop:14}}>⚾ NEW YORK METS — 2026 CURRENT ROSTER</div>
+        {[
+          { player:"Juan Soto",         pos:"RF",  song:"Empire State of Mind",                   artist:"JAY-Z & Alicia Keys", note:"The $765M man plays NY's own anthem when he steps to the plate at Citi Field. Perfect." },
+          { player:"Francisco Lindor",  pos:"SS",  song:"My Girl",                                artist:"The Temptations",     note:"Citi Field sings along every at-bat. The Temptations performed it live at Citi during the 2025 NLCS — a true NY moment." },
+          { player:"Francisco Lindor",  pos:"SS",  song:"Ain't No Mountain High Enough",          artist:"Marvin Gaye & Tammi Terrell", note:"His alternate — he rotates between this and My Girl. Fans pushed back when he tried to drop My Girl, so he kept both." },
+          { player:"Francisco Alvarez", pos:"C",   song:"TBD 2026",                               artist:"Various",             note:"Young franchise catcher — watch for his choice as he becomes the face of the Mets" },
+          { player:"Mark Vientos",      pos:"1B",  song:"TBD 2026",                               artist:"Various",             note:"The emerging power bat — his walk-up will grow with his stardom" },
+          { player:"Marcus Semien",     pos:"2B",  song:"Studio",                                 artist:"ScHoolboy Q",         note:"Hard-hitting rapper for a hard-hitting second baseman" },
+          { player:"Bo Bichette",       pos:"3B",  song:"Love Yourself",                          artist:"Justin Bieber",       note:"Unexpected — but Bichette's always been his own guy" },
+          { player:"Tyrone Taylor",     pos:"OF",  song:"THE SCOTTS",                             artist:"Travis Scott & Kid Cudi", note:"High energy for the outfielder who gives 100% every at-bat" },
+          { player:"Brett Baty",        pos:"OF",  song:"TBD 2026",                               artist:"charlieonnafriday",   note:"The young Met keeps it indie — a different vibe at Citi" },
+          { player:"Clay Holmes",       pos:"RP",  song:"TBD 2026",                               artist:"Various",             note:"The veteran reliever brought from the Bronx — curious what he picks for Citi" },
+          { player:"Sean Manaea",       pos:"SP",  song:"TBD 2026",                               artist:"Various",             note:"The lefty starter — Citi Field will give him a big welcome" },
+        ].map((s, i) => (
+          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid #1a1a1a", flexWrap:"wrap"}}>
+            <div style={{flexShrink:0, width:22, fontSize:13, textAlign:"center"}}>⚾</div>
+            <div style={{flex:1, minWidth:0}}>
+              <div style={{display:"flex", gap:6, alignItems:"baseline", flexWrap:"wrap", marginBottom:1}}>
+                <span style={{fontSize:11, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                <span style={{fontSize:8, color:"#666"}}>{s.pos}</span>
+                <span style={{fontSize:9, color:"#FF5910", fontWeight:700}}>Mets</span>
+              </div>
+              <div style={{fontSize:11, color:"#FFD700", marginBottom:1}}>"{s.song}" — {s.artist}</div>
+              <div style={{fontSize:9, color:"#555", fontStyle:"italic"}}>{s.note}</div>
+            </div>
+            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{...styles.histLink, flexShrink:0, alignSelf:"center", fontSize:9}}>▶</a>
+          </div>
+        ))}
+
+        <div style={{...styles.stdDivisionHeader, marginTop:14}}>🏆 ALL-TIME ICONIC NY SPORTS ENTRANCE MUSIC</div>
+        {[
+          { player:"Mariano Rivera",   team:"Yankees",  song:"Enter Sandman",              artist:"Metallica",              note:"The most famous walk-up in baseball history. Stadium goes silent — then ERUPTS. Every closer since is compared to this." },
+          { player:"Derek Jeter",      team:"Yankees",  song:"Empire State of Mind",       artist:"JAY-Z & Alicia Keys",    note:"NY's anthem for NY's Captain. 50,000 people sang along. Goosebumps every time." },
+          { player:"Gary Sheffield",   team:"Yankees",  song:"We're Not Gonna Take It",    artist:"Twisted Sister",         note:"Perfectly matched Sheffield's menacing bat waggle and intensity." },
+          { player:"Gerrit Cole",      team:"Yankees",  song:"Gimme Shelter",              artist:"The Rolling Stones",     note:"The ace opens with the Stones — legendary taste from a legendary pitcher." },
+          { player:"David Wright",     team:"Mets",     song:"New York Groove",            artist:"Ace Frehley (KISS)",     note:"Mr. Met himself — pure New York rock and roll." },
+          { player:"Carlos Beltrán",   team:"Mets",     song:"Fuego",                      artist:"Pitbull",                note:"Beltrán's Latin flair at the plate — powerful and cool." },
+          { player:"Pete Alonso",      team:"Mets",     song:"Polar Bear energy",          artist:"Various (2019-2024)",    note:"The Mets all-time HR king rotated songs but always brought the same energy." },
+          { player:"Jesse Orosco",     team:"Mets",     song:"Shea Stadium crowd roar",    artist:"1986 World Series",      note:"He didn't need a walk-up — the crowd's roar was his music as he struck out the final batter of the '86 Series." },
+          { player:"Mike Piazza",      team:"Mets",     song:"City silence — then bedlam", artist:"Shea Stadium, 9/21/01",  note:"On September 21, 2001, the silence before his at-bat was the most powerful moment. Then he hit the HR that healed a city." },
+          { player:"Henrik Lundqvist", team:"Rangers",  song:"Welcome to the Jungle",      artist:"Guns N' Roses",          note:"The King's MSG entrance — electric for 15 seasons. The crowd lit up every time." },
+          { player:"Mark Messier",     team:"Rangers",  song:"We Are the Champions",       artist:"Queen",                  note:"The victory anthem that became the Rangers' forever song after 1994." },
+          { player:"Patrick Ewing",    team:"Knicks",   song:"Welcome to the Terrordome",  artist:"Public Enemy",           note:"90s Knicks at MSG — Ewing and Public Enemy was peak New York." },
+          { player:"Curtis Martin",    team:"Jets",     song:"Can't Stop Won't Stop",      artist:"Young Jeezy",            note:"Martin's workman intensity perfectly captured in music." },
+          { player:"Joe Namath",       team:"Jets",     song:"New York, New York",         artist:"Frank Sinatra",          note:"Broadway Joe's era — Sinatra defined the city and Namath defined the Jets." },
+        ].map((s, i) => (
+          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid #1a1a1a", flexWrap:"wrap"}}>
+            <div style={{flexShrink:0, width:22, fontSize:13, textAlign:"center"}}>🎵</div>
+            <div style={{flex:1, minWidth:0}}>
+              <div style={{display:"flex", gap:8, alignItems:"baseline", flexWrap:"wrap", marginBottom:1}}>
+                <span style={{fontSize:11, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                <span style={{fontSize:9, color:"#888", fontWeight:700}}>{s.team}</span>
+              </div>
+              <div style={{fontSize:11, color:"#FFD700", marginBottom:1}}>"{s.song}" — {s.artist}</div>
+              <div style={{fontSize:9, color:"#555", fontStyle:"italic"}}>{s.note}</div>
+            </div>
+            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{...styles.histLink, flexShrink:0, alignSelf:"center", fontSize:9}}>▶</a>
+          </div>
+        ))}
+      </div>
+
+      {/* ── SPIN WHEEL (below songs) ── */}
+      <div style={{padding:"12px 14px", background:"#111", border:"1px solid #2a2a2a", marginBottom:16}}>
+        <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:4}}>🎰 SPIN THE WHEEL — NY SPORTS FACTS</div>
+        <div style={{fontSize:9, color:"#555", marginBottom:10}}>Land on a team, get a random NY sports fact from our database</div>
+      </div>
         {[
           { player:"Aaron Judge",      song:"Swag Surfin'",              artist:"F.L.Y.",           note:"The Captain's swagger anthem — fitting for the AL HR record holder" },
           { player:"Jazz Chisholm Jr.",song:"TBD 2026",                  artist:"Various",           note:"Jazz's energy is electric — whatever he picks gets the Stadium going" },
@@ -6242,72 +6354,6 @@ function SpinTab() {
               style={{...styles.histLink, flexShrink:0, alignSelf:"center", fontSize:9}}>▶ YouTube</a>
           </div>
         ))}
-
-        <div style={{...styles.stdDivisionHeader, marginTop:14}}>⚾ NEW YORK METS — 2026</div>
-        {[
-          { player:"Francisco Lindor",  song:"My Girl",                    artist:"The Temptations",  note:"Citi Field sings along every single at-bat. The Temptations even performed it live at Citi Field during the 2025 NLCS. A true NY moment." },
-          { player:"Francisco Lindor",  song:"Ain't No Mountain High Enough", artist:"Marvin Gaye & Tammi Terrell", note:"His alternate — he rotates between this and 'My Girl' to keep fans guessing. Both are Motown classics." },
-          { player:"Juan Soto",         song:"Empire State of Mind",        artist:"Jay-Z & Alicia Keys", note:"The $765M man plays NY's anthem when he steps to the plate at Citi Field. Perfect." },
-          { player:"Juan Soto",         song:"Yo Soy Dominicano",           artist:"Leo RD & Dilon Baby",  note:"Soto's Dominican pride walk-up — alternates with Empire State of Mind" },
-          { player:"Pete Alonso",       song:"Various 2026",                artist:"Various",           note:"The Polar Bear's walk-up rotates but always gets the Citi Field crowd going" },
-          { player:"Mark Vientos",      song:"TBD 2026",                    artist:"Various",           note:"The rising star — watch for a standout choice from the young slugger" },
-        ].map((s, i) => (
-          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid #1a1a1a", flexWrap:"wrap"}}>
-            <div style={{flexShrink:0, width:22, fontSize:14, textAlign:"center"}}>⚾</div>
-            <div style={{flex:1, minWidth:0}}>
-              <div style={{display:"flex", gap:8, alignItems:"baseline", flexWrap:"wrap", marginBottom:1}}>
-                <span style={{fontSize:11, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
-                <span style={{fontSize:9, color:"#FF5910", fontWeight:700}}>Mets</span>
-              </div>
-              <div style={{fontSize:11, color:"#FFD700", marginBottom:1}}>"{s.song}" — {s.artist}</div>
-              <div style={{fontSize:9, color:"#555", fontStyle:"italic"}}>{s.note}</div>
-            </div>
-            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
-              target="_blank" rel="noopener noreferrer"
-              style={{...styles.histLink, flexShrink:0, alignSelf:"center", fontSize:9}}>▶ YouTube</a>
-          </div>
-        ))}
-
-        <div style={{...styles.stdDivisionHeader, marginTop:14}}>🏆 ALL-TIME ICONIC NY SPORTS ENTRANCE MUSIC</div>
-        {[
-          { player:"Mariano Rivera",    team:"Yankees",   song:"Enter Sandman",              artist:"Metallica",            note:"The most famous walk-up in baseball history. The Stadium went quiet — then DEAFENINGLY loud. Every closer since has been compared to it." },
-          { player:"Derek Jeter",       team:"Yankees",   song:"Empire State of Mind",       artist:"Jay-Z & Alicia Keys",  note:"NY's anthem for NY's Captain. The Stadium sang along. Goosebumps every time." },
-          { player:"Gary Sheffield",    team:"Yankees",   song:"We're Not Gonna Take It",    artist:"Twisted Sister",       note:"Perfect for one of the most intense batting stances — and tempers — in Yankees history." },
-          { player:"Alex Rodriguez",    team:"Yankees",   song:"Thank God I Found You",      artist:"Mariah Carey",          note:"A-Rod's controversial choices extended to his walk-up music. MSG mocked him relentlessly." },
-          { player:"David Wright",      team:"Mets",      song:"New York Groove",            artist:"Ace Frehley (KISS)",   note:"Mr. Met himself — pure New York. KISS meets the Mets." },
-          { player:"Carlos Beltrán",    team:"Mets",      song:"Fuego",                      artist:"Pitbull",              note:"Beltrán's Latin flair at the plate — powerful and cool." },
-          { player:"Jesse Orosco",      team:"Mets",      song:"Crowd Roar — 1986",          artist:"Shea Stadium",         note:"The stadium's own roar was his music — he struck out the final batter of the 1986 World Series." },
-          { player:"Henrik Lundqvist",  team:"Rangers",   song:"Welcome to the Jungle",      artist:"Guns N' Roses",        note:"The King's entrance at MSG — electric every single game for 15 seasons." },
-          { player:"Mark Messier",      team:"Rangers",   song:"We Are the Champions",       artist:"Queen",                note:"The 1994 victory anthem that became the Rangers' forever song." },
-          { player:"Patrick Ewing",     team:"Knicks",    song:"Welcome to the Terrordome",  artist:"Public Enemy",         note:"90s Knicks at MSG — Ewing walking out to PE was peak New York." },
-          { player:"John Starks",       team:"Knicks",    song:"The Garden Roar",            artist:"MSG Faithful",         note:"Starks didn't need a song — the Garden went absolutely nuclear when he was hot." },
-          { player:"Curtis Martin",     team:"Jets",      song:"Can't Stop Won't Stop",      artist:"Young Jeezy",          note:"Martin's workman intensity captured in music — no nonsense, all business." },
-          { player:"Joe Namath",        team:"Jets",      song:"New York, New York",         artist:"Frank Sinatra",        note:"Broadway Joe's era — Sinatra defined the city and Namath defined the Jets." },
-          { player:"Mike Piazza",       team:"Mets",      song:"Crowd Roar — 9/11",          artist:"Shea Stadium",         note:"On September 21, 2001, the crowd gave him his music before he hit the most emotional HR in baseball history." },
-        ].map((s, i) => (
-          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid #1a1a1a", flexWrap:"wrap"}}>
-            <div style={{flexShrink:0, width:22, fontSize:14, textAlign:"center"}}>🎵</div>
-            <div style={{flex:1, minWidth:0}}>
-              <div style={{display:"flex", gap:8, alignItems:"baseline", flexWrap:"wrap", marginBottom:1}}>
-                <span style={{fontSize:11, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
-                <span style={{fontSize:9, color:"#888", fontWeight:700}}>{s.team}</span>
-              </div>
-              <div style={{fontSize:11, color:"#FFD700", marginBottom:1}}>"{s.song}" — {s.artist}</div>
-              <div style={{fontSize:9, color:"#555", fontStyle:"italic"}}>{s.note}</div>
-            </div>
-            <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
-              target="_blank" rel="noopener noreferrer"
-              style={{...styles.histLink, flexShrink:0, alignSelf:"center", fontSize:9}}>▶ YouTube</a>
-          </div>
-        ))}
-
-        <div style={{display:"flex", gap:10, marginTop:10, flexWrap:"wrap"}}>
-          <a href="https://platemusic.com/team/yankees" target="_blank" rel="noopener noreferrer" style={styles.histLink}>⚾ Full Yankees 2026 Walk-Ups</a>
-          <a href="https://platemusic.com/team/mets" target="_blank" rel="noopener noreferrer" style={styles.histLink}>⚾ Full Mets 2026 Walk-Ups</a>
-          <a href="https://www.mlb.com/yankees/ballpark/music" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🎵 MLB Official Walk-Up Songs</a>
-        </div>
-      </div>
-
       <div style={styles.spinLayout}>
         {/* Wheel column */}
         <div style={styles.spinWheelCol}>
