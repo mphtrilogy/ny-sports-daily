@@ -3087,6 +3087,7 @@ function IconicTab() {
   );
 }
 
+const TODAY_IN_NY_SPORTS = [
   // JANUARY
   { month:1, day:3,  year:1920, team:"Yankees",   emoji:"⚾", title:"Yankees Acquire Babe Ruth from Red Sox", desc:"For $100,000 cash and a $300K loan on Fenway Park, the Yankees acquire Ruth. The Curse of the Bambino begins. The most consequential deal in sports history." },
   { month:1, day:5,  year:1970, team:"Knicks",    emoji:"🏀", title:"Willis Reed Named All-Star Starter", desc:"The Knicks captain earns his third All-Star selection as New York cruises toward their first NBA championship." },
