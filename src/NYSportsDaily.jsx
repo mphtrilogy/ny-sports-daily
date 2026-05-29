@@ -454,6 +454,19 @@ const DAILY_PLAYERS = [
   { name:"Pete Alonso",    team:"Mets",     sport:"MLB", pos:"1B",  emoji:"⚾", number:"20", active:true,  era:"2019–present", stats:"254+ HR · Mets All-Time HR Record · 53 HR rookie record 2019", fact:"The Polar Bear broke the MLB rookie home run record in 2019 with 53 HR. On Aug 12, 2025 he broke Darryl Strawberry's Mets all-time record of 252. The franchise's home run king.", wiki:"https://en.wikipedia.org/wiki/Pete_Alonso", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Pete_Alonso_in_2021.jpg/256px-Pete_Alonso_in_2021.jpg", cardColor:"#FF5910" },
   { name:"Aaron Judge",    team:"Yankees",  sport:"MLB", pos:"RF",  emoji:"⚾", number:"99", active:true,  era:"2016–present", stats:"60+ HR seasons · .280+ AVG · AL MVP 2017, 2022", fact:"Hit 62 home runs in 2022 — the American League single-season record. The current face of the Yankees dynasty.", wiki:"https://en.wikipedia.org/wiki/Aaron_Judge", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Aaron_Judge_2017.jpg/256px-Aaron_Judge_2017.jpg", cardColor:"#003087" },
   { name:"Breanna Stewart",team:"Liberty", sport:"WNBA",pos:"F",  emoji:"🏀", number:"30", active:true,  era:"2023–present", stats:"2× WNBA Champion · Finals MVP", fact:"Came to New York to win and delivered back-to-back championships. The best player in women's basketball history.", wiki:"https://en.wikipedia.org/wiki/Breanna_Stewart", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Breanna_Stewart_2024.jpg/256px-Breanna_Stewart_2024.jpg", cardColor:"#007A5E" },
+  { name:"Mickey Mantle",   team:"Yankees", sport:"MLB", pos:"CF",  emoji:"⚾", number:"7",  active:false, era:"1951–1968", stats:"536 HR · Triple Crown 1956 · 3× AL MVP", fact:"Played through bone infections and torn cartilage his entire career. If fully healthy, many believe he would have been the greatest player of all time.", wiki:"https://en.wikipedia.org/wiki/Mickey_Mantle", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Mickey_Mantle_1953.jpg/256px-Mickey_Mantle_1953.jpg", cardColor:"#003087" },
+  { name:"Darryl Strawberry",team:"Mets",  sport:"MLB", pos:"RF",  emoji:"⚾", number:"18", active:false, era:"1983–1990", stats:"252 HR · 8× All-Star · 1986 World Series champion", fact:"The most naturally gifted hitter of his generation. His swing was considered the most perfect in the sport. His story is one of the great 'what might have been' in baseball.", wiki:"https://en.wikipedia.org/wiki/Darryl_Strawberry", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Darryl_Strawberry_2011.jpg/256px-Darryl_Strawberry_2011.jpg", cardColor:"#FF5910" },
+  { name:"Michael Strahan", team:"Giants", sport:"NFL", pos:"DE",  emoji:"🏈", number:"92", active:false, era:"1993–2007", stats:"141.5 sacks · Single-season record 22.5 (2001) · Super Bowl XLI", fact:"Set the single-season sack record in 2001. Went from NFL star to one of the most recognizable faces on television. The gap in his smile is as famous as the gap in offensive lines he exploited.", wiki:"https://en.wikipedia.org/wiki/Michael_Strahan", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Michael_Strahan_2011.jpg/256px-Michael_Strahan_2011.jpg", cardColor:"#0B2265" },
+  { name:"Darrelle Revis",  team:"Jets",   sport:"NFL", pos:"CB",  emoji:"🏈", number:"24", active:false, era:"2007–2016", stats:"4× All-Pro · Revis Island · 29 career INT", fact:"Revis Island was a real place — the best receivers in football simply ceased to exist when they were lined up against him. The most dominant cornerback of his generation.", wiki:"https://en.wikipedia.org/wiki/Darrelle_Revis", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Darrelle_Revis_2013.jpg/256px-Darrelle_Revis_2013.jpg", cardColor:"#125740" },
+  { name:"Curtis Martin",   team:"Jets",   sport:"NFL", pos:"RB",  emoji:"🏈", number:"28", active:false, era:"1998–2006", stats:"14,101 rushing yards · 4× Pro Bowl · Hall of Fame 2012", fact:"Won the NFL rushing title at 31 despite never being considered the most explosive back. Pure will, vision, and toughness. The greatest Jet since Namath.", wiki:"https://en.wikipedia.org/wiki/Curtis_Martin", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Curtis_Martin_2009.jpg/256px-Curtis_Martin_2009.jpg", cardColor:"#125740" },
+  { name:"Henrik Lundqvist",team:"Rangers",sport:"NHL", pos:"G",   emoji:"🏒", number:"30", active:false, era:"2005–2021", stats:".921 SV% · 459 wins · Vezina Trophy 2012", fact:"The King gave Rangers fans 15 years of elite goaltending, carrying teams deeper than they deserved. MSG worshipped him. Sweden's greatest ambassador to New York.", wiki:"https://en.wikipedia.org/wiki/Henrik_Lundqvist", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Henrik_Lundqvist_2012.jpg/256px-Henrik_Lundqvist_2012.jpg", cardColor:"#0038A8" },
+  { name:"John Tavares",    team:"Islanders",sport:"NHL",pos:"C",  emoji:"🏒", number:"91", active:false, era:"2009–2018", stats:"272 goals · 621 points as an Islander · 6× All-Star", fact:"The most talented Islander since Mike Bossy. His departure for Toronto in 2018 broke Long Island's heart. His years in blue and orange were genuinely spectacular.", wiki:"https://en.wikipedia.org/wiki/John_Tavares", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/John_Tavares_2018.jpg/256px-John_Tavares_2018.jpg", cardColor:"#00539B" },
+  { name:"Mookie Wilson",   team:"Mets",   sport:"MLB", pos:"CF",  emoji:"⚾", number:"1",  active:false, era:"1980–1989", stats:".274 AVG · 327 SB · 1986 World Series hero", fact:"His slow grounder through Bill Buckner's legs in Game 6 of the 1986 World Series is one of the iconic moments in baseball history. He never hit it hard — but it found its way.", wiki:"https://en.wikipedia.org/wiki/Mookie_Wilson", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Mookie_Wilson_2010.jpg/256px-Mookie_Wilson_2010.jpg", cardColor:"#FF5910" },
+  { name:"Gary Carter",     team:"Mets",   sport:"MLB", pos:"C",   emoji:"⚾", number:"8",  active:false, era:"1985–1989", stats:"168 HR as a Met · 3× Gold Glove · 1986 World Series hero", fact:"The Kid started the miraculous two-out, two-strike 10th inning rally in Game 6 of the 1986 World Series. His single off Schiraldi sparked one of the greatest comebacks in sports history.", wiki:"https://en.wikipedia.org/wiki/Gary_Carter", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Gary_Carter_2010.jpg/256px-Gary_Carter_2010.jpg", cardColor:"#FF5910" },
+  { name:"Reggie Jackson",  team:"Yankees",sport:"MLB", pos:"RF",  emoji:"⚾", number:"44", active:false, era:"1977–1981", stats:"144 HR as a Yankee · 3 HRs in 1977 WS clincher · Mr. October", fact:"Hit three home runs on three consecutive pitches from three different pitchers in the 1977 World Series clincher. The most theatrical performance in baseball postseason history.", wiki:"https://en.wikipedia.org/wiki/Reggie_Jackson", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Reggie_Jackson_1969.jpg/256px-Reggie_Jackson_1969.jpg", cardColor:"#003087" },
+  { name:"Jason Kidd",      team:"Nets",   sport:"NBA", pos:"PG",  emoji:"🏀", number:"5",  active:false, era:"2001–2008", stats:"12.0 APG · 8.0 RPG · 2× NBA Finals", fact:"Led the New Jersey Nets to two consecutive NBA Finals appearances — the only Finals appearances in franchise history. Transformed the team from lottery dwellers to contenders overnight.", wiki:"https://en.wikipedia.org/wiki/Jason_Kidd", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Jason_Kidd_2010.jpg/256px-Jason_Kidd_2010.jpg", cardColor:"#000000" },
+  { name:"Sabrina Ionescu", team:"Liberty",sport:"WNBA",pos:"G",   emoji:"🏀", number:"20", active:true,  era:"2020–present", stats:"20+ PPG · 6+ APG · WNBA champion", fact:"Set the NCAA all-time triple-doubles record at Oregon. Now the face of the WNBA alongside Breanna Stewart, leading the Liberty to championships in New York.", wiki:"https://en.wikipedia.org/wiki/Sabrina_Ionescu", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Sabrina_Ionescu_2022.jpg/256px-Sabrina_Ionescu_2022.jpg", cardColor:"#007A5E" },
+  { name:"Ken Daneyko",     team:"Devils", sport:"NHL", pos:"D",   emoji:"🏒", number:"3",  active:false, era:"1983–2003", stats:"1,283 games · 3× Stanley Cup · Mr. Devil", fact:"Played 20 seasons in New Jersey and won three Stanley Cups. The heart and soul of every Devils championship. His number 3 hangs at the Prudential Center forever.", wiki:"https://en.wikipedia.org/wiki/Ken_Daneyko", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Ken_Daneyko.jpg/256px-Ken_Daneyko.jpg", cardColor:"#CE1126" },
 ];
 
 function getDailyPlayer() {
@@ -691,60 +704,40 @@ async function fetchNYNews() {
     { sub:"NYCFC",           team:"NYCFC"     },
   ];
   await Promise.all(REDDIT_SUBS.map(async ({ sub, team }) => {
-    // Fetch both hot and new to get broader coverage
-    const [topJson, newJson] = await Promise.all([
-      safeFetch(`https://www.reddit.com/r/${sub}/hot.json?limit=8`),
-      safeFetch(`https://www.reddit.com/r/${sub}/new.json?limit=5`),
-    ]);
-    const posts = [
-      ...(topJson?.data?.children || []),
-      ...(newJson?.data?.children || []),
-    ];
+    // Reddit requires a User-Agent or returns 429 — try both hot and new
+    const headers = { "User-Agent": "NYSportsDaily/1.0" };
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    let posts = [];
+    try {
+      const res = await fetch(`https://www.reddit.com/r/${sub}/hot.json?limit=8&raw_json=1`, { signal: controller.signal, headers });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const json = await res.json();
+        posts = json?.data?.children || [];
+      }
+    } catch(e) { clearTimeout(timeoutId); }
+
     posts.forEach(post => {
       const p = post.data;
-      if (!p || p.stickied || p.over_18) return;
+      if (!p || p.stickied || p.over_18 || p.score < 5) return;
       const title = p.title;
       if (!title || seen.has(title)) return;
       const lowerTitle = title.toLowerCase();
-      if (lowerTitle.includes("game thread") || lowerTitle.includes("post-game thread") ||
+      if (lowerTitle.includes("game thread") || lowerTitle.includes("post-game") ||
           lowerTitle.includes("daily discussion") || lowerTitle.includes("lineup thread") ||
-          lowerTitle.includes("pre-game thread") || lowerTitle.includes("weekly thread")) return;
+          lowerTitle.includes("pre-game") || lowerTitle.includes("weekly thread")) return;
       seen.add(title);
       results.push({
         title,
         link:    `https://reddit.com${p.permalink}`,
-        desc:    p.selftext ? p.selftext.slice(0, 200) : "",
+        desc:    p.selftext ? p.selftext.slice(0, 200) : `${p.ups} upvotes · r/${sub}`,
         pub:     new Date(p.created_utc * 1000).toISOString(),
         source:  `Reddit · r/${sub}`,
         team,
         sport:   team,
         isNY:    true,
         upvotes: p.ups,
-      });
-    });
-  }));
-
-  // MLB.com Stats API — great for Yankees and Mets news
-  const MLB_TEAMS = [
-    { id:147, name:"Yankees" },
-    { id:121, name:"Mets"    },
-  ];
-  await Promise.all(MLB_TEAMS.map(async ({ id, name }) => {
-    const json = await safeFetch(`https://statsapi.mlb.com/api/v1/news/feed/team/${id}?limit=10`);
-    if (!json?.articles) return;
-    (json.articles || []).forEach(a => {
-      const title = a.headline || a.title || "";
-      if (!title || seen.has(title)) return;
-      seen.add(title);
-      results.push({
-        title,
-        link:   a.url || `https://www.mlb.com/${name.toLowerCase()}/news`,
-        desc:   a.blurb || a.subhead || "",
-        pub:    a.date || a.timestamp || "",
-        source: `MLB.com · ${name}`,
-        team:   name,
-        sport:  "MLB",
-        isNY:   true,
       });
     });
   }));
