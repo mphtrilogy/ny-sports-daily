@@ -936,25 +936,29 @@ export default function NYSportsDaily() {
             <div style={styles.mastheadLineBar} />
           </div>
         </div>
-        {/* Search bar */}
-        <div style={styles.searchBar}>
-          <input
-            type="text"
-            placeholder="🔍  Search players, moments, history, teams..."
-            value={searchQuery}
-            onChange={e => { setSearchQuery(e.target.value); setSearchOpen(e.target.value.length > 1); }}
-            onFocus={() => { if (searchQuery.length > 1) setSearchOpen(true); }}
-            onBlur={() => setTimeout(() => setSearchOpen(false), 200)}
-            style={styles.searchInput}
-          />
-          {searchQuery && (
-            <button onClick={() => { setSearchQuery(""); setSearchOpen(false); }} style={styles.searchClear}>✕</button>
+        {/* Search bar + dropdown — wrapped in relative container */}
+        <div style={{position:"relative", zIndex:1000}}>
+          <div style={styles.searchBar}>
+            <input
+              type="text"
+              placeholder="🔍  Search players, moments, history, teams..."
+              value={searchQuery}
+              onChange={e => { setSearchQuery(e.target.value); setSearchOpen(e.target.value.length > 1); }}
+              onFocus={() => { if (searchQuery.length > 1) setSearchOpen(true); }}
+              onBlur={() => setTimeout(() => setSearchOpen(false), 200)}
+              style={styles.searchInput}
+            />
+            {searchQuery && (
+              <button onClick={() => { setSearchQuery(""); setSearchOpen(false); }} style={styles.searchClear}>✕</button>
+            )}
+          </div>
+          {/* Search results dropdown — absolutely positioned under the search bar */}
+          {searchOpen && searchQuery.length > 1 && (
+            <div style={{position:"absolute", left:16, right:16, top:"100%", zIndex:1001}}>
+              <SiteSearch query={searchQuery} onSelect={(tab) => { setActiveTab(tab); setSearchQuery(""); setSearchOpen(false); }} />
+            </div>
           )}
         </div>
-        {/* Search results dropdown */}
-        {searchOpen && searchQuery.length > 1 && (
-          <SiteSearch query={searchQuery} onSelect={(tab) => { setActiveTab(tab); setSearchQuery(""); setSearchOpen(false); }} />
-        )}
       </header>
 
       {/* ── DATE STRIP ── */}
@@ -6571,7 +6575,7 @@ const styles = {
     background: "#0e0e0e",
     borderBottom: "4px double #c8201c",
     padding: "16px 20px 0",
-    position: "relative", zIndex: 1,
+    position: "sticky", top: 0, zIndex: 500,
   },
   mastheadTop: {
     display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -6585,7 +6589,7 @@ const styles = {
     background: "#0e0e0e",
     borderBottom: "4px double #c8201c",
     padding: "16px 20px 0",
-    position: "relative", zIndex: 1,
+    position: "sticky", top: 0, zIndex: 500,
   },
   mastheadTop: {
     display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -6643,10 +6647,10 @@ const styles = {
     cursor: "pointer", fontSize: 12, padding: "4px",
   },
   searchDropdown: {
-    position: "absolute", left: 0, right: 0, zIndex: 999,
+    position: "relative", left: "auto", right: "auto", zIndex: 1001,
     background: "#0e0e0e", border: "1px solid #c8201c",
-    borderTop: "none", maxHeight: 420, overflowY: "auto",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.8)",
+    borderTop: "none", maxHeight: 380, overflowY: "auto",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.9)",
   },
   searchResult: {
     display: "flex", gap: 10, width: "100%", padding: "10px 14px",
