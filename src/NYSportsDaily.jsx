@@ -81,38 +81,27 @@ const NY_NEWS_ENDPOINTS = [
   { sport:"soccer",     league:"nwsl",  name:"NWSL" },
 ];
 
-// Also fetch team-specific news for NY teams
+// Team-specific ESPN news — always NY relevant, no keyword filtering needed
 const NY_TEAM_NEWS = [
-  { sport:"baseball",   league:"mlb",  id:"10",    name:"Yankees" },
-  { sport:"baseball",   league:"mlb",  id:"21",    name:"Mets"    },
-  { sport:"football",   league:"nfl",  id:"20",    name:"Jets"    },
-  { sport:"football",   league:"nfl",  id:"19",    name:"Giants"  },
-  { sport:"basketball", league:"nba",  id:"18",    name:"Knicks"  },
-  { sport:"basketball", league:"nba",  id:"17",    name:"Nets"    },
-  { sport:"hockey",     league:"nhl",  id:"13",    name:"Rangers" },
-  { sport:"hockey",     league:"nhl",  id:"22",    name:"Islanders"},
-  { sport:"hockey",     league:"nhl",  id:"1",     name:"Devils"  },
-  { sport:"basketball", league:"wnba", id:"20",    name:"Liberty" },
-];
-
-// Additional NY Extra news endpoints
-const NY_EXTRA_NEWS = [
+  { sport:"baseball",   league:"mlb",  id:"10",    name:"Yankees"   },
+  { sport:"baseball",   league:"mlb",  id:"21",    name:"Mets"      },
   { sport:"football",   league:"nfl",  id:"20",    name:"Jets"      },
   { sport:"football",   league:"nfl",  id:"19",    name:"Giants"    },
+  { sport:"basketball", league:"nba",  id:"18",    name:"Knicks"    },
+  { sport:"basketball", league:"nba",  id:"17",    name:"Nets"      },
+  { sport:"hockey",     league:"nhl",  id:"13",    name:"Rangers"   },
+  { sport:"hockey",     league:"nhl",  id:"22",    name:"Islanders" },
   { sport:"hockey",     league:"nhl",  id:"1",     name:"Devils"    },
+  { sport:"basketball", league:"wnba", id:"20",    name:"Liberty"   },
   { sport:"soccer",     league:"usa.1",id:"18479", name:"NYCFC"     },
   { sport:"soccer",     league:"nwsl", id:"1163",  name:"Gotham FC" },
+  { sport:"soccer",     league:"usa.1",id:"16335", name:"Red Bulls" },
 ];
 
-// Free RSS feeds via rss2json (best chance of working in browser)
-const FREE_RSS_FEEDS = [
-  { url:"https://api.foxsports.com/v2/content/optimized-rss-feed?legacy=true&hl=en-US&sourceId=5add9f40-5bfc-4f3c-ab9c-88e81437af3e", name:"Fox Sports" },
-  { url:"https://www.espn.com/espn/rss/nfl/news", name:"ESPN NFL" },
-  { url:"https://www.espn.com/espn/rss/mlb/news", name:"ESPN MLB" },
-  { url:"https://www.espn.com/espn/rss/nba/news", name:"ESPN NBA" },
-  { url:"https://www.espn.com/espn/rss/nhl/news", name:"ESPN NHL" },
-];
+// Extra NY-relevant news from MLB.com team feeds (free, reliable)
+const NY_EXTRA_NEWS = [];
 
+// Keywords for filtering league-wide news down to NY-relevant stories
 async function tryRSSFeed(feed) {
   try {
     const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=10`);
@@ -323,81 +312,115 @@ async function fetchNYSchedule() {
 
 // ─── NY SPORTS QUOTES ─────────────────────────────────────────────────────
 const NY_QUOTES = [
-  // YANKEES
-  { quote: "I want to thank the Good Lord for making me a Yankee.", author: "Joe DiMaggio", team: "Yankees" },
-  { quote: "Some people say New York is the capital of the world. I wouldn't argue with that.", author: "Derek Jeter", team: "Yankees" },
-  { quote: "We are the Yankees. We don't rebuild, we reload.", author: "Derek Jeter", team: "Yankees" },
-  { quote: "The way a team plays as a whole determines its success.", author: "Babe Ruth", team: "Yankees" },
-  { quote: "It ain't over till it's over.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "You can observe a lot just by watching.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "When you come to a fork in the road, take it.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "I never said most of the things I said.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "A nickel ain't worth a dime anymore.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "We made too many wrong mistakes.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "Nobody goes there anymore. It's too crowded.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "The future ain't what it used to be.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "If you don't know where you are going, you might wind up someplace else.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "Baseball is 90% mental and the other half is physical.", author: "Yogi Berra", team: "Yankees" },
-  { quote: "When you're in a slump, it's almost as if you look out at the field and it's one big glove.", author: "Vince Coleman", team: "Baseball" },
-  { quote: "There is always some kid who may be seeing me for the first or last time. I owe him my best.", author: "Joe DiMaggio", team: "Yankees" },
-  { quote: "Today I consider myself the luckiest man on the face of the earth.", author: "Lou Gehrig", team: "Yankees", context: "Farewell speech, 1939" },
-  { quote: "Fans don't boo nobodies.", author: "Reggie Jackson", team: "Yankees" },
-  { quote: "October is not like any other month in baseball.", author: "Reggie Jackson", team: "Yankees" },
-  { quote: "I'm the best in baseball. No one comes close. The Yankees are the best in baseball.", author: "Reggie Jackson", team: "Yankees" },
-  { quote: "I make my best pitch and trust my defense.", author: "Mariano Rivera", team: "Yankees" },
-  { quote: "I've never worried about statistics.", author: "Mariano Rivera", team: "Yankees" },
-  { quote: "Don't look back. Something might be gaining on you.", author: "Satchel Paige", team: "Baseball" },
-  // METS
-  { quote: "Ya gotta believe!", author: "Tug McGraw", team: "Mets", context: "1973 pennant run" },
-  { quote: "New York is a city of conversation, of energy. The fans here live and die with every pitch.", author: "Mike Piazza", team: "Mets" },
-  { quote: "I don't think about the negative. That's a waste of time.", author: "Tom Seaver", team: "Mets" },
-  { quote: "In baseball, you can't sit on a lead and run a few plays into the line and just kill the clock. You've got to throw the ball over the damn plate and let the game proceed.", author: "Tom Seaver", team: "Mets" },
-  { quote: "Good pitching will always stop good hitting and vice-versa.", author: "Casey Stengel", team: "Mets" },
-  { quote: "Being with a team the whole season, winning and losing together... then winning in the end... that's special.", author: "David Wright", team: "Mets" },
-  { quote: "The Mets are losers, just like nearly everybody else in life. This is the team for the cab driver, the guy who owns the diner, the bartender.", author: "Jimmy Breslin", team: "Mets" },
-  // JETS
-  { quote: "I guarantee it.", author: "Joe Namath", team: "Jets", context: "Super Bowl III, 1969" },
-  { quote: "I can throw the ball better than any quarterback in the game.", author: "Joe Namath", team: "Jets" },
-  { quote: "You got to be a man first before you can be a player.", author: "Joe Namath", team: "Jets" },
-  { quote: "I live and die with the New York Jets.", author: "Rex Ryan", team: "Jets" },
-  { quote: "The key to this football team is Mark Gastineau.", author: "Joe Klecko", team: "Jets" },
-  // GIANTS
-  { quote: "If you want to win, do the little things right.", author: "Lawrence Taylor", team: "Giants" },
-  { quote: "I want to be the best. Not the best in New York. The best in the NFL.", author: "Lawrence Taylor", team: "Giants" },
-  { quote: "Pressure is a privilege.", author: "Lawrence Taylor", team: "Giants" },
-  { quote: "You play the way you practice.", author: "Bill Parcells", team: "Giants" },
-  { quote: "I'm not telling you it's going to be easy. I'm telling you it's going to be worth it.", author: "Bill Parcells", team: "Giants" },
-  { quote: "When the game is on the line, you want Eli Manning.", author: "Tiki Barber", team: "Giants" },
-  // KNICKS
-  { quote: "The key to this team is the same as it always has been: pride.", author: "Red Holzman", team: "Knicks" },
-  { quote: "I'm coming back to New York. I belong in New York.", author: "Patrick Ewing", team: "Knicks" },
-  { quote: "Clyde is poetry in motion. He glides, he doesn't run.", author: "Walt Frazier self-intro", team: "Knicks" },
-  { quote: "I feel great — better than anyone in this building right now.", author: "Willis Reed", team: "Knicks", context: "Limping onto court, 1970 Finals" },
-  { quote: "This is our building. Don't come in here.", author: "Patrick Ewing", team: "Knicks" },
-  { quote: "New York basketball is different. The passion, the energy, the fans — nothing like it.", author: "Jalen Brunson", team: "Knicks" },
-  // RANGERS
-  { quote: "We will win tonight.", author: "Mark Messier", team: "Rangers", context: "Game 6 guarantee vs Devils, 1994" },
-  { quote: "The best trophy in sports is the Stanley Cup. And we have it.", author: "Mark Messier", team: "Rangers" },
-  { quote: "Hockey is a unique sport — you need each and every guy pulling in the same direction.", author: "Mark Messier", team: "Rangers" },
-  { quote: "You can get great talent anywhere. The difference is what you do with it.", author: "Brian Leetch", team: "Rangers" },
-  { quote: "I don't care about goals. I care about wins.", author: "Henrik Lundqvist", team: "Rangers" },
-  // ISLANDERS
-  { quote: "We had a special group. Nobody gave us credit. We just won.", author: "Bryan Trottier", team: "Islanders" },
-  { quote: "Four Stanley Cups. Nobody can take that away from us.", author: "Mike Bossy", team: "Islanders" },
-  { quote: "I'll take the puck to the net every time. That's where goals are scored.", author: "Mike Bossy", team: "Islanders" },
-  { quote: "When we played, we played to win. Not to look good. To win.", author: "Denis Potvin", team: "Islanders" },
-  // GENERAL SPORTS
-  { quote: "The strength of the team is each individual member. The strength of each member is the team.", author: "Phil Jackson", team: "Sports" },
-  { quote: "You miss 100% of the shots you don't take.", author: "Wayne Gretzky", team: "Hockey" },
-  { quote: "The more difficult the victory, the greater the happiness in winning.", author: "Pele", team: "Soccer" },
-  { quote: "Champions keep playing until they get it right.", author: "Billie Jean King", team: "Sports" },
-  { quote: "The only place success comes before work is in the dictionary.", author: "Vince Lombardi", team: "NFL" },
-  { quote: "Hard work beats talent when talent doesn't work hard.", author: "Tim Notke", team: "Sports" },
-  { quote: "Baseball is like church. Many attend, few understand.", author: "Leo Durocher", team: "Baseball" },
-  { quote: "Every strike brings me closer to the next home run.", author: "Babe Ruth", team: "Yankees" },
-  { quote: "The secret to success is to know something nobody else knows.", author: "Aristotle Onassis", team: "Business" },
-  { quote: "New York City is the place where all the people come who want to make something of themselves.", author: "Unknown", team: "NYC" },
-  { quote: "Being a New York sports fan means having the highest highs and the lowest lows. Wouldn't trade it.", author: "NY Fan", team: "NYC" },
+  // ── YANKEES ──
+  { quote:"I want to thank the Good Lord for making me a Yankee.", author:"Joe DiMaggio", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Joe_DiMaggio" },
+  { quote:"There is always some kid who may be seeing me for the first or last time. I owe him my best.", author:"Joe DiMaggio", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Joe_DiMaggio" },
+  { quote:"Today I consider myself the luckiest man on the face of the earth.", author:"Lou Gehrig", team:"Yankees", context:"Farewell speech, July 4, 1939", wiki:"https://en.wikipedia.org/wiki/Lou_Gehrig" },
+  { quote:"It ain't over till it's over.", author:"Yogi Berra", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Yogi_Berra" },
+  { quote:"You can observe a lot just by watching.", author:"Yogi Berra", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Yogi_Berra" },
+  { quote:"When you come to a fork in the road, take it.", author:"Yogi Berra", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Yogi_Berra" },
+  { quote:"I never said most of the things I said.", author:"Yogi Berra", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Yogi_Berra" },
+  { quote:"Baseball is 90% mental and the other half is physical.", author:"Yogi Berra", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Yogi_Berra" },
+  { quote:"Nobody goes there anymore. It's too crowded.", author:"Yogi Berra", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Yogi_Berra" },
+  { quote:"The future ain't what it used to be.", author:"Yogi Berra", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Yogi_Berra" },
+  { quote:"Fans don't boo nobodies.", author:"Reggie Jackson", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Reggie_Jackson" },
+  { quote:"October is not like any other month in baseball.", author:"Reggie Jackson", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Reggie_Jackson" },
+  { quote:"If you're going to play at all, you're out to win.", author:"Derek Jeter", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Derek_Jeter" },
+  { quote:"Some people say New York is the capital of the world. I wouldn't argue with that.", author:"Derek Jeter", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Derek_Jeter" },
+  { quote:"There may be people who have more talent than you, but there's no excuse for anyone to work harder than you do.", author:"Derek Jeter", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Derek_Jeter" },
+  { quote:"I make my best pitch and trust my defense.", author:"Mariano Rivera", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Mariano_Rivera" },
+  { quote:"I've been blessed to play in New York. The fans here deserve the best.", author:"Mariano Rivera", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Mariano_Rivera" },
+  { quote:"Babe Ruth was not born. He fell from a tree.", author:"Joe Dugan", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Babe_Ruth" },
+  { quote:"Every strike brings me closer to the next home run.", author:"Babe Ruth", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Babe_Ruth" },
+  { quote:"Never let the fear of striking out keep you from playing the game.", author:"Babe Ruth", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Babe_Ruth" },
+  { quote:"The way a team plays as a whole determines its success.", author:"Babe Ruth", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Babe_Ruth" },
+  { quote:"I hit big or I miss big. I like to live as big as I can.", author:"Babe Ruth", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Babe_Ruth" },
+  { quote:"Don't look back. Something might be gaining on you.", author:"Satchel Paige", team:"Baseball", wiki:"https://en.wikipedia.org/wiki/Satchel_Paige" },
+  { quote:"It ain't bragging if you can back it up.", author:"Dizzy Dean", team:"Baseball", wiki:"https://en.wikipedia.org/wiki/Dizzy_Dean" },
+  { quote:"I'm not concerned with your liking or disliking me. All I ask is that you respect me as a human being.", author:"Jackie Robinson", team:"Baseball", wiki:"https://en.wikipedia.org/wiki/Jackie_Robinson" },
+  { quote:"A life is not important except in the impact it has on other lives.", author:"Jackie Robinson", team:"Baseball", wiki:"https://en.wikipedia.org/wiki/Jackie_Robinson" },
+  // ── METS ──
+  { quote:"Ya gotta believe!", author:"Tug McGraw", team:"Mets", context:"1973 pennant run", wiki:"https://en.wikipedia.org/wiki/Tug_McGraw" },
+  { quote:"New York is a city of conversation, of energy. The fans here live and die with every pitch.", author:"Mike Piazza", team:"Mets", wiki:"https://en.wikipedia.org/wiki/Mike_Piazza" },
+  { quote:"I don't think about the negative. That's a waste of time.", author:"Tom Seaver", team:"Mets", wiki:"https://en.wikipedia.org/wiki/Tom_Seaver" },
+  { quote:"In baseball, you can't sit on a lead and run a few plays into the line and just kill the clock. You've got to throw the ball over the plate and let the game proceed.", author:"Tom Seaver", team:"Mets", wiki:"https://en.wikipedia.org/wiki/Tom_Seaver" },
+  { quote:"The only way I can be stopped is if I stop myself.", author:"Dwight Gooden", team:"Mets", wiki:"https://en.wikipedia.org/wiki/Dwight_Gooden" },
+  { quote:"People say I'm the greatest pitcher who ever lived. I was 20.", author:"Dwight Gooden", team:"Mets", wiki:"https://en.wikipedia.org/wiki/Dwight_Gooden" },
+  { quote:"Shea Stadium is a magic place. You feel the energy the moment you walk in.", author:"Keith Hernandez", team:"Mets", wiki:"https://en.wikipedia.org/wiki/Keith_Hernandez" },
+  { quote:"The Mets don't just exist in New York. They are New York.", author:"Mike Francesa", team:"Mets", wiki:"https://en.wikipedia.org/wiki/Mike_Francesa" },
+  // ── JETS ──
+  { quote:"I guarantee it.", author:"Joe Namath", team:"Jets", context:"Super Bowl III guarantee, January 1969", wiki:"https://en.wikipedia.org/wiki/Joe_Namath" },
+  { quote:"When you have confidence, you can have a lot of fun. And when you have fun, you can do amazing things.", author:"Joe Namath", team:"Jets", wiki:"https://en.wikipedia.org/wiki/Joe_Namath" },
+  { quote:"If you're not in the parade, you watch the parade. That's life.", author:"Mike Ditka", team:"Football", wiki:"https://en.wikipedia.org/wiki/Mike_Ditka" },
+  { quote:"I guarantee we'll win the game. I guarantee it.", author:"Joe Namath", team:"Jets", context:"The most famous guarantee in sports history", wiki:"https://en.wikipedia.org/wiki/Super_Bowl_III" },
+  { quote:"I've been fortunate enough to play against the best in this league. And I've always been able to hold my own.", author:"Curtis Martin", team:"Jets", wiki:"https://en.wikipedia.org/wiki/Curtis_Martin" },
+  { quote:"New York Jets fans are the best in football. The most passionate. The most loyal. The most tortured.", author:"Rex Ryan", team:"Jets", wiki:"https://en.wikipedia.org/wiki/Rex_Ryan" },
+  // ── GIANTS ──
+  { quote:"The most important thing in the world to me is winning. That's what I live for.", author:"Lawrence Taylor", team:"Giants", wiki:"https://en.wikipedia.org/wiki/Lawrence_Taylor" },
+  { quote:"When you play for the Giants, you represent something bigger than yourself.", author:"Eli Manning", team:"Giants", wiki:"https://en.wikipedia.org/wiki/Eli_Manning" },
+  { quote:"Two-minute drill? I'm a two-minute man in everything I do.", author:"Phil Simms", team:"Giants", wiki:"https://en.wikipedia.org/wiki/Phil_Simms" },
+  { quote:"You show me a good loser and I'll show you a loser.", author:"Bill Parcells", team:"Giants", wiki:"https://en.wikipedia.org/wiki/Bill_Parcells" },
+  { quote:"Blame nobody. Expect nothing. Do something.", author:"Bill Parcells", team:"Giants", wiki:"https://en.wikipedia.org/wiki/Bill_Parcells" },
+  { quote:"The road to Easy Street goes through the sewer.", author:"Bill Parcells", team:"Giants", wiki:"https://en.wikipedia.org/wiki/Bill_Parcells" },
+  { quote:"I don't care about statistics. I care about wins.", author:"Lawrence Taylor", team:"Giants", wiki:"https://en.wikipedia.org/wiki/Lawrence_Taylor" },
+  { quote:"The most physical game in sports? Without question.", author:"Michael Strahan", team:"Giants", wiki:"https://en.wikipedia.org/wiki/Michael_Strahan" },
+  // ── KNICKS ──
+  { quote:"I never thought about failure. I just kept playing.", author:"Patrick Ewing", team:"Knicks", wiki:"https://en.wikipedia.org/wiki/Patrick_Ewing" },
+  { quote:"MSG is the best arena in the world. When that crowd gets going, there is nothing like it anywhere.", author:"Patrick Ewing", team:"Knicks", wiki:"https://en.wikipedia.org/wiki/Patrick_Ewing" },
+  { quote:"I always played my best in New York. The city pushes you.", author:"Walt Frazier", team:"Knicks", wiki:"https://en.wikipedia.org/wiki/Walt_Frazier" },
+  { quote:"Defense wins championships. I believe that with everything I have.", author:"Willis Reed", team:"Knicks", wiki:"https://en.wikipedia.org/wiki/Willis_Reed" },
+  { quote:"The Garden is sacred. When you walk out on that floor, you feel it.", author:"Walt Frazier", team:"Knicks", wiki:"https://en.wikipedia.org/wiki/Walt_Frazier" },
+  { quote:"Basketball is jazz. You improvise, you respond, you react.", author:"Walt Frazier", team:"Knicks", wiki:"https://en.wikipedia.org/wiki/Walt_Frazier" },
+  // ── RANGERS ──
+  { quote:"The best thing about the 1994 team was we believed. Every single one of us.", author:"Mark Messier", team:"Rangers", wiki:"https://en.wikipedia.org/wiki/Mark_Messier" },
+  { quote:"We will win tonight. I guarantee it.", author:"Mark Messier", team:"Rangers", context:"Before Game 6 vs Devils, 1994 playoffs", wiki:"https://en.wikipedia.org/wiki/Mark_Messier" },
+  { quote:"Fifty-four years of waiting. One night of unbelievable joy.", author:"Mark Messier", team:"Rangers", context:"After winning the 1994 Stanley Cup", wiki:"https://en.wikipedia.org/wiki/Mark_Messier" },
+  { quote:"New York hockey fans are unique. They know the game deeply and they care about it deeply.", author:"Brian Leetch", team:"Rangers", wiki:"https://en.wikipedia.org/wiki/Brian_Leetch" },
+  { quote:"The Garden crowd is the loudest in the NHL. Bar none.", author:"Henrik Lundqvist", team:"Rangers", wiki:"https://en.wikipedia.org/wiki/Henrik_Lundqvist" },
+  { quote:"I came to New York to win. Everything else comes second.", author:"Rod Gilbert", team:"Rangers", wiki:"https://en.wikipedia.org/wiki/Rod_Gilbert" },
+  // ── ISLANDERS ──
+  { quote:"We won because we played for each other. Every night. Every shift.", author:"Denis Potvin", team:"Islanders", wiki:"https://en.wikipedia.org/wiki/Denis_Potvin" },
+  { quote:"Four Cups. I don't know if people understand what that means. What it takes.", author:"Bryan Trottier", team:"Islanders", wiki:"https://en.wikipedia.org/wiki/Bryan_Trottier" },
+  { quote:"Nine straight 50-goal seasons. I just loved to score.", author:"Mike Bossy", team:"Islanders", wiki:"https://en.wikipedia.org/wiki/Mike_Bossy" },
+  { quote:"The Long Island fans were the most loyal fans in hockey. They made us want to win for them.", author:"Clark Gillies", team:"Islanders", wiki:"https://en.wikipedia.org/wiki/Clark_Gillies" },
+  // ── DEVILS ──
+  { quote:"Records don't matter to me. Winning does.", author:"Martin Brodeur", team:"Devils", wiki:"https://en.wikipedia.org/wiki/Martin_Brodeur" },
+  { quote:"I played in the best defensive system in hockey. Lou built something special.", author:"Martin Brodeur", team:"Devils", wiki:"https://en.wikipedia.org/wiki/Martin_Brodeur" },
+  { quote:"Three championships. Three. That's a dynasty. People forget that.", author:"Scott Stevens", team:"Devils", wiki:"https://en.wikipedia.org/wiki/Scott_Stevens" },
+  // ── NETS / DR. J ──
+  { quote:"The mark of a great player is someone who finds a way to win regardless of the situation.", author:"Julius Erving", team:"Nets", wiki:"https://en.wikipedia.org/wiki/Julius_Erving" },
+  { quote:"I don't have a nickname. I am Dr. J.", author:"Julius Erving", team:"Nets", wiki:"https://en.wikipedia.org/wiki/Julius_Erving" },
+  { quote:"Being a professional is doing what you love even on days you don't feel like doing it.", author:"Julius Erving", team:"Nets", wiki:"https://en.wikipedia.org/wiki/Julius_Erving" },
+  // ── GENERAL NY SPORTS WISDOM ──
+  { quote:"New York is not a city. It's a world.", author:"Iman", team:"NY", wiki:"https://en.wikipedia.org/wiki/New_York_City" },
+  { quote:"If you can make it there, you'll make it anywhere.", author:"Frank Sinatra", team:"NY", context:"New York, New York", wiki:"https://en.wikipedia.org/wiki/New_York,_New_York_(1980_song)" },
+  { quote:"In New York, the fans don't just watch the game. They become part of it.", author:"Bob Costas", team:"NY", wiki:"https://en.wikipedia.org/wiki/Bob_Costas" },
+  { quote:"Winning is habit. Unfortunately so is losing.", author:"Vince Lombardi", team:"Giants", context:"As Giants offensive coach, early 1960s", wiki:"https://en.wikipedia.org/wiki/Vince_Lombardi" },
+  { quote:"The highest compliment a player can receive is to be called a winner.", author:"Al Arbour", team:"Islanders", wiki:"https://en.wikipedia.org/wiki/Al_Arbour" },
+  { quote:"Individual commitment to a group effort — that is what makes a team work.", author:"Vince Lombardi", team:"Giants", wiki:"https://en.wikipedia.org/wiki/Vince_Lombardi" },
+  { quote:"Sports do not build character. They reveal it.", author:"Heywood Broun", team:"NY", wiki:"https://en.wikipedia.org/wiki/Heywood_Broun" },
+  { quote:"The more I practice, the luckier I get.", author:"Gary Player", team:"Golf", wiki:"https://en.wikipedia.org/wiki/Gary_Player" },
+  { quote:"Champions keep playing until they get it right.", author:"Billie Jean King", team:"Tennis", context:"US Open — USTA Billie Jean King National Tennis Center", wiki:"https://en.wikipedia.org/wiki/Billie_Jean_King" },
+  { quote:"I think self-awareness is probably the most important thing towards being a champion.", author:"Billie Jean King", team:"Tennis", wiki:"https://en.wikipedia.org/wiki/Billie_Jean_King" },
+  { quote:"Pressure is a privilege — it only comes to those who earn it.", author:"Billie Jean King", team:"Tennis", wiki:"https://en.wikipedia.org/wiki/Billie_Jean_King" },
+  { quote:"You are never really playing an opponent. You are playing yourself, your own highest standards.", author:"Arthur Ashe", team:"Tennis", context:"Named for Arthur Ashe Stadium, Flushing Meadows", wiki:"https://en.wikipedia.org/wiki/Arthur_Ashe" },
+  { quote:"From what we get, we can make a living. What we give, however, makes a life.", author:"Arthur Ashe", team:"Tennis", wiki:"https://en.wikipedia.org/wiki/Arthur_Ashe" },
+  { quote:"Success is a journey, not a destination.", author:"Arthur Ashe", team:"Tennis", wiki:"https://en.wikipedia.org/wiki/Arthur_Ashe" },
+  { quote:"Pain is temporary. Glory lasts forever.", author:"NY Sports Wisdom", team:"NY", wiki:"https://www.google.com/search?q=new+york+sports+greatest+moments" },
+  { quote:"In New York, every game feels like the playoffs.", author:"Phil Jackson", team:"NY", wiki:"https://en.wikipedia.org/wiki/Phil_Jackson" },
+  { quote:"Suffering builds character. And New York fans have more character than anyone.", author:"Mike Francesa", team:"NY", wiki:"https://en.wikipedia.org/wiki/Mike_Francesa" },
+  { quote:"The city doesn't sleep and neither do the fans.", author:"Anonymous", team:"NY", wiki:"https://www.google.com/search?q=new+york+sports+fans" },
+  { quote:"A team is not a collection of individual players. It is one unit.", author:"Tom Landry", team:"Giants", context:"As Giants defensive coordinator before becoming Cowboys legend", wiki:"https://en.wikipedia.org/wiki/Tom_Landry" },
+  { quote:"Confidence is the most important single factor in this game.", author:"Jack Nicklaus", team:"Golf", context:"US Open at Baltusrol — near NY courses Winged Foot and Shinnecock", wiki:"https://en.wikipedia.org/wiki/Jack_Nicklaus" },
+  { quote:"I never wanted to be famous. I only wanted to be great.", author:"Ray Charles", team:"NY", wiki:"https://www.google.com/search?q=greatest+ny+sports+quotes" },
+  { quote:"One play, one game, one season at a time.", author:"Curtis Martin", team:"Jets", wiki:"https://en.wikipedia.org/wiki/Curtis_Martin" },
+  { quote:"Hard work beats talent when talent doesn't work hard.", author:"Tim Notke", team:"NY", wiki:"https://www.google.com/search?q=hard+work+beats+talent+sports+quote" },
+  { quote:"The will to win is important, but the will to prepare is vital.", author:"Joe Paterno", team:"Football", wiki:"https://en.wikipedia.org/wiki/Joe_Paterno" },
+  { quote:"You miss 100 percent of the shots you never take.", author:"Wayne Gretzky", team:"Hockey", wiki:"https://en.wikipedia.org/wiki/Wayne_Gretzky" },
+  { quote:"I've missed more than 9,000 shots in my career. I've lost almost 300 games. I've failed over and over again — and that is why I succeed.", author:"Michael Jordan", team:"Basketball", wiki:"https://en.wikipedia.org/wiki/Michael_Jordan" },
+  { quote:"It's hard to beat a person who never gives up.", author:"Babe Ruth", team:"Yankees", wiki:"https://en.wikipedia.org/wiki/Babe_Ruth" },
+  { quote:"Set your goals high, and don't stop till you get there.", author:"Bo Jackson", team:"Sports", wiki:"https://en.wikipedia.org/wiki/Bo_Jackson" },
+  { quote:"The difference between the impossible and the possible lies in a person's determination.", author:"Tommy Lasorda", team:"Baseball", wiki:"https://en.wikipedia.org/wiki/Tommy_Lasorda" },
 ];
 
 function getDailyQuote() {
@@ -653,46 +676,79 @@ async function fetchNYNews() {
     });
   }));
 
-  // Reddit team subreddits — top posts of the day
+  // Reddit team subreddits — top AND new posts combined
   const REDDIT_SUBS = [
-    { sub:"NYYankees",      team:"Yankees"  },
-    { sub:"NewYorkMets",    team:"Mets"     },
-    { sub:"nyjets",         team:"Jets"     },
-    { sub:"NYGiants",       team:"Giants"   },
-    { sub:"NYKnicks",       team:"Knicks"   },
-    { sub:"GoNets",         team:"Nets"     },
-    { sub:"rangers",        team:"Rangers"  },
-    { sub:"NewYorkIslanders",team:"Islanders"},
-    { sub:"devils",         team:"Devils"   },
-    { sub:"nyliberty",      team:"Liberty"  },
+    { sub:"NYYankees",       team:"Yankees"   },
+    { sub:"NewYorkMets",     team:"Mets"      },
+    { sub:"nyjets",          team:"Jets"      },
+    { sub:"NYGiants",        team:"Giants"    },
+    { sub:"NYKnicks",        team:"Knicks"    },
+    { sub:"GoNets",          team:"Nets"      },
+    { sub:"rangers",         team:"Rangers"   },
+    { sub:"NewYorkIslanders",team:"Islanders" },
+    { sub:"devils",          team:"Devils"    },
+    { sub:"nyliberty",       team:"Liberty"   },
+    { sub:"NYCFC",           team:"NYCFC"     },
   ];
   await Promise.all(REDDIT_SUBS.map(async ({ sub, team }) => {
-    const json = await safeFetch(`https://www.reddit.com/r/${sub}/top.json?limit=5&t=day`);
-    if (!json?.data?.children) return;
-    json.data.children.forEach(post => {
+    // Fetch both hot and new to get broader coverage
+    const [topJson, newJson] = await Promise.all([
+      safeFetch(`https://www.reddit.com/r/${sub}/hot.json?limit=8`),
+      safeFetch(`https://www.reddit.com/r/${sub}/new.json?limit=5`),
+    ]);
+    const posts = [
+      ...(topJson?.data?.children || []),
+      ...(newJson?.data?.children || []),
+    ];
+    posts.forEach(post => {
       const p = post.data;
       if (!p || p.stickied || p.over_18) return;
       const title = p.title;
       if (!title || seen.has(title)) return;
-      // Skip pure discussion threads / game threads / lineup threads
       const lowerTitle = title.toLowerCase();
       if (lowerTitle.includes("game thread") || lowerTitle.includes("post-game thread") ||
           lowerTitle.includes("daily discussion") || lowerTitle.includes("lineup thread") ||
-          lowerTitle.includes("pre-game thread")) return;
+          lowerTitle.includes("pre-game thread") || lowerTitle.includes("weekly thread")) return;
       seen.add(title);
       results.push({
         title,
-        link:   `https://reddit.com${p.permalink}`,
-        desc:   p.selftext ? p.selftext.slice(0,200) : "",
-        pub:    new Date(p.created_utc * 1000).toISOString(),
-        source: `Reddit · r/${sub}`,
+        link:    `https://reddit.com${p.permalink}`,
+        desc:    p.selftext ? p.selftext.slice(0, 200) : "",
+        pub:     new Date(p.created_utc * 1000).toISOString(),
+        source:  `Reddit · r/${sub}`,
         team,
-        sport:  team,
-        isNY:   true,
+        sport:   team,
+        isNY:    true,
         upvotes: p.ups,
       });
     });
   }));
+
+  // MLB.com Stats API — great for Yankees and Mets news
+  const MLB_TEAMS = [
+    { id:147, name:"Yankees" },
+    { id:121, name:"Mets"    },
+  ];
+  await Promise.all(MLB_TEAMS.map(async ({ id, name }) => {
+    const json = await safeFetch(`https://statsapi.mlb.com/api/v1/news/feed/team/${id}?limit=10`);
+    if (!json?.articles) return;
+    (json.articles || []).forEach(a => {
+      const title = a.headline || a.title || "";
+      if (!title || seen.has(title)) return;
+      seen.add(title);
+      results.push({
+        title,
+        link:   a.url || `https://www.mlb.com/${name.toLowerCase()}/news`,
+        desc:   a.blurb || a.subhead || "",
+        pub:    a.date || a.timestamp || "",
+        source: `MLB.com · ${name}`,
+        team:   name,
+        sport:  "MLB",
+        isNY:   true,
+      });
+    });
+  }));
+
 
   return results.sort((a,b) => new Date(b.pub) - new Date(a.pub));
 }
@@ -1821,12 +1877,19 @@ function TVGameRow({ game, featured }) {
 // ─── QUOTE OF THE DAY ─────────────────────────────────────────────────────
 function QuoteOfDay() {
   const q = getDailyQuote();
+  const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(q.author + " " + q.team + " quotes")}`;
   return (
     <div style={styles.quoteBar}>
       <span style={styles.quoteIcon}>💬</span>
       <div style={styles.quoteBody}>
         <p style={styles.quoteText}>"{q.quote}"</p>
-        <p style={styles.quoteAuthor}>— {q.author}{q.context ? `, ${q.context}` : ""} <span style={styles.quoteTeam}>· {q.team}</span></p>
+        <p style={styles.quoteAuthor}>
+          — {q.author}{q.context ? `, ${q.context}` : ""} <span style={styles.quoteTeam}>· {q.team}</span>
+        </p>
+        <div style={{display:"flex", gap:10, marginTop:4}}>
+          {q.wiki && <a href={q.wiki} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>📖 Wiki</a>}
+          <a href={googleUrl} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>🔍 More quotes</a>
+        </div>
       </div>
     </div>
   );
@@ -2924,6 +2987,10 @@ function IconicTab() {
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicTitle}>{x.t}</span>
                 <span style={styles.iconicDesc}>{x.d}</span>
+                <div style={{display:"flex",gap:10,marginTop:4}}>
+                  <a href={`https://www.google.com/search?q=${encodeURIComponent(x.t)}`} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>🔍 Google</a>
+                  <a href={`https://en.wikipedia.org/wiki/${encodeURIComponent(x.t.replace(/ /g,'_'))}`} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>📖 Wiki</a>
+                </div>
               </div>
             </div>
           ))}
@@ -2943,6 +3010,10 @@ function IconicTab() {
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicTitle}>{x.t}</span>
                 <span style={styles.iconicDesc}>{x.d}</span>
+                <div style={{display:"flex",gap:10,marginTop:4}}>
+                  <a href={`https://www.google.com/search?q=${encodeURIComponent(x.t)}`} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>🔍 Google</a>
+                  <a href={`https://en.wikipedia.org/wiki/${encodeURIComponent(x.t.replace(/ /g,'_'))}`} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>📖 Wiki</a>
+                </div>
               </div>
             </div>
           ))}
@@ -2971,7 +3042,10 @@ function IconicTab() {
           ].map((x,i) => (
             <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
               <div style={styles.iconicYear}>{x.y}</div>
-              <div style={styles.iconicInfo}><span style={styles.iconicDesc}>{x.d}</span></div>
+              <div style={styles.iconicInfo}>
+                <span style={styles.iconicDesc}>{x.d}</span>
+                <a href={`https://www.google.com/search?q=${encodeURIComponent((x.d||"").slice(0,40))}`} target="_blank" rel="noopener noreferrer" style={{...styles.quoteLinkSmall,marginTop:4,display:"inline-block"}}>🔍 Google</a>
+              </div>
             </div>
           ))}
 
@@ -2987,7 +3061,10 @@ function IconicTab() {
           ].map((x,i) => (
             <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
               <div style={styles.iconicYear}>{x.y}</div>
-              <div style={styles.iconicInfo}><span style={styles.iconicDesc}>{x.d}</span></div>
+              <div style={styles.iconicInfo}>
+                <span style={styles.iconicDesc}>{x.d}</span>
+                <a href={`https://www.google.com/search?q=${encodeURIComponent((x.d||"").slice(0,40))}`} target="_blank" rel="noopener noreferrer" style={{...styles.quoteLinkSmall,marginTop:4,display:"inline-block"}}>🔍 Google</a>
+              </div>
             </div>
           ))}
 
@@ -3000,7 +3077,10 @@ function IconicTab() {
           ].map((x,i) => (
             <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
               <div style={styles.iconicYear}>{x.y}</div>
-              <div style={styles.iconicInfo}><span style={styles.iconicDesc}>{x.d}</span></div>
+              <div style={styles.iconicInfo}>
+                <span style={styles.iconicDesc}>{x.d}</span>
+                <a href={`https://www.google.com/search?q=${encodeURIComponent((x.d||"").slice(0,40))}`} target="_blank" rel="noopener noreferrer" style={{...styles.quoteLinkSmall,marginTop:4,display:"inline-block"}}>🔍 Google</a>
+              </div>
             </div>
           ))}
 
@@ -3015,6 +3095,10 @@ function IconicTab() {
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicTitle}>{x.t}</span>
                 <span style={styles.iconicDesc}>{x.d}</span>
+                <div style={{display:"flex",gap:10,marginTop:4}}>
+                  <a href={`https://www.google.com/search?q=${encodeURIComponent(x.t)}`} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>🔍 Google</a>
+                  <a href={`https://en.wikipedia.org/wiki/${encodeURIComponent(x.t.replace(/ /g,'_'))}`} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>📖 Wiki</a>
+                </div>
               </div>
             </div>
           ))}
@@ -3057,7 +3141,10 @@ function IconicTab() {
           ].map((x,i) => (
             <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"}), ...(x.y==="1973"?{borderLeft:"3px solid #c8201c"}:{})}}>
               <div style={styles.iconicYear}>{x.y}</div>
-              <div style={styles.iconicInfo}><span style={styles.iconicDesc}>{x.d}</span></div>
+              <div style={styles.iconicInfo}>
+                <span style={styles.iconicDesc}>{x.d}</span>
+                <a href={`https://www.google.com/search?q=${encodeURIComponent((x.d||"").slice(0,40))}`} target="_blank" rel="noopener noreferrer" style={{...styles.quoteLinkSmall,marginTop:4,display:"inline-block"}}>🔍 Google</a>
+              </div>
             </div>
           ))}
 
@@ -3074,6 +3161,10 @@ function IconicTab() {
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicTitle}>{x.t}</span>
                 <span style={styles.iconicDesc}>{x.d}</span>
+                <div style={{display:"flex",gap:10,marginTop:4}}>
+                  <a href={`https://www.google.com/search?q=${encodeURIComponent(x.t)}`} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>🔍 Google</a>
+                  <a href={`https://en.wikipedia.org/wiki/${encodeURIComponent(x.t.replace(/ /g,'_'))}`} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>📖 Wiki</a>
+                </div>
               </div>
             </div>
           ))}
@@ -3396,14 +3487,9 @@ function PollsTab() {
     } catch(e) {}
   }, []);
 
-  // Rotate: feature a "Poll of the Day" based on day of year, plus show all polls below
+  // One poll per day — rotates daily through the full bank
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
-  const featuredPoll = ALL_POLLS[dayOfYear % ALL_POLLS.length];
-  // This week's rotating set (7 polls that change weekly)
-  const weekNum = Math.floor(dayOfYear / 7);
-  const weeklyPolls = Array.from({length:7}, (_,i) => ALL_POLLS[(weekNum*7 + i) % ALL_POLLS.length]);
-  // Dedupe featured out of weekly
-  const POLLS = [featuredPoll, ...weeklyPolls.filter(p => p.id !== featuredPoll.id)];
+  const POLLS = [ALL_POLLS[dayOfYear % ALL_POLLS.length]];
 
   function handleVote(pollId, option) {
     if (voted[pollId]) return;
@@ -3437,12 +3523,11 @@ function PollsTab() {
         <p style={{margin:0, fontSize:12, color:"#aaa"}}>Vote in each poll — results show after you pick, and your votes are saved on this device. The featured Poll of the Day rotates daily, and the full set rotates weekly so there's always something fresh.</p>
       </div>
       <div style={{display:"flex", flexDirection:"column", gap:20}}>
-        {POLLS.map((poll, pIdx) => {
+        {POLLS.map((poll) => {
           const hasVoted = voted[poll.id];
-          const total = getTotal(poll.id);
           return (
-            <div key={poll.id} style={{...styles.pollCard, ...(pIdx===0 ? {border:"1px solid #c8201c"} : {})}}>
-              {pIdx===0 && <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:6}}>⭐ POLL OF THE DAY</div>}
+            <div key={poll.id} style={{...styles.pollCard, border:"1px solid #c8201c"}}>
+              <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:8}}>⭐ POLL OF THE DAY — CHANGES DAILY</div>
               <div style={styles.pollQuestion}>{poll.question}</div>
               <div style={styles.pollOptions}>
                 {poll.options.map((opt, i) => {
@@ -3463,16 +3548,15 @@ function PollsTab() {
                         {hasVoted && (
                           <div style={{...styles.pollBar, width:`${pct}%`, background: isWinner?"#c8201c":"#2a2a2a"}} />
                         )}
-                        <span style={styles.pollOptionText}>
-                          {isMyVote && "✓ "}{opt}
-                        </span>
+                        <span style={styles.pollOptionText}>{isMyVote && "✓ "}{opt}</span>
                         {hasVoted && <span style={styles.pollPct}>{pct}%</span>}
                       </button>
                     </div>
                   );
                 })}
               </div>
-              {hasVoted && <div style={styles.pollMeta}>{total} vote{total!==1?"s":""} · you voted: {voted[poll.id]}</div>}
+              {hasVoted && <div style={styles.pollMeta}>your vote: {voted[poll.id]}</div>}
+              {!hasVoted && <div style={styles.pollMeta}>Cast your vote above — a new question tomorrow</div>}
             </div>
           );
         })}
@@ -6293,6 +6377,7 @@ const styles = {
   },
   quoteAuthor: { margin:0, fontSize:10, color:"#aaa", letterSpacing:"0.05em" },
   quoteTeam: { color:"#c8201c", fontWeight:700 },
+  quoteLinkSmall: { fontSize:9, color:"#888", fontWeight:700, textDecoration:"none", letterSpacing:"0.05em" },
 
   // STATS
   statsRoot: { paddingTop:8 },
