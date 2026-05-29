@@ -852,6 +852,8 @@ export default function NYSportsDaily() {
   const [activeLeague, setActiveLeague]   = useState("ALL");
   const [nyOnly, setNyOnly]               = useState(false);
   const [activeTab, setActiveTab]         = useState("SCORES");
+  const [searchOpen, setSearchOpen]       = useState(false);
+  const [searchQuery, setSearchQuery]     = useState("");
   const days = getLast7Days();
 
   const loadScores = useCallback(async (date) => {
@@ -934,6 +936,25 @@ export default function NYSportsDaily() {
             <div style={styles.mastheadLineBar} />
           </div>
         </div>
+        {/* Search bar */}
+        <div style={styles.searchBar}>
+          <input
+            type="text"
+            placeholder="🔍  Search players, moments, history, teams..."
+            value={searchQuery}
+            onChange={e => { setSearchQuery(e.target.value); setSearchOpen(e.target.value.length > 1); }}
+            onFocus={() => { if (searchQuery.length > 1) setSearchOpen(true); }}
+            onBlur={() => setTimeout(() => setSearchOpen(false), 200)}
+            style={styles.searchInput}
+          />
+          {searchQuery && (
+            <button onClick={() => { setSearchQuery(""); setSearchOpen(false); }} style={styles.searchClear}>✕</button>
+          )}
+        </div>
+        {/* Search results dropdown */}
+        {searchOpen && searchQuery.length > 1 && (
+          <SiteSearch query={searchQuery} onSelect={(tab) => { setActiveTab(tab); setSearchQuery(""); setSearchOpen(false); }} />
+        )}
       </header>
 
       {/* ── DATE STRIP ── */}
@@ -2866,6 +2887,176 @@ function HistoryTab() {
 }
 
 // ─── TODAY IN NY SPORTS ───────────────────────────────────────────────────
+// ─── SITE SEARCH ──────────────────────────────────────────────────────────
+function SiteSearch({ query, onSelect }) {
+  const q = query.toLowerCase().trim();
+
+  // Build search index from all site content
+  const results = [];
+
+  // Search DAILY_PLAYERS
+  DAILY_PLAYERS.forEach(p => {
+    const text = `${p.name} ${p.team} ${p.pos} ${p.era} ${p.stats} ${p.fact}`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "PLAYER SPOTLIGHT", icon: p.emoji,
+      title: p.name,
+      sub: `${p.team} · ${p.pos} · ${p.era}`,
+      tab: "SCORES",
+      highlight: p.stats.slice(0, 60),
+    });
+  });
+
+  // Search TODAY_IN_NY_SPORTS
+  TODAY_IN_NY_SPORTS.forEach(m => {
+    const text = `${m.title} ${m.desc} ${m.team} ${m.year}`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "ON THIS DATE", icon: m.emoji,
+      title: m.title,
+      sub: `${m.team} · ${m.month}/${m.day}/${m.year}`,
+      tab: "THIS DATE",
+      highlight: m.desc.slice(0, 80),
+    });
+  });
+
+  // Search NY_QUOTES
+  NY_QUOTES.forEach(qt => {
+    const text = `${qt.quote} ${qt.author} ${qt.team}`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "QUOTE", icon: "💬",
+      title: `"${qt.quote.slice(0, 60)}..."`,
+      sub: `— ${qt.author} · ${qt.team}`,
+      tab: "SCORES",
+      highlight: qt.author,
+    });
+  });
+
+  // Search HOF_DATA
+  Object.entries(HOF_DATA).forEach(([team, players]) => {
+    players.forEach(p => {
+      const text = `${p.name} ${team} ${p.pos} ${p.note}`.toLowerCase();
+      if (text.includes(q)) results.push({
+        type: "HALL OF FAME", icon: "🏛️",
+        title: p.name,
+        sub: `${team} · ${p.pos}${p.inducted ? ` · Inducted ${p.inducted}` : ""}`,
+        tab: "HOF",
+        highlight: p.note,
+      });
+    });
+  });
+
+  // Search ALL_POLLS
+  ALL_POLLS.forEach(p => {
+    const text = `${p.question} ${p.options.join(" ")}`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "POLL", icon: "🗳️",
+      title: p.question,
+      sub: p.options.join(" · ").slice(0, 60),
+      tab: "POLLS",
+      highlight: "",
+    });
+  });
+
+  // Search HISTORY_LISTS
+  Object.entries(HISTORY_LISTS).forEach(([category, lists]) => {
+    lists.forEach(list => {
+      if (list.title.toLowerCase().includes(q)) {
+        results.push({
+          type: "HISTORY LIST", icon: "📋",
+          title: list.title,
+          sub: `Category: ${category}`,
+          tab: "HISTORY",
+          highlight: "",
+        });
+      }
+      (list.items || []).forEach(item => {
+        const text = `${item.name} ${item.value} ${item.years}`.toLowerCase();
+        if (text.includes(q)) results.push({
+          type: "HISTORY", icon: "📊",
+          title: item.name,
+          sub: `${list.title} · ${item.value}`,
+          tab: "HISTORY",
+          highlight: item.years,
+        });
+      });
+    });
+  });
+
+  // Search STADIUM_HISTORY
+  STADIUM_HISTORY.forEach(s => {
+    const text = `${s.name} ${s.team} ${s.note} ${s.location}`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "STADIUM", icon: "🏟️",
+      title: s.name,
+      sub: `${s.team} · ${s.years} · ${s.location}`,
+      tab: "HISTORY",
+      highlight: s.note.slice(0, 80),
+    });
+  });
+
+  // Static nav shortcuts
+  const NAV_SHORTCUTS = [
+    { keywords:["score","scores","game","games","live"], tab:"SCORES",    icon:"🏆", title:"Live Scores & Games",   sub:"Today's scores across all NY teams" },
+    { keywords:["news","headline","story","stories"],    tab:"NEWS",      icon:"📰", title:"NY Sports News",         sub:"Latest headlines and beat writer links" },
+    { keywords:["recap","yesterday","highlights"],       tab:"RECAP",     icon:"📺", title:"Last Night's Recap",     sub:"Yesterday's NY results and YouTube highlights" },
+    { keywords:["stand","standing","table"],             tab:"STANDINGS", icon:"📊", title:"League Standings",       sub:"Current standings for all NY team leagues" },
+    { keywords:["tv","television","channel","watch"],    tab:"TV",        icon:"📺", title:"TV Schedule",            sub:"What's on TV tonight for NY sports" },
+    { keywords:["schedule","upcoming","next game"],      tab:"SCHEDULE",  icon:"📅", title:"Schedule",               sub:"Upcoming NY sports schedule" },
+    { keywords:["misery","suffer","drought","worst"],    tab:"MISERY",    icon:"😩", title:"Misery Index",           sub:"NY teams ranked by how much they've made fans suffer" },
+    { keywords:["poll","vote","debate","opinion"],       tab:"POLLS",     icon:"🗳️", title:"Polls",                  sub:"This week's NY sports poll" },
+    { keywords:["hof","hall of fame","inducted","legend"],tab:"HOF",      icon:"🏛️", title:"Hall of Fame",           sub:"Every NY Hall of Famer by team" },
+    { keywords:["trivia","quiz","question"],             tab:"TRIVIA",    icon:"🧠", title:"Trivia",                 sub:"Daily NY sports trivia challenge" },
+    { keywords:["spin","fact","random"],                 tab:"SPIN",      icon:"🎰", title:"Spin Facts",             sub:"Random NY sports facts" },
+    { keywords:["shop","buy","gear","jersey"],           tab:"SHOP",      icon:"🛒", title:"Shop",                   sub:"NY sports gear, books, memorabilia" },
+    { keywords:["radio","podcast","listen","wfan"],      tab:"RADIO",     icon:"📻", title:"Radio & Podcasts",       sub:"NY sports radio stations and podcasts" },
+    { keywords:["iconic","tennis","golf","belmont","secretariat","us open"], tab:"ICONIC", icon:"🏆", title:"Iconic NY Events", sub:"US Open Tennis, US Open Golf, Belmont Stakes" },
+    { keywords:["crossword","xword","puzzle"],           tab:"XWORD",     icon:"✏️", title:"Crossword",              sub:"NY sports crossword puzzle" },
+  ];
+  NAV_SHORTCUTS.forEach(s => {
+    if (s.keywords.some(kw => kw.includes(q) || q.includes(kw))) {
+      results.push({ type:"NAVIGATE", icon:s.icon, title:s.title, sub:s.sub, tab:s.tab, highlight:"" });
+    }
+  });
+
+  const limited = results.slice(0, 12);
+  if (limited.length === 0) return (
+    <div style={styles.searchDropdown}>
+      <div style={styles.searchNoResult}>No results for "{query}" — try a player name, team, or event</div>
+    </div>
+  );
+
+  const TYPE_COLORS = {
+    "PLAYER SPOTLIGHT": "#c8201c",
+    "ON THIS DATE":     "#c8201c",
+    "HALL OF FAME":     "#FFD700",
+    "HISTORY":          "#888",
+    "HISTORY LIST":     "#888",
+    "STADIUM":          "#4ade80",
+    "QUOTE":            "#aaa",
+    "POLL":             "#c8201c",
+    "NAVIGATE":         "#0038A8",
+  };
+
+  return (
+    <div style={styles.searchDropdown}>
+      {limited.map((r, i) => (
+        <button key={i} onMouseDown={() => onSelect(r.tab)} style={styles.searchResult}>
+          <span style={styles.searchResultIcon}>{r.icon}</span>
+          <div style={styles.searchResultBody}>
+            <div style={styles.searchResultTop}>
+              <span style={{...styles.searchResultType, color: TYPE_COLORS[r.type] || "#888"}}>{r.type}</span>
+              <span style={styles.searchResultTab}>→ {r.tab}</span>
+            </div>
+            <span style={styles.searchResultTitle}>{r.title}</span>
+            {r.sub && <span style={styles.searchResultSub}>{r.sub}</span>}
+            {r.highlight && <span style={styles.searchResultHighlight}>{r.highlight}</span>}
+          </div>
+        </button>
+      ))}
+      <div style={styles.searchFooter}>{results.length} result{results.length !== 1 ? "s" : ""} for "{query}"</div>
+    </div>
+  );
+}
+
 // ─── RECAP TAB ─────────────────────────────────────────────────────────────
 function RecapTab({ scores }) {
   const [ytResults, setYtResults] = useState({});
@@ -3532,30 +3723,65 @@ function TodayTab() {
 
 // ─── POLLS TAB ─────────────────────────────────────────────────────────────
 const ALL_POLLS = [
-  { id:"goat_yankee", question:"Who is the greatest Yankee of all time?", options:["Babe Ruth","Lou Gehrig","Mickey Mantle","Joe DiMaggio","Derek Jeter"] },
-  { id:"goat_met", question:"Who is the greatest Met of all time?", options:["Tom Seaver","Mike Piazza","Dwight Gooden","David Wright","Pete Alonso"] },
-  { id:"goat_knick", question:"Who is the greatest Knick of all time?", options:["Patrick Ewing","Walt Frazier","Willis Reed","Carmelo Anthony","Jalen Brunson"] },
-  { id:"goat_jet", question:"Who is the greatest Jet of all time?", options:["Joe Namath","Curtis Martin","Don Maynard","Darrelle Revis","Mark Gastineau"] },
-  { id:"goat_giant", question:"Who is the greatest Giant of all time?", options:["Lawrence Taylor","Eli Manning","Frank Gifford","Phil Simms","Michael Strahan"] },
-  { id:"goat_ranger", question:"Who is the greatest Ranger of all time?", options:["Mark Messier","Brian Leetch","Rod Gilbert","Mike Richter","Henrik Lundqvist"] },
-  { id:"goat_islander", question:"Who is the greatest Islander of all time?", options:["Bryan Trottier","Mike Bossy","Denis Potvin","Billy Smith","John Tavares"] },
-  { id:"goat_devil", question:"Who is the greatest Devil of all time?", options:["Martin Brodeur","Scott Stevens","Patrik Elias","Scott Niedermayer","Ken Daneyko"] },
-  { id:"best_moment", question:"Greatest NY sports moment ever?", options:["1969 Mets WS","Namath Guarantee","Rangers 1994 Cup","Helmet Catch","Piazza 9/11 HR"] },
-  { id:"best_stadium", question:"Best NY sports venue?", options:["Yankee Stadium","Madison Square Garden","MetLife Stadium","Citi Field","UBS Arena"] },
-  { id:"misery_leader", question:"Which NY team makes you suffer the most?", options:["Jets","Mets","Knicks","Islanders","Rangers"] },
-  { id:"mt_rushmore", question:"NY Sports Mt. Rushmore — who's on it?", options:["Ruth/Namath/LT/Messier","Jeter/Ewing/Messier/LT","Ruth/DiMaggio/Namath/Ewing","Mantle/Seaver/Reed/Bossy"] },
-  { id:"best_qb", question:"Best NY quarterback ever?", options:["Joe Namath","Eli Manning","Phil Simms","Y.A. Tittle"] },
-  { id:"best_pitcher", question:"Best NY pitcher of all time?", options:["Tom Seaver","Whitey Ford","Dwight Gooden","Mariano Rivera","Jacob deGrom"] },
-  { id:"best_coach", question:"Greatest NY coach/manager ever?", options:["Casey Stengel","Bill Parcells","Red Holzman","Al Arbour","Joe Torre"] },
-  { id:"best_subway", question:"Who wins the all-time Subway Series?", options:["Yankees — no contest","Mets — heart over history","Too close to call"] },
-  { id:"best_dynasty", question:"Greatest NY dynasty?", options:["Yankees (any era)","Islanders 1980-83","Knicks early 70s","Devils 1995-2003"] },
-  { id:"best_single_season", question:"Greatest single NY team season?", options:["1927 Yankees","1986 Mets","1998 Yankees","1969 Mets","1970 Knicks"] },
-  { id:"most_heartbreak", question:"Most heartbreaking NY sports moment?", options:["2004 ALCS collapse","2007 Mets collapse","Wide Right (Bills had it worse)","2000 Subway Series loss (Mets)"] },
-  { id:"best_nickname", question:"Best NY sports nickname?", options:["Mr. October","The Captain","Broadway Joe","LT","Doc"] },
-  { id:"goat_overall", question:"The single greatest NY athlete ever?", options:["Babe Ruth","Lawrence Taylor","Willis Reed","Mark Messier","Tom Seaver"] },
-  { id:"best_owner", question:"Best (or most impactful) NY sports owner?", options:["George Steinbrenner","Steve Cohen","James Dolan (lol)","Charles Wang"] },
-  { id:"best_broadcaster", question:"Best NY sports broadcaster ever?", options:["Bob Murphy","Phil Rizzuto","Marv Albert","Mike Breen","Gary Cohen"] },
-  { id:"best_walkup", question:"Best NY sports entrance/walk-up moment?", options:["Enter Sandman (Rivera)","Jeter's intro at the Stadium","MSG Rangers goal song","Mets Piazza at-bats"] },
+  // WEEK 1-8: GOAT BY TEAM
+  { id:"goat_yankee",       question:"Who is the greatest Yankee of all time?",                        options:["Babe Ruth","Lou Gehrig","Mickey Mantle","Joe DiMaggio","Derek Jeter"] },
+  { id:"goat_met",          question:"Who is the greatest Met of all time?",                           options:["Tom Seaver","Mike Piazza","Dwight Gooden","David Wright","Pete Alonso"] },
+  { id:"goat_knick",        question:"Who is the greatest Knick of all time?",                         options:["Patrick Ewing","Walt Frazier","Willis Reed","Carmelo Anthony","Jalen Brunson"] },
+  { id:"goat_jet",          question:"Who is the greatest Jet of all time?",                           options:["Joe Namath","Curtis Martin","Don Maynard","Darrelle Revis","Mark Gastineau"] },
+  { id:"goat_giant",        question:"Who is the greatest Giant of all time?",                         options:["Lawrence Taylor","Eli Manning","Frank Gifford","Phil Simms","Michael Strahan"] },
+  { id:"goat_ranger",       question:"Who is the greatest Ranger of all time?",                        options:["Mark Messier","Brian Leetch","Rod Gilbert","Mike Richter","Henrik Lundqvist"] },
+  { id:"goat_islander",     question:"Who is the greatest Islander of all time?",                      options:["Bryan Trottier","Mike Bossy","Denis Potvin","Billy Smith","John Tavares"] },
+  { id:"goat_devil",        question:"Who is the greatest Devil of all time?",                         options:["Martin Brodeur","Scott Stevens","Patrik Elias","Scott Niedermayer","Ken Daneyko"] },
+  // WEEK 9-16: MOMENTS & VENUES
+  { id:"best_moment",       question:"Greatest NY sports moment ever?",                                options:["1969 Mets WS","Namath Guarantee","Rangers 1994 Cup","Helmet Catch","Piazza 9/11 HR"] },
+  { id:"best_stadium",      question:"Best NY sports venue?",                                          options:["Yankee Stadium","Madison Square Garden","MetLife Stadium","Citi Field","UBS Arena"] },
+  { id:"misery_leader",     question:"Which NY team makes you suffer the most?",                       options:["Jets","Mets","Knicks","Islanders","Rangers"] },
+  { id:"mt_rushmore",       question:"NY Sports Mt. Rushmore — who's on it?",                         options:["Ruth/Namath/LT/Messier","Jeter/Ewing/Messier/LT","Ruth/DiMaggio/Namath/Ewing","Mantle/Seaver/Reed/Bossy"] },
+  { id:"best_rivalry",      question:"Best NY sports rivalry?",                                        options:["Yankees vs Red Sox","Rangers vs Devils","Knicks vs Heat (90s)","Jets vs Patriots","Mets vs Phillies"] },
+  { id:"best_choke",        question:"Most painful NY sports collapse?",                               options:["2004 ALCS (Yankees blew 3-0)","2007 Mets (7-game September collapse)","2015 Mets World Series","2019 Yankees ALCS"] },
+  { id:"best_dynasty",      question:"Greatest NY dynasty?",                                           options:["Yankees (any era)","Islanders 1980-83","Knicks early 70s","Devils 1995-2003","Liberty 2024-25"] },
+  { id:"best_single_season",question:"Greatest single NY team season?",                                options:["1927 Yankees","1986 Mets","1998 Yankees","1969 Mets","1970 Knicks"] },
+  // WEEK 17-24: POSITIONS & INDIVIDUALS
+  { id:"best_qb",           question:"Best NY quarterback ever?",                                      options:["Joe Namath","Eli Manning","Phil Simms","Y.A. Tittle"] },
+  { id:"best_pitcher",      question:"Best NY pitcher of all time?",                                   options:["Tom Seaver","Whitey Ford","Dwight Gooden","Mariano Rivera","Jacob deGrom"] },
+  { id:"best_coach",        question:"Greatest NY coach/manager ever?",                                options:["Casey Stengel","Bill Parcells","Red Holzman","Al Arbour","Joe Torre"] },
+  { id:"best_nickname",     question:"Best NY sports nickname?",                                       options:["Mr. October","The Captain","Broadway Joe","LT","Doc","The Pearl"] },
+  { id:"goat_overall",      question:"The single greatest NY athlete ever?",                           options:["Babe Ruth","Lawrence Taylor","Willis Reed","Mark Messier","Tom Seaver"] },
+  { id:"best_broadcaster",  question:"Best NY sports broadcaster ever?",                               options:["Bob Murphy","Phil Rizzuto","Marv Albert","Mike Breen","Gary Cohen"] },
+  { id:"best_walkup",       question:"Best NY sports entrance/walk-up moment?",                        options:["Enter Sandman (Rivera)","Jeter's intro at the Stadium","MSG Rangers goal song","Mets Piazza at-bats"] },
+  { id:"best_owner",        question:"Most impactful NY sports owner?",                                options:["George Steinbrenner","Steve Cohen","James Dolan (complicated)","Charles Wang"] },
+  // WEEK 25-32: DEEP DEBATES
+  { id:"seaver_gooden",     question:"Better career as a Met — Seaver or Gooden?",                    options:["Tom Seaver — no question","Doc Gooden — peak was higher","Too close to call"] },
+  { id:"mets_1969_1986",    question:"Better Mets team — 1969 or 1986?",                              options:["1969 — the miracle makes it","1986 — best team top to bottom","Both equally legendary"] },
+  { id:"best_trade_ever",   question:"Best trade in NY sports history?",                               options:["Yankees acquire Babe Ruth (1920)","Piazza trade to Mets (1998)","Jason Kidd to Nets (2001)","Messier trade to Rangers (1991)"] },
+  { id:"worst_trade_ever",  question:"Worst trade/transaction in NY sports history?",                  options:["Red Sox sell Ruth to Yankees","Islanders let Tavares walk","DiPietro 15-year contract","Ewing traded to Seattle"] },
+  { id:"best_game_ever",    question:"Single greatest game in NY sports history?",                     options:["1994 Rangers Cup Game 7","1986 WS Game 6 (Mookie/Buckner)","Super Bowl XLII (Helmet Catch)","1969 WS Game 5 (Koosman)","1973 Belmont (Secretariat)"] },
+  { id:"best_individual",   question:"Greatest single individual performance in NY sports?",           options:["Reggie 3 HRs consecutive pitches (1977)","Messier hat trick guarantee (1994)","Simms 22/25 in SB XXI","Secretariat 31 lengths (1973)","Seaver 19 Ks including 10 straight (1970)"] },
+  { id:"subway_series",     question:"Who wins the all-time Subway Series?",                          options:["Yankees — no contest","Mets — heart over history","Too close to call"] },
+  { id:"most_lovable_loser",question:"Most lovable NY team despite the suffering?",                    options:["The Jets — forever hopeful","The Knicks — MSG still rocks","The Mets — Ya Gotta Believe","The Islanders — loyal Long Island"] },
+  // WEEK 33-40: FUN & CULTURE
+  { id:"best_chant",        question:"Best NY sports chant or song?",                                 options:["Enter Sandman (Yankees)","Let's Go Mets","Let's Go Rangers","DE-FENSE (Knicks/Giants)","1940! (Rangers fans to taunt them)"] },
+  { id:"best_jersey",       question:"Best NY sports jersey ever designed?",                           options:["Yankees pinstripes","Mets '86 home blues","Rangers white with crest","Knicks blue and orange","Giants blue"] },
+  { id:"best_borough",      question:"Best borough for NY sports fans?",                               options:["The Bronx — Yankee country","Queens — Mets and US Open","Brooklyn — Nets and nostalgia","Manhattan — MSG rules","Long Island — Islanders diehards"] },
+  { id:"best_comeback",     question:"Greatest comeback in NY sports history?",                        options:["1978 Yankees (14 games back in July)","1969 Mets (100-1 shots)","Giants beating 18-0 Patriots (SB XLII)","Knicks 1999 8-seed Finals run","Rangers from 3-2 down vs Devils (1994)"] },
+  { id:"next_championship", question:"Which NY team wins the NEXT championship?",                     options:["Yankees","Mets","Knicks","Rangers","Liberty","Devils","Giants","Jets"] },
+  { id:"best_moment_you_witnessed", question:"Which NY moment do you most wish you'd seen live?",    options:["Secretariat's Belmont (1973)","Rangers win Cup (1994)","Miracle Mets clinch (1969)","Namath's guarantee game (1969)","Reggie's 3 HRs (1977 WS)"] },
+  { id:"goat_hitter",       question:"Greatest pure hitter to play in New York?",                     options:["Babe Ruth","Joe DiMaggio","Mickey Mantle","Mike Piazza","Derek Jeter"] },
+  { id:"goat_defender",     question:"Greatest defensive player in NY sports history?",               options:["Lawrence Taylor (Giants)","Willis Reed (Knicks)","Martin Brodeur (Devils)","Denis Potvin (Islanders)","Darrelle Revis (Jets)"] },
+  // WEEK 41-48: ICONIC NY EVENTS
+  { id:"us_open_best_match",question:"Greatest US Open Tennis moment at Flushing Meadows?",           options:["Connors 1991 run at age 39","Serena's first title at 17 (1999)","Arthur Ashe wins first Open Era (1968)","Sampras final career slam (2002)"] },
+  { id:"bethpage_best",     question:"Best major golf at Bethpage Black?",                            options:["Tiger 2002 — only one under par","Koepka PGA 2019 — brutally dominated","Ryder Cup crowd energy 2025","Lucas Glover dramatic win 2009"] },
+  { id:"belmont_best",      question:"Greatest Belmont Stakes moment?",                               options:["Secretariat 31 lengths (1973)","American Pharoah ends 37-year drought (2015)","Affirmed vs Alydar thriller (1978)","Seattle Slew stays undefeated (1977)"] },
+  { id:"shinnecock_best",   question:"Best US Open Golf at Shinnecock Hills?",                        options:["Corey Pavin's 4-wood to 18th (1995)","Retief Goosen dominates (2004)","Brooks Koepka wins at +1 (2018)","2026 — the next chapter"] },
+  { id:"goat_tennis",       question:"Greatest US Open tennis champion overall?",                     options:["Serena Williams (6 titles)","Jimmy Connors (5 titles, 3 surfaces)","Pete Sampras (5 titles)","Chris Evert (6 titles)","Roger Federer (5 titles)"] },
+  { id:"goat_golf_ny",      question:"Best golfer to play NY's US Open courses?",                     options:["Tiger Woods (Bethpage 2002)","Jack Nicklaus (multiple Open finals)","Bryson DeChambeau (Winged Foot 2020)","Brooks Koepka (Shinnecock 2018)"] },
+  { id:"belmont_triple",    question:"Most dominant Triple Crown performance?",                        options:["Secretariat 1973 — 31 lengths","Seattle Slew 1977 — undefeated","Affirmed 1978 — beat Alydar every race","American Pharoah 2015 — ended the drought"] },
+  { id:"best_ny_sports_year",question:"Best single year in NY sports history?",                       options:["1969 (Mets WS + Jets SB win)","1994 (Rangers Cup)","1998-2000 (Yankees dynasty peak)","1980-83 (Islanders 4 Cups)","1986 (Mets WS + Giants Super Bowl run)"] },
+  // WEEK 49-52: YEAR-END BIG ONES
+  { id:"goat_net",          question:"Greatest Net of all time?",                                     options:["Julius Erving (ABA)","Jason Kidd","Dražen Petrović","Buck Williams","Vince Carter"] },
+  { id:"goat_liberty",      question:"Greatest NY Liberty player ever?",                              options:["Breanna Stewart","Sabrina Ionescu","Teresa Weatherspoon","Tina Charles","Cappie Pondexter"] },
+  { id:"goat_net_modern",   question:"Best era of Nets basketball?",                                  options:["Dr. J ABA championships (1974/1976)","Jason Kidd Finals runs (2002/2003)","KD/Kyrie Brooklyn era","Jason Williams/Vince Carter era"] },
+  { id:"ny_sports_goat_all_time", question:"Across ALL NY sports ever — the single greatest?",       options:["Babe Ruth","Lawrence Taylor","Secretariat","Tom Seaver","Mark Messier","Willis Reed"] },
 ];
 
 function PollsTab() {
@@ -3572,9 +3798,9 @@ function PollsTab() {
     } catch(e) {}
   }, []);
 
-  // One poll per day — rotates daily through the full bank
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
-  const POLLS = [ALL_POLLS[dayOfYear % ALL_POLLS.length]];
+  // One poll per week — rotates through all 52 weekly (one full year)
+  const weekOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / (86400000 * 7));
+  const POLLS = [ALL_POLLS[weekOfYear % ALL_POLLS.length]];
 
   function handleVote(pollId, option) {
     if (voted[pollId]) return;
@@ -3605,14 +3831,14 @@ function PollsTab() {
         <p style={styles.stdSub}>VOTE · DEBATE · SETTLE THE ARGUMENT</p>
       </div>
       <div style={{marginBottom:20, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Vote in each poll — results show after you pick, and your votes are saved on this device. The featured Poll of the Day rotates daily, and the full set rotates weekly so there's always something fresh.</p>
+        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Vote in this week's poll — results show after you pick, and your vote is saved on this device. A new question every week, cycling through all 52 over the course of a year. Come back next week for a fresh debate!</p>
       </div>
       <div style={{display:"flex", flexDirection:"column", gap:20}}>
         {POLLS.map((poll) => {
           const hasVoted = voted[poll.id];
           return (
             <div key={poll.id} style={{...styles.pollCard, border:"1px solid #c8201c"}}>
-              <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:8}}>⭐ POLL OF THE DAY — CHANGES DAILY</div>
+              <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:8}}>⭐ POLL OF THE WEEK — CHANGES WEEKLY</div>
               <div style={styles.pollQuestion}>{poll.question}</div>
               <div style={styles.pollOptions}>
                 {poll.options.map((opt, i) => {
@@ -3641,7 +3867,7 @@ function PollsTab() {
                 })}
               </div>
               {hasVoted && <div style={styles.pollMeta}>your vote: {voted[poll.id]}</div>}
-              {!hasVoted && <div style={styles.pollMeta}>Cast your vote above — a new question tomorrow</div>}
+              {!hasVoted && <div style={styles.pollMeta}>Cast your vote — a new question every week</div>}
             </div>
           );
         })}
@@ -6002,6 +6228,47 @@ const styles = {
     display: "flex", height: 3, position: "relative", zIndex: 1,
   },
   pennantSegment: { flex: 1 },
+
+  // SITE SEARCH
+  searchBar: {
+    position: "relative", padding: "8px 16px 12px",
+    borderTop: "1px solid #2a2a2a",
+  },
+  searchInput: {
+    width: "100%", background: "#161616",
+    border: "1px solid #333", color: "#e8e0d0",
+    padding: "8px 36px 8px 12px", fontSize: 12,
+    fontFamily: "'Georgia', serif",
+    outline: "none", boxSizing: "border-box",
+  },
+  searchClear: {
+    position: "absolute", right: 22, top: "50%", transform: "translateY(-50%)",
+    background: "none", border: "none", color: "#666",
+    cursor: "pointer", fontSize: 12, padding: "4px",
+  },
+  searchDropdown: {
+    position: "absolute", left: 0, right: 0, zIndex: 999,
+    background: "#0e0e0e", border: "1px solid #c8201c",
+    borderTop: "none", maxHeight: 420, overflowY: "auto",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.8)",
+  },
+  searchResult: {
+    display: "flex", gap: 10, width: "100%", padding: "10px 14px",
+    background: "transparent", border: "none", cursor: "pointer",
+    textAlign: "left", borderBottom: "1px solid #1a1a1a",
+    transition: "background 0.1s",
+  },
+  searchResultIcon: { fontSize: 18, flexShrink: 0, paddingTop: 2 },
+  searchResultBody: { flex: 1, display: "flex", flexDirection: "column", gap: 2 },
+  searchResultTop: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  searchResultType: { fontSize: 8, fontWeight: 900, letterSpacing: "0.12em" },
+  searchResultTab: { fontSize: 8, color: "#555", letterSpacing: "0.08em" },
+  searchResultTitle: { fontSize: 12, fontWeight: 900, color: "#e8e0d0", fontFamily: "'Georgia', serif" },
+  searchResultSub: { fontSize: 10, color: "#888" },
+  searchResultHighlight: { fontSize: 10, color: "#666", fontStyle: "italic" },
+  searchNoResult: { padding: "14px 16px", fontSize: 11, color: "#555", fontStyle: "italic" },
+  searchFooter: { padding: "6px 14px", fontSize: 9, color: "#444", letterSpacing: "0.08em", borderTop: "1px solid #1a1a1a" },
+
 
   // BUY ME A COFFEE
   bmcBtn: {
