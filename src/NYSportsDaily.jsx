@@ -1003,7 +1003,7 @@ export default function NYSportsDaily() {
         </div>
         {/* TAB NAV — Secondary */}
         <div style={{...styles.tabNav, marginTop:-16, borderBottom:"1px solid #1a1a1a", marginBottom:20}}>
-          {["STATS","HISTORY","THIS DATE","ICONIC","HOF","POLLS","MISERY","TRIVIA","XWORD","SPIN"].map(tab => (
+          {["STATS","HISTORY","THIS DATE","ICONIC","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","TRIVIA","XWORD","SPIN"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}), fontSize:9, padding:"7px 10px"}}>
               {tab}
@@ -1014,13 +1014,40 @@ export default function NYSportsDaily() {
         {/* ──── SCORES TAB ──── */}
         {activeTab === "SCORES" && (
           <div>
-            {/* Quote of the Day */}
-            <div style={{display:"flex", gap:12, flexWrap:"wrap", marginBottom:16}}>
-              <div style={{flex:1, minWidth:280}}><QuoteOfDay /></div>
-              <div style={{minWidth:220}}><PlayerSpotlight /></div>
+            {/* ── Top strip: quote + player spotlight side by side, compact ── */}
+            <div style={{display:"flex", gap:12, marginBottom:16, alignItems:"stretch"}}>
+              {/* Quote — left, slim */}
+              <div style={{flex:2, minWidth:0}}>
+                <QuoteOfDay />
+              </div>
+              {/* Player Spotlight — right, compact card */}
+              <div style={{flexShrink:0, width:200}}>
+                <PlayerSpotlight />
+              </div>
             </div>
-            {/* League filter */}
-            <div style={styles.filterBar}>
+            {/* ── Playoff tracker strip — uses standings data ── */}
+            {standings && standings.length > 0 && (() => {
+              const NY_TEAMS_TRACK = ["Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty"];
+              const nyStandings = standings.filter(s =>
+                NY_TEAMS_TRACK.some(t => (s.team||"").includes(t))
+              ).slice(0, 6);
+              if (!nyStandings.length) return null;
+              return (
+                <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:12, padding:"8px 12px", background:"#111", border:"1px solid #1a1a1a"}}>
+                  <span style={{fontSize:8, fontWeight:900, color:"#555", letterSpacing:"0.15em", alignSelf:"center", flexShrink:0}}>📊 NY STANDINGS:</span>
+                  {nyStandings.map((s, i) => (
+                    <div key={i} style={{display:"flex", gap:4, alignItems:"center", fontSize:10, color:"#bbb"}}>
+                      <span style={{fontWeight:700, color:"#e8e0d0"}}>{s.team?.split(" ").pop()}</span>
+                      <span style={{color:"#888"}}>{s.wins}-{s.losses}</span>
+                      {s.gamesBehind && s.gamesBehind !== "0" && s.gamesBehind !== "-" &&
+                        <span style={{color:"#c8201c", fontSize:9}}>{s.gamesBehind}GB</span>
+                      }
+                      {i < nyStandings.length-1 && <span style={{color:"#333", marginLeft:2}}>·</span>}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
               <div style={styles.filterGroup}>
                 {allLeagues.map(l => (
                   <button key={l} onClick={() => setActiveLeague(l)}
@@ -1099,6 +1126,8 @@ export default function NYSportsDaily() {
         {activeTab === "ICONIC" && <IconicTab />}
         {activeTab === "THIS DATE" && <TodayTab />}
         {activeTab === "POLLS" && <PollsTab />}
+        {activeTab === "AWARDS"   && <AwardsTab />}
+        {activeTab === "FORGOTTEN" && <ForgottenTab />}
         {activeTab === "HOF" && <HofTab />}
         {activeTab === "MISERY" && <MiseryTab />}
         {activeTab === "HISTORY" && (
@@ -2724,6 +2753,44 @@ const HISTORY_LISTS = {
       { rank:50, name:"NYCFC 2021 MLS Cup",             value:"NYCFC",     years:"First MLS championship for any New York area team" },
     ]},
   ],
+  "Trades": [
+    { title: "Best Trades in NY Sports History", items: [
+      { rank:1,  name:"Yankees Acquire Babe Ruth",        value:"Yankees",    years:"1920 — $100K from Red Sox — cursed Boston for 86 years. Most impactful transaction in sports history." },
+      { rank:2,  name:"Mets Acquire Mike Piazza",         value:"Mets",       years:"1998 — from Marlins — greatest hitting catcher of all time transformed the franchise" },
+      { rank:3,  name:"Rangers Acquire Mark Messier",     value:"Rangers",    years:"1991 — from Edmonton — brought 5 Cups and ended 54-year drought" },
+      { rank:4,  name:"Nets Acquire Jason Kidd",          value:"Nets",       years:"2001 — from Phoenix — single-handedly took NJ to 2 straight NBA Finals" },
+      { rank:5,  name:"Yankees Sign Reggie Jackson",      value:"Yankees",    years:"1977 — 5-year $2.96M deal — Mr. October delivers two World Series" },
+      { rank:6,  name:"Giants Acquire Y.A. Tittle",       value:"Giants",     years:"1961 — from 49ers — threw 36 TDs in 1963, best QB era in Giants history" },
+      { rank:7,  name:"Yankees Acquire Roger Maris",      value:"Yankees",    years:"1959 — from Kansas City — 61 HR in 1961, World Series titles" },
+      { rank:8,  name:"Mets Trade for Keith Hernandez",   value:"Mets",       years:"1983 — from Cardinals — defensive anchor and captain of the 1986 champions" },
+      { rank:9,  name:"Rangers Acquire Wayne Gretzky (almost)", value:"Rangers", years:"2004 trade — Gretzky came as GM, not player — but raised the franchise's profile" },
+      { rank:10, name:"Islanders Draft Denis Potvin #1",  value:"Islanders",  years:"1973 — most consequential draft pick in Islanders history — 4 Cups" },
+    ]},
+    { title: "Worst Trades in NY Sports History", items: [
+      { rank:1,  name:"Red Sox Sell Babe Ruth to Yankees",   value:"Red Sox",   years:"1920 — $100K cash loan — cursed themselves for 86 years. The worst deal in sports history." },
+      { rank:2,  name:"Islanders Let John Tavares Walk",     value:"Islanders", years:"2018 — lost franchise star to Toronto in free agency — broke Long Island's heart" },
+      { rank:3,  name:"Rangers Trade Rick Middleton for Ken Hodge", value:"Rangers", years:"1976 — Middleton became a star in Boston, Hodge was finished — criminal trade" },
+      { rank:4,  name:"Nets Lose Julius Erving for Merger Fee", value:"Nets",   years:"1976 — sold Dr. J to 76ers to pay ABA-NBA merger fee — lost the greatest player in franchise history" },
+      { rank:5,  name:"Knicks Trade Carmelo Anthony (Poorly)", value:"Knicks", years:"2017 — received almost nothing of value in return for a franchise star" },
+      { rank:6,  name:"Mets Sign Bobby Bonilla Deferred Deal", value:"Mets",   years:"1999 — $1.19M per year through 2035 for a player not on the team. Every July 1." },
+      { rank:7,  name:"Jets Miss Dan Marino — Take Ken O'Brien", value:"Jets",  years:"1983 — Marino fell to Miami at #27 while Jets took QB Ken O'Brien at #24" },
+      { rank:8,  name:"Knicks Trade Kristaps Porzingis",    value:"Knicks",    years:"2019 — sent The Unicorn to Dallas — Dallas won the trade significantly" },
+      { rank:9,  name:"Islanders Sign Rick DiPietro 15 Years", value:"Islanders", years:"2006 — $67.5M for 15 years — DiPietro played only 301 games. Worst contract in NHL history." },
+      { rank:10, name:"Giants Pick Ron Dayne #1 Overall",   value:"Giants",    years:"2000 — Heisman Trophy winner never replicated college dominance in the NFL" },
+    ]},
+    { title: "Greatest Draft Steals in NY Sports History", items: [
+      { rank:1,  name:"Yankees Draft Mariano Rivera",      value:"Yankees",    years:"1990 — 13th round — became the greatest closer in baseball history" },
+      { rank:2,  name:"Mets Draft Tom Seaver (Commissioner's Choice)", value:"Mets", years:"1966 — lottery pick after college deal voided — Seaver became the greatest Met ever" },
+      { rank:3,  name:"Giants Draft Lawrence Taylor #2",   value:"Giants",     years:"1981 — greatest defensive player in NFL history, right there at #2" },
+      { rank:4,  name:"Rangers Draft Brian Leetch #9",     value:"Rangers",    years:"1986 — greatest American player in NHL history, American all-time scoring leader" },
+      { rank:5,  name:"Islanders Draft Mike Bossy #15",    value:"Islanders",  years:"1977 — 14 teams passed — Bossy scored 573 goals in 10 seasons" },
+      { rank:6,  name:"Yankees Draft Derek Jeter #6",      value:"Yankees",    years:"1992 — The Captain. 5 World Series rings. 3,465 hits." },
+      { rank:7,  name:"Rangers Draft Rod Gilbert — 5th round", value:"Rangers", years:"1960 — 5th round — became the franchise's all-time leading scorer for decades" },
+      { rank:8,  name:"Knicks Draft Walt Frazier #5",      value:"Knicks",     years:"1967 — two NBA championships, the most stylish Knick ever" },
+      { rank:9,  name:"Mets Sign Free Agent Gary Carter",  value:"Mets",       years:"1984 — signed The Kid — he was the missing piece for the 1986 championship" },
+      { rank:10, name:"Devils Draft Martin Brodeur #20",   value:"Devils",     years:"1990 — 20th pick — became the all-time NHL leader in wins, shutouts, and games" },
+    ]},
+  ],
 };
 
 // ─── HISTORY TAB ──────────────────────────────────────────────────────────
@@ -2993,26 +3060,50 @@ function SiteSearch({ query, onSelect }) {
     });
   });
 
+  // Team shortcuts — searching a team name brings up relevant content
+  const TEAM_SHORTCUTS = [
+    { keywords:["yankees","yankee","bronx","pinstripes"],                    tab:"NEWS",    icon:"⚾", title:"Yankees — News & Hub",     sub:"Beat writers · news · history · stats" },
+    { keywords:["mets","queens","flushing","amazins","amazin"],              tab:"NEWS",    icon:"⚾", title:"Mets — News & Hub",         sub:"Beat writers · news · history · stats" },
+    { keywords:["jets","gang green","namath","broadway joe","revis"],        tab:"NEWS",    icon:"🏈", title:"Jets — News & Hub",         sub:"Beat writers · news · history · stats" },
+    { keywords:["giants","big blue","eli","metlife"],                        tab:"NEWS",    icon:"🏈", title:"Giants — News & Hub",       sub:"Beat writers · news · history · stats" },
+    { keywords:["knicks","garden","msg","brunson","ewing"],                  tab:"NEWS",    icon:"🏀", title:"Knicks — News & Hub",       sub:"Beat writers · news · history · stats" },
+    { keywords:["nets","brooklyn","barclays","kidd","dr j","julius erving"], tab:"NEWS",    icon:"🏀", title:"Nets — News & Hub",         sub:"Beat writers · news · history · stats" },
+    { keywords:["rangers","broadway blues","lundqvist","leetch","messier"],  tab:"NEWS",    icon:"🏒", title:"Rangers — News & Hub",      sub:"Beat writers · news · history · stats" },
+    { keywords:["islanders","isles","potvin","bossy","ubs","schaefer"],      tab:"NEWS",    icon:"🏒", title:"Islanders — News & Hub",    sub:"Beat writers · news · history · stats" },
+    { keywords:["devils","brodeur","stevens","prudential","newark"],         tab:"NEWS",    icon:"🏒", title:"Devils — News & Hub",       sub:"Beat writers · news · history · stats" },
+    { keywords:["liberty","wnba","stewart","ionescu","women"],               tab:"NEWS",    icon:"🏀", title:"Liberty — News & Hub",      sub:"Beat writers · news · history · stats" },
+  ];
+  TEAM_SHORTCUTS.forEach(s => {
+    if (s.keywords.some(kw => q.includes(kw) || kw.includes(q))) {
+      results.unshift({ type:"TEAM HUB", icon:s.icon, title:s.title, sub:s.sub, tab:s.tab, highlight:"" });
+    }
+  });
+
   // Static nav shortcuts
   const NAV_SHORTCUTS = [
-    { keywords:["score","scores","game","games","live"], tab:"SCORES",    icon:"🏆", title:"Live Scores & Games",   sub:"Today's scores across all NY teams" },
-    { keywords:["news","headline","story","stories"],    tab:"NEWS",      icon:"📰", title:"NY Sports News",         sub:"Latest headlines and beat writer links" },
-    { keywords:["recap","yesterday","highlights"],       tab:"RECAP",     icon:"📺", title:"Last Night's Recap",     sub:"Yesterday's NY results and YouTube highlights" },
-    { keywords:["stand","standing","table"],             tab:"STANDINGS", icon:"📊", title:"League Standings",       sub:"Current standings for all NY team leagues" },
-    { keywords:["tv","television","channel","watch"],    tab:"TV",        icon:"📺", title:"TV Schedule",            sub:"What's on TV tonight for NY sports" },
-    { keywords:["schedule","upcoming","next game"],      tab:"SCHEDULE",  icon:"📅", title:"Schedule",               sub:"Upcoming NY sports schedule" },
-    { keywords:["misery","suffer","drought","worst"],    tab:"MISERY",    icon:"😩", title:"Misery Index",           sub:"NY teams ranked by how much they've made fans suffer" },
-    { keywords:["poll","vote","debate","opinion"],       tab:"POLLS",     icon:"🗳️", title:"Polls",                  sub:"This week's NY sports poll" },
-    { keywords:["hof","hall of fame","inducted","legend"],tab:"HOF",      icon:"🏛️", title:"Hall of Fame",           sub:"Every NY Hall of Famer by team" },
-    { keywords:["trivia","quiz","question"],             tab:"TRIVIA",    icon:"🧠", title:"Trivia",                 sub:"Daily NY sports trivia challenge" },
-    { keywords:["spin","fact","random"],                 tab:"SPIN",      icon:"🎰", title:"Spin Facts",             sub:"Random NY sports facts" },
-    { keywords:["shop","buy","gear","jersey"],           tab:"SHOP",      icon:"🛒", title:"Shop",                   sub:"NY sports gear, books, memorabilia" },
-    { keywords:["radio","podcast","listen","wfan"],      tab:"RADIO",     icon:"📻", title:"Radio & Podcasts",       sub:"NY sports radio stations and podcasts" },
-    { keywords:["iconic","tennis","golf","belmont","secretariat","us open"], tab:"ICONIC", icon:"🏆", title:"Iconic NY Events", sub:"US Open Tennis, US Open Golf, Belmont Stakes" },
-    { keywords:["crossword","xword","puzzle"],           tab:"XWORD",     icon:"✏️", title:"Crossword",              sub:"NY sports crossword puzzle" },
+    { keywords:["score","scores","game","games","live","today"],              tab:"SCORES",    icon:"🏆", title:"Live Scores & Games",      sub:"Today's scores across all NY teams" },
+    { keywords:["news","headline","story","stories","beat","reporter"],       tab:"NEWS",      icon:"📰", title:"NY Sports News",            sub:"Latest headlines and beat writer links" },
+    { keywords:["recap","yesterday","highlights","last night","result"],      tab:"RECAP",     icon:"📺", title:"Last Night's Recap",       sub:"Yesterday's NY results and YouTube highlights" },
+    { keywords:["stand","standings","table","division","league"],             tab:"STANDINGS", icon:"📊", title:"League Standings",          sub:"Current standings for all NY team leagues" },
+    { keywords:["tv","television","channel","watch","broadcast","network"],   tab:"TV",        icon:"📺", title:"TV Schedule",               sub:"What's on TV tonight for NY sports" },
+    { keywords:["schedule","upcoming","next game","calendar"],                tab:"SCHEDULE",  icon:"📅", title:"Schedule",                  sub:"Upcoming NY sports schedule" },
+    { keywords:["misery","suffer","drought","worst","pain","losing"],         tab:"MISERY",    icon:"😩", title:"Misery Index",              sub:"NY teams ranked by how much they've made fans suffer" },
+    { keywords:["poll","vote","debate","opinion","survey","question"],        tab:"POLLS",     icon:"🗳️", title:"Weekly Poll",               sub:"This week's NY sports debate" },
+    { keywords:["hof","hall","fame","inducted","legend","retired number"],    tab:"HOF",       icon:"🏛️", title:"Hall of Fame",              sub:"Every NY Hall of Famer by team" },
+    { keywords:["trivia","quiz","test","challenge","answer"],                 tab:"TRIVIA",    icon:"🧠", title:"Trivia",                    sub:"Daily NY sports trivia challenge" },
+    { keywords:["history","all time","record","leaders","list","greatest"],   tab:"HISTORY",   icon:"📚", title:"History & Records",         sub:"All-time records, leaders, coaches" },
+    { keywords:["this date","anniversary","today in","on this date"],        tab:"THIS DATE", icon:"📅", title:"On This Date",              sub:"NY sports history by date" },
+    { keywords:["iconic","tennis","us open","belmont","secretariat","golf","shinnecock","bethpage","winged foot","pga","ryder"], tab:"ICONIC", icon:"🏆", title:"Iconic NY Events", sub:"US Open Tennis, Golf, Belmont Stakes" },
+    { keywords:["spin","random","surprise","lucky"],                          tab:"SPIN",      icon:"🎰", title:"Spin Facts",                sub:"Random NY sports facts" },
+    { keywords:["shop","buy","gear","jersey","memorabilia","book"],           tab:"SHOP",      icon:"🛒", title:"Shop",                      sub:"NY sports gear, books, memorabilia" },
+    { keywords:["radio","podcast","listen","wfan","espn radio"],              tab:"RADIO",     icon:"📻", title:"Radio & Podcasts",          sub:"NY sports radio and podcasts" },
+    { keywords:["crossword","xword","puzzle","word"],                         tab:"XWORD",     icon:"✏️", title:"Crossword",                 sub:"NY sports crossword puzzle" },
+    { keywords:["draft","pick","prospect","rookie","first round"],            tab:"STATS",     icon:"📋", title:"Draft History",             sub:"Greatest and worst picks for all NY teams" },
+    { keywords:["trade","trades","deal","transaction","swap"],                tab:"HISTORY",   icon:"🔄", title:"Trade Tracker",             sub:"Best and worst NY sports trades ever" },
+    { keywords:["stats","statistics","leaders","numbers","all time"],         tab:"STATS",     icon:"📊", title:"Stats & Records",           sub:"All-time statistical leaders" },
   ];
   NAV_SHORTCUTS.forEach(s => {
-    if (s.keywords.some(kw => kw.includes(q) || q.includes(kw))) {
+    if (s.keywords.some(kw => q.includes(kw) || kw.includes(q))) {
       results.push({ type:"NAVIGATE", icon:s.icon, title:s.title, sub:s.sub, tab:s.tab, highlight:"" });
     }
   });
@@ -3360,27 +3451,100 @@ function IconicTab() {
             </div>
           ))}
 
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>⛳ PGA CHAMPIONSHIP IN NEW YORK</div>
+          {[
+            { y:"2019", d:"Brooks Koepka wins at Bethpage Black with dominant 8-under final score — his third major in three years. The rowdy NY crowd was unlike any major had seen." },
+            { y:"2025", d:"Bethpage Black hosts the Ryder Cup — the first Ryder Cup at a public municipal course. The crowd's passion for Team USA becomes legendary in golf history." },
+            { y:"1980", d:"Jack Nicklaus wins his fifth PGA Championship at Oak Hill in Rochester, NY — one of the great late-career performances by the Golden Bear." },
+            { y:"2003", d:"Shaun Micheel wins an improbable PGA at Oak Hill. His 7-iron approach on the final hole — two inches from the cup — is one of the great clutch shots in major history." },
+            { y:"2013", d:"Jason Dufner wins the PGA at Oak Hill, breaking a final-round scoring record. Rochester NY hosts its third PGA Championship." },
+          ].map((x,i) => (
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.iconicYear}>{x.y}</div>
+              <div style={styles.iconicInfo}>
+                <span style={styles.iconicDesc}>{x.d}</span>
+                <a href={`https://www.google.com/search?q=${encodeURIComponent("PGA Championship " + x.y + " New York")}`} target="_blank" rel="noopener noreferrer" style={{...styles.quoteLinkSmall, marginTop:3, display:"inline-block"}}>🔍 Google</a>
+              </div>
+            </div>
+          ))}
+
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>🏆 RYDER CUP IN NEW YORK</div>
+          {[
+            { y:"1995", d:"The Ryder Cup returns to the NY area — American golf at its most passionate. The region's golf culture makes it a perfect host every generation." },
+            { y:"2025", d:"Bethpage Black hosts the Ryder Cup — the most anticipated team golf event in decades. A public course, a roaring NY crowd, and Team USA on home soil." },
+          ].map((x,i) => (
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.iconicYear}>{x.y}</div>
+              <div style={styles.iconicInfo}>
+                <span style={styles.iconicDesc}>{x.d}</span>
+                <a href={`https://www.google.com/search?q=${encodeURIComponent("Ryder Cup " + x.y + " New York")}`} target="_blank" rel="noopener noreferrer" style={{...styles.quoteLinkSmall, marginTop:3, display:"inline-block"}}>🔍 Google</a>
+              </div>
+            </div>
+          ))}
+
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>🎓 AMATEUR & OTHER MAJOR NY GOLF MOMENTS</div>
+          {[
+            { t:"US Amateur at Winged Foot", d:"Winged Foot has hosted the US Amateur multiple times — the oldest major amateur event in American golf." },
+            { t:"Walker Cup at Garden City GC", d:"Garden City Golf Club on Long Island has hosted the Walker Cup — the oldest international team event in golf — showcasing NY's deep amateur golf tradition." },
+            { t:"Bob Jones at Winged Foot (1929)", d:"Bobby Jones wins at Winged Foot after a 36-hole playoff — one of only two playoff wins of his Grand Slam career." },
+            { t:"LPGA at Bethpage Black", d:"Bethpage Black has hosted LPGA events — proving the course challenges the game's best regardless of gender." },
+            { t:"Met Amateur Championship", d:"The Metropolitan Golf Association (MGA) has governed NY area golf since 1897 — the oldest regional golf association in America." },
+          ].map((x,i) => (
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.iconicIcon}>🎓</div>
+              <div style={styles.iconicInfo}>
+                <span style={styles.iconicTitle}>{x.t}</span>
+                <span style={styles.iconicDesc}>{x.d}</span>
+                <a href={`https://www.google.com/search?q=${encodeURIComponent(x.t)}`} target="_blank" rel="noopener noreferrer" style={{...styles.quoteLinkSmall, marginTop:3, display:"inline-block"}}>🔍 Google</a>
+              </div>
+            </div>
+          ))}
+
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>🗺️ GREAT NY-AREA GOLF COURSES</div>
+          {[
+            { t:"Shinnecock Hills GC — Southampton, LI", rank:"Top 5 in world", url:"https://www.shinnecockhills.com", d:"Founded 1891 — one of the five founding clubs of the USGA. Links-style course on the eastern tip of Long Island. Consistently ranked a top-5 course in the world." },
+            { t:"Winged Foot Golf Club — Mamaroneck, Westchester", rank:"Top 10 in world", url:"https://www.wingedfoot.org", d:"Two championship courses — the West Course is legendary. Has hosted 7 US Opens, producing some of the most dramatic finishes in golf history." },
+            { t:"Bethpage Black — Farmingdale, LI", rank:"Top 15 public in world", url:"https://www.bethpagegolfcourse.com", d:"The only public course to host the US Open (twice) and PGA Championship. Standing room only starts at 3am. The warning sign says it all." },
+            { t:"Garden City Golf Club — Garden City, LI", rank:"Top 50 in US", url:"https://www.gardencitygc.com", d:"Classic A.W. Tillinghast design. One of the great old-money classic courses in American golf." },
+            { t:"The National Golf Links of America — Southampton, LI", rank:"Top 10 in US", url:"https://www.nationalgolflinks.com", d:"Charles Blair Macdonald's masterpiece, inspired by the great British links. Private, historic, and ranked among the finest 10 courses in the country." },
+            { t:"Friar's Head — Baiting Hollow, LI", rank:"Top 20 in US", url:"https://www.friarshead.org", d:"Modern masterpiece overlooking Long Island Sound. Consistently ranked in the US top 20. One of the best modern courses built in the last 30 years." },
+            { t:"Maidstone Club — East Hampton, LI", rank:"Top 50 in US", url:"https://www.maidstoneclubeh.com", d:"Classic links-style course right on the Atlantic. One of the most beautiful and challenging courses in the Northeast." },
+            { t:"Oak Hill Country Club — Rochester, NY", rank:"Top 20 in US", url:"https://www.oakhillcc.com", d:"3× PGA Championship host. Donald Ross design. Upstate New York's great championship venue." },
+          ].map((x,i) => (
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.iconicIcon}>⛳</div>
+              <div style={styles.iconicInfo}>
+                <span style={styles.iconicTitle}>{x.t}</span>
+                <span style={{...styles.iconicDesc, color:"#FFD700", fontSize:9, fontWeight:700}}>{x.rank}</span>
+                <span style={styles.iconicDesc}>{x.d}</span>
+                <div style={{display:"flex", gap:10, marginTop:3}}>
+                  <a href={x.url} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>🌐 Course Site</a>
+                  <a href={`https://www.google.com/search?q=${encodeURIComponent(x.t + " golf course ranking history")}`} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>🔍 Google</a>
+                </div>
+              </div>
+            </div>
+          ))}
+
           <div style={{...styles.stdDivisionHeader, marginTop:20}}>📖 NY GOLF FUN FACTS</div>
           {[
-            { t:"Most US Opens by State", d:"New York has hosted 18 US Opens — more than any other state. A testament to the region's incredible championship courses." },
-            { t:"Other Historic NY Venues", d:"Fresh Meadow CC (Long Island) hosted Gene Sarazen's 1932 win. Oak Hill in Rochester has hosted three US Opens. The Country Club of Buffalo crowned 19-year-old John McDermott, still the youngest champ ever, in 1912." },
-            { t:"Public Course Pride", d:"Bethpage Black proved a municipal course could host the US Open — you can still tee it up where Tiger won, if you can handle it." },
+            { t:"Most US Opens by State", d:"New York has hosted 18 US Opens — more than any other state in America." },
+            { t:"Public Course Pride", d:"Bethpage Black proved a municipal course could host the US Open. You can still tee it up where Tiger Woods won — if you can handle it. Tee times start at 3am via lottery." },
+            { t:"NY Golf Royalty", d:"The Metropolitan Golf Association (MGA), founded 1897, is the oldest regional golf association in America. NY golf has been elite for over 125 years." },
+            { t:"Youngest US Open Champion", d:"John McDermott won the 1912 US Open at 19 years old — a record that still stands — at the Country Club of Buffalo." },
           ].map((x,i) => (
             <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
               <div style={styles.iconicIcon}>📖</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicTitle}>{x.t}</span>
                 <span style={styles.iconicDesc}>{x.d}</span>
-                <div style={{display:"flex",gap:10,marginTop:4}}>
-                  <a href={`https://www.google.com/search?q=${encodeURIComponent(x.t)}`} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>🔍 Google</a>
-                  <a href={`https://en.wikipedia.org/wiki/${encodeURIComponent(x.t.replace(/ /g,'_'))}`} target="_blank" rel="noopener noreferrer" style={styles.quoteLinkSmall}>📖 Wiki</a>
-                </div>
+                <a href={`https://www.google.com/search?q=${encodeURIComponent(x.t + " New York golf")}`} target="_blank" rel="noopener noreferrer" style={{...styles.quoteLinkSmall, marginTop:3, display:"inline-block"}}>🔍 Google</a>
               </div>
             </div>
           ))}
           <div style={{marginTop:12, display:"flex", gap:10, flexWrap:"wrap"}}>
             <a href="https://www.usga.org/championships/us-open.html" target="_blank" rel="noopener noreferrer" style={styles.histLink}>⛳ Official US Open Golf</a>
-            <a href="https://www.bethpagegolfcourse.com" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🏌️ Play Bethpage Black</a>
+            <a href="https://www.bethpagegolfcourse.com" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🏌️ Tee Off at Bethpage</a>
+            <a href="https://www.themetgolf.org" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🏆 Met Golf Association</a>
           </div>
         </div>
       )}
@@ -4148,6 +4312,200 @@ function MiseryTab() {
   );
 }
 
+// ─── AWARDS TAB ────────────────────────────────────────────────────────────
+function AwardsTab() {
+  const [sport, setSport] = useState("ALL");
+  const AWARDS = [
+    // ── MLB ──
+    { award:"Cy Young",         year:2023, winner:"Gerrit Cole",        team:"Yankees", sport:"MLB", note:"First Cy Young for a Yankee since Ron Guidry 1978" },
+    { award:"Cy Young",         year:2019, winner:"Jacob deGrom",       team:"Mets",    sport:"MLB", note:"Second consecutive Cy Young — 2.43 ERA" },
+    { award:"Cy Young",         year:2018, winner:"Jacob deGrom",       team:"Mets",    sport:"MLB", note:"First Cy Young with a losing team record (10-9) in MLB history" },
+    { award:"Cy Young",         year:2013, winner:"Max Scherzer",       team:"Tigers",  sport:"MLB", note:"NL — awarded while with Tigers but 21-3 record was legendary" },
+    { award:"Cy Young",         year:1985, winner:"Dwight Gooden",      team:"Mets",    sport:"MLB", note:"Unanimous — 24-4, 1.53 ERA at age 20. Most dominant young season ever." },
+    { award:"Cy Young",         year:1978, winner:"Ron Guidry",         team:"Yankees", sport:"MLB", note:"25-3 · 1.74 ERA · Louisiana Lightning's masterpiece season" },
+    { award:"Cy Young",         year:1975, winner:"Tom Seaver",         team:"Mets",    sport:"MLB", note:"Third Cy Young for Tom Terrific — 22-9, 2.38 ERA" },
+    { award:"Cy Young",         year:1973, winner:"Tom Seaver",         team:"Mets",    sport:"MLB", note:"Second Cy Young — 19-10, 2.08 ERA leading the Ya Gotta Believe Mets" },
+    { award:"Cy Young",         year:1969, winner:"Tom Seaver",         team:"Mets",    sport:"MLB", note:"First Cy Young — 25-7 as the Miracle Mets win the World Series" },
+    { award:"Cy Young",         year:1961, winner:"Whitey Ford",        team:"Yankees", sport:"MLB", note:"Chairman of the Board — 25-4, .862 winning percentage" },
+    { award:"AL MVP",           year:2022, winner:"Aaron Judge",        team:"Yankees", sport:"MLB", note:"Unanimous — 62 HR (AL record), .311 AVG, 131 RBI" },
+    { award:"AL MVP",           year:2017, winner:"Aaron Judge",        team:"Yankees", sport:"MLB", note:"Rookie of Year and runner-up MVP — 52 HR as a rookie" },
+    { award:"AL MVP",           year:1985, winner:"Don Mattingly",      team:"Yankees", sport:"MLB", note:"Donnie Baseball's finest year — .324, 35 HR, 145 RBI" },
+    { award:"AL MVP",           year:1976, winner:"Thurman Munson",     team:"Yankees", sport:"MLB", note:"The Captain earns the highest individual honor — .302, 105 RBI" },
+    { award:"AL MVP",           year:1963, winner:"Elston Howard",      team:"Yankees", sport:"MLB", note:"First Black player to win AL MVP — .287, 28 HR" },
+    { award:"AL MVP",           year:1962, winner:"Mickey Mantle",      team:"Yankees", sport:"MLB", note:"Third AL MVP for The Commerce Comet" },
+    { award:"AL MVP",           year:1957, winner:"Mickey Mantle",      team:"Yankees", sport:"MLB", note:"Second AL MVP — .365 AVG, 34 HR, 94 RBI" },
+    { award:"AL MVP",           year:1956, winner:"Mickey Mantle",      team:"Yankees", sport:"MLB", note:"Triple Crown year — .353 AVG, 52 HR, 130 RBI · First MVP" },
+    { award:"AL ROY",           year:2017, winner:"Aaron Judge",        team:"Yankees", sport:"MLB", note:"Unanimous AL Rookie of the Year with record 52 HR" },
+    { award:"AL ROY",           year:1996, winner:"Derek Jeter",        team:"Yankees", sport:"MLB", note:"The Captain announces himself — .314 AVG in his rookie year" },
+    { award:"AL ROY",           year:1970, winner:"Thurman Munson",     team:"Yankees", sport:"MLB", note:"The first step toward becoming Yankees captain" },
+    { award:"NL ROY",           year:2019, winner:"Pete Alonso",        team:"Mets",    sport:"MLB", note:"53 HR in 2019 — MLB rookie home run record" },
+    { award:"NL ROY",           year:2014, winner:"Jacob deGrom",       team:"Mets",    sport:"MLB", note:"The beginning of one of the most dominant pitching runs in Mets history" },
+    { award:"World Series MVP", year:2009, winner:"Hideki Matsui",      team:"Yankees", sport:"MLB", note:"6 RBI in Game 6 — first Japanese player to win World Series MVP" },
+    { award:"World Series MVP", year:2000, winner:"Derek Jeter",        team:"Yankees", sport:"MLB", note:"Subway Series MVP — Yankees defeat the Mets in 5 games" },
+    { award:"World Series MVP", year:1999, winner:"Mariano Rivera",     team:"Yankees", sport:"MLB", note:"Closers don't usually win — Rivera was so dominant they had to give it to him" },
+    { award:"World Series MVP", year:1978, winner:"Bucky Dent",         team:"Yankees", sport:"MLB", note:"The same Bucky Dent who hit the playoff homer at Fenway" },
+    { award:"World Series MVP", year:1977, winner:"Reggie Jackson",     team:"Yankees", sport:"MLB", note:"3 HRs on 3 consecutive pitches. The definitive Mr. October." },
+    { award:"World Series MVP", year:1986, winner:"Ray Knight",         team:"Mets",    sport:"MLB", note:"The Mets' 3B delivered in the clutch throughout the Fall Classic" },
+    // ── NFL ──
+    { award:"NFL MVP",          year:1986, winner:"Lawrence Taylor",    team:"Giants",  sport:"NFL", note:"Only defensive player to win NFL MVP in the modern era — 20.5 sacks" },
+    { award:"Super Bowl MVP",   year:2012, winner:"Eli Manning",        team:"Giants",  sport:"NFL", note:"Second Super Bowl MVP — beat the Patriots AGAIN. Only QB with 2 upset SB wins." },
+    { award:"Super Bowl MVP",   year:2008, winner:"Eli Manning",        team:"Giants",  sport:"NFL", note:"Escaped from a certain sack to find Tyree. 17-14 over undefeated Patriots." },
+    { award:"Super Bowl MVP",   year:1991, winner:"Ottis Anderson",     team:"Giants",  sport:"NFL", note:"102 rushing yards at age 34 — one of the great surprise MVP performances" },
+    { award:"Super Bowl MVP",   year:1987, winner:"Phil Simms",         team:"Giants",  sport:"NFL", note:"22/25 (88%) completion percentage — still the all-time Super Bowl record" },
+    { award:"Super Bowl MVP",   year:1969, winner:"Joe Namath",         team:"Jets",    sport:"NFL", note:"16-7 over Baltimore. No stats needed. The guarantee was the performance." },
+    { award:"Defensive POY",    year:1986, winner:"Lawrence Taylor",    team:"Giants",  sport:"NFL", note:"Second straight Defensive Player of the Year" },
+    { award:"Defensive POY",    year:1985, winner:"Lawrence Taylor",    team:"Giants",  sport:"NFL", note:"First of back-to-back Defensive Player of the Year awards" },
+    // ── NBA ──
+    { award:"NBA MVP",          year:1994, winner:"Hakeem (finals vs Knicks)", team:"Rockets", sport:"NBA", note:"Ewing's Knicks lost the 1994 Finals — Patrick deserved a ring" },
+    { award:"Finals MVP",       year:1973, winner:"Willis Reed",        team:"Knicks",  sport:"NBA", note:"Second Finals MVP — completing the Knicks' dynasty" },
+    { award:"Finals MVP",       year:1970, winner:"Willis Reed",        team:"Knicks",  sport:"NBA", note:"Legendary limping entrance, 4-pt start — The Captain delivers" },
+    { award:"NBA Rookie of Year",year:1986, winner:"Patrick Ewing",     team:"Knicks",  sport:"NBA", note:"First NBA lottery pick — announced a 15-year era of Knicks basketball" },
+    { award:"WNBA MVP",         year:2023, winner:"Breanna Stewart",    team:"Liberty", sport:"WNBA", note:"League MVP and championship — the complete package" },
+    { award:"WNBA Finals MVP",  year:2024, winner:"Breanna Stewart",    team:"Liberty", sport:"WNBA", note:"Back-to-back championship Finals MVP" },
+    // ── NHL ──
+    { award:"Conn Smythe",      year:2000, winner:"Scott Stevens",      team:"Devils",  sport:"NHL", note:"His hits on Lindros and Kariya defined the 2000 playoffs" },
+    { award:"Conn Smythe",      year:1994, winner:"Brian Leetch",       team:"Rangers", sport:"NHL", note:"First American to win Conn Smythe — 34 pts in the playoffs" },
+    { award:"Conn Smythe",      year:1980, winner:"Bryan Trottier",     team:"Islanders",sport:"NHL",note:"The engine of the first Islanders Cup — led all scorers" },
+    { award:"Vezina Trophy",    year:2012, winner:"Henrik Lundqvist",   team:"Rangers", sport:"NHL", note:"The King's finest individual recognition — career year" },
+    { award:"Vezina Trophy",    year:1987, winner:"Ron Hextall",        team:"Flyers",  sport:"NHL", note:"Not a NY award — but his battles with Rangers fans are legendary" },
+    { award:"Hart Trophy",      year:1979, winner:"Bryan Trottier",     team:"Islanders",sport:"NHL",note:"NHL MVP the year before the first of four straight Cups" },
+    { award:"Norris Trophy",    year:1992, winner:"Brian Leetch",       team:"Rangers", sport:"NHL", note:"Best defenseman in the NHL — set up the 1994 Cup run" },
+    { award:"Norris Trophy",    year:1979, winner:"Denis Potvin",       team:"Islanders",sport:"NHL",note:"Third of four Norris Trophies as best defenseman" },
+  ];
+
+  const SPORTS = ["ALL","MLB","NFL","NBA","NHL","WNBA"];
+  const filtered = sport === "ALL" ? AWARDS : AWARDS.filter(a => a.sport === sport);
+  const grouped = filtered.reduce((acc, a) => {
+    const key = `${a.sport} — ${a.award}`;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(a);
+    return acc;
+  }, {});
+
+  return (
+    <div style={styles.statsRoot}>
+      <div style={styles.stdHeader}>
+        <h2 style={styles.stdTitle}>🏅 NY SPORTS AWARDS</h2>
+        <p style={styles.stdSub}>EVERY MAJOR AWARD WON BY A NEW YORK PLAYER OR TEAM</p>
+      </div>
+      <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Every major individual and team award won by a NY athlete. A testament to the depth of New York sports greatness across a century.</p>
+      </div>
+      <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:16}}>
+        {SPORTS.map(s => (
+          <button key={s} onClick={() => setSport(s)}
+            style={{...styles.filterBtn, ...(sport===s?styles.filterBtnActive:{})}}>
+            {s}
+          </button>
+        ))}
+      </div>
+      {Object.entries(grouped).map(([groupKey, items]) => (
+        <div key={groupKey} style={{marginBottom:16}}>
+          <div style={styles.stdDivisionHeader}>🏅 {groupKey}</div>
+          {items.sort((a,b) => b.year-a.year).map((a, i) => (
+            <div key={i} style={{...styles.hofRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={{...styles.hofYear, minWidth:44, fontSize:14}}>{a.year}</div>
+              <div style={styles.hofInfo}>
+                <div style={styles.hofHeader}>
+                  <span style={styles.hofName}>{a.winner}</span>
+                  <span style={{...styles.hofPos, color:"#888"}}>{a.team}</span>
+                </div>
+                <p style={styles.hofNote}>{a.note}</p>
+                <div style={{display:"flex", gap:10}}>
+                  <a href={`https://www.google.com/search?q=${encodeURIComponent(a.winner+" "+a.award+" "+a.year)}`} target="_blank" rel="noopener noreferrer" style={styles.histLink}>🔍 Google</a>
+                  <a href={`https://en.wikipedia.org/wiki/${encodeURIComponent(a.winner.replace(/ /g,"_"))}`} target="_blank" rel="noopener noreferrer" style={styles.histLink}>📖 Wiki</a>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── THE ALMOST FORGOTTEN TAB ──────────────────────────────────────────────
+function ForgottenTab() {
+  const [teamFilter, setTeamFilter] = useState("ALL");
+  const FORGOTTEN = [
+    // Yankees
+    { name:"Tommy John",       team:"Yankees", era:"1979–1982,1986–1989", emoji:"⚾", why:"The man who gave pitchers a second life. Tommy John surgery is named after him. Went 21-9 as a Yankee in 1979.", wiki:"https://en.wikipedia.org/wiki/Tommy_John" },
+    { name:"Dave Righetti",    team:"Yankees", era:"1979–1990", emoji:"⚾", why:"No-hit the Red Sox on July 4, 1983. Led the AL in saves in 1986 with 46. The bridge between dynasty eras.", wiki:"https://en.wikipedia.org/wiki/Dave_Righetti" },
+    { name:"Willie Randolph",  team:"Yankees", era:"1976–1988", emoji:"⚾", why:"The heartbeat of the late-70s Yankees dynasty. Six All-Star selections, four World Series. Criminally overlooked for the Hall.", wiki:"https://en.wikipedia.org/wiki/Willie_Randolph" },
+    { name:"Ron Guidry",       team:"Yankees", era:"1975–1988", emoji:"⚾", why:"25-3 in 1978 — one of the most dominant single seasons by any pitcher ever. Louisiana Lightning.", wiki:"https://en.wikipedia.org/wiki/Ron_Guidry" },
+    { name:"Chris Chambliss",  team:"Yankees", era:"1974–1979", emoji:"⚾", why:"His pennant-clinching home run off Mark Littell in 1976 is one of the most electrifying moments in Yankees playoff history.", wiki:"https://en.wikipedia.org/wiki/Chris_Chambliss" },
+    // Mets
+    { name:"John Olerud",      team:"Mets",    era:"1997–1999", emoji:"⚾", why:"Hit .354 in 1998 — the best batting average by a Met since Cleon Jones in 1969. A complete player who deserved more recognition.", wiki:"https://en.wikipedia.org/wiki/John_Olerud" },
+    { name:"Cleon Jones",      team:"Mets",    era:"1963–1975", emoji:"⚾", why:"Hit .340 in 1969 as the Mets won it all. Caught the final out of the 1969 World Series. Career New York Met.", wiki:"https://en.wikipedia.org/wiki/Cleon_Jones" },
+    { name:"Al Leiter",        team:"Mets",    era:"1998–2004", emoji:"⚾", why:"The 2000 Subway Series ace. His two-out 9th inning against the Cubs in the 1999 wild card game remains one of the best single-game pitching performances in Mets history.", wiki:"https://en.wikipedia.org/wiki/Al_Leiter" },
+    { name:"John Franco",      team:"Mets",    era:"1990–2001", emoji:"⚾", why:"All-time NL saves leader when he retired. A Queens kid who grew up rooting for the Mets and became their closer for a decade.", wiki:"https://en.wikipedia.org/wiki/John_Franco" },
+    { name:"Edgardo Alfonzo",  team:"Mets",    era:"1995–2002", emoji:"⚾", why:"Hit .324 in 2000 with 25 HR. Perhaps the best all-around Mets player of the late 1990s. Maestro at 2B and 3B.", wiki:"https://en.wikipedia.org/wiki/Edgardo_Alfonzo" },
+    { name:"Lenny Dykstra",    team:"Mets",    era:"1985–1989", emoji:"⚾", why:"Nails — the scrappiest lead-off hitter of his era. His single in Game 3 of the 1986 NLCS vs the Astros changed the series.", wiki:"https://en.wikipedia.org/wiki/Lenny_Dykstra" },
+    // Jets/Giants
+    { name:"Wesley Walker",    team:"Jets",    era:"1977–1989", emoji:"🏈", why:"Legally blind in one eye — yet one of the most dangerous deep threats in NFL history. Part of the 1986 AFC Championship run.", wiki:"https://en.wikipedia.org/wiki/Wesley_Walker" },
+    { name:"Otis Anderson",    team:"Giants",  era:"1986–1992", emoji:"🏈", why:"Super Bowl XXV MVP at age 34. Rushed for 102 yards. The unsung hero of the Giants' second championship.", wiki:"https://en.wikipedia.org/wiki/Ottis_Anderson" },
+    { name:"Brad Van Pelt",    team:"Giants",  era:"1973–1983", emoji:"🏈", why:"Five straight Pro Bowls as a Giant. The unrecognized defensive leader who kept the franchise alive through a dark decade before LT and Parcells.", wiki:"https://en.wikipedia.org/wiki/Brad_Van_Pelt" },
+    { name:"Joe Klecko",       team:"Jets",    era:"1977–1987", emoji:"🏈", why:"The only player in NFL history to be named to the Pro Bowl at three different positions — DE, DT, and NT. Heart of the NY Sack Exchange.", wiki:"https://en.wikipedia.org/wiki/Joe_Klecko" },
+    { name:"Freeman McNeil",   team:"Jets",    era:"1981–1992", emoji:"🏈", why:"Led the NFL in rushing in 1982. A quiet, durable back who was the Jets' best offensive player through a decade of mediocrity.", wiki:"https://en.wikipedia.org/wiki/Freeman_McNeil" },
+    // Knicks
+    { name:"Dick Barnett",     team:"Knicks",  era:"1965–1974", emoji:"🏀", why:"'Fall back, baby!' Two championships. An elegant shooter who anchored the backcourt alongside Frazier. Underappreciated champion.", wiki:"https://en.wikipedia.org/wiki/Dick_Barnett" },
+    { name:"Bernard King",     team:"Knicks",  era:"1982–1987", emoji:"🏀", why:"Scored 60 points at Madison Square Garden in 1984. Before knee injuries, he was as unstoppable as anyone in the NBA — a pure scorer.", wiki:"https://en.wikipedia.org/wiki/Bernard_King" },
+    { name:"Kerry Kittles",    team:"Nets",    era:"1996–2004", emoji:"🏀", why:"The building block of the Jason Kidd Finals teams. His smooth shooting and relentless defense made the Nets dangerous.", wiki:"https://en.wikipedia.org/wiki/Kerry_Kittles" },
+    { name:"Micheal Ray Richardson", team:"Knicks", era:"1978–1982", emoji:"🏀", why:"One of the most gifted players the Knicks ever had. His 'The ship be sinking' quote is iconic. Addiction robbed the game of something special.", wiki:"https://en.wikipedia.org/wiki/Micheal_Ray_Richardson" },
+    // Rangers/Islanders/Devils
+    { name:"Rod Gilbert",      team:"Rangers", era:"1960–1978", emoji:"🏒", why:"All-time Rangers scoring leader for decades. Overcame serious back surgery to become the franchise icon. First Ranger to have his number retired.", wiki:"https://en.wikipedia.org/wiki/Rod_Gilbert" },
+    { name:"Ed Giacomin",      team:"Rangers", era:"1965–1975", emoji:"🏒", why:"Fast Eddie — goaltender who played with such personality MSG named the ice after him conceptually. HOF career, beloved in NY.", wiki:"https://en.wikipedia.org/wiki/Ed_Giacomin" },
+    { name:"Bob Nystrom",      team:"Islanders",era:"1972–1986",emoji:"🏒", why:"Scored the OT goal that won the Islanders' first Stanley Cup in 1980. As beloved in Nassau County as any player in franchise history.", wiki:"https://en.wikipedia.org/wiki/Bob_Nystrom" },
+    { name:"Butch Goring",     team:"Islanders",era:"1980–1985",emoji:"🏒", why:"The missing piece. Acquired mid-season 1980, he was the Conn Smythe winner that year and the defensive forward who made the dynasty work.", wiki:"https://en.wikipedia.org/wiki/Butch_Goring" },
+    { name:"Patrik Elias",     team:"Devils",  era:"1994–2016", emoji:"🏒", why:"The all-time leading scorer in Devils history who played his entire career in New Jersey — quietly building one of the great NHL careers.", wiki:"https://en.wikipedia.org/wiki/Patrik_Elias" },
+    { name:"Ken Daneyko",      team:"Devils",  era:"1983–2003", emoji:"🏒", why:"Mr. Devil — played all 1,283 NHL games in a Devils uniform. Three Cups. The soul of New Jersey hockey for 20 years.", wiki:"https://en.wikipedia.org/wiki/Ken_Daneyko" },
+    // US Open / Golf / Racing
+    { name:"Corey Pavin",      team:"Shinnecock",era:"1995",   emoji:"⛳", why:"His 4-wood approach to the 72nd green at Shinnecock to win the 1995 US Open is one of the greatest clutch shots in golf history.", wiki:"https://en.wikipedia.org/wiki/Corey_Pavin" },
+    { name:"Raymond Floyd",    team:"Shinnecock",era:"1986",   emoji:"⛳", why:"Won the 1986 US Open at Shinnecock Hills at age 43 — making him the oldest US Open champion in history at the time.", wiki:"https://en.wikipedia.org/wiki/Raymond_Floyd" },
+  ];
+
+  const TEAMS = ["ALL","Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Shinnecock"];
+  const filtered = teamFilter === "ALL" ? FORGOTTEN : FORGOTTEN.filter(p => p.team === teamFilter);
+
+  return (
+    <div style={styles.statsRoot}>
+      <div style={styles.stdHeader}>
+        <h2 style={styles.stdTitle}>🕯️ THE ALMOST FORGOTTEN</h2>
+        <p style={styles.stdSub}>NY PLAYERS WHO DESERVE MORE LOVE</p>
+      </div>
+      <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+        <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6}}>Great players who got overshadowed by larger legends, fell victim to injury, or simply played in an era before social media could amplify their brilliance. New York sports history is deeper than the headlines.</p>
+      </div>
+      <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:16}}>
+        {TEAMS.map(t => (
+          <button key={t} onClick={() => setTeamFilter(t)}
+            style={{...styles.filterBtn, ...(teamFilter===t?styles.filterBtnActive:{}), fontSize:9}}>
+            {t}
+          </button>
+        ))}
+      </div>
+      <div style={styles.stdDivisionHeader}>{filtered.length} OVERLOOKED LEGENDS</div>
+      {filtered.map((p, i) => (
+        <div key={i} style={{...styles.hofRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          <div style={{fontSize:24, flexShrink:0, width:36, textAlign:"center"}}>{p.emoji}</div>
+          <div style={styles.hofInfo}>
+            <div style={styles.hofHeader}>
+              <span style={styles.hofName}>{p.name}</span>
+              <span style={styles.hofPos}>{p.team}</span>
+              <span style={{fontSize:9, color:"#666"}}>{p.era}</span>
+            </div>
+            <p style={styles.hofNote}>{p.why}</p>
+            <div style={{display:"flex", gap:10}}>
+              <a href={p.wiki} target="_blank" rel="noopener noreferrer" style={styles.histLink}>📖 Wiki</a>
+              <a href={`https://www.google.com/search?q=${encodeURIComponent(p.name+" "+p.team+" career")}`} target="_blank" rel="noopener noreferrer" style={styles.histLink}>🔍 Google</a>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── STATS TAB ────────────────────────────────────────────────────────────
 function StatsTab() {
   const [activeSection, setActiveSection] = useState("LEADERS");
@@ -4263,7 +4621,7 @@ function StatsTab() {
       { year:2018, pick:"#2",  name:"Saquon Barkley",   note:"Most electrifying offensive talent in years — lost to Eagles as a free agent" },
       { year:2019, pick:"#6",  name:"Daniel Jones",     note:"Showed promise but never reached franchise QB level" },
       { year:2022, pick:"#5",  name:"Kayvon Thibodeaux",note:"Oregon DE — developing into the pass rusher Giants hoped for" },
-      { year:2026, pick:"#3",  name:"Abdul Carter",     note:"Penn State LB — most electrifying Giants pick in years. Generational pass rusher." },
+      { year:2025, pick:"#3",  name:"Abdul Carter",     note:"Penn State LB — most electrifying Giants pick in years. Generational pass rusher." },
     ],
     Knicks: [
       { year:1985, pick:"#1",  name:"Patrick Ewing",    note:"First NBA lottery pick ever. Led the Knicks for 15 years. Should have won at least one title." },
@@ -5571,6 +5929,41 @@ function SpinTab() {
         <p style={styles.spinSub}>LAND ON A TEAM · GET A PIECE OF NY SPORTS HISTORY</p>
       </div>
 
+      {/* ── WALK-UP SONGS ── */}
+      <div style={{marginBottom:24, padding:"14px 16px", background:"#111", border:"1px solid #2a2a2a"}}>
+        <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:10}}>🎵 ICONIC WALK-UP SONGS & ENTRANCE MUSIC</div>
+        {[
+          { player:"Mariano Rivera",    team:"Yankees",  song:"Enter Sandman",              artist:"Metallica",         note:"The most famous walk-up in baseball history. The Stadium went quiet, then LOUD." },
+          { player:"Derek Jeter",       team:"Yankees",  song:"Empire State of Mind",       artist:"Jay-Z & Alicia Keys",note:"NY's anthem for NY's Captain. Chills every time." },
+          { player:"Gary Sheffield",    team:"Yankees",  song:"We're Not Gonna Take It",    artist:"Twisted Sister",    note:"Perfect for one of the most intense hitters of his era." },
+          { player:"David Wright",      team:"Mets",     song:"New York Groove",            artist:"Ace Frehley (KISS)",note:"Mr. Met himself — pure New York." },
+          { player:"Carlos Beltrán",    team:"Mets",     song:"Fuego",                      artist:"Pitbull",           note:"Beltrán's Latin flair at the plate — powerful and cool." },
+          { player:"Pete Alonso",       team:"Mets",     song:"Empire State of Mind / various", artist:"Various",      note:"The Polar Bear's walk-up rotates but always gets the crowd going." },
+          { player:"Jesse Orosco",      team:"Mets",     song:"Mets Fan Crowd Roar",        artist:"Shea Stadium 1986",note:"The sound of the crowd was his music — final out of the 1986 World Series." },
+          { player:"Mark Messier",      team:"Rangers",  song:"We Are the Champions",       artist:"Queen",            note:"The Cup victory song that became the Rangers' anthem in 1994." },
+          { player:"Henrik Lundqvist",  team:"Rangers",  song:"Welcome to the Jungle",      artist:"Guns N' Roses",    note:"The King's entrance at MSG — electric every single game." },
+          { player:"Patrick Ewing",     team:"Knicks",   song:"Welcome to the Terrordome",  artist:"Public Enemy",     note:"90s Knicks era — Ewing walking out to PE at MSG was peak New York." },
+          { player:"John Starks",       team:"Knicks",   song:"Who Let the Dogs Out",       artist:"Baha Men",         note:"Starks's ferocity was perfectly matched by the Garden crowd." },
+          { player:"Curtis Martin",     team:"Jets",     song:"Can't Stop Won't Stop",      artist:"Young Jeezy",      note:"Martin's workman intensity captured in music — no nonsense." },
+        ].map((s, i) => (
+          <div key={i} style={{display:"flex", gap:12, padding:"8px 0", borderBottom:"1px solid #1a1a1a", flexWrap:"wrap"}}>
+            <div style={{flexShrink:0, width:26, textAlign:"center", fontSize:16}}>🎵</div>
+            <div style={{flex:1}}>
+              <div style={{display:"flex", gap:10, alignItems:"baseline", flexWrap:"wrap", marginBottom:2}}>
+                <span style={{fontSize:12, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                <span style={{fontSize:9, color:"#c8201c", fontWeight:700}}>{s.team}</span>
+              </div>
+              <div style={{fontSize:11, color:"#FFD700", marginBottom:2}}>"{s.song}" — {s.artist}</div>
+              <div style={{fontSize:10, color:"#666", fontStyle:"italic"}}>{s.note}</div>
+            </div>
+            <a href={`https://www.google.com/search?q=${encodeURIComponent(s.song + " " + s.artist)}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{...styles.histLink, flexShrink:0, alignSelf:"center"}}>▶ Listen</a>
+          </div>
+        ))}
+        <div style={{fontSize:9, color:"#444", marginTop:8, fontStyle:"italic"}}>Walk-up songs change season to season — these are the most iconic pairings in NY sports history.</div>
+      </div>
+
       <div style={styles.spinLayout}>
         {/* Wheel column */}
         <div style={styles.spinWheelCol}>
@@ -6231,15 +6624,16 @@ const styles = {
 
   // SITE SEARCH
   searchBar: {
-    position: "relative", padding: "8px 16px 12px",
-    borderTop: "1px solid #2a2a2a",
+    position: "relative", padding: "6px 16px 10px",
+    borderTop: "1px solid #1a1a1a",
   },
   searchInput: {
-    width: "100%", background: "#161616",
-    border: "1px solid #333", color: "#e8e0d0",
-    padding: "8px 36px 8px 12px", fontSize: 12,
+    width: "100%", background: "#111",
+    border: "1px solid #2a2a2a", color: "#bbb",
+    padding: "7px 34px 7px 12px", fontSize: 11,
     fontFamily: "'Georgia', serif",
     outline: "none", boxSizing: "border-box",
+    letterSpacing: "0.03em",
   },
   searchClear: {
     position: "absolute", right: 22, top: "50%", transform: "translateY(-50%)",
@@ -6603,10 +6997,10 @@ const styles = {
   },
 
   // TRADING CARD STYLE PLAYER SPOTLIGHT
-  tcardWrap: { cursor:"pointer", userSelect:"none", maxWidth:280 },
+  tcardWrap: { cursor:"pointer", userSelect:"none", width:200 },
   tcardOuter: {
-    padding:6, borderRadius:8,
-    boxShadow:"0 4px 20px rgba(0,0,0,0.6)",
+    padding:3, borderRadius:6,
+    boxShadow:"0 2px 12px rgba(0,0,0,0.5)",
   },
   tcardInner: {
     background:"#0a0a0a", borderRadius:4,
@@ -6625,9 +7019,9 @@ const styles = {
     fontSize:7, color:"#666", letterSpacing:"0.1em", fontWeight:700,
   },
   tcardPhotoFrame: {
-    position:"relative", height:160, marginBottom:8,
-    borderRadius:4, overflow:"hidden",
-    border:"2px solid rgba(255,215,0,0.4)",
+    position:"relative", height:110, marginBottom:6,
+    borderRadius:3, overflow:"hidden",
+    border:"1px solid rgba(255,215,0,0.3)",
     display:"flex", alignItems:"center", justifyContent:"center",
   },
   tcardPhoto: {
@@ -6651,8 +7045,8 @@ const styles = {
     borderBottom:"1px solid rgba(255,215,0,0.3)",
   },
   tcardName: {
-    fontSize:16, fontWeight:900, color:"#e8e0d0",
-    fontFamily:"'Georgia',serif", lineHeight:1.1, marginBottom:3,
+    fontSize:12, fontWeight:900, color:"#e8e0d0",
+    fontFamily:"'Georgia',serif", lineHeight:1.1, marginBottom:2,
   },
   tcardTeamRow: { display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" },
   tcardTeamBadge: {
@@ -6717,19 +7111,19 @@ const styles = {
 
   // QUOTE OF THE DAY
   quoteBar: {
-    display:"flex", gap:12, alignItems:"flex-start",
-    background:"#161616", borderLeft:"3px solid #c8201c",
-    padding:"12px 16px", marginBottom:16,
+    display:"flex", gap:10, alignItems:"flex-start",
+    background:"transparent", borderLeft:"2px solid #333",
+    padding:"8px 12px", marginBottom:12,
   },
-  quoteIcon: { fontSize:18, flexShrink:0, marginTop:2 },
+  quoteIcon: { fontSize:14, flexShrink:0, marginTop:2, color:"#555" },
   quoteBody: { flex:1 },
   quoteText: {
-    margin:"0 0 4px", fontSize:13, fontStyle:"italic",
-    color:"#e8e0d0", lineHeight:1.5, fontFamily:"'Georgia',serif",
+    margin:"0 0 3px", fontSize:11, fontStyle:"italic",
+    color:"#ccc", lineHeight:1.5, fontFamily:"'Georgia',serif",
   },
-  quoteAuthor: { margin:0, fontSize:10, color:"#aaa", letterSpacing:"0.05em" },
+  quoteAuthor: { margin:0, fontSize:9, color:"#666", letterSpacing:"0.05em" },
   quoteTeam: { color:"#c8201c", fontWeight:700 },
-  quoteLinkSmall: { fontSize:9, color:"#888", fontWeight:700, textDecoration:"none", letterSpacing:"0.05em" },
+  quoteLinkSmall: { fontSize:8, color:"#555", fontWeight:700, textDecoration:"none", letterSpacing:"0.05em" },
 
   // STATS
   statsRoot: { paddingTop:8 },
