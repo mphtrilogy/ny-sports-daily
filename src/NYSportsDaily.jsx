@@ -841,7 +841,7 @@ export default function NYSportsDaily() {
         </div>
         {/* TAB NAV — Secondary */}
         <div style={{...styles.tabNav, marginTop:-16, borderBottom:"1px solid #1a1a1a", marginBottom:20}}>
-          {["STATS","HISTORY","THIS DATE","HOF","POLLS","MISERY","TRIVIA","XWORD","SPIN"].map(tab => (
+          {["STATS","HISTORY","THIS DATE","ICONIC","HOF","POLLS","MISERY","TRIVIA","XWORD","SPIN"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}), fontSize:9, padding:"7px 10px"}}>
               {tab}
@@ -934,6 +934,7 @@ export default function NYSportsDaily() {
         )}
         {/* ──── HISTORY TAB ──── */}
         {activeTab === "RECAP" && <RecapTab scores={scores} />}
+        {activeTab === "ICONIC" && <IconicTab />}
         {activeTab === "THIS DATE" && <TodayTab />}
         {activeTab === "POLLS" && <PollsTab />}
         {activeTab === "HOF" && <HofTab />}
@@ -1470,18 +1471,20 @@ function NewsTab({ news, loading }) {
             { name:"Andy Martino",    outlet:"SNY",          teams:"Mets · Yankees",    handle:"@martinonyc",       url:"https://twitter.com/martinonyc",       desc:"SNY Mets insider — breaks Steve Cohen moves" },
             { name:"Anthony DiComo",  outlet:"MLB.com",      teams:"Mets",              handle:"@AnthonyDiComo",    url:"https://twitter.com/AnthonyDiComo",    desc:"Official Mets beat reporter" },
             { name:"Bryan Hoch",      outlet:"MLB.com",      teams:"Yankees",           handle:"@BryanHoch",        url:"https://twitter.com/BryanHoch",        desc:"Official Yankees beat reporter" },
-            { name:"Zach Rozenblatt",  outlet:"NY Times",     teams:"Jets",              handle:"@ZachRozenblatt",   url:"https://twitter.com/ZachRozenblatt",   desc:"NY Times Jets reporter — thorough, credible coverage" },
+            { name:"Zack Rosenblatt",  outlet:"The Athletic",  teams:"Jets",              handle:"@ZackBlatt",        url:"https://twitter.com/ZackBlatt",        desc:"The Athletic Jets reporter — thorough, credible coverage" },
             { name:"Brian Costello",   outlet:"NY Post",      teams:"Jets",              handle:"@BrianCoz",         url:"https://twitter.com/BrianCoz",         desc:"NY Post Jets beat — strong insider access" },
             { name:"Rich Cimini",      outlet:"ESPN",         teams:"Jets",              handle:"@RichCimini",       url:"https://twitter.com/RichCimini",       desc:"ESPN's veteran Jets reporter — decades of coverage" },
+            { name:"Joe Caporoso",     outlet:"Badlands/Jets", teams:"Jets",             handle:"@JoeCaporoso",      url:"https://twitter.com/JoeCaporoso",      desc:"Voice of Jets X / Badlands — passionate fan-first coverage" },
+            { name:"Connor Rogers",    outlet:"NBC Sports",   teams:"Jets · NFL Draft",  handle:"@ConnorJRogers",    url:"https://twitter.com/ConnorJRogers",    desc:"NBC draft analyst — deep Jets and draft expertise" },
             { name:"Jordan Raanan",   outlet:"ESPN",         teams:"Giants",            handle:"@JordanRaanan",     url:"https://twitter.com/JordanRaanan",     desc:"ESPN Giants insider" },
             { name:"Ralph Vacchiano", outlet:"FOX Sports",   teams:"Giants",            handle:"@RVacchianoSNY",    url:"https://twitter.com/RVacchianoSNY",    desc:"Giants beat veteran" },
             { name:"Ian Begley",      outlet:"SNY",          teams:"Knicks",            handle:"@IanBegley",        url:"https://twitter.com/IanBegley",        desc:"Top Knicks reporter — Brunson era insider" },
             { name:"Marc Berman",     outlet:"NY Post",      teams:"Knicks",            handle:"@NYPost_Berman",    url:"https://twitter.com/NYPost_Berman",    desc:"Knicks beat for the NY Post" },
             { name:"Stefan Bondy",    outlet:"NY Post",      teams:"Knicks · Nets",     handle:"@SbondyNYP",        url:"https://twitter.com/SbondyNYP",        desc:"NBA NY coverage" },
-            { name:"Brett Cyrgalis",  outlet:"NY Post",      teams:"Rangers",           handle:"@BrettCyrgalis",    url:"https://twitter.com/BrettCyrgalis",    desc:"Rangers beat reporter" },
-            { name:"Larry Brooks",    outlet:"NY Post",      teams:"Rangers · NHL",     handle:"@NYP_Brooksie",     url:"https://twitter.com/NYP_Brooksie",     desc:"Legendary NY hockey columnist" },
+            { name:"Mollie Walker",   outlet:"NY Post",      teams:"Rangers",           handle:"@MollieeWalkerr",   url:"https://twitter.com/MollieeWalkerr",   desc:"NY Post Rangers beat reporter" },
+            { name:"Vince Mercogliano",outlet:"USA Today",   teams:"Rangers",           handle:"@vzmercogliano",    url:"https://twitter.com/vzmercogliano",    desc:"Comprehensive Rangers coverage for the Journal News / USA Today" },
             { name:"Andrew Gross",    outlet:"Newsday",      teams:"Islanders",         handle:"@AGrossNewsday",    url:"https://twitter.com/AGrossNewsday",    desc:"Newsday Islanders beat" },
-            { name:"Stefen Rosner",   outlet:"NY Hockey Now",teams:"Islanders",         handle:"@SRosner91",        url:"https://twitter.com/SRosner91",        desc:"Islanders deep coverage" },
+            { name:"Stefen Rosner",   outlet:"The Hockey News", teams:"Islanders",      handle:"@SRosner91",        url:"https://twitter.com/SRosner91",        desc:"The Hockey News Islanders writer — deep Isles coverage" },
             { name:"Amanda Stein",    outlet:"Devils",       teams:"Devils",            handle:"@AmandaCStein",     url:"https://twitter.com/AmandaCStein",     desc:"Devils studio host and reporter" },
             { name:"Howie Kussoy",    outlet:"NY Post",      teams:"All NY",            handle:"@HowieKussoy",      url:"https://twitter.com/HowieKussoy",      desc:"NY Post sports columnist" },
           ].map((w, i) => (
@@ -1565,6 +1568,7 @@ function NewsTab({ news, loading }) {
             { name:"Pinstripe Alley",     team:"Yankees",       url:"https://www.pinstripealley.com/",           desc:"SB Nation Yankees blog — fan analysis and stats" },
             { name:"Amazin' Avenue",      team:"Mets",          url:"https://www.amazinavenue.com/",             desc:"SB Nation Mets community — fan voices" },
             { name:"Gang Green Nation",   team:"Jets",          url:"https://www.ganggreennation.com/",          desc:"SB Nation Jets — long-suffering fan deep dives" },
+            { name:"Jets X-Factor (Badlands)", team:"Jets",     url:"https://jetsxfactor.com/",                  desc:"Joe Caporoso's Badlands — passionate, fan-first Jets community and podcasts" },
             { name:"Big Blue View",       team:"Giants",        url:"https://www.bigblueview.com/",              desc:"SB Nation Giants — Ed Valentine's deep analysis" },
             { name:"Posting and Toasting",team:"Knicks",        url:"https://www.postingandtoasting.com/",       desc:"SB Nation Knicks — Garden faithful" },
             { name:"Blueshirt Banter",    team:"Rangers",       url:"https://www.blueshirtbanter.com/",          desc:"SB Nation Rangers — broadway hockey analysis" },
@@ -2718,20 +2722,26 @@ function HistoryTab() {
 function RecapTab({ scores }) {
   const [ytResults, setYtResults] = useState({});
   const [loadingYT, setLoadingYT] = useState(false);
-  const [activeTeam, setActiveTeam] = useState("ALL");
+  const [yesterdayScores, setYesterdayScores] = useState([]);
+  const [loadingYesterday, setLoadingYesterday] = useState(true);
 
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const yDate = yesterday.toLocaleDateString("en-US", {weekday:"long", month:"long", day:"numeric"});
 
+  useEffect(() => {
+    setLoadingYesterday(true);
+    fetchESPNScores(yesterday).then(data => {
+      setYesterdayScores(data || []);
+      setLoadingYesterday(false);
+    });
+  }, []);
+
   // NY teams from scores
   const NY_NAMES = ["yankees","mets","jets","giants","knicks","nets","rangers","islanders","devils","liberty","nycfc","gotham","red bulls"];
-  const yesterdayGames = scores.filter(s => {
-    const d = new Date(s.gameDate || s.date);
-    const isYesterday = d.toDateString() === yesterday.toDateString();
-    const isNY = [s.homeTeam, s.awayTeam].some(t => NY_NAMES.some(n => (t||"").toLowerCase().includes(n)));
-    return isYesterday && isNY;
-  });
+  const yesterdayNYGames = yesterdayScores.filter(s =>
+    [s.homeTeam, s.awayTeam].some(t => NY_NAMES.some(n => (t||"").toLowerCase().includes(n)))
+  );
 
   // Fetch YouTube highlights for a team
   async function fetchYTHighlights(query) {
@@ -2766,10 +2776,15 @@ function RecapTab({ scores }) {
       </div>
 
       {/* Yesterday's NY scores */}
-      {yesterdayGames.length > 0 ? (
+      {loadingYesterday ? (
+        <div style={styles.loading}>
+          <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
+          <p style={styles.loadingText}>LOADING YESTERDAY'S RESULTS...</p>
+        </div>
+      ) : yesterdayNYGames.length > 0 ? (
         <>
-          <div style={styles.stdDivisionHeader}>🏆 YESTERDAY'S NY RESULTS</div>
-          {yesterdayGames.map((g, i) => (
+          <div style={styles.stdDivisionHeader}>🏆 YESTERDAY'S NY RESULTS — {yDate.toUpperCase()}</div>
+          {yesterdayNYGames.map((g, i) => (
             <div key={i} style={{...styles.recapScoreRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
               <div style={styles.recapTeams}>
                 <span style={styles.recapSport}>[{g.sport}]</span>
@@ -2782,8 +2797,9 @@ function RecapTab({ scores }) {
           ))}
         </>
       ) : (
-        <div style={{padding:"12px 0 20px", fontSize:12, color:"#555"}}>
-          No NY games found for yesterday — check ESPN for results or use the SCORES tab.
+        <div style={{padding:"12px 0 20px"}}>
+          <div style={styles.stdDivisionHeader}>🏆 YESTERDAY'S NY RESULTS — {yDate.toUpperCase()}</div>
+          <p style={{fontSize:12, color:"#555", padding:"8px 0"}}>No NY games found for yesterday. Teams may have had an off day — check ESPN or the SCORES tab for the full picture.</p>
         </div>
       )}
 
@@ -2869,65 +2885,324 @@ function RecapTab({ scores }) {
   );
 }
 
-const TODAY_IN_NY_SPORTS = [
+// ─── NY ICONIC EVENTS TAB ─────────────────────────────────────────────────
+function IconicTab() {
+  const [section, setSection] = useState("TENNIS");
+
+  return (
+    <div style={styles.statsRoot}>
+      <div style={styles.stdHeader}>
+        <h2 style={styles.stdTitle}>🏆 NY ICONIC SPORTING EVENTS</h2>
+        <p style={styles.stdSub}>US OPEN TENNIS · US OPEN GOLF · BELMONT & THE TRIPLE CROWN</p>
+      </div>
+
+      <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:16, borderBottom:"1px solid #2a2a2a", paddingBottom:12}}>
+        {[["TENNIS","🎾 US OPEN TENNIS"],["GOLF","⛳ US OPEN GOLF"],["BELMONT","🐎 BELMONT / TRIPLE CROWN"]].map(([s,label]) => (
+          <button key={s} onClick={() => setSection(s)}
+            style={{...styles.filterBtn, ...(section===s ? styles.filterBtnActive : {})}}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── US OPEN TENNIS ── */}
+      {section === "TENNIS" && (
+        <div>
+          <div style={{marginBottom:16, padding:"12px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6}}>The US Open is held every late August into September at the USTA Billie Jean King National Tennis Center in Flushing Meadows, Queens — the same park that hosted two World's Fairs. Arthur Ashe Stadium, the largest tennis venue in the world (23,771 seats), anchors it. One of the four Grand Slams and the loudest, brashest, most New York of them all.</p>
+          </div>
+
+          <div style={styles.stdDivisionHeader}>🎾 THE VENUE — A NY LANDMARK</div>
+          {[
+            { t:"Arthur Ashe Stadium", d:"The largest tennis stadium in the world at 23,771 seats. Opened in 1997, named for the only Black man to win the US Open (1968), Wimbledon and Australian Open — and a tireless humanitarian." },
+            { t:"Billie Jean King National Tennis Center", d:"Renamed in 2006 for the tennis legend and equality pioneer who won 39 Grand Slam titles and famously beat Bobby Riggs in the 1973 'Battle of the Sexes.'" },
+            { t:"Louis Armstrong Stadium", d:"The second show court, rebuilt in 2018 — named for the jazz legend who lived nearby in Corona, Queens." },
+            { t:"Flushing Meadows-Corona Park", d:"Site of the 1939 and 1964 World's Fairs. The Unisphere still towers nearby. Pure Queens history." },
+          ].map((x,i) => (
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.iconicIcon}>🎾</div>
+              <div style={styles.iconicInfo}>
+                <span style={styles.iconicTitle}>{x.t}</span>
+                <span style={styles.iconicDesc}>{x.d}</span>
+              </div>
+            </div>
+          ))}
+
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>📖 US OPEN RECORD BOOK & FUN FACTS</div>
+          {[
+            { t:"Most US Open Men's Titles", d:"Jimmy Connors, Pete Sampras, Roger Federer and Bill Tilden are among the all-time greats. Connors won on three different surfaces at the Open — grass, clay and hard court." },
+            { t:"Most US Open Women's Titles (Open Era)", d:"Chris Evert and Serena Williams each won 6 US Open singles titles — the most of the Open Era. Serena's wins spanned 1999 to 2014." },
+            { t:"Molla Mallory — 8 Titles", d:"The all-time record for US singles championships is held by Molla Mallory with 8 (1915–1926)." },
+            { t:"1968 — First US Open of the Open Era", d:"Arthur Ashe won the first US Open in 1968, the first year professionals were allowed to compete. He remains the only Black man to win the title." },
+            { t:"The Night Session", d:"The US Open was the first Grand Slam to install lights and embrace prime-time night tennis — pure New York theater under the lights at Ashe." },
+            { t:"Super Saturday 1984", d:"One of the greatest days in tennis history — two epic men's semifinals plus the women's final, all in one unforgettable day at Flushing Meadows." },
+            { t:"Tiebreak Innovation", d:"The US Open was the first major to use a final-set tiebreak — typical of the event's willingness to break tennis tradition." },
+          ].map((x,i) => (
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.iconicIcon}>📖</div>
+              <div style={styles.iconicInfo}>
+                <span style={styles.iconicTitle}>{x.t}</span>
+                <span style={styles.iconicDesc}>{x.d}</span>
+              </div>
+            </div>
+          ))}
+          <div style={{marginTop:12, display:"flex", gap:10, flexWrap:"wrap"}}>
+            <a href="https://www.usopen.org" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🎾 Official US Open Site</a>
+            <a href={`https://www.google.com/search?q=${encodeURIComponent("US Open tennis history records Flushing Meadows")}`} target="_blank" rel="noopener noreferrer" style={styles.histLink}>🔍 More History</a>
+          </div>
+        </div>
+      )}
+
+      {/* ── US OPEN GOLF ── */}
+      {section === "GOLF" && (
+        <div>
+          <div style={{marginBottom:16, padding:"12px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6}}>No state has hosted more US Opens than New York — 18 and counting. From the wind-swept links of Shinnecock Hills to the brutal slopes of Winged Foot to the public-course beast that is Bethpage Black, NY golf is championship golf. The US Open returns to Shinnecock in 2026 and Winged Foot in 2028.</p>
+          </div>
+
+          <div style={styles.stdDivisionHeader}>⛳ SHINNECOCK HILLS — SOUTHAMPTON, LONG ISLAND</div>
+          {[
+            { y:"1896", d:"Hosted the second US Open ever — at 4,423 yards, the shortest US Open course in history. One of the five founding clubs of the USGA." },
+            { y:"1986", d:"Raymond Floyd, age 44, wins by two strokes — becoming the oldest US Open champion at the time with a final-round 66." },
+            { y:"1995", d:"Corey Pavin wins his only major, sealed by a famous 4-wood approach to the 18th green for a closing 68." },
+            { y:"2004", d:"Retief Goosen wins at -4; only he and Phil Mickelson finish under par as the greens become controversially baked and brutal." },
+            { y:"2018", d:"Brooks Koepka wins at +1 — the only over-par US Open winner in a decade — defending his title in punishing conditions." },
+            { y:"2026", d:"The US Open returns to Shinnecock Hills this June — one of the most anticipated venues on the entire golf calendar." },
+          ].map((x,i) => (
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.iconicYear}>{x.y}</div>
+              <div style={styles.iconicInfo}><span style={styles.iconicDesc}>{x.d}</span></div>
+            </div>
+          ))}
+
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>⛳ WINGED FOOT — MAMARONECK, WESTCHESTER</div>
+          {[
+            { y:"1929", d:"Bobby Jones wins in a 36-hole playoff — one of only two major playoff wins of his legendary career, both in New York." },
+            { y:"1959", d:"Billy Casper wins the first of his two US Opens, masterfully managing the treacherous greens." },
+            { y:"1974", d:"'The Massacre at Winged Foot' — Hale Irwin wins at +7, the course so brutal it became golf legend." },
+            { y:"1984", d:"Fuzzy Zoeller wins a playoff over Greg Norman, famously waving a white towel in surrender after Norman's putt." },
+            { y:"2006", d:"Geoff Ogilvy wins at +5 as Phil Mickelson double-bogeys the 72nd hole — one of the most painful collapses in major history." },
+            { y:"2020", d:"Bryson DeChambeau overpowers Winged Foot at -6, the only player under par, redefining how the course could be played." },
+            { y:"2028", d:"The US Open returns to Winged Foot — its seventh time hosting the national championship." },
+          ].map((x,i) => (
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.iconicYear}>{x.y}</div>
+              <div style={styles.iconicInfo}><span style={styles.iconicDesc}>{x.d}</span></div>
+            </div>
+          ))}
+
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>⛳ BETHPAGE BLACK — FARMINGDALE, LONG ISLAND</div>
+          {[
+            { y:"2002", d:"Tiger Woods wins at -3 — the first US Open ever held on a publicly-owned golf course. Bethpage Black belongs to the people of New York." },
+            { y:"2009", d:"Lucas Glover wins a rain-soaked Open over Phil Mickelson, David Duval and Ricky Barnes." },
+            { y:"2019", d:"Bethpage Black hosts the PGA Championship — Brooks Koepka wins his fourth major. The famous warning sign greets every golfer: 'The Black Course is an extremely difficult course recommended only for highly skilled golfers.'" },
+            { y:"2025", d:"Bethpage Black hosts the Ryder Cup — the rowdy New York crowd brings unmatched energy to international golf." },
+          ].map((x,i) => (
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.iconicYear}>{x.y}</div>
+              <div style={styles.iconicInfo}><span style={styles.iconicDesc}>{x.d}</span></div>
+            </div>
+          ))}
+
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>📖 NY GOLF FUN FACTS</div>
+          {[
+            { t:"Most US Opens by State", d:"New York has hosted 18 US Opens — more than any other state. A testament to the region's incredible championship courses." },
+            { t:"Other Historic NY Venues", d:"Fresh Meadow CC (Long Island) hosted Gene Sarazen's 1932 win. Oak Hill in Rochester has hosted three US Opens. The Country Club of Buffalo crowned 19-year-old John McDermott, still the youngest champ ever, in 1912." },
+            { t:"Public Course Pride", d:"Bethpage Black proved a municipal course could host the US Open — you can still tee it up where Tiger won, if you can handle it." },
+          ].map((x,i) => (
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.iconicIcon}>📖</div>
+              <div style={styles.iconicInfo}>
+                <span style={styles.iconicTitle}>{x.t}</span>
+                <span style={styles.iconicDesc}>{x.d}</span>
+              </div>
+            </div>
+          ))}
+          <div style={{marginTop:12, display:"flex", gap:10, flexWrap:"wrap"}}>
+            <a href="https://www.usga.org/championships/us-open.html" target="_blank" rel="noopener noreferrer" style={styles.histLink}>⛳ Official US Open Golf</a>
+            <a href="https://www.bethpagegolfcourse.com" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🏌️ Play Bethpage Black</a>
+          </div>
+        </div>
+      )}
+
+      {/* ── BELMONT / TRIPLE CROWN ── */}
+      {section === "BELMONT" && (
+        <div>
+          <div style={{marginBottom:16, padding:"12px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6}}>The Belmont Stakes — 'The Test of the Champion' — is the third and final jewel of horse racing's Triple Crown, run at Belmont Park in Elmont, Long Island since 1905. At 1.5 miles, it's the longest of the three races and the ultimate test of stamina. Every Triple Crown bid comes down to Belmont. And in 1973, the greatest performance in the history of the sport happened right here.
+</p>
+          </div>
+
+          <div style={styles.stdDivisionHeader}>🐎 SECRETARIAT — THE GREATEST OF ALL TIME</div>
+          <div style={{padding:"14px 16px", background:"#161616", borderLeft:"3px solid #c8201c", marginBottom:16}}>
+            <p style={{margin:"0 0 8px", fontSize:13, color:"#e8e0d0", fontWeight:700, fontFamily:"'Georgia',serif"}}>June 9, 1973 — Belmont Park</p>
+            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.7}}>Secretariat won the Belmont Stakes by an astonishing 31 lengths — the largest margin in the history of the race — completing the first Triple Crown in 25 years. His time of 2:24 flat set a world record for 1.5 miles on dirt that still stands today. Announcer Chic Anderson's call — 'Secretariat is moving like a tremendous machine!' — is the most famous in racing history. Big Red is universally considered the greatest racehorse that ever lived.</p>
+          </div>
+
+          <div style={styles.stdDivisionHeader}>🏆 TRIPLE CROWN WINNERS (ALL SEALED AT BELMONT)</div>
+          {[
+            { y:"1919", d:"Sir Barton — the first-ever Triple Crown winner, before the term was even coined." },
+            { y:"1930", d:"Gallant Fox — the colt that made 'Triple Crown' a household phrase." },
+            { y:"1935", d:"Omaha — Gallant Fox's own son, the only Triple Crown winner sired by another." },
+            { y:"1937", d:"War Admiral — Man o' War's son, later famous for losing to Seabiscuit." },
+            { y:"1941", d:"Whirlaway — won the Belmont by 2.5 lengths to complete the sweep." },
+            { y:"1943", d:"Count Fleet — won the Belmont by 25 lengths, a record until Secretariat." },
+            { y:"1946", d:"Assault — the 'Club-Footed Comet' overcame a hoof injury to win it all." },
+            { y:"1948", d:"Citation — the last Triple Crown winner before a 25-year drought." },
+            { y:"1973", d:"Secretariat — the 31-length Belmont and a world record that has never been broken." },
+            { y:"1977", d:"Seattle Slew — the only undefeated horse to win the Triple Crown." },
+            { y:"1978", d:"Affirmed — beat rival Alydar in all three races in one of the great rivalries ever." },
+            { y:"2015", d:"American Pharoah — ended a 37-year drought, sending Belmont Park into delirium." },
+            { y:"2018", d:"Justify — won it all undefeated, the second to do so, in just his sixth career start." },
+          ].map((x,i) => (
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"}), ...(x.y==="1973"?{borderLeft:"3px solid #c8201c"}:{})}}>
+              <div style={styles.iconicYear}>{x.y}</div>
+              <div style={styles.iconicInfo}><span style={styles.iconicDesc}>{x.d}</span></div>
+            </div>
+          ))}
+
+          <div style={{...styles.stdDivisionHeader, marginTop:20}}>📖 BELMONT PARK FUN FACTS</div>
+          {[
+            { t:"The Test of the Champion", d:"At 1.5 miles, the Belmont is the longest of the three Triple Crown races — many a Derby and Preakness winner has run out of gas down Belmont's long stretch." },
+            { t:"Belmont Park Opened in 1905", d:"One of the grand old cathedrals of American horse racing, in Elmont just over the NYC line in Nassau County, Long Island." },
+            { t:"'Big Sandy'", d:"Belmont's massive main dirt track is nicknamed 'Big Sandy' — the largest dirt thoroughbred racetrack in America." },
+            { t:"Layered Sports History", d:"Belmont Park's grounds are now also home to UBS Arena, where the NY Islanders play — sports history layered on sports history." },
+            { t:"Every Triple Crown Clinched Here", d:"All 13 Triple Crowns in American history have been sealed at Belmont Park — the most decisive stretch of dirt in the sport." },
+          ].map((x,i) => (
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div style={styles.iconicIcon}>📖</div>
+              <div style={styles.iconicInfo}>
+                <span style={styles.iconicTitle}>{x.t}</span>
+                <span style={styles.iconicDesc}>{x.d}</span>
+              </div>
+            </div>
+          ))}
+          <div style={{marginTop:12, display:"flex", gap:10, flexWrap:"wrap"}}>
+            <a href="https://www.belmontstakes.com" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🐎 Official Belmont Stakes</a>
+            <a href="https://www.google.com/search?q=Secretariat+1973+Belmont+Stakes+31+lengths+record" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🔍 Secretariat's Record</a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
   // JANUARY
-  { month:1,  day:11, year:1969, team:"Jets",      emoji:"🏈", title:"Super Bowl III — Namath's Guarantee Pays Off", desc:"The Jets shock the NFL world, defeating the Baltimore Colts 16-7. Namath's famous guarantee fulfilled. The AFL is validated forever." },
-  { month:1,  day:19, year:1994, team:"Rangers",   emoji:"🏒", title:"Mark Messier Signs Contract Extension", desc:"The Captain agrees to stay in New York — the move that would directly lead to the 1994 Stanley Cup." },
-  { month:1,  day:25, year:1987, team:"Giants",    emoji:"🏈", title:"Giants Win Super Bowl XXI", desc:"Phil Simms goes 22-for-25 (88%) — still the Super Bowl record. Giants crush the Denver Broncos 39-20. LT and the Big Blue are champions." },
-  { month:1,  day:27, year:2008, team:"Giants",    emoji:"🏈", title:"Giants Reach Super Bowl XLII", desc:"Eli Manning leads a stunning upset of the 18-0 New England Patriots in Super Bowl XLII — one of the greatest games ever played." },
+  { month:1, day:3,  year:1920, team:"Yankees",   emoji:"⚾", title:"Yankees Acquire Babe Ruth from Red Sox", desc:"For $100,000 cash and a $300K loan on Fenway Park, the Yankees acquire Ruth. The Curse of the Bambino begins. The most consequential deal in sports history." },
+  { month:1, day:5,  year:1970, team:"Knicks",    emoji:"🏀", title:"Willis Reed Named All-Star Starter", desc:"The Knicks captain earns his third All-Star selection as New York cruises toward their first NBA championship." },
+  { month:1, day:9,  year:1951, team:"Yankees",   emoji:"⚾", title:"Joe DiMaggio Retires at Age 36", desc:"The Yankee Clipper calls it quits after 13 seasons. His final words: 'I just want to live my life in dignity.' His record 56-game streak will never fall." },
+  { month:1, day:11, year:1969, team:"Jets",      emoji:"🏈", title:"Super Bowl III — Namath's Guarantee Pays Off", desc:"The Jets shock the NFL world, defeating the Baltimore Colts 16-7. Broadway Joe's guarantee is fulfilled. The AFL is validated forever." },
+  { month:1, day:12, year:1986, team:"Giants",    emoji:"🏈", title:"Bill Parcells Named Giants Head Coach", desc:"Parcells takes over a struggling Giants program — he will go on to win two Super Bowls with Lawrence Taylor, Phil Simms, and the Big Blue." },
+  { month:1, day:15, year:2000, team:"Devils",    emoji:"🏒", title:"Martin Brodeur Sets Devils Goals-Against Record", desc:"Brodeur continues his march to becoming the greatest goaltender in NHL history — he will win his second Cup this very season." },
+  { month:1, day:17, year:1983, team:"Islanders", emoji:"🏒", title:"Mike Bossy Scores 50th Goal in 50th Game — Again", desc:"Bossy again reaches Rocket Richard's iconic milestone — one of only two players ever to score 50 goals in the team's first 50 games, in back-to-back seasons." },
+  { month:1, day:19, year:1994, team:"Rangers",   emoji:"🏒", title:"Mark Messier Signs Contract Extension with Rangers", desc:"The Captain commits to New York — the move that leads directly to the 54-year drought ending in June 1994." },
+  { month:1, day:25, year:1987, team:"Giants",    emoji:"🏈", title:"Giants Win Super Bowl XXI — Simms' Perfect Performance", desc:"Phil Simms goes 22-for-25 — still the Super Bowl completion record. The Giants crush Denver 39-20. LT and the Big Blue are champions for the first time." },
+  { month:1, day:27, year:1991, team:"Giants",    emoji:"🏈", title:"Giants Win Super Bowl XXV — Wide Right!", desc:"Ottis Anderson wins MVP. Scott Norwood's kick drifts wide right. New York 20, Buffalo 19. Arguably the greatest Super Bowl ever played." },
+  { month:1, day:29, year:2006, team:"Islanders", emoji:"🏒", title:"Rick DiPietro Signs 15-Year, $67.5M Contract", desc:"One of the worst contracts in NHL history — injuries limit DiPietro to 301 games total. A cautionary tale about guaranteed money." },
+  { month:1, day:31, year:1950, team:"Knicks",    emoji:"🏀", title:"Knicks Officially Join the NBA", desc:"The Knicks are ratified as an NBA franchise — beginning 75+ years of basketball at Madison Square Garden." },
   // FEBRUARY
-  { month:2,  day:3,  year:2008, team:"Giants",    emoji:"🏈", title:"The Helmet Catch — Giants Stun Patriots", desc:"Eli to David Tyree. On 4th and 1 with 1:15 left. The catch that defines improbable. 17-14 Giants over the perfect Patriots." },
-  { month:2,  day:5,  year:2012, team:"Giants",    emoji:"🏈", title:"Giants Win Super Bowl XLVI", desc:"Second Patriots upset in 4 years. Bradshaw's reluctant TD seals it 21-17. Eli Manning is a two-time Super Bowl MVP." },
-  { month:2,  day:10, year:1985, team:"Mets",      emoji:"⚾", title:"Dwight Gooden Wins NL Cy Young Award", desc:"Doc at age 20 — 24-4, 1.53 ERA. The youngest Cy Young winner in history. The most dominant season by a Mets pitcher ever." },
+  { month:2, day:1,  year:1984, team:"Jets",      emoji:"🏈", title:"Mark Gastineau Named AFC Defensive Player of Year", desc:"The NY Sack Exchange star is recognized after his record 22-sack season — at the time the most dominant defensive season in NFL history." },
+  { month:2, day:3,  year:2008, team:"Giants",    emoji:"🏈", title:"The Helmet Catch — Giants Stun the Perfect Patriots", desc:"Eli scrambles free, throws deep. David Tyree pins it against his helmet on 4th and 1. 17-14 Giants. The greatest Super Bowl upset ever." },
+  { month:2, day:5,  year:2012, team:"Giants",    emoji:"🏈", title:"Giants Win Super Bowl XLVI — Second Patriots Stunner", desc:"Ahmad Bradshaw's reluctant touchdown wins it 21-17. Eli Manning is a two-time Super Bowl MVP. Two miracles against the same dynasty." },
+  { month:2, day:7,  year:1991, team:"Knicks",    emoji:"🏀", title:"Patrick Ewing Scores 51 Points at MSG", desc:"The greatest Knick puts on a career-high performance with 51 points against the Celtics — MSG is on its feet." },
+  { month:2, day:10, year:1985, team:"Mets",      emoji:"⚾", title:"Dwight Gooden Wins NL Cy Young — At Age 20", desc:"Doc wins unanimously — 24-4, 1.53 ERA — the most dominant pitching season by any 20-year-old in baseball history. The youngest Cy Young winner ever." },
+  { month:2, day:12, year:1934, team:"Rangers",   emoji:"🏒", title:"Rangers Win Stanley Cup", desc:"The Rangers' second Cup championship — defeating the Detroit Red Wings. The franchise will wait 60 years for the next one." },
+  { month:2, day:14, year:1976, team:"Nets",      emoji:"🏀", title:"Julius Erving Named ABA MVP — Third Time", desc:"Dr. J wins his third ABA MVP with the Nets — the most exciting player in basketball reinvents the game in New Jersey." },
+  { month:2, day:16, year:2012, team:"Knicks",    emoji:"🏀", title:"Jeremy Lin — Linsanity Peaks Against Kobe's Lakers", desc:"Lin drops 38 on the Lakers in what becomes the defining night of Linsanity. MSG is electric. The whole world is watching New York basketball." },
+  { month:2, day:20, year:1962, team:"Mets",      emoji:"⚾", title:"New York Mets Are Born", desc:"The National League returns to New York after the Dodgers and Giants fled to California. The Amazin's start their improbable 64-year story." },
+  { month:2, day:24, year:1975, team:"Islanders", emoji:"🏒", title:"Denis Potvin Named NHL All-Star First Team", desc:"The Islanders captain earns his first of six All-Star selections — he will win four Norris Trophies and four straight Stanley Cups." },
+  { month:2, day:26, year:1987, team:"Yankees",   emoji:"⚾", title:"Don Mattingly Named AL MVP — Donnie Baseball at His Peak", desc:"The most beloved Yankee of his era is recognized as the best player in the American League — still waiting for his first World Series ring." },
   // MARCH
-  { month:3,  day:6,  year:1961, team:"Yankees",   emoji:"⚾", title:"Roger Maris Returns for Historic Season", desc:"Maris prepares for the 1961 season that will produce 61 home runs — breaking Babe Ruth's 34-year-old record." },
-  { month:3,  day:28, year:1973, team:"Yankees",   emoji:"⚾", title:"George Steinbrenner Buys the Yankees", desc:"A group led by George Steinbrenner purchases the Yankees for $10 million. The Boss era begins. Nothing in NY sports would ever be the same." },
-  { month:3,  day:15, year:1991, team:"Rangers",   emoji:"🏒", title:"Mark Messier Traded to Rangers", desc:"The greatest captain in hockey history arrives in New York. Three years later he ends the 54-year drought." },
+  { month:3, day:2,  year:1962, team:"Knicks",    emoji:"🏀", title:"Wilt Chamberlain Scores 100 Points vs. Knicks", desc:"In Hershey PA, Wilt scores 100 with the Knicks as the opponents. The game still defines the outer limits of what one player can achieve." },
+  { month:3, day:8,  year:1985, team:"Islanders", emoji:"🏒", title:"Denis Potvin Breaks Bobby Orr's Defenseman Points Record", desc:"Potvin becomes the highest-scoring defenseman in NHL history, surpassing the legendary Bobby Orr — a record that stands for decades." },
+  { month:3, day:10, year:1970, team:"Knicks",    emoji:"🏀", title:"Knicks Clinch Division Title — Championship Run Begins", desc:"New York locks up the Eastern Division — setting the stage for their magical run to the 1970 NBA championship." },
+  { month:3, day:15, year:1991, team:"Rangers",   emoji:"🏒", title:"Mark Messier Traded to New York Rangers", desc:"The greatest captain in hockey history arrives in New York with 5 Stanley Cup rings. Three years later he adds a sixth with the Rangers." },
+  { month:3, day:21, year:1960, team:"Yankees",   emoji:"⚾", title:"Roger Maris Acquired from Kansas City Athletics", desc:"Maris is traded to New York — he will hit 39 HR in Year 1 and 61 HR in Year 2. The most important trade of the Mantle-Maris era." },
+  { month:3, day:23, year:1958, team:"Giants",    emoji:"🏈", title:"Frank Gifford Named NFL MVP", desc:"Mr. Giant wins the league's highest individual honor — Gifford defines what it means to be a glamorous New York sports star." },
+  { month:3, day:28, year:1973, team:"Yankees",   emoji:"⚾", title:"George Steinbrenner Finalizes Yankees Purchase for $10M", desc:"The Boss era begins. Steinbrenner buys the Yankees for a fraction of what they're worth today. He will win 7 World Series as owner." },
   // APRIL
-  { month:4,  day:6,  year:1973, team:"Yankees",   emoji:"⚾", title:"Ron Blomberg Becomes First DH", desc:"Yankees' Ron Blomberg becomes the first designated hitter in baseball history — forever changing the game." },
-  { month:4,  day:8,  year:1969, team:"Mets",      emoji:"⚾", title:"Miracle Mets Season Opens", desc:"The 1969 Mets begin their miraculous journey as 100-to-1 longshots. The world has no idea what's coming." },
-  { month:4,  day:14, year:2024, team:"Mets",      emoji:"⚾", title:"Mets Retire Dwight Gooden's #16", desc:"Doc's number goes to the rafters at Citi Field — a bittersweet celebration of what might have been the greatest pitching career ever." },
-  { month:4,  day:18, year:1923, team:"Yankees",   emoji:"⚾", title:"Yankee Stadium Opens — Ruth Hits Homer", desc:"Babe Ruth hits a three-run homer in the first game at the original Yankee Stadium — 'The House That Ruth Built.' The shrine is open." },
-  { month:4,  day:22, year:1970, team:"Mets",      emoji:"⚾", title:"Seaver Strikes Out 19 Padres", desc:"Tom Seaver fans 19 Padres — including 10 consecutive to end the game — then the greatest single pitching performance in Mets history." },
-  { month:4,  day:28, year:1973, team:"Mets",      emoji:"⚾", title:"Tug McGraw Utters 'Ya Gotta Believe'", desc:"Tug McGraw fires up his teammates with those three words. The rallying cry that defines Mets fandom forever." },
+  { month:4, day:6,  year:1973, team:"Yankees",   emoji:"⚾", title:"Ron Blomberg Becomes MLB's First Designated Hitter", desc:"The Yankees' Ron Blomberg walks in the first at-bat as a DH in baseball history — forever changing how the American League plays." },
+  { month:4, day:8,  year:1969, team:"Mets",      emoji:"⚾", title:"Miracle Mets Season Begins — 100-to-1 Longshots", desc:"The 1969 Mets open their improbable season. Nobody — nobody — imagines they will win the World Series in 6 months." },
+  { month:4, day:14, year:2024, team:"Mets",      emoji:"⚾", title:"Mets Retire Dwight Gooden's #16", desc:"Doc's number goes to the rafters at Citi Field — a bittersweet celebration of what might have been the greatest pitching career in history." },
+  { month:4, day:18, year:1923, team:"Yankees",   emoji:"⚾", title:"Yankee Stadium Opens — Babe Ruth Hits a Homer", desc:"'The House That Ruth Built' opens its doors. Ruth christens it with a three-run homer. The most famous stadium in American sports is born." },
+  { month:4, day:22, year:1970, team:"Mets",      emoji:"⚾", title:"Tom Seaver Strikes Out 19 Padres — 10 Consecutive to End It", desc:"Tom Terrific fans the final 10 San Diego Padres he faces — 19 total strikeouts. Still the greatest single pitching performance in Mets history." },
+  { month:4, day:24, year:1967, team:"Mets",      emoji:"⚾", title:"Tom Seaver Makes His Mets Debut", desc:"The 22-year-old from Fresno State takes the mound for the first time as a Met — the franchise will never be the same." },
+  { month:4, day:26, year:1977, team:"Yankees",   emoji:"⚾", title:"Reggie Jackson Joins the Yankees — Bronx Zoo Begins", desc:"Mr. October arrives in the Bronx. The turmoil with Billy Martin begins immediately — so does the path to back-to-back World Series titles." },
+  { month:4, day:28, year:1965, team:"Jets",      emoji:"🏈", title:"Joe Namath Signs with Jets for $427,000 — NFL Shocked", desc:"The most shocking contract in football history sends Broadway Joe to New York — legitimizing the AFL once and for all." },
   // MAY
-  { month:5,  day:17, year:1998, team:"Yankees",   emoji:"⚾", title:"David Wells Throws a Perfect Game", desc:"Hungover Wells (his words, not ours) retires all 27 Minnesota Twins he faces. The 15th perfect game in MLB history." },
-  { month:5,  day:20, year:1980, team:"Islanders", emoji:"🏒", title:"Bob Nystrom OT Goal — First Dynasty Cup", desc:"Nystrom scores at 7:11 of overtime to give the Islanders their first Stanley Cup, defeating the Flyers. The dynasty is born." },
-  { month:5,  day:28, year:2026, team:"NY Sports", emoji:"🗽", title:"NY Sports Daily Launches!", desc:"nysportsdaily.com goes live — the definitive destination for obsessed NY sports fans everywhere." },
-  { month:5,  day:9,  year:1984, team:"Islanders", emoji:"🏒", title:"Islanders Win 4th Consecutive Cup", desc:"Denis Potvin lifts the Cup after sweeping the Edmonton Oilers — stopping Gretzky's dynasty at its doorstep." },
+  { month:5, day:3,  year:1988, team:"Mets",      emoji:"⚾", title:"Darryl Strawberry Sets New Mets HR Record (155)", desc:"Straw passes Dave Kingman for the Mets franchise HR record — a record he holds for 37 years until Pete Alonso passes him in August 2025." },
+  { month:5, day:5,  year:1994, team:"Rangers",   emoji:"🏒", title:"Rangers Clinch Presidents' Trophy — Best Record in NHL", desc:"The Blueshirts finish with the NHL's best record — setting up the greatest playoff run in franchise history since the 1940 Cup." },
+  { month:5, day:7,  year:1980, team:"Islanders", emoji:"🏒", title:"Bob Nystrom OT Goal — Islanders Win First Stanley Cup!", desc:"At 7:11 of overtime against the Philadelphia Flyers, Nystrom converts and the Islanders win their first Stanley Cup. The four-year dynasty begins." },
+  { month:5, day:9,  year:1984, team:"Islanders", emoji:"🏒", title:"Islanders Win Fourth Consecutive Stanley Cup", desc:"By sweeping the Edmonton Oilers, the Islanders complete four straight championships — stopping Gretzky's dynasty before it could start." },
+  { month:5, day:10, year:2003, team:"Devils",    emoji:"🏒", title:"Martin Brodeur Sets NHL Career Shutout Record", desc:"Brodeur surpasses Tony Esposito's career shutout record — a reflection of 12 years of elite goaltending in New Jersey." },
+  { month:5, day:12, year:1994, team:"Rangers",   emoji:"🏒", title:"Messier Guarantees a Win — Then Scores a Hat Trick", desc:"Down 3-2 to the Devils, Messier guarantees a win. He then scores a hat trick in the third period. The Rangers go on to win the Stanley Cup." },
+  { month:5, day:17, year:1998, team:"Yankees",   emoji:"⚾", title:"David Wells Throws a Perfect Game at Yankee Stadium", desc:"All 27 Minnesota Twins retired. Wells — who admits he was feeling rough that morning — throws the 15th perfect game in MLB history." },
+  { month:5, day:22, year:1976, team:"Nets",      emoji:"🏀", title:"Nets Win ABA Championship — Dr. J's Final ABA Title", desc:"Julius Erving leads the Nets to their second ABA title — then is sold to the 76ers to pay the ABA-NBA merger fee. The most heartbreaking exit in Nets history." },
+  { month:5, day:24, year:2000, team:"Devils",    emoji:"🏒", title:"Devils Win Second Stanley Cup — Scott Stevens Era", desc:"NJ defeats the Dallas Stars. Scott Stevens wins Conn Smythe. New Jersey's second Cup in 6 years. The dynasty is no longer deniable." },
+  { month:5, day:26, year:1994, team:"Rangers",   emoji:"🏒", title:"Rangers Defeat Devils in 7 to Reach Cup Finals", desc:"After Messier's guarantee game, the Rangers win the series in 7 — then go on to end the 54-year drought against the Vancouver Canucks." },
+  { month:5, day:28, year:2026, team:"NY Sports", emoji:"🗽", title:"NY Sports Daily Launches at nysportsdaily.com!", desc:"The definitive daily destination for obsessed NY sports fans launches. You're reading this right now." },
   // JUNE
-  { month:6,  day:3,  year:1932, team:"Yankees",   emoji:"⚾", title:"Lou Gehrig Hits 4 Home Runs in a Game", desc:"The Iron Horse hits 4 HRs in a single game — a feat matched but never beaten. Pure power on display at Shibe Park." },
-  { month:6,  day:9,  year:2004, team:"Devils",    emoji:"🏒", title:"Martin Brodeur Named All-Time Wins Leader", desc:"Brodeur breaks Terry Sawchuk's all-time NHL wins record — cementing his status as the greatest goalie in NHL history." },
-  { month:6,  day:14, year:1994, team:"Rangers",   emoji:"🏒", title:"Rangers Win the Stanley Cup — 54-Year Drought Over", desc:"Mark Messier's Rangers defeat the Vancouver Canucks in Game 7. 'The Curse of 1940' is over. MSG goes absolutely insane." },
-  { month:6,  day:14, year:2000, team:"Devils",    emoji:"🏒", title:"Devils Win Second Stanley Cup", desc:"Scott Stevens era peaks — Devils defeat the Dallas Stars. New Jersey's second Cup in 6 years. The dynasty is real." },
+  { month:6, day:2,  year:1941, team:"Yankees",   emoji:"⚾", title:"Lou Gehrig Dies at 37 from ALS", desc:"The Iron Horse passes away — just two years after his famous farewell speech at Yankee Stadium. His memory and courage define the sport." },
+  { month:6, day:3,  year:1932, team:"Yankees",   emoji:"⚾", title:"Lou Gehrig Hits 4 Home Runs in a Single Game", desc:"The Iron Horse goes deep four times at Shibe Park — one of the most remarkable single-game performances in Yankees history." },
+  { month:6, day:8,  year:2003, team:"Devils",    emoji:"🏒", title:"Devils Win Third Stanley Cup in 9 Years", desc:"New Jersey sweeps the Anaheim Mighty Ducks — Pat Burns coaches NJ to its third championship. Three Cups in 9 years is a dynasty by any definition." },
+  { month:6, day:11, year:1997, team:"Yankees",   emoji:"⚾", title:"First Subway Series Game — Yankees vs. Mets", desc:"The Yankees and Mets play for the very first time in the regular season. New York is divided. The Subway Series rivalry is officially born." },
+  { month:6, day:13, year:1994, team:"Rangers",   emoji:"🏒", title:"RANGERS WIN THE STANLEY CUP — 54 YEARS OVER!", desc:"Mark Messier's Rangers defeat the Vancouver Canucks in Game 7. Fifty-four years since 1940. MSG explodes. The greatest moment in Rangers history." },
+  { month:6, day:15, year:2000, team:"Devils",    emoji:"🏒", title:"NJ Devils Win the 2000 Stanley Cup", desc:"The Devils defeat the Dallas Stars in 6 games — Scott Stevens is Conn Smythe MVP. The dynasty reaches full force." },
+  { month:6, day:17, year:1994, team:"Knicks",    emoji:"🏀", title:"OJ Simpson Chase Interrupts Knicks-Rockets NBA Finals", desc:"NBC splits screens — NBA Finals Game 5 alongside the Bronco chase on the LA freeway. One of the strangest nights in sports television history." },
+  { month:6, day:19, year:1994, team:"Rangers",   emoji:"🏒", title:"Rangers Stanley Cup Parade Down Broadway", desc:"A million fans line the Canyon of Heroes. Messier raises the Cup on Broadway. The greatest parade in New York hockey history." },
+  { month:6, day:25, year:1995, team:"Devils",    emoji:"🏒", title:"Devils Win First Stanley Cup — Brodeur Dominant", desc:"Martin Brodeur shuts out the Detroit Red Wings as NJ sweeps the Series in 4. The NJ Devils have arrived as a dynasty." },
+  { month:6, day:27, year:1999, team:"Yankees",   emoji:"⚾", title:"Yankees Begin Greatest Regular Season of All Time", desc:"New York finishes 114-48 — the most wins in modern baseball history — before a perfect World Series sweep of the San Diego Padres." },
   // JULY
-  { month:7,  day:4,  year:1939, team:"Yankees",   emoji:"⚾", title:"Lou Gehrig's Farewell Speech", desc:"'Today I consider myself the luckiest man on the face of the earth.' Gehrig's iconic goodbye at Yankee Stadium — the most powerful speech in sports history." },
-  { month:7,  day:9,  year:1934, team:"Yankees",   emoji:"⚾", title:"Babe Ruth's 'Called Shot' Anniversary", desc:"Ruth's most legendary act remains debated — but the Babe always insisted he pointed to center field before hitting that home run." },
-  { month:7,  day:17, year:1941, team:"Yankees",   emoji:"⚾", title:"DiMaggio's 56-Game Streak Ends", desc:"Joe DiMaggio's unbelievable run ends in Cleveland — the most unbreakable record in sports is now in the books at 56 games." },
-  { month:7,  day:18, year:1999, team:"Yankees",   emoji:"⚾", title:"David Cone Perfect Game on Yogi Berra Day", desc:"On Yogi Berra Day, with Don Larsen in attendance, Cone throws a perfect game against the Expos. Only in New York." },
-  { month:7,  day:24, year:1983, team:"Yankees",   emoji:"⚾", title:"The Pine Tar Game", desc:"George Brett's homer nullified. Billy Martin's scheming at its finest. Yankees win the protest — then lose the makeup game anyway." },
+  { month:7, day:1,  year:2000, team:"Mets",      emoji:"⚾", title:"Bobby Bonilla Day Begins — $1.19M Per Year Through 2035", desc:"The Mets begin paying deferred salary to Bobby Bonilla, who hasn't played for them since 1999. Every July 1st. Through 2035. A remarkable financial arrangement." },
+  { month:7, day:4,  year:1939, team:"Yankees",   emoji:"⚾", title:"Lou Gehrig's Farewell Speech at Yankee Stadium", desc:"'Today I consider myself the luckiest man on the face of the earth.' Two years after diagnosis, the Iron Horse says goodbye. Sports' most powerful speech." },
+  { month:7, day:9,  year:2011, team:"Yankees",   emoji:"⚾", title:"Derek Jeter Homers for His 3,000th Career Hit", desc:"The Captain becomes the first player in history to hit a home run for career hit number 3,000. The Stadium goes absolutely wild." },
+  { month:7, day:13, year:1977, team:"Yankees",   emoji:"⚾", title:"Blackout Night in the Bronx — Yankees Play On", desc:"During the great NYC blackout of 1977, the Yankees play on under Yankee Stadium's lights — the Bronx perseveres as the city struggles." },
+  { month:7, day:15, year:1965, team:"Mets",      emoji:"⚾", title:"The Beatles Play Shea Stadium — First Big Rock Concert", desc:"55,000 screaming fans see John, Paul, George and Ringo at Shea — the largest rock concert ever held at the time. A legendary night in Flushing." },
+  { month:7, day:17, year:1941, team:"Yankees",   emoji:"⚾", title:"DiMaggio's 56-Game Hitting Streak Ends in Cleveland", desc:"Al Smith and Ken Keltner make brilliant plays to stop DiMaggio — ending the most unbreakable record in sports at 56 games. It has never been seriously threatened." },
+  { month:7, day:18, year:1999, team:"Yankees",   emoji:"⚾", title:"David Cone Perfect Game — On Yogi Berra Day, With Don Larsen There", desc:"On Yogi Berra Day at Yankee Stadium, with Don Larsen in attendance, Cone throws a perfect game against the Expos. You cannot make this up." },
+  { month:7, day:24, year:1983, team:"Yankees",   emoji:"⚾", title:"The Pine Tar Game — Billy Martin's Scheming at Its Finest", desc:"George Brett's homer is nullified by Billy Martin's pine-tar rule complaint. The Royals protest and win. The Yankees then lose the makeup game anyway." },
+  { month:7, day:28, year:1979, team:"Yankees",   emoji:"⚾", title:"Thurman Munson Dies in Plane Crash — New York Mourns", desc:"The Yankees captain dies at age 32 in a plane crash in Canton, Ohio. His teammates play in tears that night. His number 15 is retired immediately." },
   // AUGUST
-  { month:8,  day:12, year:2025, team:"Mets",      emoji:"⚾", title:"Pete Alonso Sets Mets All-Time HR Record", desc:"The Polar Bear hits #253 off Spencer Strider, passing Darryl Strawberry's 37-year-old record. Citi Field erupts. He adds #254 in the same game." },
-  { month:8,  day:19, year:1951, team:"Giants",    emoji:"⚾", title:"Bobby Thomson Joins the Giants Roster", desc:"The man who would hit the Shot Heard Round the World settles into the Giants lineup." },
+  { month:8, day:2,  year:1979, team:"Yankees",   emoji:"⚾", title:"Yankees Retire Thurman Munson's #15", desc:"One day after his death, the Yankees announce the immediate retirement of Munson's number — the greatest honor the franchise can bestow." },
+  { month:8, day:8,  year:1994, team:"Yankees",   emoji:"⚾", title:"Baseball Strike Wipes Out Yankees' Best Season in Decades", desc:"The players strike cancels the season with the Yankees at 70-43 — the best record in baseball. The most painful non-World Series in pinstripe history." },
+  { month:8, day:12, year:2025, team:"Mets",      emoji:"⚾", title:"Pete Alonso Sets Mets All-Time Home Run Record (#253 and #254)", desc:"The Polar Bear passes Darryl Strawberry in the 3rd inning at Citi Field with HR #253, then adds #254 in the same game vs. the Braves. The Mets all-time HR king." },
+  { month:8, day:16, year:1948, team:"Yankees",   emoji:"⚾", title:"Babe Ruth Dies at 53", desc:"The Sultan of Swat passes. Flags fly at half-staff across New York. Over 100,000 fans line up at Yankee Stadium to pay their respects to the greatest player ever." },
+  { month:8, day:18, year:1983, team:"Mets",      emoji:"⚾", title:"Tom Seaver Returns to Mets for Final Season", desc:"Tom Terrific comes back for one last year in Queens — the city celebrates the homecoming of its greatest pitcher. He finishes with 2,541 Mets strikeouts." },
+  { month:8, day:24, year:1992, team:"Giants",    emoji:"🏈", title:"Lawrence Taylor Retires from the NFL", desc:"The greatest defensive player in league history hangs up his cleats — 132.5 career sacks, 2 Super Bowls, 1 MVP award. No linebacker has come close." },
+  { month:8, day:26, year:1990, team:"Yankees",   emoji:"⚾", title:"George Steinbrenner Suspended from Baseball", desc:"Commissioner Fay Vincent bans The Boss for his dealings with a gambler. His absence lets Gene Michael rebuild — the seeds of the 1996-2000 dynasty are planted." },
   // SEPTEMBER
-  { month:9,  day:8,  year:1985, team:"Yankees",   emoji:"⚾", title:"Don Mattingly Sets AL RBI Record", desc:"Donnie Baseball sets the American League record for RBIs in a season — the most beloved Yankee of his generation at his peak." },
-  { month:9,  day:21, year:2001, team:"Mets",      emoji:"⚾", title:"Piazza's 9/11 Home Run — The Most Emotional HR Ever", desc:"With NYC still in mourning after 9/11, Mike Piazza's solo shot in the 8th inning lifts the Mets over the Braves. The city needed this." },
-  { month:9,  day:28, year:1941, team:"Yankees",   emoji:"⚾", title:"DiMaggio's .357 Season Ends", desc:"Joe DiMaggio finishes one of the great seasons in baseball history — in the same year his 56-game hit streak entranced the nation." },
+  { month:9, day:1,  year:1969, team:"Mets",      emoji:"⚾", title:"Miracle Mets Move Into First Place — Nation Stunned", desc:"The 100-to-1 longshots take first place in September. Everyone is watching. The baseball world cannot believe what's happening in Flushing." },
+  { month:9, day:13, year:1951, team:"Giants",    emoji:"⚾", title:"Bobby Thomson's Shot Heard Round the World", desc:"Thomson's 3-run homer off Ralph Branca in the 9th wins the NL pennant for the Giants. Russ Hodges screams 'THE GIANTS WIN THE PENNANT!' over and over. Baseball history." },
+  { month:9, day:15, year:2001, team:"Mets",      emoji:"⚾", title:"First Major Sporting Event After 9/11", desc:"With Ground Zero still smoldering a mile away, the Mets host the Pirates in the first major sporting event post-9/11. An emotional night for all of New York." },
+  { month:9, day:17, year:1978, team:"Yankees",   emoji:"⚾", title:"Bucky Dent's Homer at Fenway — Red Sox Season Over", desc:"In a one-game playoff, Dent's three-run homer silences Fenway. Yankees win the AL East. Boston is crushed. One of the most dramatic moments in baseball history." },
+  { month:9, day:19, year:1969, team:"Mets",      emoji:"⚾", title:"Miracle Mets Clinch NL East — The Miracle Is Real", desc:"The Amazin' Mets clinch their first-ever division title. Fans storm Shea Stadium. 100-to-1 shots. World Series bound. It actually happened." },
+  { month:9, day:21, year:2001, team:"Mets",      emoji:"⚾", title:"Mike Piazza's 9/11 Home Run — Most Emotional HR in History", desc:"With NYC still grieving after 9/11, Piazza's solo shot in the 8th inning lifts the Mets over the Braves. The city needed this. Baseball as healing." },
+  { month:9, day:25, year:1973, team:"Mets",      emoji:"⚾", title:"Ya Gotta Believe! Mets Win NL East on Final Day", desc:"The 82-79 Mets — 12.5 games back in August — win the division on the last day of the season. Tug McGraw's rallying cry is prophecy." },
+  { month:9, day:27, year:1998, team:"Yankees",   emoji:"⚾", title:"Yankees Win 114th Game — Best Record in Modern Baseball", desc:"New York finishes with the most wins in modern baseball history — 114-48 — before sweeping the World Series. The greatest team ever assembled." },
   // OCTOBER
-  { month:10, day:1,  year:1961, team:"Yankees",   emoji:"⚾", title:"Roger Maris Hits Home Run #61", desc:"On the final day of the season, Maris breaks Babe Ruth's 34-year-old single-season record. He deserved the asterisk removed — which it finally was." },
-  { month:10, day:8,  year:1956, team:"Yankees",   emoji:"⚾", title:"Don Larsen's Perfect Game in the World Series", desc:"Larsen retires all 27 Brooklyn Dodgers in Game 5 — the only perfect game in postseason history. Roy Campanella called it: 'The impossible has happened.'" },
-  { month:10, day:16, year:1969, team:"Mets",      emoji:"⚾", title:"Miracle Mets Win the World Series", desc:"The Amazin' Mets defeat the Baltimore Orioles in 5 games. The 100-1 longshots pull off the greatest upset in World Series history. Shea Stadium explodes." },
-  { month:10, day:17, year:1977, team:"Yankees",   emoji:"⚾", title:"Reggie Jackson's 3 Home Runs on 3 Consecutive Pitches", desc:"Mr. October hits 3 HRs on 3 pitches from 3 different pitchers in the World Series clincher. The defining image of the Bronx Zoo era." },
-  { month:10, day:21, year:1986, team:"Mets",      emoji:"⚾", title:"Mets Win the 1986 World Series", desc:"After Buckner's error saved their season in Game 6, the Mets beat the Red Sox in Game 7. New York goes wild. The Bad Guys Won." },
-  { month:10, day:25, year:1986, team:"Mets",      emoji:"⚾", title:"Mookie Wilson's Grounder — Game 6 Miracle", desc:"Mookie's grounder to first. Buckner's legs fail him. The Mets survive to play Game 7 in one of the most dramatic moments in baseball history." },
-  { month:10, day:26, year:2003, team:"Devils",    emoji:"🏒", title:"Devils Win Third Stanley Cup", desc:"NJ completes a dynasty — three Cups in 9 years. Pat Burns's masterpiece. Brodeur and Stevens cement their legacies." },
+  { month:10, day:1, year:1961, team:"Yankees",   emoji:"⚾", title:"Roger Maris Hits Home Run #61 — Ruth's Record Falls", desc:"On the final day, Maris lines a pitch into the right-field seats. He breaks Babe Ruth's 34-year-old record. He deserved better from the fans and the Commissioner." },
+  { month:10, day:3, year:1951, team:"Giants",    emoji:"⚾", title:"Shot Heard Round the World — Thomson Wins the Pennant", desc:"Bobby Thomson's walk-off 3-run homer in the 9th. Ralph Branca never recovers. The Giants win the pennant in the most dramatic moment in baseball history." },
+  { month:10, day:8, year:1956, team:"Yankees",   emoji:"⚾", title:"Don Larsen's Perfect Game in the World Series", desc:"Larsen retires all 27 Brooklyn Dodgers he faces in Game 5. Yogi Berra leaps into his arms. The only perfect game in postseason history — ever." },
+  { month:10, day:13, year:1960, team:"Yankees",  emoji:"⚾", title:"Bill Mazeroski Walk-Off Shatters Yankee Hearts", desc:"The Yankees outscore Pittsburgh 55-27 in the Series but lose on Mazeroski's walk-off homer in Game 7. Still the most maddening Yankees loss in history." },
+  { month:10, day:16, year:1969, team:"Mets",     emoji:"⚾", title:"Miracle Mets Win the World Series", desc:"The Amazin' Mets defeat the Baltimore Orioles in 5 games. The 100-1 longshots pull off the greatest upset in World Series history. Shea Stadium explodes." },
+  { month:10, day:17, year:1977, team:"Yankees",  emoji:"⚾", title:"Reggie Jackson Hits 3 HRs on 3 Consecutive Pitches — Mr. October Born", desc:"Three pitchers. Three first pitches. Three home runs. The most theatrical World Series performance in history. The Bronx Zoo is World Champions." },
+  { month:10, day:19, year:2004, team:"Yankees",  emoji:"⚾", title:"Yankees Blow 3-0 Series Lead to Red Sox — Worst Collapse Ever", desc:"Boston becomes the only team to come back from 3-0 down. The Curse is reversed. Yankee fans still feel this one." },
+  { month:10, day:21, year:1986, team:"Mets",     emoji:"⚾", title:"Mets Win the 1986 World Series — The Bad Guys Won", desc:"After the Game 6 miracle, the Mets beat the Red Sox in Game 7. Fans pour onto Shea. Doc and Straw celebrate with a city that loves them." },
+  { month:10, day:25, year:1986, team:"Mets",     emoji:"⚾", title:"Mookie's Grounder — The Ball Goes Through Buckner's Legs", desc:"Mookie Wilson's grounder rolls through first baseman Bill Buckner's wickets. The Mets survive. Game 7 awaits. One of the most dramatic moments in baseball history." },
+  { month:10, day:27, year:2009, team:"Yankees",  emoji:"⚾", title:"Yankees Win 27th World Series Championship", desc:"In the new Yankee Stadium's inaugural year, New York defeats the Phillies in 6 games. A-Rod wins MVP. The Boss gets his final ring." },
   // NOVEMBER
-  { month:11, day:1,  year:2001, team:"Yankees",   emoji:"⚾", title:"Mr. November — Jeter's Walk-Off in the World Series", desc:"Derek Jeter hits a walk-off home run in the 10th inning, crossing into November. The most dramatic walk-off in Yankees history in a World Series they ultimately lose." },
-  { month:11, day:4,  year:2001, team:"Yankees",   emoji:"⚾", title:"Yankees Win Game 7 of 2001 World Series... Wait, They Lose", desc:"The Diamondbacks beat Rivera in the 9th inning of Game 7. Luis Gonzalez's bloop single shatters Yankee invincibility. One of the greatest Series ever." },
-  { month:11, day:18, year:1985, team:"Giants",    emoji:"🏈", title:"LT Breaks Theismann's Leg on Monday Night Football", desc:"Lawrence Taylor's hit on Monday Night Football shatters Joe Theismann's leg. The image changes the NFL. LT weeps on the field." },
+  { month:11, day:1, year:2001, team:"Yankees",   emoji:"⚾", title:"Mr. November — Jeter's Walk-Off Homer After Midnight", desc:"Derek Jeter hits a walk-off home run in the 10th inning of Game 4, crossing into November. The most dramatic walk-off in Yankees World Series history." },
+  { month:11, day:6, year:1985, team:"Mets",      emoji:"⚾", title:"Dwight Gooden Wins NL Cy Young Unanimously", desc:"Doc wins the Cy Young unanimously at age 20 — the youngest Cy Young Award winner in baseball history. The most dominant young pitcher the sport has ever seen." },
+  { month:11, day:14, year:2015, team:"Mets",     emoji:"⚾", title:"Jacob deGrom Named NL Rookie of the Year", desc:"The lanky right-hander from Daytona Beach wins ROY — beginning a run that makes him arguably the most dominant pitcher of his generation." },
+  { month:11, day:18, year:1985, team:"Giants",   emoji:"🏈", title:"LT Breaks Theismann's Leg on Monday Night Football", desc:"On MNF, Lawrence Taylor brings down Joe Theismann and shatters his leg. Football changes. Protecting the QB becomes the NFL's priority. LT weeps on the field." },
+  { month:11, day:22, year:2012, team:"Rangers",  emoji:"🏒", title:"Henrik Lundqvist Wins Vezina Trophy", desc:"The King is recognized as the best goaltender in the NHL at the peak of his remarkable career — the greatest Ranger since Messier and Leetch." },
+  { month:11, day:28, year:1993, team:"Knicks",   emoji:"🏀", title:"Knicks Win 10th Straight Under Pat Riley", desc:"The most physically intimidating team in the NBA — Riley's defensive system is producing the Knicks' best basketball in two decades." },
   // DECEMBER
-  { month:12, day:19, year:1925, team:"Yankees",   emoji:"⚾", title:"Babe Ruth Sold to Yankees from Red Sox", desc:"The most consequential transaction in sports history — Boston sells Ruth for $100,000, cursing themselves for 86 years." },
-  { month:12, day:28, year:1958, team:"Giants",    emoji:"🏈", title:"The Greatest Game Ever Played", desc:"Baltimore Colts defeat the NY Giants 23-17 in sudden death overtime. The game that made the NFL the dominant American sport. Every sports fan owes this game a debt." },
+  { month:12, day:9, year:1992, team:"Devils",    emoji:"🏒", title:"New Jersey Devils Sign Scott Stevens", desc:"The hardest hitter in hockey history arrives in New Jersey. He will win 3 Stanley Cup championships, the Conn Smythe Trophy in 2000, and define Devils hockey." },
+  { month:12, day:11, year:1977, team:"Islanders",emoji:"🏒", title:"Bryan Trottier Named NHL All-Star — Dynasty Building", desc:"The Islanders center begins his ascent to greatness — three years before the first of four consecutive Stanley Cups." },
+  { month:12, day:19, year:1925, team:"Yankees",  emoji:"⚾", title:"Yankees Acquire Babe Ruth from Red Sox for $100,000", desc:"The most consequential transaction in sports history. Boston curses itself for 86 years. The Babe goes to the Bronx. Baseball's balance of power shifts forever." },
+  { month:12, day:23, year:1973, team:"Islanders",emoji:"🏒", title:"Denis Potvin Signs with the Islanders", desc:"The franchise cornerstone begins a career that includes 4 Cups, 3 Norris Trophies, the all-time defenseman scoring record, and the most beloved dynasty in Islanders history." },
+  { month:12, day:28, year:1958, team:"Giants",   emoji:"🏈", title:"The Greatest Game Ever Played — Colts 23, Giants 17 in OT", desc:"Baltimore Colts defeat the NY Giants in sudden death overtime in Yankee Stadium. The game that made the NFL America's sport. John Unitas over the Giants defense. A masterpiece." },
 ];
 
 function TodayTab() {
@@ -3028,61 +3303,66 @@ function TodayTab() {
 }
 
 // ─── POLLS TAB ─────────────────────────────────────────────────────────────
+const ALL_POLLS = [
+  { id:"goat_yankee", question:"Who is the greatest Yankee of all time?", options:["Babe Ruth","Lou Gehrig","Mickey Mantle","Joe DiMaggio","Derek Jeter"] },
+  { id:"goat_met", question:"Who is the greatest Met of all time?", options:["Tom Seaver","Mike Piazza","Dwight Gooden","David Wright","Pete Alonso"] },
+  { id:"goat_knick", question:"Who is the greatest Knick of all time?", options:["Patrick Ewing","Walt Frazier","Willis Reed","Carmelo Anthony","Jalen Brunson"] },
+  { id:"goat_jet", question:"Who is the greatest Jet of all time?", options:["Joe Namath","Curtis Martin","Don Maynard","Darrelle Revis","Mark Gastineau"] },
+  { id:"goat_giant", question:"Who is the greatest Giant of all time?", options:["Lawrence Taylor","Eli Manning","Frank Gifford","Phil Simms","Michael Strahan"] },
+  { id:"goat_ranger", question:"Who is the greatest Ranger of all time?", options:["Mark Messier","Brian Leetch","Rod Gilbert","Mike Richter","Henrik Lundqvist"] },
+  { id:"goat_islander", question:"Who is the greatest Islander of all time?", options:["Bryan Trottier","Mike Bossy","Denis Potvin","Billy Smith","John Tavares"] },
+  { id:"goat_devil", question:"Who is the greatest Devil of all time?", options:["Martin Brodeur","Scott Stevens","Patrik Elias","Scott Niedermayer","Ken Daneyko"] },
+  { id:"best_moment", question:"Greatest NY sports moment ever?", options:["1969 Mets WS","Namath Guarantee","Rangers 1994 Cup","Helmet Catch","Piazza 9/11 HR"] },
+  { id:"best_stadium", question:"Best NY sports venue?", options:["Yankee Stadium","Madison Square Garden","MetLife Stadium","Citi Field","UBS Arena"] },
+  { id:"misery_leader", question:"Which NY team makes you suffer the most?", options:["Jets","Mets","Knicks","Islanders","Rangers"] },
+  { id:"mt_rushmore", question:"NY Sports Mt. Rushmore — who's on it?", options:["Ruth/Namath/LT/Messier","Jeter/Ewing/Messier/LT","Ruth/DiMaggio/Namath/Ewing","Mantle/Seaver/Reed/Bossy"] },
+  { id:"best_qb", question:"Best NY quarterback ever?", options:["Joe Namath","Eli Manning","Phil Simms","Y.A. Tittle"] },
+  { id:"best_pitcher", question:"Best NY pitcher of all time?", options:["Tom Seaver","Whitey Ford","Dwight Gooden","Mariano Rivera","Jacob deGrom"] },
+  { id:"best_coach", question:"Greatest NY coach/manager ever?", options:["Casey Stengel","Bill Parcells","Red Holzman","Al Arbour","Joe Torre"] },
+  { id:"best_subway", question:"Who wins the all-time Subway Series?", options:["Yankees — no contest","Mets — heart over history","Too close to call"] },
+  { id:"best_dynasty", question:"Greatest NY dynasty?", options:["Yankees (any era)","Islanders 1980-83","Knicks early 70s","Devils 1995-2003"] },
+  { id:"best_single_season", question:"Greatest single NY team season?", options:["1927 Yankees","1986 Mets","1998 Yankees","1969 Mets","1970 Knicks"] },
+  { id:"most_heartbreak", question:"Most heartbreaking NY sports moment?", options:["2004 ALCS collapse","2007 Mets collapse","Wide Right (Bills had it worse)","2000 Subway Series loss (Mets)"] },
+  { id:"best_nickname", question:"Best NY sports nickname?", options:["Mr. October","The Captain","Broadway Joe","LT","Doc"] },
+  { id:"goat_overall", question:"The single greatest NY athlete ever?", options:["Babe Ruth","Lawrence Taylor","Willis Reed","Mark Messier","Tom Seaver"] },
+  { id:"best_owner", question:"Best (or most impactful) NY sports owner?", options:["George Steinbrenner","Steve Cohen","James Dolan (lol)","Charles Wang"] },
+  { id:"best_broadcaster", question:"Best NY sports broadcaster ever?", options:["Bob Murphy","Phil Rizzuto","Marv Albert","Mike Breen","Gary Cohen"] },
+  { id:"best_walkup", question:"Best NY sports entrance/walk-up moment?", options:["Enter Sandman (Rivera)","Jeter's intro at the Stadium","MSG Rangers goal song","Mets Piazza at-bats"] },
+];
+
 function PollsTab() {
   const [votes, setVotes] = useState({});
   const [voted, setVoted] = useState({});
 
-  const POLLS = [
-    {
-      id:"goat_yankee", question:"Who is the greatest Yankee of all time?",
-      options:["Babe Ruth","Lou Gehrig","Mickey Mantle","Joe DiMaggio","Derek Jeter"],
-    },
-    {
-      id:"goat_met", question:"Who is the greatest Met of all time?",
-      options:["Tom Seaver","Mike Piazza","Dwight Gooden","David Wright","Pete Alonso"],
-    },
-    {
-      id:"goat_knick", question:"Who is the greatest Knick of all time?",
-      options:["Patrick Ewing","Walt Frazier","Willis Reed","Carmelo Anthony","Jalen Brunson"],
-    },
-    {
-      id:"goat_jet", question:"Who is the greatest Jet of all time?",
-      options:["Joe Namath","Curtis Martin","Don Maynard","Darrelle Revis","Mark Gastineau"],
-    },
-    {
-      id:"goat_giant", question:"Who is the greatest Giant of all time?",
-      options:["Lawrence Taylor","Eli Manning","Frank Gifford","Phil Simms","Saquon Barkley"],
-    },
-    {
-      id:"goat_ranger", question:"Who is the greatest Ranger of all time?",
-      options:["Mark Messier","Brian Leetch","Rod Gilbert","Mike Richter","Henrik Lundqvist"],
-    },
-    {
-      id:"goat_islander", question:"Who is the greatest Islander of all time?",
-      options:["Bryan Trottier","Mike Bossy","Denis Potvin","Billy Smith","John Tavares"],
-    },
-    {
-      id:"best_moment", question:"Greatest NY sports moment ever?",
-      options:["1969 Mets WS","Namath Guarantee","Rangers 1994 Cup","Helmet Catch","Piazza 9/11 HR"],
-    },
-    {
-      id:"best_stadium", question:"Best NY sports venue?",
-      options:["Yankee Stadium","Madison Square Garden","MetLife Stadium","Citi Field","UBS Arena"],
-    },
-    {
-      id:"misery_leader", question:"Which NY team makes you suffer the most?",
-      options:["Jets","Mets","Knicks","Islanders","Rangers"],
-    },
-    {
-      id:"mt_rushmore", question:"NY Sports Mt. Rushmore — who's on it?",
-      options:["Ruth/Namath/LT/Messier","Jeter/Ewing/Messier/LT","Ruth/DiMaggio/Namath/Ewing","Mantle/Seaver/Reed/Bossy"],
-    },
-  ];
+  // Load saved votes from localStorage on mount (works on Vercel, not in artifact preview)
+  useEffect(() => {
+    try {
+      const savedVoted = JSON.parse(localStorage.getItem("nysd_poll_voted") || "{}");
+      const savedVotes = JSON.parse(localStorage.getItem("nysd_poll_votes") || "{}");
+      setVoted(savedVoted);
+      setVotes(savedVotes);
+    } catch(e) {}
+  }, []);
+
+  // Rotate: feature a "Poll of the Day" based on day of year, plus show all polls below
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+  const featuredPoll = ALL_POLLS[dayOfYear % ALL_POLLS.length];
+  // This week's rotating set (7 polls that change weekly)
+  const weekNum = Math.floor(dayOfYear / 7);
+  const weeklyPolls = Array.from({length:7}, (_,i) => ALL_POLLS[(weekNum*7 + i) % ALL_POLLS.length]);
+  // Dedupe featured out of weekly
+  const POLLS = [featuredPoll, ...weeklyPolls.filter(p => p.id !== featuredPoll.id)];
 
   function handleVote(pollId, option) {
     if (voted[pollId]) return;
-    setVotes(v => ({...v, [pollId]: {...(v[pollId]||{}), [option]: ((v[pollId]||{})[option]||0)+1}}));
-    setVoted(v => ({...v, [pollId]: option}));
+    const newVotes = {...votes, [pollId]: {...(votes[pollId]||{}), [option]: ((votes[pollId]||{})[option]||0)+1}};
+    const newVoted = {...voted, [pollId]: option};
+    setVotes(newVotes);
+    setVoted(newVoted);
+    try {
+      localStorage.setItem("nysd_poll_votes", JSON.stringify(newVotes));
+      localStorage.setItem("nysd_poll_voted", JSON.stringify(newVoted));
+    } catch(e) {}
   }
 
   function getTotal(pollId) {
@@ -3102,14 +3382,15 @@ function PollsTab() {
         <p style={styles.stdSub}>VOTE · DEBATE · SETTLE THE ARGUMENT</p>
       </div>
       <div style={{marginBottom:20, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Vote in each poll — results shown after you pick. Polls reset when you reload. Have your say!</p>
+        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Vote in each poll — results show after you pick, and your votes are saved on this device. The featured Poll of the Day rotates daily, and the full set rotates weekly so there's always something fresh.</p>
       </div>
       <div style={{display:"flex", flexDirection:"column", gap:20}}>
-        {POLLS.map(poll => {
+        {POLLS.map((poll, pIdx) => {
           const hasVoted = voted[poll.id];
           const total = getTotal(poll.id);
           return (
-            <div key={poll.id} style={styles.pollCard}>
+            <div key={poll.id} style={{...styles.pollCard, ...(pIdx===0 ? {border:"1px solid #c8201c"} : {})}}>
+              {pIdx===0 && <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:6}}>⭐ POLL OF THE DAY</div>}
               <div style={styles.pollQuestion}>{poll.question}</div>
               <div style={styles.pollOptions}>
                 {poll.options.map((opt, i) => {
@@ -3307,7 +3588,7 @@ function MiseryTab() {
       title:"DEFCON 1 — MAXIMUM SUFFERING",
       last:"1969", drought:57,
       lowlights:["56 years without a Super Bowl — longest drought in the NFL","Missed on Dan Marino in 1983 (took Ken O'Brien)","Brett Favre torn Achilles Week 4, 2008","Sanchez Butt Fumble on national TV 2012","Sam Darnold's ghost haunts every draft pick","Aaron Rodgers: Achilles in Week 1, 2023"],
-      brightside:"They do have Joe Namath and Super Bowl III — the greatest moment in franchise history. Aaron Rodgers healthy again gives real hope.",
+      brightside:"They do have Super Bowl III and Broadway Joe's guarantee — the greatest single moment any NY franchise has ever produced. Hope, however faint, springs eternal each fall.",
     },
     {
       team:"Knicks", emoji:"🏀", color:"#006BB6",
@@ -3315,7 +3596,7 @@ function MiseryTab() {
       title:"CHRONIC HEARTBREAK",
       last:"1973", drought:53,
       lowlights:["52 years without an NBA title","1994 Finals — Ewing's closest call, lost to Rockets","7 shots at the playoffs in the Isiah Thomas era","James Dolan's endless ownership chaos","Carmelo Anthony's best years wasted","Kristaps Porzingis traded for nothing tangible"],
-      brightside:"Brunson has MSG rocking again. Real hope for the first time in decades.",
+      brightside:"Two championships in the early 70s and the most electric building in sports. When the Garden is rocking, there is nothing like it in basketball.",
     },
     {
       team:"Mets", emoji:"⚾", color:"#FF5910",
@@ -3323,7 +3604,7 @@ function MiseryTab() {
       title:"HIGH SUFFERING",
       last:"1986", drought:40,
       lowlights:["40 years without a World Series title","1988: 100 wins and still lost to the Dodgers in NLCS","Generation K: Wilson, Pulsipher, Isringhausen — all busted before they started","2007: Collapsed with 17 games to play — 7 game lead vanished","2015: Harvey's arm, one strike away, Familia blows Save","Bobby Bonilla Day — paid $1.19M every July 1 through 2035"],
-      brightside:"Pete Alonso is the all-time HR king. Steve Cohen's money. Soto signed. Juan Soto and Alonso together could finally bring it home.",
+      brightside:"Two World Series titles, the deepest-pocketed ownership in baseball, and the most passionate fans in the National League. The window never truly closes in Queens.",
     },
     {
       team:"Rangers", emoji:"🏒", color:"#0038A8",
@@ -3331,7 +3612,7 @@ function MiseryTab() {
       title:"ELEVATED SUFFERING",
       last:"1994", drought:32,
       lowlights:["54-year drought before 1994","2014 Finals loss to the LA Kings","2022 Conference Finals loss to Lightning","Losing Messier's free agent negotiations","Trading Rick Middleton for Ken Hodge — criminal"],
-      brightside:"1994 happened. Panarin/Fox core is legitimate. The drought feels manageable.",
+      brightside:"1994 happened — the 54-year curse was broken on Broadway. Four Stanley Cups in the trophy case and the most storied building in hockey.",
     },
     {
       team:"Giants", emoji:"🏈", color:"#0B2265",
@@ -3339,7 +3620,7 @@ function MiseryTab() {
       title:"MODERATE SUFFERING",
       last:"2012", drought:14,
       lowlights:["Back-to-back losing seasons 2017-2023","Daniel Jones experiment cost 3 years","Saquon Barkley left for Philadelphia and immediately won","Odell Beckham traded away","McAdoo benched Eli Manning — immediate fan revolt"],
-      brightside:"4 Super Bowls. Two miracle upsets of the Patriots. LT. The resume is elite.",
+      brightside:"Four Super Bowls, two miracle upsets of the greatest dynasty in NFL history, and Lawrence Taylor. The resume is, simply, elite.",
     },
     {
       team:"Islanders", emoji:"🏒", color:"#00539B",
@@ -3347,7 +3628,7 @@ function MiseryTab() {
       title:"MODERATE SUFFERING",
       last:"1983", drought:43,
       lowlights:["John Tavares left for Toronto in free agency — broke hearts","Rick DiPietro 15-year $67.5M contract — disaster","Years of arena uncertainty (Nassau vs Brooklyn vs UBS)","Mike Milbury's trades still echoing","No Cup since the dynasty ended in 1983"],
-      brightside:"Matthew Schaefer #1 overall. Barry Trotz era nearly made it. Patrick Roy coaching.",
+      brightside:"Four consecutive Stanley Cups from 1980-83 — the most dominant dynasty in modern NHL history. No one can ever take those banners down.",
     },
     {
       team:"Nets", emoji:"🏀", color:"#000000",
@@ -3355,7 +3636,7 @@ function MiseryTab() {
       title:"EXISTENTIAL CONFUSION",
       last:"Never (NBA)", drought:999,
       lowlights:["Never won an NBA championship","Dr. J sold to 76ers to pay the ABA-NBA merger fee","KD/Kyrie/Harden Big 3 never won a single playoff round","Moved from Jersey to Brooklyn — identity crisis","Brook Lopez era was good but not good enough"],
-      brightside:"Dr. J's two ABA titles count. Barclays Center is beautiful. Mikal Bridges/Cam Johnson core.",
+      brightside:"Dr. J's two ABA championships count in the heart even if not in the NBA ledger. Brooklyn gave the franchise a real identity and a beautiful home.",
     },
     {
       team:"Yankees", emoji:"⚾", color:"#003087",
@@ -3363,7 +3644,7 @@ function MiseryTab() {
       title:"BASELINE SUFFERING",
       last:"2009", drought:17,
       lowlights:["17 years since last World Series — a LONG time by Yankee standards","2004 ALCS: blew 3-0 series lead to Red Sox","ARod's steroid legacy taints multiple eras","2022 ALCS: 7 games, Judge and Stanton disappear","Gerrit Cole's spider tack suspension embarrassment"],
-      brightside:"27 championships. Aaron Judge. They're always in contention. The standard is the standard.",
+      brightside:"27 World Series championships — more than any franchise in North American sports. The standard is the standard, and contention is the baseline expectation.",
     },
     {
       team:"Liberty", emoji:"🏀", color:"#007A5E",
@@ -3371,7 +3652,7 @@ function MiseryTab() {
       title:"REIGNING CHAMPIONS",
       last:"2025", drought:0,
       lowlights:["Years of irrelevance before Stewart's arrival","Played second fiddle to the Knicks for decades","Had to fight for visibility in NY sports media"],
-      brightside:"Back-to-back WNBA champions. Breanna Stewart. Sabrina Ionescu. The best team in women's basketball.",
+      brightside:"WNBA champions and the premier franchise in women's basketball. After decades of fighting for the spotlight, the Liberty finally own it.",
     },
     {
       team:"Devils", emoji:"🏒", color:"#CE1126",
@@ -3379,7 +3660,7 @@ function MiseryTab() {
       title:"SURPRISINGLY MANAGEABLE",
       last:"2003", drought:23,
       lowlights:["23 years since last Cup despite 3 championships","Patrik Elias retired without enough recognition","Zach Parise left for Minnesota, never won","2012 Finals loss to Kings after incredible playoff run","Jack Hughes growing pains"],
-      brightside:"Three Cups in 9 years (1995-2003). Brodeur's records forever. Hughes brothers era dawning.",
+      brightside:"Three Stanley Cups in nine years (1995-2003) and the all-time NHL records for goaltending wins and shutouts. A quietly remarkable franchise history.",
     },
   ];
 
@@ -6238,6 +6519,14 @@ const styles = {
   ytInfo: { flex:1, display:"flex", flexDirection:"column", gap:2 },
   ytTeamName: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
   ytSubtext: { fontSize:9, color:"#888" },
+
+  // ICONIC EVENTS
+  iconicRow: { display:"flex", gap:14, padding:"11px 14px", borderTop:"1px solid #1a1a1a", alignItems:"flex-start" },
+  iconicIcon: { fontSize:18, flexShrink:0, width:26, textAlign:"center", paddingTop:1 },
+  iconicYear: { fontSize:15, fontWeight:900, color:"#c8201c", fontFamily:"'Georgia',serif", flexShrink:0, width:52 },
+  iconicInfo: { flex:1, display:"flex", flexDirection:"column", gap:3 },
+  iconicTitle: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
+  iconicDesc: { fontSize:11, color:"#aaa", lineHeight:1.6 },
 
   // TODAY IN NY SPORTS
   todayCard: { display:"flex", gap:14, padding:"14px 16px", borderTop:"1px solid #1a1a1a" },
