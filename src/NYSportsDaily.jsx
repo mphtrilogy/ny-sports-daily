@@ -3066,6 +3066,247 @@ function SiteSearch({ query, onSelect }) {
     });
   });
 
+  // Search AWARDS data inline
+  const AWARDS_INLINE = [
+    { award:"Cy Young", winner:"Gerrit Cole", team:"Yankees", year:2023 },
+    { award:"Cy Young", winner:"Jacob deGrom", team:"Mets", year:2019 },
+    { award:"Cy Young", winner:"Jacob deGrom", team:"Mets", year:2018 },
+    { award:"Cy Young", winner:"Dwight Gooden", team:"Mets", year:1985 },
+    { award:"Cy Young", winner:"Ron Guidry", team:"Yankees", year:1978 },
+    { award:"Cy Young", winner:"Tom Seaver", team:"Mets", year:1975 },
+    { award:"Cy Young", winner:"Tom Seaver", team:"Mets", year:1973 },
+    { award:"Cy Young", winner:"Tom Seaver", team:"Mets", year:1969 },
+    { award:"Cy Young", winner:"Whitey Ford", team:"Yankees", year:1961 },
+    { award:"AL MVP", winner:"Aaron Judge", team:"Yankees", year:2022 },
+    { award:"AL MVP", winner:"Don Mattingly", team:"Yankees", year:1985 },
+    { award:"AL MVP", winner:"Mickey Mantle", team:"Yankees", year:1956 },
+    { award:"NFL MVP", winner:"Lawrence Taylor", team:"Giants", year:1986 },
+    { award:"Super Bowl MVP", winner:"Joe Namath", team:"Jets", year:1969 },
+    { award:"Super Bowl MVP", winner:"Phil Simms", team:"Giants", year:1987 },
+    { award:"Super Bowl MVP", winner:"Eli Manning", team:"Giants", year:2008 },
+    { award:"Super Bowl MVP", winner:"Eli Manning", team:"Giants", year:2012 },
+    { award:"Conn Smythe", winner:"Brian Leetch", team:"Rangers", year:1994 },
+    { award:"Conn Smythe", winner:"Scott Stevens", team:"Devils", year:2000 },
+    { award:"Vezina Trophy", winner:"Henrik Lundqvist", team:"Rangers", year:2012 },
+    { award:"Hart Trophy", winner:"Bryan Trottier", team:"Islanders", year:1979 },
+    { award:"NL ROY", winner:"Pete Alonso", team:"Mets", year:2019 },
+    { award:"AL ROY", winner:"Derek Jeter", team:"Yankees", year:1996 },
+    { award:"WNBA MVP", winner:"Breanna Stewart", team:"Liberty", year:2023 },
+  ];
+  AWARDS_INLINE.forEach(a => {
+    const text = `${a.award} ${a.winner} ${a.team} ${a.year} award`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "AWARD", icon: "🏅",
+      title: `${a.year} ${a.award} — ${a.winner}`,
+      sub: `${a.team}`,
+      tab: "AWARDS",
+      highlight: "",
+    });
+  });
+
+  // Search Radio stations + podcasts inline
+  const RADIO_INLINE = [
+    { name:"WFAN 101.9 FM", desc:"NY's flagship sports station — Yankees, Mets, Giants, Jets, Knicks, Rangers", url:"https://www.audacy.com/wfan" },
+    { name:"ESPN NY 98.7 FM", desc:"ESPN radio New York — all sports coverage", url:"https://www.espn.com/espnradio/play/_/id/14978946" },
+    { name:"YES Network", desc:"Yankees radio and TV home", url:"https://www.yesnetwork.com/" },
+    { name:"SNY Radio", desc:"Mets radio home — also covers NY sports broadly", url:"https://sny.tv/" },
+    { name:"MSG Networks", desc:"Knicks and Rangers radio home", url:"https://www.msgnetworks.com/" },
+    { name:"Mike Francesa", desc:"WFAN legend — the voice of NY sports radio for decades", url:"https://www.audacy.com/wfan" },
+    { name:"Mike and the Mad Dog", desc:"Greatest sports radio show in NY history — Francesa and Russo on WFAN", url:"https://www.audacy.com/wfan" },
+    { name:"Yankees podcast", desc:"Official New York Yankees podcast", url:"https://www.mlb.com/yankees/fans/podcast" },
+    { name:"Mets podcast", desc:"Official New York Mets podcast", url:"https://www.mlb.com/mets/fans/podcast" },
+    { name:"Rangers podcast", desc:"Official NY Rangers Hockey Central podcast", url:"https://www.nhl.com/rangers/multimedia/podcasts" },
+    { name:"Audacy", desc:"Free streaming for WFAN and all NY sports radio on iOS and Android", url:"https://www.audacy.com/wfan" },
+    { name:"TuneIn", desc:"Free streaming for WFAN live radio", url:"https://tunein.com" },
+    { name:"WGBB 1240 AM", desc:"Long Island sports radio", url:"https://www.wgbb.com" },
+  ];
+  RADIO_INLINE.forEach((r, i) => {
+    const text = `${r.name} ${r.desc} radio podcast`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "RADIO / PODCAST", icon: "📻",
+      title: r.name,
+      sub: r.desc,
+      tab: "RADIO",
+      highlight: "",
+    });
+  });
+
+  // Search Beat Writers inline
+  const BEAT_WRITERS_INLINE = [
+    { name:"Zack Rosenblatt", outlet:"The Athletic", teams:"Jets", handle:"@ZackBlatt" },
+    { name:"Brian Costello", outlet:"NY Post", teams:"Jets", handle:"@BrianCoz" },
+    { name:"Rich Cimini", outlet:"ESPN", teams:"Jets", handle:"@RichCimini" },
+    { name:"Joe Caporoso", outlet:"Badlands", teams:"Jets", handle:"@JoeCaporoso" },
+    { name:"Connor Rogers", outlet:"NBC Sports", teams:"Jets NFL Draft", handle:"@ConnorJRogers" },
+    { name:"Joel Sherman", outlet:"NY Post", teams:"Yankees MLB", handle:"@Joelsherman1" },
+    { name:"Jon Heyman", outlet:"NY Post", teams:"MLB Yankees", handle:"@JonHeyman" },
+    { name:"Bryan Hoch", outlet:"MLB.com", teams:"Yankees", handle:"@BryanHoch" },
+    { name:"Andy Martino", outlet:"SNY", teams:"Mets Yankees", handle:"@martinonyc" },
+    { name:"Anthony DiComo", outlet:"MLB.com", teams:"Mets", handle:"@AnthonyDiComo" },
+    { name:"Jordan Raanan", outlet:"ESPN", teams:"Giants", handle:"@JordanRaanan" },
+    { name:"Ralph Vacchiano", outlet:"FOX Sports", teams:"Giants", handle:"@RVacchianoSNY" },
+    { name:"Ian Begley", outlet:"SNY", teams:"Knicks", handle:"@IanBegley" },
+    { name:"Marc Berman", outlet:"NY Post", teams:"Knicks", handle:"@NYPost_Berman" },
+    { name:"Mollie Walker", outlet:"NY Post", teams:"Rangers", handle:"@MollieeWalkerr" },
+    { name:"Andrew Gross", outlet:"Newsday", teams:"Islanders", handle:"@AGrossNewsday" },
+    { name:"Stefen Rosner", outlet:"The Hockey News", teams:"Islanders", handle:"@SRosner91" },
+    { name:"Amanda Stein", outlet:"Devils", teams:"Devils", handle:"@AmandaCStein" },
+    { name:"Howie Kussoy", outlet:"NY Post", teams:"All NY", handle:"@HowieKussoy" },
+    { name:"Vince Mercogliano", outlet:"USA Today", teams:"Rangers", handle:"@vzmercogliano" },
+  ];
+  BEAT_WRITERS_INLINE.forEach((w, i) => {
+    const text = `${w.name} ${w.outlet} ${w.teams} ${w.handle} beat writer reporter`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "BEAT WRITER", icon: "🐦",
+      title: w.name,
+      sub: `${w.outlet} · ${w.teams} · ${w.handle}`,
+      tab: "NEWS",
+      highlight: "Follow on X/Twitter — click NEWS → Beat Writers",
+    });
+  });
+
+  // Search Almost Forgotten players inline
+  const FORGOTTEN_INLINE = [
+    { name:"John Olerud", team:"Mets", note:"Hit .354 in 1998 — best average by a Met since 1969" },
+    { name:"Tommy John", team:"Yankees", note:"Tommy John surgery named after him — 21-9 as a Yankee" },
+    { name:"Dave Righetti", team:"Yankees", note:"No-hit Red Sox on July 4 1983 — 46 saves in 1986" },
+    { name:"Willie Randolph", team:"Yankees", note:"Heart of the 70s dynasty — criminally overlooked for HOF" },
+    { name:"Cleon Jones", team:"Mets", note:"Hit .340 in 1969 — caught final out of World Series" },
+    { name:"Al Leiter", team:"Mets", note:"2000 Subway Series ace — wild card clincher masterpiece" },
+    { name:"John Franco", team:"Mets", note:"All-time NL saves leader when he retired — Queens kid" },
+    { name:"Edgardo Alfonzo", team:"Mets", note:"Hit .324 in 2000 — best all-around Met of late 90s" },
+    { name:"Lenny Dykstra", team:"Mets", note:"Nails — scrappiest leadoff man of his era" },
+    { name:"Otis Anderson", team:"Giants", note:"Super Bowl XXV MVP at age 34 — 102 rushing yards" },
+    { name:"Joe Klecko", team:"Jets", note:"Only player Pro Bowled at 3 different positions" },
+    { name:"Kerry Kittles", team:"Nets", note:"Building block of the Jason Kidd Finals teams" },
+    { name:"Bernard King", team:"Knicks", note:"Scored 60 points at MSG in 1984 — unstoppable" },
+    { name:"Bob Nystrom", team:"Islanders", note:"OT goal that won the first Stanley Cup — 1980" },
+    { name:"Butch Goring", team:"Islanders", note:"Missing piece — Conn Smythe 1980" },
+    { name:"Ron Guidry", team:"Yankees", note:"25-3 in 1978 — Louisiana Lightning" },
+    { name:"Rod Gilbert", team:"Rangers", note:"All-time Rangers scoring leader — first number retired" },
+    { name:"Patrik Elias", team:"Devils", note:"All-time Devils scoring leader — 1,025 career points" },
+    { name:"Ken Daneyko", team:"Devils", note:"Mr. Devil — all 1,283 games in a Devils uniform" },
+    { name:"Chris Chambliss", team:"Yankees", note:"Pennant-clinching HR in 1976 — fans stormed the field" },
+  ];
+  FORGOTTEN_INLINE.forEach((p, i) => {
+    const text = `${p.name} ${p.team} ${p.note} forgotten overlooked`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "ALMOST FORGOTTEN", icon: "🕯️",
+      title: p.name,
+      sub: p.team,
+      tab: "FORGOTTEN",
+      highlight: p.note,
+    });
+  });
+
+  // Search Misery Index teams
+  const MISERY_INLINE = [
+    { team:"Jets", score:98, title:"DEFCON 1 — 56 years without a Super Bowl" },
+    { team:"Knicks", score:91, title:"CHRONIC HEARTBREAK — 52 years without a title" },
+    { team:"Mets", score:85, title:"HIGH SUFFERING — 40 years without a World Series" },
+    { team:"Rangers", score:72, title:"ELEVATED SUFFERING — 1994 was the last Cup" },
+    { team:"Giants", score:65, title:"MODERATE SUFFERING — 4 Super Bowls but recent drought" },
+    { team:"Islanders", score:62, title:"MODERATE SUFFERING — 43 years since dynasty ended" },
+    { team:"Nets", score:55, title:"EXISTENTIAL CONFUSION — never won an NBA title" },
+    { team:"Yankees", score:35, title:"BASELINE SUFFERING — 27 titles but 17-year drought" },
+    { team:"Devils", score:22, title:"SURPRISINGLY MANAGEABLE — 3 Cups in 9 years" },
+    { team:"Liberty", score:15, title:"REIGNING CHAMPIONS — back-to-back WNBA titles" },
+  ];
+  MISERY_INLINE.forEach((m, i) => {
+    const text = `${m.team} misery index suffering drought heartbreak ${m.title}`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "MISERY INDEX", icon: "😩",
+      title: `${m.team} — Score: ${m.score}/100`,
+      sub: m.title,
+      tab: "MISERY",
+      highlight: "",
+    });
+  });
+
+  // Search Walk-up Songs
+  const WALKUP_INLINE = [
+    { player:"Mariano Rivera", song:"Enter Sandman", artist:"Metallica", team:"Yankees" },
+    { player:"Derek Jeter", song:"Empire State of Mind", artist:"Jay-Z", team:"Yankees" },
+    { player:"David Wright", song:"New York Groove", artist:"Ace Frehley KISS", team:"Mets" },
+    { player:"Henrik Lundqvist", song:"Welcome to the Jungle", artist:"Guns N Roses", team:"Rangers" },
+    { player:"Patrick Ewing", song:"Welcome to the Terrordome", artist:"Public Enemy", team:"Knicks" },
+    { player:"Carlos Beltran", song:"Fuego", artist:"Pitbull", team:"Mets" },
+    { player:"Curtis Martin", song:"Can't Stop Won't Stop", artist:"Young Jeezy", team:"Jets" },
+  ];
+  WALKUP_INLINE.forEach((s, i) => {
+    const text = `${s.player} ${s.song} ${s.artist} ${s.team} walkup walk-up entrance music song`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "WALK-UP SONG", icon: "🎵",
+      title: `${s.player} — "${s.song}"`,
+      sub: `${s.artist} · ${s.team}`,
+      tab: "SPIN",
+      highlight: "Find in SPIN tab → Walk-Up Songs section",
+    });
+  });
+
+  // Search Fan Communities / Sites inline
+  const SITES_INLINE = [
+    { name:"Badlands / Jets X-Factor", url:"jetsxfactor.com", teams:"Jets", desc:"Joe Caporoso's Jets fan community and podcast" },
+    { name:"Pinstripe Alley", teams:"Yankees", desc:"SB Nation Yankees blog" },
+    { name:"Amazin Avenue", teams:"Mets", desc:"SB Nation Mets community" },
+    { name:"Gang Green Nation", teams:"Jets", desc:"SB Nation Jets blog" },
+    { name:"Big Blue View", teams:"Giants", desc:"SB Nation Giants blog" },
+    { name:"Posting and Toasting", teams:"Knicks", desc:"SB Nation Knicks community" },
+    { name:"Blueshirt Banter", teams:"Rangers", desc:"SB Nation Rangers blog" },
+    { name:"Lighthouse Hockey", teams:"Islanders", desc:"SB Nation Islanders blog" },
+    { name:"All About The Jersey", teams:"Devils", desc:"SB Nation Devils blog" },
+    { name:"r/NYYankees", teams:"Yankees", desc:"Yankees Reddit community — 185K members" },
+    { name:"r/NewYorkMets", teams:"Mets", desc:"Mets Reddit community" },
+    { name:"r/nyjets", teams:"Jets", desc:"Jets Reddit community" },
+    { name:"r/NYKnicks", teams:"Knicks", desc:"Knicks Reddit community — 385K members" },
+    { name:"r/rangers", teams:"Rangers", desc:"Rangers Reddit community" },
+    { name:"r/NewYorkIslanders", teams:"Islanders", desc:"Islanders Reddit community" },
+    { name:"r/devils", teams:"Devils", desc:"Devils Reddit community" },
+    { name:"SNY", teams:"Mets Yankees", desc:"SNY.tv — best NY baseball coverage" },
+    { name:"YES Network", teams:"Yankees", desc:"Yankees official network" },
+    { name:"MSG Networks", teams:"Knicks Rangers", desc:"Knicks and Rangers home" },
+  ];
+  SITES_INLINE.forEach((s, i) => {
+    const text = `${s.name} ${s.teams} ${s.desc} community site blog reddit fan`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "FAN COMMUNITY", icon: "💬",
+      title: s.name,
+      sub: s.teams,
+      tab: "NEWS",
+      highlight: s.desc,
+    });
+  });
+
+  // Search Shop categories inline
+  const SHOP_INLINE = [
+    { title:"Yankees gear jerseys", desc:"Pinstripes, hats, signed memorabilia", tab:"SHOP" },
+    { title:"Mets gear jerseys", desc:"Mets hats, throwbacks, Pete Alonso", tab:"SHOP" },
+    { title:"Jets gear jerseys", desc:"Gang green gear and throwbacks", tab:"SHOP" },
+    { title:"Giants gear jerseys", desc:"Big Blue — LT era throwbacks", tab:"SHOP" },
+    { title:"Knicks gear jerseys", desc:"MSG gear, Ewing throwbacks, Brunson", tab:"SHOP" },
+    { title:"Rangers gear jerseys hockey", desc:"Broadway Blues — 1994 champs gear", tab:"SHOP" },
+    { title:"Islanders dynasty jerseys", desc:"Bossy, Trottier, Potvin throwbacks", tab:"SHOP" },
+    { title:"Devils gear hockey", desc:"Brodeur, Stevens — NJ Devils shop", tab:"SHOP" },
+    { title:"vintage throwback jerseys", desc:"Classic NY team throwbacks — all teams", tab:"SHOP" },
+    { title:"signed memorabilia autograph", desc:"Authenticated NY sports autographs", tab:"SHOP" },
+    { title:"books NY sports history", desc:"NY sports books — history, biographies, coaching", tab:"SHOP" },
+    { title:"kids books children", desc:"NY sports books for the next generation", tab:"SHOP" },
+    { title:"yankee stadium tour tickets", desc:"Stadium tours and live game tickets", tab:"SHOP" },
+    { title:"madison square garden MSG tour", desc:"MSG Knicks Rangers tours", tab:"SHOP" },
+    { title:"Bethpage Black tee time golf", desc:"Play where Tiger won — public course", tab:"SHOP" },
+    { title:"bar signs home decor man cave", desc:"NY sports themed home and bar decor", tab:"SHOP" },
+  ];
+  SHOP_INLINE.forEach((s, i) => {
+    const text = `${s.title} ${s.desc} buy shop gear`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "SHOP", icon: "🛒",
+      title: s.title,
+      sub: s.desc,
+      tab: "SHOP",
+      highlight: "",
+    });
+  });
+
   // Team shortcuts — searching a team name brings up relevant content
   const TEAM_SHORTCUTS = [
     { keywords:["yankees","yankee","bronx","pinstripes"],                    tab:"NEWS",    icon:"⚾", title:"Yankees — News & Hub",     sub:"Beat writers · news · history · stats" },
@@ -3114,7 +3355,7 @@ function SiteSearch({ query, onSelect }) {
     }
   });
 
-  const limited = results.slice(0, 12);
+  const limited = results.slice(0, 20);
   if (limited.length === 0) return (
     <div style={styles.searchDropdown}>
       <div style={styles.searchNoResult}>No results for "{query}" — try a player name, team, or event</div>
@@ -3122,15 +3363,24 @@ function SiteSearch({ query, onSelect }) {
   );
 
   const TYPE_COLORS = {
-    "PLAYER SPOTLIGHT": "#c8201c",
-    "ON THIS DATE":     "#c8201c",
-    "HALL OF FAME":     "#FFD700",
-    "HISTORY":          "#888",
-    "HISTORY LIST":     "#888",
-    "STADIUM":          "#4ade80",
-    "QUOTE":            "#aaa",
-    "POLL":             "#c8201c",
-    "NAVIGATE":         "#0038A8",
+    "PLAYER SPOTLIGHT":  "#c8201c",
+    "ON THIS DATE":      "#c8201c",
+    "HALL OF FAME":      "#FFD700",
+    "HISTORY":           "#888",
+    "HISTORY LIST":      "#888",
+    "STADIUM":           "#4ade80",
+    "QUOTE":             "#aaa",
+    "POLL":              "#c8201c",
+    "NAVIGATE":          "#0038A8",
+    "TEAM HUB":          "#c8201c",
+    "AWARD":             "#FFD700",
+    "RADIO / PODCAST":   "#4ade80",
+    "BEAT WRITER":       "#1d9bf0",
+    "ALMOST FORGOTTEN":  "#888",
+    "MISERY INDEX":      "#c8201c",
+    "WALK-UP SONG":      "#a855f7",
+    "FAN COMMUNITY":     "#f97316",
+    "SHOP":              "#22c55e",
   };
 
   return (
