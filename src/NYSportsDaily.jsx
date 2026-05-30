@@ -748,147 +748,152 @@ async function fetchNYNews() {
   async function safeFetch(url) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const tid = setTimeout(() => controller.abort(), 12000);
       const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeoutId);
+      clearTimeout(tid);
       if (!res.ok) return null;
       return await res.json();
     } catch(e) { return null; }
   }
 
   function addArticle(a, source, team, isNY, sport) {
-    const title = a.headline || a.title || a.name || "";
+    const title = (a.headline || a.title || a.name || "").trim();
     if (!title || seen.has(title)) return;
     seen.add(title);
     results.push({
       title,
       link:   a.links?.web?.href || a.url || a.link || "#",
       desc:   a.description || a.summary || a.blurb || "",
-      pub:    a.published || a.lastModified || a.date || "",
+      pub:    a.published || a.lastModified || a.date || new Date().toISOString(),
       source, team, sport, isNY,
       image:  a.images?.[0]?.url || null,
     });
   }
 
-  // ── 1. TEAM NEWS — 50 articles each, always NY ────────────────────────────
+  // ── 1. TEAM NEWS via /news?team= param (more results than /teams/{id}/news) ─
   await Promise.all(NY_TEAM_NEWS.map(async ({ sport, league, id, name }) => {
-    const json = await safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=50`);
-    (json?.articles || []).forEach(a => addArticle(a, `ESPN · ${name}`, name, true, league.toUpperCase()));
+    // Try both endpoint styles — the team= param often returns more stories
+    const [j1, j2] = await Promise.all([
+      safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?team=${id}&limit=50`),
+      safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=50`),
+    ]);
+    const articles = [
+      ...(j1?.articles || []),
+      ...(j2?.articles || []),
+    ];
+    articles.forEach(a => addArticle(a, `ESPN · ${name}`, name, true, league.toUpperCase()));
   }));
 
-  // ── 2. LEAGUE-WIDE NEWS — 50 articles, filter to NY ──────────────────────
+  // ── 2. ESPN NOW feed — the motherlode. Supports limit=1000 ─────────────────
+  // Run both generic and sport-specific NOW feeds
+  const NOW_FEEDS = [
+    "https://now.core.api.espn.com/v1/sports/news?limit=500&sport=football",
+    "https://now.core.api.espn.com/v1/sports/news?limit=500&sport=baseball",
+    "https://now.core.api.espn.com/v1/sports/news?limit=500&sport=basketball",
+    "https://now.core.api.espn.com/v1/sports/news?limit=500&sport=hockey",
+  ];
+  await Promise.all(NOW_FEEDS.map(async (url) => {
+    const json = await safeFetch(url);
+    const feed = json?.feed || json?.results || json?.articles || [];
+    feed.forEach(a => {
+      const title = (a.headline || a.title || "").trim();
+      const desc  = a.description || a.summary || "";
+      const combined = `${title} ${desc}`.toLowerCase();
+      const isNY = NY_KEYWORDS.some(kw => combined.includes(kw));
+      if (isNY) addArticle(
+        { headline:title, description:desc,
+          links:{ web:{ href: a.links?.web?.href || a.nowId && `https://www.espn.com/story/_/id/${a.nowId}` || "#" }},
+          published: a.published || a.lastModified,
+          images: a.images },
+        "ESPN Breaking", "NY Sports", true, "NEWS"
+      );
+    });
+  }));
+
+  // ── 3. League-wide with strict NY filter ──────────────────────────────────
   const LEAGUES = [
-    { sport:"baseball",   league:"mlb",   name:"MLB"  },
     { sport:"football",   league:"nfl",   name:"NFL"  },
+    { sport:"baseball",   league:"mlb",   name:"MLB"  },
     { sport:"basketball", league:"nba",   name:"NBA"  },
     { sport:"hockey",     league:"nhl",   name:"NHL"  },
     { sport:"basketball", league:"wnba",  name:"WNBA" },
-    { sport:"soccer",     league:"usa.1", name:"MLS"  },
-    { sport:"soccer",     league:"nwsl",  name:"NWSL" },
   ];
   await Promise.all(LEAGUES.map(async ({ sport, league, name }) => {
-    const json = await safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=50`);
+    const json = await safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=100`);
     (json?.articles || []).forEach(a => {
       const combined = `${a.headline||""} ${a.description||""}`.toLowerCase();
       const isNY = NY_KEYWORDS.some(kw => combined.includes(kw));
-      addArticle(a, `ESPN · ${name}`, name, isNY, name);
+      if (isNY) addArticle(a, `ESPN · ${name}`, name, true, name);
     });
   }));
 
-  // ── 3. ESPN NOW FEED — breaking news across all sports ───────────────────
-  const nowJson = await safeFetch("https://now.core.api.espn.com/v1/sports/news?limit=50&lang=en&region=us");
-  (nowJson?.feed || nowJson?.results || []).forEach(a => {
-    const combined = `${a.headline||a.title||""} ${a.description||""}`.toLowerCase();
-    const isNY = NY_KEYWORDS.some(kw => combined.includes(kw));
-    if (isNY) addArticle(
-      { headline: a.headline||a.title, description: a.description,
-        links:{ web:{ href: a.links?.web?.href || a.url || "#" }},
-        published: a.published || a.date, images: a.images },
-      "ESPN Now", "Breaking", true, "ALL"
-    );
-  });
-
-  // ── 4. TEAM TRANSACTIONS & INJURIES (extra depth) ────────────────────────
-  await Promise.all(NY_TEAM_NEWS.slice(0,6).map(async ({ sport, league, id, name }) => {
-    // Injuries
-    const injJson = await safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}?enable=injuries`);
-    (injJson?.team?.injuries || []).slice(0,5).forEach(inj => {
-      const player = inj.athlete?.displayName || "Player";
-      const status = inj.status || "Injured";
-      const desc   = inj.longComment || inj.shortComment || "";
-      const title  = `${name} Injury: ${player} — ${status}`;
-      if (seen.has(title)) return;
-      seen.add(title);
-      results.push({ title, link:`https://www.espn.com/${league}/team/injuries/_/name/${id}`, desc, pub:inj.date||"", source:`ESPN · ${name} Injuries`, team:name, sport:league.toUpperCase(), isNY:true });
-    });
-  }));
-
-  // ── 5. RSS FEEDS via rss2json ─────────────────────────────────────────────
+  // ── 4. RSS via rss2json — NY Post, Daily News, team official feeds ─────────
   await Promise.all(NY_RSS_FEEDS.map(async ({ url, name, team }) => {
-    try {
-      const rssJson = await safeFetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=20`);
-      if (rssJson?.status !== "ok") return;
-      (rssJson.items || []).forEach(item => {
-        const title = item.title?.trim() || "";
-        if (!title || seen.has(title)) return;
-        // Strict NY filter on RSS — check keywords
-        const combined = `${title} ${item.description||""}`.toLowerCase();
-        const isNY = team !== "All NY"
-          ? true  // team-specific feeds always NY
-          : NY_KEYWORDS.some(kw => combined.includes(kw));
-        if (!isNY) return;
-        seen.add(title);
-        results.push({
-          title,
-          link:   item.link || item.guid || "#",
-          desc:   (item.description || "").replace(/<[^>]*>/g,"").trim().slice(0,200),
-          pub:    item.pubDate || "",
-          source: name,
-          team,
-          sport:  "NEWS",
-          isNY:   true,
-        });
+    const json = await safeFetch(
+      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=25`
+    );
+    if (json?.status !== "ok") return;
+    (json.items || []).forEach(item => {
+      const title = item.title?.trim() || "";
+      if (!title || seen.has(title)) return;
+      const combined = `${title} ${item.description||""}`.toLowerCase();
+      // For "All NY" feeds still apply keyword filter; team-specific feeds pass through
+      const isNY = team === "All NY" ? NY_KEYWORDS.some(kw => combined.includes(kw)) : true;
+      if (!isNY) return;
+      seen.add(title);
+      results.push({
+        title, isNY:true, source:name, team, sport:"NEWS",
+        link:   item.link || item.guid || "#",
+        desc:   (item.description||"").replace(/<[^>]*>/g,"").trim().slice(0,250),
+        pub:    item.pubDate || "",
+        image:  item.thumbnail || item.enclosure?.link || null,
       });
-    } catch(e) {}
+    });
   }));
 
-  // ── 6. REDDIT — hot posts from all NY team subs ───────────────────────────
+  // ── 5. Reddit ──────────────────────────────────────────────────────────────
   const REDDIT_SUBS = [
-    { sub:"NYYankees",       team:"Yankees"   },
-    { sub:"NewYorkMets",     team:"Mets"      },
-    { sub:"nyjets",          team:"Jets"      },
-    { sub:"NYGiants",        team:"Giants"    },
-    { sub:"NYKnicks",        team:"Knicks"    },
-    { sub:"GoNets",          team:"Nets"      },
-    { sub:"rangers",         team:"Rangers"   },
-    { sub:"NewYorkIslanders",team:"Islanders" },
-    { sub:"devils",          team:"Devils"    },
-    { sub:"nyliberty",       team:"Liberty"   },
-    { sub:"NYCFC",           team:"NYCFC"     },
+    { sub:"NYYankees",       team:"Yankees"  },
+    { sub:"NewYorkMets",     team:"Mets"     },
+    { sub:"nyjets",          team:"Jets"     },
+    { sub:"NYGiants",        team:"Giants"   },
+    { sub:"NYKnicks",        team:"Knicks"   },
+    { sub:"GoNets",          team:"Nets"     },
+    { sub:"rangers",         team:"Rangers"  },
+    { sub:"NewYorkIslanders",team:"Islanders"},
+    { sub:"devils",          team:"Devils"   },
+    { sub:"nyliberty",       team:"Liberty"  },
+    { sub:"NYCFC",           team:"NYCFC"    },
   ];
   await Promise.all(REDDIT_SUBS.map(async ({ sub, team }) => {
-    const controller = new AbortController();
-    const tid = setTimeout(() => controller.abort(), 8000);
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), 8000);
     try {
-      const res = await fetch(`https://www.reddit.com/r/${sub}/hot.json?limit=10&raw_json=1`,
-        { signal: controller.signal, headers: { "User-Agent": "NYSportsDaily/1.0" }});
+      const res = await fetch(
+        `https://www.reddit.com/r/${sub}/hot.json?limit=10&raw_json=1`,
+        { signal: ctrl.signal, headers:{ "User-Agent":"NYSportsDaily/1.0" }}
+      );
       clearTimeout(tid);
       if (!res.ok) return;
       const json = await res.json();
-      (json?.data?.children || []).forEach(post => {
-        const p = post.data;
+      (json?.data?.children || []).forEach(({ data:p }) => {
         if (!p || p.stickied || p.over_18 || p.score < 10) return;
         const title = p.title;
         if (!title || seen.has(title)) return;
         const lc = title.toLowerCase();
-        if (["game thread","post-game","daily discussion","lineup thread","pre-game","weekly thread"].some(s => lc.includes(s))) return;
+        if (["game thread","post-game","daily discussion","lineup","pre-game","weekly"].some(s=>lc.includes(s))) return;
         seen.add(title);
-        results.push({ title, link:`https://reddit.com${p.permalink}`, desc:`${p.ups} upvotes · r/${sub}`, pub:new Date(p.created_utc*1000).toISOString(), source:`Reddit · r/${sub}`, team, sport:team, isNY:true });
+        results.push({
+          title, isNY:true, source:`Reddit · r/${sub}`, team, sport:team,
+          link:  `https://reddit.com${p.permalink}`,
+          desc:  `${p.ups} upvotes`,
+          pub:   new Date(p.created_utc*1000).toISOString(),
+        });
       });
-    } catch(e) { clearTimeout(tid); }
+    } catch(e){ clearTimeout(tid); }
   }));
 
-  return results.sort((a,b) => new Date(b.pub) - new Date(a.pub));
+  return results.sort((a,b) => new Date(b.pub)-new Date(a.pub));
 }
 
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
@@ -1670,12 +1675,16 @@ function NewsTab({ news, loading }) {
   const [teamFilter, setTeamFilter] = useState("ALL");
 
   const NY_KEYWORDS_CHECK = [
+    // Full team names only — safe from ambiguity
     "new york yankees","new york mets","new york jets","new york giants",
     "new york knicks","brooklyn nets","new york rangers","new york islanders",
     "new jersey devils","new york liberty","nycfc","red bulls","gotham fc",
-    "yankees","mets","knicks","nets","islanders","liberty",
-    "new york","brooklyn","bronx","queens","flushing","yankee stadium","citi field",
-    "madison square garden","msg","metlife","ubs arena","barclays","prudential center",
+    // Short names only where no other major team shares them
+    "yankees","mets","knicks","nets","islanders","liberty","devils",
+    // Location markers — articles with these are almost always NY sports
+    "new york","brooklyn","bronx","flushing","citi field",
+    "yankee stadium","madison square garden","barclays center","ubs arena","prudential center",
+    // NOT included: "rangers" (TX Rangers), "giants" (SF Giants), "jets" (aviation)
   ];
   const SPORTS = ["ALL","MLB","NFL","NBA","NHL","WNBA","MLS"];
   const TEAMS  = ["ALL","Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty","NYCFC","Gotham FC"];
@@ -1698,8 +1707,11 @@ function NewsTab({ news, loading }) {
       if (!sportKws.some(kw => combined.includes(kw))) return false;
     }
     if (teamFilter !== "ALL") {
-      const tf = teamFilter.toLowerCase();
-      if (!combined.includes(tf)) return false;
+      // Match on item.team FIRST (exact) — this prevents TX Rangers matching NY Rangers filter
+      const teamMatch = item.team && item.team.toLowerCase() === teamFilter.toLowerCase();
+      // Fall back to source check (e.g. "ESPN · Rangers")
+      const sourceMatch = item.source && item.source.toLowerCase().includes(teamFilter.toLowerCase());
+      if (!teamMatch && !sourceMatch) return false;
     }
     return true;
   });
