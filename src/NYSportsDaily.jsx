@@ -71,37 +71,50 @@ const SPORT_ENDPOINTS = [
 ];
 
 // ─── ESPN NEWS TEAMS ──────────────────────────────────────────────────────
-const NY_NEWS_ENDPOINTS = [
-  { sport:"baseball",   league:"mlb",   name:"MLB"  },
-  { sport:"football",   league:"nfl",   name:"NFL"  },
-  { sport:"basketball", league:"nba",   name:"NBA"  },
-  { sport:"hockey",     league:"nhl",   name:"NHL"  },
-  { sport:"basketball", league:"wnba",  name:"WNBA" },
-  { sport:"soccer",     league:"usa.1", name:"MLS"  },
-  { sport:"soccer",     league:"nwsl",  name:"NWSL" },
-];
-
 // Team-specific ESPN news — always NY relevant, no keyword filtering needed
 const NY_TEAM_NEWS = [
-  { sport:"baseball",   league:"mlb",  id:"10",    name:"Yankees"   },
-  { sport:"baseball",   league:"mlb",  id:"21",    name:"Mets"      },
-  { sport:"football",   league:"nfl",  id:"20",    name:"Jets"      },
-  { sport:"football",   league:"nfl",  id:"19",    name:"Giants"    },
-  { sport:"basketball", league:"nba",  id:"18",    name:"Knicks"    },
-  { sport:"basketball", league:"nba",  id:"17",    name:"Nets"      },
-  { sport:"hockey",     league:"nhl",  id:"13",    name:"Rangers"   },
-  { sport:"hockey",     league:"nhl",  id:"22",    name:"Islanders" },
-  { sport:"hockey",     league:"nhl",  id:"1",     name:"Devils"    },
-  { sport:"basketball", league:"wnba", id:"20",    name:"Liberty"   },
-  { sport:"soccer",     league:"usa.1",id:"18479", name:"NYCFC"     },
-  { sport:"soccer",     league:"nwsl", id:"1163",  name:"Gotham FC" },
-  { sport:"soccer",     league:"usa.1",id:"16335", name:"Red Bulls" },
+  { sport:"baseball",   league:"mlb",  id:"10",    name:"Yankees",   espnSlug:"nyy" },
+  { sport:"baseball",   league:"mlb",  id:"21",    name:"Mets",      espnSlug:"nym" },
+  { sport:"football",   league:"nfl",  id:"20",    name:"Jets",      espnSlug:"nyj" },
+  { sport:"football",   league:"nfl",  id:"19",    name:"Giants",    espnSlug:"nyg" },
+  { sport:"basketball", league:"nba",  id:"18",    name:"Knicks",    espnSlug:"ny"  },
+  { sport:"basketball", league:"nba",  id:"17",    name:"Nets",      espnSlug:"bkn" },
+  { sport:"hockey",     league:"nhl",  id:"13",    name:"Rangers",   espnSlug:"nyr" },
+  { sport:"hockey",     league:"nhl",  id:"22",    name:"Islanders", espnSlug:"nyi" },
+  { sport:"hockey",     league:"nhl",  id:"1",     name:"Devils",    espnSlug:"njd" },
+  { sport:"basketball", league:"wnba", id:"20",    name:"Liberty",   espnSlug:"ny"  },
+  { sport:"soccer",     league:"usa.1",id:"18479", name:"NYCFC",     espnSlug:"nyc" },
+  { sport:"soccer",     league:"nwsl", id:"1163",  name:"Gotham FC", espnSlug:"nj"  },
+  { sport:"soccer",     league:"usa.1",id:"16335", name:"Red Bulls", espnSlug:"rbny"},
 ];
 
-// Extra NY-relevant news from MLB.com team feeds (free, reliable)
 const NY_EXTRA_NEWS = [];
 
-// Keywords for filtering league-wide news down to NY-relevant stories
+// ── STRICT NY KEYWORDS — full team names to avoid SF Giants / Texas Rangers ──
+const NY_KEYWORDS = [
+  "new york yankees","new york mets","new york jets","new york giants",
+  "new york knicks","brooklyn nets","new york rangers","new york islanders",
+  "new jersey devils","new york liberty","nycfc","red bulls","gotham fc",
+  // Short names safe to use (no other major teams share them)
+  "yankees","mets","knicks","nets","islanders","liberty","devils",
+  // Location-based
+  "bronx","flushing","citi field","yankee stadium","msg","madison square garden",
+  "metlife","ubs arena","barclays center","prudential center",
+];
+
+// ── RSS FEEDS via rss2json (CORS-friendly, converts RSS to JSON) ──────────────
+const NY_RSS_FEEDS = [
+  { url:"https://nypost.com/sports/feed/",             name:"NY Post Sports",    team:"All NY" },
+  { url:"https://www.nydailynews.com/sports/?rss",     name:"NY Daily News",     team:"All NY" },
+  { url:"https://sny.tv/rss",                          name:"SNY",               team:"Mets/Yankees" },
+  { url:"https://www.yesnetwork.com/news/rss",         name:"YES Network",       team:"Yankees" },
+  { url:"https://www.nhl.com/rangers/rss/news",        name:"Rangers Official",  team:"Rangers" },
+  { url:"https://www.nhl.com/islanders/rss/news",      name:"Islanders Official",team:"Islanders" },
+  { url:"https://www.nhl.com/devils/rss/news",         name:"Devils Official",   team:"Devils" },
+  { url:"https://www.mlb.com/yankees/rss/news",        name:"Yankees Official",  team:"Yankees" },
+  { url:"https://www.mlb.com/mets/rss/news",           name:"Mets Official",     team:"Mets" },
+  { url:"https://www.nba.com/knicks/rss",              name:"Knicks Official",   team:"Knicks" },
+];
 async function tryRSSFeed(feed) {
   try {
     const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}&count=10`);
@@ -728,65 +741,114 @@ async function fetchNYNews() {
   const results = [];
   const seen = new Set();
 
-  // Helper to safely fetch with timeout fallback
   async function safeFetch(url) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
+      if (!res.ok) return null;
       return await res.json();
     } catch(e) { return null; }
   }
 
-  // Team-specific ESPN news — always NY relevant, no keyword filtering needed
-  const allTeams = [...NY_TEAM_NEWS, ...NY_EXTRA_NEWS];
-  await Promise.all(allTeams.map(async ({ sport, league, id, name }) => {
-    const json = await safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=10`);
-    if (!json) return;
-    (json.articles || []).forEach(a => {
-      const title = a.headline || a.title || "";
-      if (!title || seen.has(title)) return;
-      seen.add(title);
-      results.push({
-        title,
-        link:   a.links?.web?.href || "#",
-        desc:   a.description || "",
-        pub:    a.published || a.lastModified || "",
-        source: `ESPN · ${name}`,
-        team:   name,
-        sport:  league.toUpperCase(),
-        isNY:   true,
-        image:  a.images?.[0]?.url || null,
-      });
+  function addArticle(a, source, team, isNY, sport) {
+    const title = a.headline || a.title || a.name || "";
+    if (!title || seen.has(title)) return;
+    seen.add(title);
+    results.push({
+      title,
+      link:   a.links?.web?.href || a.url || a.link || "#",
+      desc:   a.description || a.summary || a.blurb || "",
+      pub:    a.published || a.lastModified || a.date || "",
+      source, team, sport, isNY,
+      image:  a.images?.[0]?.url || null,
     });
+  }
+
+  // ── 1. TEAM NEWS — 50 articles each, always NY ────────────────────────────
+  await Promise.all(NY_TEAM_NEWS.map(async ({ sport, league, id, name }) => {
+    const json = await safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}/news?limit=50`);
+    (json?.articles || []).forEach(a => addArticle(a, `ESPN · ${name}`, name, true, league.toUpperCase()));
   }));
 
-  // League-level ESPN news — store ALL articles, mark isNY based on keywords
-  await Promise.all(NY_NEWS_ENDPOINTS.map(async ({ sport, league, name }) => {
-    const json = await safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=25`);
-    if (!json) return;
-    (json.articles || []).forEach(a => {
-      const title = a.headline || a.title || "";
-      if (!title || seen.has(title)) return;
-      const desc = a.description || "";
-      seen.add(title);
-      const combined = (title + " " + desc).toLowerCase();
+  // ── 2. LEAGUE-WIDE NEWS — 50 articles, filter to NY ──────────────────────
+  const LEAGUES = [
+    { sport:"baseball",   league:"mlb",   name:"MLB"  },
+    { sport:"football",   league:"nfl",   name:"NFL"  },
+    { sport:"basketball", league:"nba",   name:"NBA"  },
+    { sport:"hockey",     league:"nhl",   name:"NHL"  },
+    { sport:"basketball", league:"wnba",  name:"WNBA" },
+    { sport:"soccer",     league:"usa.1", name:"MLS"  },
+    { sport:"soccer",     league:"nwsl",  name:"NWSL" },
+  ];
+  await Promise.all(LEAGUES.map(async ({ sport, league, name }) => {
+    const json = await safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/news?limit=50`);
+    (json?.articles || []).forEach(a => {
+      const combined = `${a.headline||""} ${a.description||""}`.toLowerCase();
       const isNY = NY_KEYWORDS.some(kw => combined.includes(kw));
-      results.push({
-        title,
-        link:   a.links?.web?.href || "#",
-        desc,
-        pub:    a.published || a.lastModified || "",
-        source: `ESPN · ${name}`,
-        sport:  name,
-        isNY,
-        image:  a.images?.[0]?.url || null,
-      });
+      addArticle(a, `ESPN · ${name}`, name, isNY, name);
     });
   }));
 
-  // Reddit team subreddits — top AND new posts combined
+  // ── 3. ESPN NOW FEED — breaking news across all sports ───────────────────
+  const nowJson = await safeFetch("https://now.core.api.espn.com/v1/sports/news?limit=50&lang=en&region=us");
+  (nowJson?.feed || nowJson?.results || []).forEach(a => {
+    const combined = `${a.headline||a.title||""} ${a.description||""}`.toLowerCase();
+    const isNY = NY_KEYWORDS.some(kw => combined.includes(kw));
+    if (isNY) addArticle(
+      { headline: a.headline||a.title, description: a.description,
+        links:{ web:{ href: a.links?.web?.href || a.url || "#" }},
+        published: a.published || a.date, images: a.images },
+      "ESPN Now", "Breaking", true, "ALL"
+    );
+  });
+
+  // ── 4. TEAM TRANSACTIONS & INJURIES (extra depth) ────────────────────────
+  await Promise.all(NY_TEAM_NEWS.slice(0,6).map(async ({ sport, league, id, name }) => {
+    // Injuries
+    const injJson = await safeFetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/teams/${id}?enable=injuries`);
+    (injJson?.team?.injuries || []).slice(0,5).forEach(inj => {
+      const player = inj.athlete?.displayName || "Player";
+      const status = inj.status || "Injured";
+      const desc   = inj.longComment || inj.shortComment || "";
+      const title  = `${name} Injury: ${player} — ${status}`;
+      if (seen.has(title)) return;
+      seen.add(title);
+      results.push({ title, link:`https://www.espn.com/${league}/team/injuries/_/name/${id}`, desc, pub:inj.date||"", source:`ESPN · ${name} Injuries`, team:name, sport:league.toUpperCase(), isNY:true });
+    });
+  }));
+
+  // ── 5. RSS FEEDS via rss2json ─────────────────────────────────────────────
+  await Promise.all(NY_RSS_FEEDS.map(async ({ url, name, team }) => {
+    try {
+      const rssJson = await safeFetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=20`);
+      if (rssJson?.status !== "ok") return;
+      (rssJson.items || []).forEach(item => {
+        const title = item.title?.trim() || "";
+        if (!title || seen.has(title)) return;
+        // Strict NY filter on RSS — check keywords
+        const combined = `${title} ${item.description||""}`.toLowerCase();
+        const isNY = team !== "All NY"
+          ? true  // team-specific feeds always NY
+          : NY_KEYWORDS.some(kw => combined.includes(kw));
+        if (!isNY) return;
+        seen.add(title);
+        results.push({
+          title,
+          link:   item.link || item.guid || "#",
+          desc:   (item.description || "").replace(/<[^>]*>/g,"").trim().slice(0,200),
+          pub:    item.pubDate || "",
+          source: name,
+          team,
+          sport:  "NEWS",
+          isNY:   true,
+        });
+      });
+    } catch(e) {}
+  }));
+
+  // ── 6. REDDIT — hot posts from all NY team subs ───────────────────────────
   const REDDIT_SUBS = [
     { sub:"NYYankees",       team:"Yankees"   },
     { sub:"NewYorkMets",     team:"Mets"      },
@@ -801,44 +863,26 @@ async function fetchNYNews() {
     { sub:"NYCFC",           team:"NYCFC"     },
   ];
   await Promise.all(REDDIT_SUBS.map(async ({ sub, team }) => {
-    // Reddit requires a User-Agent or returns 429 — try both hot and new
-    const headers = { "User-Agent": "NYSportsDaily/1.0" };
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-    let posts = [];
+    const tid = setTimeout(() => controller.abort(), 8000);
     try {
-      const res = await fetch(`https://www.reddit.com/r/${sub}/hot.json?limit=8&raw_json=1`, { signal: controller.signal, headers });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        const json = await res.json();
-        posts = json?.data?.children || [];
-      }
-    } catch(e) { clearTimeout(timeoutId); }
-
-    posts.forEach(post => {
-      const p = post.data;
-      if (!p || p.stickied || p.over_18 || p.score < 5) return;
-      const title = p.title;
-      if (!title || seen.has(title)) return;
-      const lowerTitle = title.toLowerCase();
-      if (lowerTitle.includes("game thread") || lowerTitle.includes("post-game") ||
-          lowerTitle.includes("daily discussion") || lowerTitle.includes("lineup thread") ||
-          lowerTitle.includes("pre-game") || lowerTitle.includes("weekly thread")) return;
-      seen.add(title);
-      results.push({
-        title,
-        link:    `https://reddit.com${p.permalink}`,
-        desc:    p.selftext ? p.selftext.slice(0, 200) : `${p.ups} upvotes · r/${sub}`,
-        pub:     new Date(p.created_utc * 1000).toISOString(),
-        source:  `Reddit · r/${sub}`,
-        team,
-        sport:   team,
-        isNY:    true,
-        upvotes: p.ups,
+      const res = await fetch(`https://www.reddit.com/r/${sub}/hot.json?limit=10&raw_json=1`,
+        { signal: controller.signal, headers: { "User-Agent": "NYSportsDaily/1.0" }});
+      clearTimeout(tid);
+      if (!res.ok) return;
+      const json = await res.json();
+      (json?.data?.children || []).forEach(post => {
+        const p = post.data;
+        if (!p || p.stickied || p.over_18 || p.score < 10) return;
+        const title = p.title;
+        if (!title || seen.has(title)) return;
+        const lc = title.toLowerCase();
+        if (["game thread","post-game","daily discussion","lineup thread","pre-game","weekly thread"].some(s => lc.includes(s))) return;
+        seen.add(title);
+        results.push({ title, link:`https://reddit.com${p.permalink}`, desc:`${p.ups} upvotes · r/${sub}`, pub:new Date(p.created_utc*1000).toISOString(), source:`Reddit · r/${sub}`, team, sport:team, isNY:true });
       });
-    });
+    } catch(e) { clearTimeout(tid); }
   }));
-
 
   return results.sort((a,b) => new Date(b.pub) - new Date(a.pub));
 }
@@ -1012,7 +1056,7 @@ export default function NYSportsDaily() {
         </div>
         {/* TAB NAV — Secondary */}
         <div style={{...styles.tabNav, marginTop:-16, borderBottom:"1px solid #1a1a1a", marginBottom:20}}>
-          {["STATS","HISTORY","THIS DATE","ICONIC","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","TRIVIA","XWORD","SONGS & SPIN"].map(tab => (
+          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","TRIVIA","XWORD","SONGS & SPIN"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}), fontSize:9, padding:"7px 10px"}}>
               {tab}
@@ -1134,7 +1178,7 @@ export default function NYSportsDaily() {
         )}
         {/* ──── HISTORY TAB ──── */}
         {activeTab === "RECAP" && <RecapTab scores={scores} />}
-        {activeTab === "ICONIC" && <IconicTab />}
+        {activeTab === "NY EVENTS" && <IconicTab />}
         {activeTab === "THIS DATE" && <TodayTab />}
         {activeTab === "POLLS" && <PollsTab />}
         {activeTab === "AWARDS"   && <AwardsTab />}
@@ -1621,7 +1665,14 @@ function NewsTab({ news, loading }) {
   const [sport,  setSport]  = useState("ALL");
   const [teamFilter, setTeamFilter] = useState("ALL");
 
-  const NY_KEYWORDS_CHECK = ["yankees","mets","knicks","nets","rangers","islanders","devils","liberty","nycfc","red bulls","gotham","new york","brooklyn","bronx","queens"];
+  const NY_KEYWORDS_CHECK = [
+    "new york yankees","new york mets","new york jets","new york giants",
+    "new york knicks","brooklyn nets","new york rangers","new york islanders",
+    "new jersey devils","new york liberty","nycfc","red bulls","gotham fc",
+    "yankees","mets","knicks","nets","islanders","liberty",
+    "new york","brooklyn","bronx","queens","flushing","yankee stadium","citi field",
+    "madison square garden","msg","metlife","ubs arena","barclays","prudential center",
+  ];
   const SPORTS = ["ALL","MLB","NFL","NBA","NHL","WNBA","MLS"];
   const TEAMS  = ["ALL","Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty","NYCFC","Gotham FC"];
 
@@ -3438,7 +3489,7 @@ function SiteSearch({ query, onSelect }) {
     { keywords:["trivia","quiz","test","challenge","answer"],                 tab:"TRIVIA",    icon:"🧠", title:"Trivia",                    sub:"Daily NY sports trivia challenge" },
     { keywords:["history","all time","record","leaders","list","greatest"],   tab:"HISTORY",   icon:"📚", title:"History & Records",         sub:"All-time records, leaders, coaches" },
     { keywords:["this date","anniversary","today in","on this date"],        tab:"THIS DATE", icon:"📅", title:"On This Date",              sub:"NY sports history by date" },
-    { keywords:["iconic","tennis","us open","belmont","secretariat","golf","shinnecock","bethpage","winged foot","pga","ryder"], tab:"ICONIC", icon:"🏆", title:"Iconic NY Events", sub:"US Open Tennis, Golf, Belmont Stakes" },
+    { keywords:["iconic","tennis","us open","belmont","secretariat","golf","shinnecock","bethpage","winged foot","pga","ryder"], tab:"NY EVENTS", icon:"🏆", title:"Iconic NY Events", sub:"US Open Tennis, Golf, Belmont Stakes" },
     { keywords:["spin","songs","walk up","walkup","music","facts","random"], tab:"SONGS & SPIN",      icon:"🎰", title:"Songs & Spin",                sub:"Random NY sports facts" },
     { keywords:["shop","buy","gear","jersey","memorabilia","book"],           tab:"SHOP",      icon:"🛒", title:"Shop",                      sub:"NY sports gear, books, memorabilia" },
     { keywords:["radio","podcast","listen","wfan","espn radio"],              tab:"RADIO",     icon:"📻", title:"Radio & Podcasts",          sub:"NY sports radio and podcasts" },
@@ -3676,8 +3727,8 @@ function IconicTab() {
   return (
     <div style={styles.statsRoot}>
       <div style={styles.stdHeader}>
-        <h2 style={styles.stdTitle}>🏆 NY ICONIC SPORTING EVENTS</h2>
-        <p style={styles.stdSub}>US OPEN TENNIS · US OPEN GOLF · BELMONT & THE TRIPLE CROWN</p>
+        <h2 style={styles.stdTitle}>🏟️ ICONIC NEW YORK SPORTING EVENTS</h2>
+        <p style={styles.stdSub}>US OPEN TENNIS · US OPEN GOLF · PGA · RYDER CUP · BELMONT STAKES</p>
       </div>
 
       <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:16, borderBottom:"1px solid #2a2a2a", paddingBottom:12}}>
