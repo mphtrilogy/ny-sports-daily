@@ -757,6 +757,7 @@ async function fetchNYNews() {
         team:   name,
         sport:  league.toUpperCase(),
         isNY:   true,
+        image:  a.images?.[0]?.url || null,
       });
     });
   }));
@@ -780,6 +781,7 @@ async function fetchNYNews() {
         source: `ESPN · ${name}`,
         sport:  name,
         isNY,
+        image:  a.images?.[0]?.url || null,
       });
     });
   }));
@@ -1532,28 +1534,85 @@ function TeamRow({ logo, name, score, color }) {
 }
 
 // ─── NEWS CARDS ────────────────────────────────────────────────────────────
+// Team color lookup for news cards
+const TEAM_COLORS = {
+  Yankees: "#003087", Mets: "#002D72", Jets: "#125740", Giants: "#0B2265",
+  Knicks: "#006BB6", Nets: "#000000", Rangers: "#0038A8", Islanders: "#00539B",
+  Devils: "#CE1126", Liberty: "#6ECEB2", NYCFC: "#6CACE4", "Red Bulls": "#ED1C2E", "Gotham FC": "#0A0A2E",
+}
+
+function timeAgo(pub) {
+  if (!pub) return ""
+  const diff = Date.now() - new Date(pub).getTime()
+  const mins  = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days  = Math.floor(diff / 86400000)
+  if (mins < 60)  return `${mins}m ago`
+  if (hours < 24) return `${hours}h ago`
+  return `${days}d ago`
+}
+
 function NewsCardFeatured({ item }) {
+  const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c"
+  const sportEmoji = { MLB:"⚾", NFL:"🏈", NBA:"🏀", NHL:"🏒", WNBA:"🏀", MLS:"⚽", NWSL:"⚽" }[item.sport] || "📰"
   return (
     <a href={item.link} target="_blank" rel="noopener noreferrer" style={styles.newsFeatured}>
-      <div style={styles.newsFeaturedSource}>{item.source}</div>
+      {/* Hero image */}
+      {item.image && (
+        <div style={{ margin:"-20px -20px 0", height:180, overflow:"hidden", borderRadius:"2px 2px 0 0" }}>
+          <img src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} loading="lazy" />
+        </div>
+      )}
+      {/* Color bar under image or at top */}
+      <div style={{ height:3, background:teamColor, margin: item.image ? "0 -20px 16px" : "-20px -20px 16px" }} />
+      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+        <span style={{ fontSize:16 }}>{sportEmoji}</span>
+        {item.team && (
+          <span style={{ fontSize:9, letterSpacing:"0.18em", color:teamColor, fontWeight:900, textTransform:"uppercase", background:`${teamColor}22`, padding:"2px 7px", borderRadius:2 }}>
+            {item.team}
+          </span>
+        )}
+        <span style={{ fontSize:9, letterSpacing:"0.12em", color:"#555", fontWeight:700, textTransform:"uppercase" }}>
+          {item.source?.replace(/ESPN · /,"")}
+        </span>
+        <span style={{ fontSize:9, color:"#444", marginLeft:"auto" }}>{timeAgo(item.pub)}</span>
+      </div>
       <h2 style={styles.newsFeaturedTitle}>{item.title}</h2>
-      {item.desc && <p style={styles.newsFeaturedDesc}>{item.desc}…</p>}
+      {item.desc && <p style={styles.newsFeaturedDesc}>{item.desc.slice(0,160)}{item.desc.length > 160 ? "…" : ""}</p>}
       <span style={styles.newsReadMore}>READ FULL STORY →</span>
     </a>
-  );
+  )
 }
 
 function NewsCardSmall({ item, index }) {
+  const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c"
   return (
     <a href={item.link} target="_blank" rel="noopener noreferrer"
-      style={{...styles.newsSmall, ...(index % 2 === 0 ? {} : styles.newsSmallAlt)}}>
-      <div style={styles.newsSmallMeta}>
-        <span style={styles.newsSmallSource}>{item.source}</span>
-        {item.pub && <span style={styles.newsSmallDate}>{new Date(item.pub).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</span>}
+      style={{...styles.newsSmall, ...(index % 2 === 0 ? {} : styles.newsSmallAlt), display:"flex", gap:10, alignItems:"flex-start"}}>
+      {/* Thumbnail */}
+      {item.image ? (
+        <div style={{ width:72, height:54, flexShrink:0, overflow:"hidden", borderRadius:2 }}>
+          <img src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} loading="lazy" />
+        </div>
+      ) : (
+        <div style={{ width:72, height:54, flexShrink:0, background:`${teamColor}22`, borderRadius:2, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>
+          {{ MLB:"⚾", NFL:"🏈", NBA:"🏀", NHL:"🏒", WNBA:"🏀", MLS:"⚽", NWSL:"⚽" }[item.sport] || "📰"}
+        </div>
+      )}
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={styles.newsSmallMeta}>
+          {item.team && (
+            <span style={{ fontSize:8, letterSpacing:"0.15em", color:teamColor, fontWeight:900, textTransform:"uppercase", background:`${teamColor}22`, padding:"1px 5px", borderRadius:2, flexShrink:0 }}>
+              {item.team}
+            </span>
+          )}
+          <span style={styles.newsSmallSource}>{item.source?.replace(/ESPN · /,"")}</span>
+          {item.pub && <span style={styles.newsSmallDate}>{timeAgo(item.pub)}</span>}
+        </div>
+        <p style={styles.newsSmallTitle}>{item.title}</p>
       </div>
-      <p style={styles.newsSmallTitle}>{item.title}</p>
     </a>
-  );
+  )
 }
 
 function NewsTab({ news, loading }) {
@@ -1649,11 +1708,17 @@ function NewsTab({ news, loading }) {
               <p style={styles.emptyText}>NO STORIES — TRY DIFFERENT FILTERS</p>
             </div>
           ) : (
-            <div style={styles.newsGrid}>
-              {filtered.slice(0,4).map((item,i) => <NewsCardFeatured key={i} item={item} />)}
+            <>
+              {/* Featured stories — top 4 in a 2-col grid */}
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))", gap:12, marginBottom:16 }}>
+                {filtered.slice(0,4).map((item,i) => <NewsCardFeatured key={i} item={item} />)}
+              </div>
               <div style={styles.newsDivider}><span style={styles.newsDividerText}>MORE STORIES</span></div>
-              {filtered.slice(4,80).map((item,i) => <NewsCardSmall key={i} item={item} index={i} />)}
-            </div>
+              {/* Remaining stories in compact list */}
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:0 }}>
+                {filtered.slice(4,80).map((item,i) => <NewsCardSmall key={i} item={item} index={i} />)}
+              </div>
+            </>
           )}
         </>
       )}
@@ -7228,28 +7293,29 @@ const styles = {
   scoreVenue: { marginTop: 4, fontSize: 9, color: "#888" },
 
   // NEWS
-  newsGrid: {},
+  newsGrid: { display:"flex", flexDirection:"column" },
   newsFeatured: {
     display: "block", textDecoration: "none", color: "inherit",
-    background: "#161616", border: "1px solid #333",
-    padding: "20px", marginBottom: 12,
-    transition: "border-color 0.2s",
-    borderLeft: "4px solid #c8201c",
+    background: "#161616", border: "1px solid #2a2a2a",
+    padding: "20px", borderRadius: 2,
+    transition: "border-color 0.15s, transform 0.15s",
+    cursor: "pointer",
   },
   newsFeaturedSource: {
     fontSize: 9, letterSpacing: "0.2em", color: "#c8201c",
     fontWeight: 900, marginBottom: 8, textTransform: "uppercase",
   },
   newsFeaturedTitle: {
-    margin: "0 0 10px", fontSize: "clamp(16px, 3vw, 22px)",
-    fontWeight: 900, lineHeight: 1.2, letterSpacing: "-0.01em",
+    margin: "0 0 10px", fontSize: "clamp(15px, 2.5vw, 20px)",
+    fontWeight: 900, lineHeight: 1.25, letterSpacing: "-0.01em",
     color: "#e8e0d0", fontFamily: "'Georgia', serif",
   },
   newsFeaturedDesc: {
-    margin: "0 0 12px", fontSize: 13, lineHeight: 1.6, color: "#999",
+    margin: "0 0 12px", fontSize: 13, lineHeight: 1.6, color: "#888",
+    fontFamily: "'Georgia', serif",
   },
   newsReadMore: {
-    fontSize: 10, color: "#c8201c", fontWeight: 900, letterSpacing: "0.1em",
+    fontSize: 9, color: "#c8201c", fontWeight: 900, letterSpacing: "0.12em",
   },
   newsDivider: {
     display: "flex", alignItems: "center", gap: 12,
@@ -7258,13 +7324,13 @@ const styles = {
   newsDividerText: { fontSize: 9, color: "#555", letterSpacing: "0.2em", fontWeight: 900 },
   newsSmall: {
     display: "block", textDecoration: "none", color: "inherit",
-    padding: "12px 0", borderBottom: "1px solid #1e1e1e",
-    transition: "background 0.15s",
+    padding: "12px 14px", borderBottom: "1px solid #1e1e1e",
+    transition: "background 0.12s", cursor: "pointer",
   },
-  newsSmallAlt: { background: "transparent" },
-  newsSmallMeta: { display: "flex", gap: 12, marginBottom: 4, alignItems: "center" },
-  newsSmallSource: { fontSize: 9, letterSpacing: "0.15em", color: "#666", fontWeight: 900, textTransform: "uppercase" },
-  newsSmallDate: { fontSize: 9, color: "#555" },
+  newsSmallAlt: { background: "#0f0f0f" },
+  newsSmallMeta: { display: "flex", gap: 8, marginBottom: 5, alignItems: "center", flexWrap: "wrap" },
+  newsSmallSource: { fontSize: 8, letterSpacing: "0.15em", color: "#555", fontWeight: 900, textTransform: "uppercase" },
+  newsSmallDate: { fontSize: 8, color: "#444", marginLeft: "auto" },
   newsSmallTitle: {
     margin: 0, fontSize: 14, fontWeight: 700, lineHeight: 1.4, color: "#ccc",
     fontFamily: "'Georgia', serif",
