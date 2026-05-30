@@ -85,7 +85,7 @@ const NY_TEAM_NEWS = [
   { sport:"basketball", league:"wnba", id:"20",    name:"Liberty",   espnSlug:"ny"  },
   { sport:"soccer",     league:"usa.1",id:"18479", name:"NYCFC",     espnSlug:"nyc" },
   { sport:"soccer",     league:"nwsl", id:"1163",  name:"Gotham FC", espnSlug:"nj"  },
-  { sport:"soccer",     league:"usa.1",id:"16335", name:"Red Bulls", espnSlug:"rbny"},
+  { sport:"soccer",     league:"usa.1",id:"399",   name:"Red Bulls", espnSlug:"rbny"},
 ];
 
 const NY_EXTRA_NEWS = [];
@@ -838,7 +838,7 @@ async function fetchNYNews() {
     });
   }));
 
-  // ── 3. LEAGUE-WIDE — filter to NY teams by text ───────────────────────────
+  // ── 3. LEAGUE-WIDE — filter to NY teams by text (NO soccer — too many foreign stories) ──
   await Promise.all([
     { sport:"football",   league:"nfl",  name:"NFL"  },
     { sport:"baseball",   league:"mlb",  name:"MLB"  },
@@ -1182,7 +1182,18 @@ export default function NYSportsDaily() {
                 <div style={styles.newsSidebarHeader}>📰 NY SPORTS HEADLINES</div>
                 {loadingNews ? (
                   <p style={styles.newsSidebarLoading}>LOADING...</p>
-                ) : news.filter(n => n.isNY).slice(0, 10).map((item, i) => (
+                ) : news.filter(n => {
+                    // Require a real NY team tag — skip generic soccer/MLS stories
+                    const nyTeams = ["Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty","NYCFC","Red Bulls","Gotham FC"];
+                    const hasNYTeam = nyTeams.includes(n.team);
+                    // For soccer teams, require the team name actually in the title
+                    if (["Red Bulls","NYCFC","Gotham FC"].includes(n.team)) {
+                      const titleLower = (n.title||"").toLowerCase();
+                      return titleLower.includes("red bull") || titleLower.includes("nycfc") ||
+                             titleLower.includes("new york city fc") || titleLower.includes("gotham");
+                    }
+                    return hasNYTeam;
+                  }).slice(0, 10).map((item, i) => (
                   <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" style={styles.newsSidebarItem}>
                     <span style={styles.newsSidebarSource}>{item.source}</span>
                     <p style={styles.newsSidebarTitle}>{item.title}</p>
@@ -1729,6 +1740,11 @@ function NewsTab({ news, loading }) {
     const combined = (item.title + " " + (item.desc||"") + " " + (item.source||"")).toLowerCase();
     const isNY = item.isNY || NY_KEYWORDS_CHECK.some(kw => combined.includes(kw));
     if (filter === "NY" && !isNY) return false;
+    // For soccer teams, require team name actually in title to avoid generic PL/world soccer
+    if (["Red Bulls","NYCFC","Gotham FC"].includes(item.team) && filter === "NY") {
+      const t = (item.title||"").toLowerCase();
+      if (!t.includes("red bull") && !t.includes("nycfc") && !t.includes("new york city fc") && !t.includes("gotham")) return false;
+    }
     if (sport !== "ALL") {
       const sportKws = SPORT_KEYWORDS[sport] || [];
       if (!sportKws.some(kw => combined.includes(kw))) return false;
