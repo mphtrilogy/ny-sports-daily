@@ -131,12 +131,16 @@ async function tryRSSFeed(feed) {
 }
 
 const NY_KEYWORDS = [
+  // Full team names — safest
   "new york yankees","new york mets","new york jets","new york giants",
   "new york knicks","brooklyn nets","new york rangers","new york islanders",
-  "new jersey devils","new york liberty","nycfc","red bulls","gotham fc",
-  "yankees","mets","knicks","nets","islanders","liberty",
-  // Use full names only for teams with common words in other team names
-  // Avoid: "giants" (SF Giants), "rangers" (Texas Rangers), "jets" (generic)
+  "new jersey devils","new york liberty","nycfc","gotham fc",
+  // Short names SAFE to use (no other major team shares these)
+  "yankees","mets","knicks","nets","islanders","liberty","devils","red bulls",
+  // Location — articles mentioning these are almost always NY sports
+  "bronx","flushing","citi field","yankee stadium","madison square garden",
+  "msg sports","metlife stadium","ubs arena","barclays center","prudential center",
+  // NOT included: "giants" (SF Giants), "rangers" (Texas Rangers), "jets" (generic aviation)
 ];
 
 // ─── DATE HELPERS ──────────────────────────────────────────────────────────
