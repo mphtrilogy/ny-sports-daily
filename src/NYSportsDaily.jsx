@@ -91,18 +91,8 @@ const NY_TEAM_NEWS = [
 const NY_EXTRA_NEWS = [];
 
 // ── STRICT NY KEYWORDS — full team names to avoid SF Giants / Texas Rangers ──
-const NY_KEYWORDS = [
-  "new york yankees","new york mets","new york jets","new york giants",
-  "new york knicks","brooklyn nets","new york rangers","new york islanders",
-  "new jersey devils","new york liberty","nycfc","red bulls","gotham fc",
-  // Short names safe to use (no other major teams share them)
-  "yankees","mets","knicks","nets","islanders","liberty","devils",
-  // Location-based
-  "bronx","flushing","citi field","yankee stadium","msg","madison square garden",
-  "metlife","ubs arena","barclays center","prudential center",
-];
 
-// ── RSS FEEDS via rss2json (CORS-friendly, converts RSS to JSON) ──────────────
+// ── RSS FEEDS via rss2json ────────────────────────────────────────────────
 const NY_RSS_FEEDS = [
   { url:"https://nypost.com/sports/feed/",             name:"NY Post Sports",    team:"All NY" },
   { url:"https://www.nydailynews.com/sports/?rss",     name:"NY Daily News",     team:"All NY" },
