@@ -94,16 +94,42 @@ const NY_EXTRA_NEWS = [];
 
 // ── RSS FEEDS via rss2json ────────────────────────────────────────────────
 const NY_RSS_FEEDS = [
-  { url:"https://nypost.com/sports/feed/",             name:"NY Post Sports",    team:"All NY" },
-  { url:"https://www.nydailynews.com/sports/?rss",     name:"NY Daily News",     team:"All NY" },
-  { url:"https://sny.tv/rss",                          name:"SNY",               team:"Mets/Yankees" },
-  { url:"https://www.yesnetwork.com/news/rss",         name:"YES Network",       team:"Yankees" },
-  { url:"https://www.nhl.com/rangers/rss/news",        name:"Rangers Official",  team:"Rangers" },
-  { url:"https://www.nhl.com/islanders/rss/news",      name:"Islanders Official",team:"Islanders" },
-  { url:"https://www.nhl.com/devils/rss/news",         name:"Devils Official",   team:"Devils" },
-  { url:"https://www.mlb.com/yankees/rss/news",        name:"Yankees Official",  team:"Yankees" },
-  { url:"https://www.mlb.com/mets/rss/news",           name:"Mets Official",     team:"Mets" },
-  { url:"https://www.nba.com/knicks/rss",              name:"Knicks Official",   team:"Knicks" },
+  // NY Post — team-specific feeds (much more targeted than general sports feed)
+  { url:"https://nypost.com/tag/new-york-yankees/feed/",   name:"NY Post",  team:"Yankees"   },
+  { url:"https://nypost.com/tag/new-york-mets/feed/",      name:"NY Post",  team:"Mets"      },
+  { url:"https://nypost.com/tag/new-york-jets/feed/",      name:"NY Post",  team:"Jets"      },
+  { url:"https://nypost.com/tag/new-york-giants/feed/",    name:"NY Post",  team:"Giants"    },
+  { url:"https://nypost.com/tag/new-york-knicks/feed/",    name:"NY Post",  team:"Knicks"    },
+  { url:"https://nypost.com/tag/brooklyn-nets/feed/",      name:"NY Post",  team:"Nets"      },
+  { url:"https://nypost.com/tag/new-york-rangers/feed/",   name:"NY Post",  team:"Rangers"   },
+  { url:"https://nypost.com/tag/new-york-islanders/feed/", name:"NY Post",  team:"Islanders" },
+  { url:"https://nypost.com/tag/new-jersey-devils/feed/",  name:"NY Post",  team:"Devils"    },
+  // Google News RSS — broad NY sports coverage, passes through rss2json
+  { url:"https://news.google.com/rss/search?q=%22new+york+yankees%22&hl=en-US&gl=US&ceid=US:en",   name:"Google News", team:"Yankees"   },
+  { url:"https://news.google.com/rss/search?q=%22new+york+mets%22&hl=en-US&gl=US&ceid=US:en",      name:"Google News", team:"Mets"      },
+  { url:"https://news.google.com/rss/search?q=%22new+york+jets%22+nfl&hl=en-US&gl=US&ceid=US:en",  name:"Google News", team:"Jets"      },
+  { url:"https://news.google.com/rss/search?q=%22new+york+giants%22+nfl&hl=en-US&gl=US&ceid=US:en",name:"Google News", team:"Giants"    },
+  { url:"https://news.google.com/rss/search?q=%22new+york+knicks%22&hl=en-US&gl=US&ceid=US:en",    name:"Google News", team:"Knicks"    },
+  { url:"https://news.google.com/rss/search?q=%22brooklyn+nets%22&hl=en-US&gl=US&ceid=US:en",      name:"Google News", team:"Nets"      },
+  { url:"https://news.google.com/rss/search?q=%22new+york+rangers%22+nhl&hl=en-US&gl=US&ceid=US:en",name:"Google News",team:"Rangers"   },
+  { url:"https://news.google.com/rss/search?q=%22new+york+islanders%22&hl=en-US&gl=US&ceid=US:en", name:"Google News", team:"Islanders" },
+  { url:"https://news.google.com/rss/search?q=%22new+jersey+devils%22&hl=en-US&gl=US&ceid=US:en",  name:"Google News", team:"Devils"    },
+  { url:"https://news.google.com/rss/search?q=%22new+york+liberty%22+wnba&hl=en-US&gl=US&ceid=US:en",name:"Google News",team:"Liberty" },
+  // MLB Trade Rumors — best baseball transaction news
+  { url:"https://www.mlbtraderumors.com/new-york-yankees/feed", name:"MLB Trade Rumors", team:"Yankees" },
+  { url:"https://www.mlbtraderumors.com/new-york-mets/feed",    name:"MLB Trade Rumors", team:"Mets"    },
+  // SB Nation team blogs — deep fan coverage
+  { url:"https://www.pinstripealley.com/rss/current",     name:"Pinstripe Alley",   team:"Yankees"   },
+  { url:"https://www.amazinavenue.com/rss/current",        name:"Amazin' Avenue",    team:"Mets"      },
+  { url:"https://www.ganggreennation.com/rss/current",     name:"Gang Green Nation", team:"Jets"      },
+  { url:"https://www.bigblueview.com/rss/current",         name:"Big Blue View",     team:"Giants"    },
+  { url:"https://www.postingandtoasting.com/rss/current",  name:"Posting & Toasting",team:"Knicks"    },
+  { url:"https://www.blueshirtbanter.com/rss/current",     name:"Blueshirt Banter",  team:"Rangers"   },
+  { url:"https://www.lighthousehockey.com/rss/current",    name:"Lighthouse Hockey", team:"Islanders" },
+  { url:"https://www.allaboutthejersey.com/rss/current",   name:"All About Jersey",  team:"Devils"    },
+  { url:"https://www.netsdaily.com/rss/current",           name:"Nets Daily",        team:"Nets"      },
+  // SNY — best Mets/Yankees TV coverage
+  { url:"https://sny.tv/rss/articles",                     name:"SNY",               team:"Mets"      },
 ];
 async function tryRSSFeed(feed) {
   try {
@@ -854,26 +880,23 @@ async function fetchNYNews() {
   }));
 
 
-  // ── 4. RSS via rss2json — NY Post, Daily News, team official feeds ─────────
+  // ── 4. RSS via rss2json — NY Post per-team, Google News, SB Nation, MLBTradeRumors ──
   await Promise.all(NY_RSS_FEEDS.map(async ({ url, name, team }) => {
     const json = await safeFetch(
-      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=25`
+      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=20`
     );
     if (json?.status !== "ok") return;
     (json.items || []).forEach(item => {
-      const title = item.title?.trim() || "";
+      const title = (item.title || "").trim().replace(/\s*-\s*.*$/, ""); // strip " - Source Name" suffixes Google adds
       if (!title || seen.has(title)) return;
-      const combined = `${title} ${item.description||""}`.toLowerCase();
-      // For "All NY" feeds still apply keyword filter; team-specific feeds pass through
-      const isNY = team === "All NY" ? NY_KEYWORDS.some(kw => combined.includes(kw)) : true;
-      if (!isNY) return;
+      // All these feeds are team-specific so always NY — no extra keyword filter needed
       seen.add(title);
       results.push({
         title, isNY:true, source:name, team, sport:"NEWS",
-        link:   item.link || item.guid || "#",
-        desc:   (item.description||"").replace(/<[^>]*>/g,"").trim().slice(0,250),
-        pub:    item.pubDate || "",
-        image:  item.thumbnail || item.enclosure?.link || null,
+        link:  item.link || item.guid || "#",
+        desc:  (item.description||"").replace(/<[^>]*>/g,"").trim().slice(0,250),
+        pub:   item.pubDate || item.published || "",
+        image: item.thumbnail || item.enclosure?.link || null,
       });
     });
   }));
