@@ -7052,8 +7052,8 @@ function CrosswordTab() {
       row.forEach((cell,c) => {
         const blk = cell===".";
         const num = numMap[`${r}-${c}`];
-        cells += `<td style="width:${CS}px;height:${CS}px;border:1.5px solid #333;
-          background:${blk?"#000":"#fff"};position:relative;vertical-align:top;
+        cells += `<td class="${blk?"black":""}" style="width:${CS}px;height:${CS}px;border:1.5px solid #333;
+          background-color:${blk?"#000":"#fff"} !important;position:relative;vertical-align:top;
           box-sizing:border-box;padding:0;">
           ${!blk&&num ? `<span style="position:absolute;top:2px;left:2px;font-size:8px;line-height:1;">${num}</span>` : ""}
           ${!blk&&revealed ? `<span style="position:absolute;bottom:2px;width:100%;text-align:center;font-size:16px;font-weight:bold;">${cell}</span>` : ""}
@@ -7067,18 +7067,21 @@ function CrosswordTab() {
 
     const html = `<!DOCTYPE html><html><head><title>${puzzle.title}</title>
     <style>
-      *{box-sizing:border-box;}
+      *{box-sizing:border-box; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important;}
       body{font-family:Georgia,serif;margin:16px;color:#000;}
       h2{text-align:center;font-size:18px;margin:0 0 2px;}
       .sub{text-align:center;font-size:11px;color:#555;margin:0 0 12px;}
       .layout{display:flex;gap:20px;align-items:flex-start;}
       table{border-collapse:collapse;flex-shrink:0;}
+      td{border:1.5px solid #333 !important;}
+      td.black{background:#000 !important;}
       .clues{flex:1;display:flex;gap:16px;}
       .col{flex:1;}
       .col h3{font-size:12px;font-weight:bold;border-bottom:2px solid #000;margin:0 0 6px;padding-bottom:3px;}
       @media print{
         body{margin:8px;}
         @page{margin:0.5in;}
+        td.black{background:#000 !important;}
       }
     </style></head><body>
     <h2>${puzzle.title}</h2>
