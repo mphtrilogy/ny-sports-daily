@@ -880,26 +880,38 @@ async function fetchNYNews() {
   }));
 
 
-  // ── 4. RSS via rss2json — NY Post per-team, Google News, SB Nation, MLBTradeRumors ──
-  await Promise.all(NY_RSS_FEEDS.map(async ({ url, name, team }) => {
-    const json = await safeFetch(
-      `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=20`
-    );
-    if (json?.status !== "ok") return;
-    (json.items || []).forEach(item => {
-      const title = (item.title || "").trim().replace(/\s*-\s*.*$/, ""); // strip " - Source Name" suffixes Google adds
-      if (!title || seen.has(title)) return;
-      // All these feeds are team-specific so always NY — no extra keyword filter needed
-      seen.add(title);
-      results.push({
-        title, isNY:true, source:name, team, sport:"NEWS",
-        link:  item.link || item.guid || "#",
-        desc:  (item.description||"").replace(/<[^>]*>/g,"").trim().slice(0,250),
-        pub:   item.pubDate || item.published || "",
-        image: item.thumbnail || item.enclosure?.link || null,
+  // ── 4. OUR OWN API ROUTE — fetches NY Post, Google News, SB Nation, MLB TR ──
+  // This calls api/news.js (Vercel serverless function) which has no CORS limits
+  try {
+    const apiJson = await safeFetch("/api/news");
+    if (apiJson?.articles) {
+      apiJson.articles.forEach(a => {
+        if (!a.title || seen.has(a.title)) return;
+        seen.add(a.title);
+        results.push({ ...a, isNY: true });
       });
-    });
-  }));
+    }
+  } catch(e) {
+    // API route not available (local dev) — fall back to rss2json
+    await Promise.all(NY_RSS_FEEDS.map(async ({ url, name, team }) => {
+      const json = await safeFetch(
+        `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=20`
+      );
+      if (json?.status !== "ok") return;
+      (json.items || []).forEach(item => {
+        const title = (item.title || "").trim();
+        if (!title || seen.has(title)) return;
+        seen.add(title);
+        results.push({
+          title, isNY:true, source:name, team, sport:"NEWS",
+          link:  item.link || item.guid || "#",
+          desc:  (item.description||"").replace(/<[^>]*>/g,"").trim().slice(0,250),
+          pub:   item.pubDate || "",
+          image: item.thumbnail || null,
+        });
+      });
+    }));
+  }
 
   // ── 5. Reddit ──────────────────────────────────────────────────────────────
   const REDDIT_SUBS = [
