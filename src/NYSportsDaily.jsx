@@ -972,6 +972,7 @@ export default function NYSportsDaily() {
   const [activeLeague, setActiveLeague]   = useState("ALL");
   const [nyOnly, setNyOnly]               = useState(false);
   const [activeTab, setActiveTab]         = useState("SCORES");
+  const [darkMode, setDarkMode]           = useState(true);
   const [searchOpen, setSearchOpen]       = useState(false);
   const [searchQuery, setSearchQuery]     = useState("");
   const days = getLast7Days();
@@ -1035,7 +1036,9 @@ export default function NYSportsDaily() {
   const allLeagues = ["ALL", ...SPORT_ENDPOINTS.map(e => e.label)];
 
   return (
-    <div style={styles.root}>
+    <div style={{...styles.root, ...(darkMode ? {} : {
+      background:"#f5f5f0", color:"#111",
+    })}}>
       {/* NOISE TEXTURE OVERLAY */}
       <div style={styles.noise} />
 
@@ -1043,7 +1046,21 @@ export default function NYSportsDaily() {
       <header style={styles.masthead}>
         <div style={styles.mastheadTop}>
           <span style={styles.mastheadKicker}>EST. 2026 · ALL NEW YORK · ALL THE TIME</span>
-          <span style={styles.mastheadKicker}>{new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"}).toUpperCase()}</span>
+          <div style={{display:"flex", gap:12, alignItems:"center"}}>
+            <a href="https://www.amazon.com/s?k=new+york+sports&tag=nysportsdaily-20" target="_blank" rel="noopener noreferrer"
+              style={{fontSize:9, color:"#888", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
+              🛒 AMAZON
+            </a>
+            <a href="https://buymeacoffee.com/mhughes65v" target="_blank" rel="noopener noreferrer"
+              style={{fontSize:9, color:"#888", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
+              ☕ TIP JAR
+            </a>
+            <button onClick={() => setDarkMode(d => !d)}
+              style={{fontSize:9, color:"#888", background:"none", border:"none", cursor:"pointer", letterSpacing:"0.1em", fontWeight:700, padding:0}}>
+              {darkMode ? "☀ LIGHT" : "🌙 DARK"}
+            </button>
+            <span style={styles.mastheadKicker}>{new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"}).toUpperCase()}</span>
+          </div>
         </div>
         <div style={styles.mastheadMain}>
           <div style={styles.mastheadLines}>
@@ -1138,14 +1155,59 @@ export default function NYSportsDaily() {
         {/* ──── SCORES TAB ──── */}
         {activeTab === "SCORES" && (
           <div>
-            {/* ── Top strip: quote + player spotlight side by side, compact ── */}
-            <div style={{display:"flex", gap:12, marginBottom:16, alignItems:"stretch"}}>
-              {/* Quote — left, slim */}
-              <div style={{flex:2, minWidth:0}}>
+            {/* ── TOP SECTION: Featured Stories + Quote + Player Card ── */}
+            <div style={{display:"flex", gap:12, marginBottom:14, alignItems:"stretch", flexWrap:"wrap"}}>
+
+              {/* Left — Top 2 Featured News Stories */}
+              <div style={{flex:3, minWidth:260, display:"flex", flexDirection:"column", gap:8}}>
+                {(() => {
+                const nyTeams = ["Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty","NYCFC"];
+                const nyStories = news.filter(n => nyTeams.includes(n.team) && n.title);
+                // Prefer stories with images first, then fall back to any story
+                const withImages = nyStories.filter(n => n.image);
+                const featured = withImages.length >= 2 ? withImages.slice(0,2) : nyStories.slice(0,2);
+                return featured.map((story, i) => (
+                  <a key={i} href={story.link} target="_blank" rel="noopener noreferrer"
+                    style={{textDecoration:"none", display:"flex", gap:10, padding:"10px 12px",
+                      background: darkMode ? "#161616" : "#fff",
+                      border: darkMode ? "1px solid #2a2a2a" : "1px solid #ddd",
+                      borderLeft:"3px solid #c8201c", flex:1}}>
+                    {story.image && (
+                      <img src={story.image} alt="" style={{width:80, height:60, objectFit:"cover", flexShrink:0, borderRadius:2}} />
+                    )}
+                    <div style={{flex:1, minWidth:0}}>
+                      <div style={{fontSize:8, fontWeight:900, color:"#c8201c", letterSpacing:"0.1em", marginBottom:3}}>
+                        {story.team?.toUpperCase()} · {story.source}
+                      </div>
+                      <div style={{fontSize:12, fontWeight:700, color: darkMode ? "#e8e0d0" : "#111",
+                        lineHeight:1.3, fontFamily:"'Georgia',serif",
+                        overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>
+                        {story.title}
+                      </div>
+                      {story.desc && (
+                        <div style={{fontSize:10, color: darkMode ? "#888" : "#666", marginTop:3, lineHeight:1.4,
+                          overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>
+                          {story.desc}
+                        </div>
+                      )}
+                    </div>
+                  </a>
+                ));
+              })()}
+              {news.filter(n => ["Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty"].includes(n.team)).length === 0 && (
+                <div style={{padding:"12px", background: darkMode?"#161616":"#fff", border:"1px solid #2a2a2a", fontSize:10, color:"#666"}}>
+                  Loading top NY sports stories...
+                </div>
+              )}
+              </div>
+
+              {/* Center — Quote */}
+              <div style={{flex:2, minWidth:180}}>
                 <QuoteOfDay />
               </div>
-              {/* Player Spotlight — right, compact card */}
-              <div style={{flexShrink:0, width:200}}>
+
+              {/* Right — Player Spotlight card */}
+              <div style={{flexShrink:0, width:190}}>
                 <PlayerSpotlight />
               </div>
             </div>
