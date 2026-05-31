@@ -6905,17 +6905,29 @@ const SAMPLE_PUZZLE = {
 
 // ─── CROSSWORD COMPONENT ───────────────────────────────────────────────────
 function CrosswordTab() {
-  const puzzle = SAMPLE_PUZZLE;
+  const [puzzle, setPuzzle]             = useState(SAMPLE_PUZZLE);
+  const [loadingPuzzle, setLoadingPuzzle] = useState(true);
+
+  // Load weekly puzzle from Supabase — falls back to SAMPLE_PUZZLE
+  useEffect(() => {
+    const weekNum = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / (86400000*7));
+    sbFetch("ny_crossword", `?week_num=eq.${weekNum}&select=puzzle_json&limit=1`)
+      .then(rows => {
+        if (rows && rows[0]?.puzzle_json) {
+          try { setPuzzle(JSON.parse(rows[0].puzzle_json)); } catch(e) {}
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingPuzzle(false));
+  }, []);
+
   const ROWS = puzzle.solution.length;
   const COLS = puzzle.solution[0].length;
+  const CELL = 34; // px per cell — larger for better usability
 
-  // Build number map
   const numberMap = {};
-  [...puzzle.across, ...puzzle.down].forEach(c => {
-    numberMap[`${c.row}-${c.col}`] = c.number;
-  });
+  [...puzzle.across, ...puzzle.down].forEach(c => { numberMap[`${c.row}-${c.col}`] = c.number; });
 
-  // Build cell membership: which across/down clue does each cell belong to?
   const cellClues = {};
   puzzle.across.forEach(c => {
     for (let i = 0; i < c.len; i++) {
@@ -6932,100 +6944,92 @@ function CrosswordTab() {
     }
   });
 
-  const [userGrid, setUserGrid]         = useState(() =>
-    Array.from({length:ROWS}, () => Array(COLS).fill(""))
-  );
+  const [userGrid, setUserGrid]         = useState(() => Array.from({length:ROWS}, ()=>Array(COLS).fill("")));
   const [selectedCell, setSelectedCell] = useState(null);
   const [direction, setDirection]       = useState("across");
-  const [activeClue, setActiveClue]     = useState(null);
-  const [revealed, setRevealed]         = useState(false);
   const [checked, setChecked]           = useState({});
+  const [revealed, setRevealed]         = useState(false);
   const [complete, setComplete]         = useState(false);
-  const inputRefs = {};
+  const inputRefs = useRef({});
 
-  function isBlack(r,c) { return puzzle.solution[r][c] === "."; }
+  // Reset grid when puzzle changes
+  useEffect(() => {
+    setUserGrid(Array.from({length:puzzle.solution.length}, ()=>Array(puzzle.solution[0].length).fill("")));
+    setChecked({}); setRevealed(false); setComplete(false); setSelectedCell(null);
+  }, [puzzle]);
+
+  function isBlack(r,c) { return puzzle.solution[r]?.[c] === "."; }
 
   function getActiveClueNum() {
     if (!selectedCell) return null;
-    const key = `${selectedCell.r}-${selectedCell.c}`;
-    return cellClues[key]?.[direction] || null;
+    return cellClues[`${selectedCell.r}-${selectedCell.c}`]?.[direction] || null;
   }
 
   function getActiveClueObj() {
     const num = getActiveClueNum();
     if (!num) return null;
-    return (direction === "across" ? puzzle.across : puzzle.down).find(c => c.number === num);
+    return (direction==="across" ? puzzle.across : puzzle.down).find(c=>c.number===num);
   }
 
   function selectCell(r, c) {
     if (isBlack(r,c)) return;
-    const key = `${r}-${c}`;
-    if (selectedCell?.r === r && selectedCell?.c === c) {
-      setDirection(d => d === "across" ? "down" : "across");
+    if (selectedCell?.r===r && selectedCell?.c===c) {
+      setDirection(d => d==="across" ? "down" : "across");
     } else {
       setSelectedCell({r,c});
     }
-    setActiveClue(getActiveClueNum());
+    setTimeout(() => inputRefs.current[`${r}-${c}`]?.focus(), 0);
   }
 
   function handleKey(r, c, e) {
     const letter = e.key.toUpperCase();
-    if (letter.length === 1 && letter >= "A" && letter <= "Z") {
-      const ng = userGrid.map(row => [...row]);
+    if (e.key === "Tab") { e.preventDefault(); nextClue(); return; }
+    if (letter.length===1 && letter>="A" && letter<="Z") {
+      const ng = userGrid.map(row=>[...row]);
       ng[r][c] = letter;
       setUserGrid(ng);
-      setChecked(prev => { const n={...prev}; delete n[`${r}-${c}`]; return n; });
-      advanceCursor(r, c);
-      checkComplete(ng);
-    } else if (e.key === "Backspace") {
-      const ng = userGrid.map(row => [...row]);
-      if (ng[r][c]) { ng[r][c] = ""; setUserGrid(ng); }
+      setChecked(prev=>{ const n={...prev}; delete n[`${r}-${c}`]; return n; });
+      advanceCursor(r, c, ng);
+    } else if (e.key==="Backspace") {
+      const ng = userGrid.map(row=>[...row]);
+      if (ng[r][c]) { ng[r][c]=""; setUserGrid(ng); }
       else retreatCursor(r, c);
-    } else if (e.key === "ArrowRight") { setDirection("across"); moveTo(r, c+1); }
-    else if (e.key === "ArrowLeft")  { setDirection("across"); moveTo(r, c-1); }
-    else if (e.key === "ArrowDown")  { setDirection("down");   moveTo(r+1, c); }
-    else if (e.key === "ArrowUp")    { setDirection("down");   moveTo(r-1, c); }
-    else if (e.key === "Tab") { e.preventDefault(); nextClue(); }
+    } else if (e.key==="ArrowRight") { e.preventDefault(); setDirection("across"); moveTo(r,c+1); }
+    else if (e.key==="ArrowLeft")   { e.preventDefault(); setDirection("across"); moveTo(r,c-1); }
+    else if (e.key==="ArrowDown")   { e.preventDefault(); setDirection("down");   moveTo(r+1,c); }
+    else if (e.key==="ArrowUp")     { e.preventDefault(); setDirection("down");   moveTo(r-1,c); }
   }
 
-  function moveTo(r, c) {
-    if (r>=0 && r<ROWS && c>=0 && c<COLS && !isBlack(r,c)) {
-      setSelectedCell({r,c});
-    }
+  function moveTo(r,c) {
+    if (r>=0&&r<ROWS&&c>=0&&c<COLS&&!isBlack(r,c)) { setSelectedCell({r,c}); setTimeout(()=>inputRefs.current[`${r}-${c}`]?.focus(),0); }
   }
 
-  function advanceCursor(r, c) {
-    if (direction === "across") { for(let nc=c+1;nc<COLS;nc++) { if(!isBlack(r,nc)){setSelectedCell({r,c:nc});return;} } }
-    else { for(let nr=r+1;nr<ROWS;nr++) { if(!isBlack(nr,c)){setSelectedCell({r:nr,c});return;} } }
+  function advanceCursor(r, c, grid) {
+    const done = puzzle.solution.every((row,r2)=>row.every((cell,c2)=>cell==="."||grid[r2][c2]===cell));
+    if (done) { setComplete(true); return; }
+    if (direction==="across") { for(let nc=c+1;nc<COLS;nc++) { if(!isBlack(r,nc)){moveTo(r,nc);return;} } }
+    else { for(let nr=r+1;nr<ROWS;nr++) { if(!isBlack(nr,c)){moveTo(nr,c);return;} } }
   }
 
   function retreatCursor(r, c) {
-    if (direction === "across") { for(let nc=c-1;nc>=0;nc--) { if(!isBlack(r,nc)){setSelectedCell({r,c:nc});return;} } }
-    else { for(let nr=r-1;nr>=0;nr--) { if(!isBlack(nr,c)){setSelectedCell({r:nr,c});return;} } }
+    if (direction==="across") { for(let nc=c-1;nc>=0;nc--) { if(!isBlack(r,nc)){moveTo(r,nc);return;} } }
+    else { for(let nr=r-1;nr>=0;nr--) { if(!isBlack(nr,c)){moveTo(nr,c);return;} } }
   }
 
   function nextClue() {
-    const clues = direction === "across" ? puzzle.across : puzzle.down;
+    const clues = direction==="across" ? puzzle.across : puzzle.down;
     const num = getActiveClueNum();
-    const idx = clues.findIndex(c => c.number === num);
-    const next = clues[(idx+1) % clues.length];
-    setSelectedCell({r:next.row, c:next.col});
-  }
-
-  function checkComplete(grid) {
-    const done = puzzle.solution.every((row,r) =>
-      row.every((cell,c) => cell === "." || grid[r][c] === cell)
-    );
-    setComplete(done);
+    const idx = clues.findIndex(c=>c.number===num);
+    const next = clues[(idx+1)%clues.length];
+    setSelectedCell({r:next.row,c:next.col});
+    setTimeout(()=>inputRefs.current[`${next.row}-${next.col}`]?.focus(),0);
   }
 
   function handleCheck() {
     const newChecked = {};
     puzzle.solution.forEach((row,r) => row.forEach((cell,c) => {
-      if (cell !== "." && userGrid[r][c] && userGrid[r][c] !== cell) {
-        newChecked[`${r}-${c}`] = "wrong";
-      } else if (cell !== "." && userGrid[r][c] === cell) {
-        newChecked[`${r}-${c}`] = "correct";
+      if (cell!=="."&&userGrid[r][c]) {
+        newChecked[`${r}-${c}`] = userGrid[r][c]===cell ? "correct" : "wrong";
       }
     }));
     setChecked(newChecked);
@@ -7033,137 +7037,163 @@ function CrosswordTab() {
 
   function handleReveal() {
     setRevealed(true);
-    setUserGrid(puzzle.solution.map(row => row.map(c => c === "." ? "" : c)));
+    setUserGrid(puzzle.solution.map(row=>row.map(c=>c==="."?"":c)));
     setComplete(true);
   }
 
-  function handleDownload() {
-    // Build printable HTML and open print dialog
-    const SIZE = puzzle.solution.length;
-    const cellSize = 28;
-    const gridPx = SIZE * cellSize + SIZE + 2;
-
-    // Build number map
+  function handlePrint() {
     const numMap = {};
-    [...puzzle.across, ...puzzle.down].forEach(c => { numMap[`${c.row}-${c.col}`] = c.number; });
+    [...puzzle.across, ...puzzle.down].forEach(c=>{ numMap[`${c.row}-${c.col}`]=c.number; });
+    const CS = 36; // cell size px for print
 
-    let gridHTML = `<table style="border-collapse:collapse;margin:0 auto;">`;
-    puzzle.solution.forEach((row, r) => {
-      gridHTML += `<tr>`;
-      row.forEach((cell, c) => {
-        const isBlack = cell === ".";
+    let gridRows = "";
+    puzzle.solution.forEach((row,r) => {
+      let cells = "";
+      row.forEach((cell,c) => {
+        const blk = cell===".";
         const num = numMap[`${r}-${c}`];
-        gridHTML += `<td style="width:${cellSize}px;height:${cellSize}px;border:1px solid #000;background:${isBlack?"#000":"#fff"};position:relative;vertical-align:top;font-size:7px;padding:1px;">`;
-        if (!isBlack && num) gridHTML += `<span style="font-size:7px;line-height:1;">${num}</span>`;
-        gridHTML += `</td>`;
+        cells += `<td style="width:${CS}px;height:${CS}px;border:1.5px solid #333;
+          background:${blk?"#000":"#fff"};position:relative;vertical-align:top;
+          box-sizing:border-box;padding:0;">
+          ${!blk&&num ? `<span style="position:absolute;top:2px;left:2px;font-size:8px;line-height:1;">${num}</span>` : ""}
+          ${!blk&&revealed ? `<span style="position:absolute;bottom:2px;width:100%;text-align:center;font-size:16px;font-weight:bold;">${cell}</span>` : ""}
+        </td>`;
       });
-      gridHTML += `</tr>`;
+      gridRows += `<tr>${cells}</tr>`;
     });
-    gridHTML += `</table>`;
 
-    let acrossHTML = puzzle.across.map(c => `<tr><td style="padding:2px 6px;font-weight:bold;white-space:nowrap;">${c.number}A</td><td style="padding:2px 6px;">${c.clue}</td></tr>`).join("");
-    let downHTML   = puzzle.down.map(c => `<tr><td style="padding:2px 6px;font-weight:bold;white-space:nowrap;">${c.number}D</td><td style="padding:2px 6px;">${c.clue}</td></tr>`).join("");
+    const aClues = puzzle.across.map(c=>`<div style="font-size:10px;padding:1px 0;"><b>${c.number}.</b> ${c.clue}</div>`).join("");
+    const dClues = puzzle.down.map(c=>`<div style="font-size:10px;padding:1px 0;"><b>${c.number}.</b> ${c.clue}</div>`).join("");
 
-    const html = `
-      <html><head><title>${puzzle.title}</title>
-      <style>
-        body{font-family:Georgia,serif;margin:20px;color:#000;}
-        h2{text-align:center;font-size:16px;margin:0 0 4px;}
-        p{text-align:center;font-size:11px;margin:0 0 12px;color:#555;}
-        .grid{margin-bottom:16px;}
-        .clues{display:flex;gap:20px;font-size:11px;}
-        .col{flex:1;}
-        h3{font-size:12px;border-bottom:1px solid #000;margin:0 0 4px;}
-        table.clue-table td{vertical-align:top;}
-        @media print{button{display:none;}}
-      </style></head>
-      <body>
-        <h2>${puzzle.title}</h2>
-        <p>${puzzle.date} · 15×15 · SUNDAY CHALLENGE</p>
-        <div class="grid">${gridHTML}</div>
-        <div class="clues">
-          <div class="col"><h3>ACROSS</h3><table class="clue-table">${acrossHTML}</table></div>
-          <div class="col"><h3>DOWN</h3><table class="clue-table">${downHTML}</table></div>
-        </div>
-        <script>window.onload=()=>window.print();</script>
-      </body></html>`;
+    const html = `<!DOCTYPE html><html><head><title>${puzzle.title}</title>
+    <style>
+      *{box-sizing:border-box;}
+      body{font-family:Georgia,serif;margin:16px;color:#000;}
+      h2{text-align:center;font-size:18px;margin:0 0 2px;}
+      .sub{text-align:center;font-size:11px;color:#555;margin:0 0 12px;}
+      .layout{display:flex;gap:20px;align-items:flex-start;}
+      table{border-collapse:collapse;flex-shrink:0;}
+      .clues{flex:1;display:flex;gap:16px;}
+      .col{flex:1;}
+      .col h3{font-size:12px;font-weight:bold;border-bottom:2px solid #000;margin:0 0 6px;padding-bottom:3px;}
+      @media print{
+        body{margin:8px;}
+        @page{margin:0.5in;}
+      }
+    </style></head><body>
+    <h2>${puzzle.title}</h2>
+    <p class="sub">${puzzle.date} · NY Sports Crossword · nysportsdaily.com</p>
+    <div class="layout">
+      <table>${gridRows}</table>
+      <div class="clues">
+        <div class="col"><h3>ACROSS</h3>${aClues}</div>
+        <div class="col"><h3>DOWN</h3>${dClues}</div>
+      </div>
+    </div>
+    <script>setTimeout(()=>window.print(),300);</script>
+    </body></html>`;
 
-    const w = window.open("","_blank");
-    w.document.write(html);
-    w.document.close();
+    const w = window.open("","_blank","width=900,height=700");
+    if (w) { w.document.write(html); w.document.close(); }
+    else alert("Please allow popups to print the crossword.");
   }
 
-  // Highlight logic
-  function getCellStyle(r, c) {
-    if (isBlack(r,c)) return {...styles.xwCell, ...styles.xwCellBlack};
+  function getCellBg(r, c) {
+    if (isBlack(r,c)) return "#111";
     const key = `${r}-${c}`;
     const isSel = selectedCell?.r===r && selectedCell?.c===c;
     const clueNum = getActiveClueNum();
-    const isHighlighted = clueNum && cellClues[key]?.[direction] === clueNum;
+    const isHl = clueNum && cellClues[key]?.[direction]===clueNum;
     const chk = checked[key];
-    let bg = "#fff";
-    if (isSel) bg = "#f5e642";
-    else if (isHighlighted) bg = "#c8e8ff";
-    else if (chk === "wrong") bg = "#ffcccc";
-    else if (chk === "correct") bg = "#ccffcc";
-    return {...styles.xwCell, background: bg};
+    if (isSel) return "#f5e642";
+    if (isHl)  return "#d4edff";
+    if (chk==="wrong")   return "#ffc0c0";
+    if (chk==="correct") return "#c0ffc0";
+    return "#fff";
   }
 
   const activeClueObj = getActiveClueObj();
-  const acrossClues = puzzle.across;
-  const downClues   = puzzle.down;
+
+  if (loadingPuzzle) return (
+    <div style={{padding:40, textAlign:"center", color:"#888"}}>Loading puzzle...</div>
+  );
 
   return (
     <div style={styles.xwRoot}>
-      {/* Header */}
       <div style={styles.xwHeader}>
         <div>
           <h2 style={styles.xwTitle}>{puzzle.title}</h2>
-          <p style={styles.xwDate}>{puzzle.date} · 15×15 · SUNDAY CHALLENGE</p>
+          <p style={styles.xwDate}>{puzzle.date} · {ROWS}×{COLS} · NY SPORTS CROSSWORD</p>
         </div>
         <div style={styles.xwActions}>
-          <button onClick={handleCheck} style={styles.xwBtn}>CHECK</button>
+          <button onClick={handleCheck} style={styles.xwBtn}>✓ CHECK</button>
           <button onClick={handleReveal} style={{...styles.xwBtn, ...styles.xwBtnReveal}}>REVEAL</button>
-          <button onClick={handleDownload} style={{...styles.xwBtn, color:"#888"}}>🖨 PRINT / PDF</button>
+          <button onClick={handlePrint} style={{...styles.xwBtn, color:"#aaa"}}>🖨 PRINT</button>
         </div>
       </div>
 
       {complete && (
-        <div style={styles.xwComplete}>
-          🎉 SOLVED! New York sports fan confirmed.
-        </div>
+        <div style={styles.xwComplete}>🎉 SOLVED! New York sports fan confirmed.</div>
       )}
 
       {/* Active clue banner */}
       {activeClueObj && (
         <div style={styles.xwActiveClueBanner}>
-          <span style={styles.xwActiveClueNum}>{activeClueObj.number}{direction === "across" ? "A" : "D"}</span>
+          <span style={styles.xwActiveClueNum}>{activeClueObj.number}{direction==="across"?"A":"D"}</span>
           <span style={styles.xwActiveClueText}>{activeClueObj.clue}</span>
           <span style={styles.xwActiveClueDir}>{direction.toUpperCase()}</span>
         </div>
       )}
 
-      {/* Grid + Clues layout */}
-      <div style={styles.xwLayout}>
+      {/* Main layout — grid left, clues right */}
+      <div style={{display:"flex", gap:16, alignItems:"flex-start", flexWrap:"wrap"}}>
+
         {/* GRID */}
-        <div style={styles.xwGridWrap}>
-          <div style={styles.xwGrid}>
+        <div style={{flexShrink:0, overflowX:"auto"}}>
+          <div style={{
+            display:"grid",
+            gridTemplateColumns:`repeat(${COLS}, ${CELL}px)`,
+            gridTemplateRows:`repeat(${ROWS}, ${CELL}px)`,
+            border:"2px solid #333",
+            width: COLS*CELL,
+          }}>
             {puzzle.solution.map((row,r) => row.map((cell,c) => {
               const num = numberMap[`${r}-${c}`];
-              const isBlk = isBlack(r,c);
+              const blk = isBlack(r,c);
+              const bg  = getCellBg(r,c);
               return (
-                <div key={`${r}-${c}`} style={getCellStyle(r,c)}
-                  onClick={() => selectCell(r,c)}>
-                  {!isBlk && num && <span style={styles.xwCellNum}>{num}</span>}
-                  {!isBlk && (
+                <div key={`${r}-${c}`}
+                  onClick={()=>selectCell(r,c)}
+                  style={{
+                    width:CELL, height:CELL,
+                    background: bg,
+                    borderRight: c<COLS-1 ? "1px solid #bbb" : "none",
+                    borderBottom: r<ROWS-1 ? "1px solid #bbb" : "none",
+                    position:"relative", cursor: blk?"default":"pointer",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                  }}>
+                  {!blk && num && (
+                    <span style={{
+                      position:"absolute", top:2, left:2,
+                      fontSize:8, lineHeight:1, color:"#333", fontWeight:700, zIndex:1,
+                    }}>{num}</span>
+                  )}
+                  {!blk && (
                     <input
-                      ref={el => { if(el) inputRefs[`${r}-${c}`]=el; }}
-                      style={styles.xwInput}
-                      value={userGrid[r][c]}
+                      ref={el=>{ if(el) inputRefs.current[`${r}-${c}`]=el; }}
+                      value={userGrid[r]?.[c]||""}
                       onChange={()=>{}}
-                      onKeyDown={e => handleKey(r,c,e)}
-                      onFocus={() => selectCell(r,c)}
+                      onKeyDown={e=>handleKey(r,c,e)}
+                      onFocus={()=>selectCell(r,c)}
                       maxLength={1}
+                      style={{
+                        width:"100%", height:"100%",
+                        background:"transparent", border:"none", outline:"none",
+                        textAlign:"center", fontSize:16, fontWeight:700,
+                        color: revealed?"#c8201c":"#111",
+                        cursor:"pointer", caretColor:"transparent",
+                        fontFamily:"Georgia,serif", paddingTop:8,
+                      }}
                     />
                   )}
                 </div>
@@ -7173,29 +7203,29 @@ function CrosswordTab() {
         </div>
 
         {/* CLUES */}
-        <div style={styles.xwClues}>
-          <div style={styles.xwClueCol}>
+        <div style={{flex:1, minWidth:220, display:"flex", gap:12, maxHeight:ROWS*CELL, overflowY:"auto"}}>
+          <div style={{flex:1}}>
             <div style={styles.xwClueHeader}>ACROSS</div>
-            {acrossClues.map(cl => {
+            {puzzle.across.map(cl => {
               const isAct = direction==="across" && getActiveClueNum()===cl.number;
               return (
                 <div key={cl.number}
-                  onClick={() => { setSelectedCell({r:cl.row,c:cl.col}); setDirection("across"); }}
-                  style={{...styles.xwClueItem, ...(isAct ? styles.xwClueItemActive : {})}}>
+                  onClick={()=>{ setSelectedCell({r:cl.row,c:cl.col}); setDirection("across"); setTimeout(()=>inputRefs.current[`${cl.row}-${cl.col}`]?.focus(),0); }}
+                  style={{...styles.xwClueItem, ...(isAct?styles.xwClueItemActive:{})}}>
                   <span style={styles.xwClueNum}>{cl.number}</span>
                   <span style={styles.xwClueText}>{cl.clue}</span>
                 </div>
               );
             })}
           </div>
-          <div style={styles.xwClueCol}>
+          <div style={{flex:1}}>
             <div style={styles.xwClueHeader}>DOWN</div>
-            {downClues.map(cl => {
+            {puzzle.down.map(cl => {
               const isAct = direction==="down" && getActiveClueNum()===cl.number;
               return (
                 <div key={cl.number}
-                  onClick={() => { setSelectedCell({r:cl.row,c:cl.col}); setDirection("down"); }}
-                  style={{...styles.xwClueItem, ...(isAct ? styles.xwClueItemActive : {})}}>
+                  onClick={()=>{ setSelectedCell({r:cl.row,c:cl.col}); setDirection("down"); setTimeout(()=>inputRefs.current[`${cl.row}-${cl.col}`]?.focus(),0); }}
+                  style={{...styles.xwClueItem, ...(isAct?styles.xwClueItemActive:{})}}>
                   <span style={styles.xwClueNum}>{cl.number}</span>
                   <span style={styles.xwClueText}>{cl.clue}</span>
                 </div>
@@ -7204,9 +7234,15 @@ function CrosswordTab() {
           </div>
         </div>
       </div>
+
+      {/* Supabase note */}
+      <div style={{marginTop:12, padding:"8px 12px", background:"#111", fontSize:10, color:"#555", borderLeft:"2px solid #2a2a2a"}}>
+        💡 New puzzle each week. To add more puzzles: create a <code style={{color:"#888"}}>ny_crossword</code> table in Supabase with <code style={{color:"#888"}}>week_num</code> (int) and <code style={{color:"#888"}}>puzzle_json</code> (text) columns.
+      </div>
     </div>
   );
 }
+
 
 // ─── STYLES ────────────────────────────────────────────────────────────────
 const styles = {
