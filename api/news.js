@@ -49,27 +49,19 @@ export default async function handler(req, res) {
     } catch { return null; }
   }
 
-  // Resolve Google News redirect URLs to real article URLs
-  async function resolveGoogleNewsUrl(url) {
-    if (!url || !url.includes("news.google.com")) return url;
-    try {
-      const ctrl = new AbortController();
-      setTimeout(() => ctrl.abort(), 5000);
-      // Follow the redirect — Google returns 302 to the actual article
-      const r = await fetch(url, {
-        signal: ctrl.signal,
-        redirect: "follow",
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; NYSportsDaily/1.0)" }
-      });
-      // After redirect, the final URL is the real article
-      if (r.url && !r.url.includes("news.google.com")) return r.url;
-      // If still Google URL, try extracting from response HTML
-      const html = await r.text();
-      const match = html.match(/href="(https?:\/\/(?!news\.google\.com)[^"]+)"/);
-      return match?.[1] || url;
-    } catch {
-      return url;
-    }
+  // Google News RSS items contain the real article URL in the description HTML
+  // Format: <a href="REAL_URL">Title - Source</a>
+  function extractGoogleNewsRealUrl(item, rawLink) {
+    // The description CDATA contains <a href="ACTUAL_URL">...
+    const descCdata = item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1] || "";
+    // First <a href> in description is the real article URL
+    const hrefMatch = descCdata.match(/href="(https?:\/\/(?!news\.google\.com)[^"]+)"/);
+    if (hrefMatch?.[1]) return hrefMatch[1];
+    // Try <source url="..."> tag
+    const sourceUrl = item.match(/<source[^>]+url="([^"]+)"/)?.[1];
+    // Combine source domain with guid if possible
+    if (sourceUrl) return sourceUrl;
+    return rawLink; // fallback to encoded URL
   }
 
   function parseRSS(xml, source, team) {
@@ -180,10 +172,9 @@ export default async function handler(req, res) {
   await Promise.all(allFeeds.map(async ({ url, team, src }) => {
     const xml = await safeFetch(url);
     if (!xml) return;
-    // For Google News, collect items then resolve URLs
     if (url.includes("news.google.com")) {
+      // Google News: extract real URL from description HTML
       const items = xml.match(/<item[\s\S]*?<\/item>/g) || [];
-      const parsed = [];
       items.slice(0, 15).forEach(item => {
         const title = cleanText(
           item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
@@ -191,22 +182,14 @@ export default async function handler(req, res) {
         );
         const rawLink =
           item.match(/<link\/?>([\s\S]*?)<\/link>/)?.[1]?.trim() ||
-          item.match(/<link\/?>\s*(https?:\/\/[^\s<]+)/)?.[1]?.trim() ||
           item.match(/<guid[^>]*>([\s\S]*?)<\/guid>/)?.[1]?.trim() || "";
-        const descRaw = item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1] || "";
-        const desc = cleanText(descRaw).replace(/https?:\/\/\S+/g,"").trim().slice(0,300);
+        // Extract real article URL from description's first <a href>
+        const realUrl = extractGoogleNewsRealUrl(item, rawLink);
+        const descCdata = item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1] || "";
+        // Get text after the first </a> tag as description
+        const descText = cleanText(descCdata.replace(/<a[^>]*>[\s\S]*?<\/a>/,"")).slice(0,300);
         const pub = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
-        if (title && rawLink) parsed.push({ title, rawLink, desc, pub });
-      });
-      // Resolve up to 10 Google URLs in parallel (rate limit)
-      const resolved = await Promise.all(
-        parsed.slice(0, 10).map(async p => ({
-          ...p,
-          link: await resolveGoogleNewsUrl(p.rawLink)
-        }))
-      );
-      resolved.forEach(({ title, link, desc, pub }) => {
-        if (title) addItem(title, link, desc, pub, src, team, null);
+        if (title) addItem(title, realUrl, descText, pub, src, team, null);
       });
     } else {
       parseRSS(xml, src, team);
