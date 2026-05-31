@@ -26,21 +26,13 @@ export default async function handler(req, res) {
   function addItem(title, link, desc, pub, source, team, image) {
     const t = cleanText(title);
     if (!t || seen.has(t)) return;
-    // Validate link — must be a real http URL, not a Google RSS path
-    let cleanLink = (link||"").trim();
-    if (!cleanLink.startsWith("http") || cleanLink.includes("news.google.com/rss/articles")) {
-      // Skip — broken Google redirect link, article not usable
-      // Instead use a Google search for the title as fallback
-      cleanLink = `https://www.google.com/search?q=${encodeURIComponent(t)}`;
-    }
+    const cleanLink = (link||"").trim().startsWith("http") ? link.trim() : "#";
     seen.add(t);
     results.push({
-      title: t,
-      link:  cleanLink,
+      title: t, link: cleanLink,
       desc:  cleanText(desc).slice(0, 300),
       pub:   pub || new Date().toISOString(),
-      source, team, isNY: true,
-      image: image || null,
+      source, team, isNY: true, image: image || null,
     });
   }
 
@@ -55,6 +47,29 @@ export default async function handler(req, res) {
       if (!r.ok) return null;
       return await r.text();
     } catch { return null; }
+  }
+
+  // Resolve Google News redirect URLs to real article URLs
+  async function resolveGoogleNewsUrl(url) {
+    if (!url || !url.includes("news.google.com")) return url;
+    try {
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 5000);
+      // Follow the redirect — Google returns 302 to the actual article
+      const r = await fetch(url, {
+        signal: ctrl.signal,
+        redirect: "follow",
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; NYSportsDaily/1.0)" }
+      });
+      // After redirect, the final URL is the real article
+      if (r.url && !r.url.includes("news.google.com")) return r.url;
+      // If still Google URL, try extracting from response HTML
+      const html = await r.text();
+      const match = html.match(/href="(https?:\/\/(?!news\.google\.com)[^"]+)"/);
+      return match?.[1] || url;
+    } catch {
+      return url;
+    }
   }
 
   function parseRSS(xml, source, team) {
@@ -164,7 +179,38 @@ export default async function handler(req, res) {
   const allFeeds = [...NY_POST, ...GOOGLE, ...MLB_TR, ...SBN, ...OTHER];
   await Promise.all(allFeeds.map(async ({ url, team, src }) => {
     const xml = await safeFetch(url);
-    if (xml) parseRSS(xml, src, team);
+    if (!xml) return;
+    // For Google News, collect items then resolve URLs
+    if (url.includes("news.google.com")) {
+      const items = xml.match(/<item[\s\S]*?<\/item>/g) || [];
+      const parsed = [];
+      items.slice(0, 15).forEach(item => {
+        const title = cleanText(
+          item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
+          item.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1] || ""
+        );
+        const rawLink =
+          item.match(/<link\/?>([\s\S]*?)<\/link>/)?.[1]?.trim() ||
+          item.match(/<link\/?>\s*(https?:\/\/[^\s<]+)/)?.[1]?.trim() ||
+          item.match(/<guid[^>]*>([\s\S]*?)<\/guid>/)?.[1]?.trim() || "";
+        const descRaw = item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1] || "";
+        const desc = cleanText(descRaw).replace(/https?:\/\/\S+/g,"").trim().slice(0,300);
+        const pub = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
+        if (title && rawLink) parsed.push({ title, rawLink, desc, pub });
+      });
+      // Resolve up to 10 Google URLs in parallel (rate limit)
+      const resolved = await Promise.all(
+        parsed.slice(0, 10).map(async p => ({
+          ...p,
+          link: await resolveGoogleNewsUrl(p.rawLink)
+        }))
+      );
+      resolved.forEach(({ title, link, desc, pub }) => {
+        if (title) addItem(title, link, desc, pub, src, team, null);
+      });
+    } else {
+      parseRSS(xml, src, team);
+    }
   }));
 
   results.sort((a, b) => new Date(b.pub||0) - new Date(a.pub||0));
