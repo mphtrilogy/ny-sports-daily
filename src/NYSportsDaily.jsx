@@ -815,18 +815,18 @@ async function fetchNYNews() {
 
   // ── STATIC FALLBACK — every team always has at least 2 stories ───────────
   const STATIC_STORIES = [
-    { title:"New York Jets 2026 training camp preview — battles to watch", team:"Jets", source:"ESPN · Jets", link:"https://www.espn.com/nfl/team/_/name/nyj/new-york-jets", desc:"Key position battles and storylines as the Jets head into camp.", pub:new Date(Date.now()-172800000).toISOString() },
-    { title:"Garrett Wilson among NFL's most dynamic receivers in 2026", team:"Jets", source:"ESPN · NFL", link:"https://www.espn.com/nfl/team/_/name/nyj", desc:"Wilson's emergence gives the Jets a true No. 1 weapon.", pub:new Date(Date.now()-259200000).toISOString() },
-    { title:"Brooklyn Nets 2026: building around youth and draft capital", team:"Nets", source:"ESPN · Nets", link:"https://www.espn.com/nba/team/_/name/bkn/brooklyn-nets", desc:"The Nets enter a new era focused on sustainable rebuilding.", pub:new Date(Date.now()-172800000).toISOString() },
-    { title:"Brooklyn Nets lottery pick gives new hope to long-suffering fans", team:"Nets", source:"ESPN · NBA", link:"https://www.espn.com/nba/team/_/name/bkn", desc:"Nets fans have reason for optimism as the rebuild continues.", pub:new Date(Date.now()-345600000).toISOString() },
-    { title:"New York Rangers 2026 offseason: retooling for another playoff run", team:"Rangers", source:"ESPN · Rangers", link:"https://www.espn.com/nhl/team/_/name/nyr/new-york-rangers", desc:"The Blueshirts face key free agent decisions this summer.", pub:new Date(Date.now()-172800000).toISOString() },
-    { title:"Rangers' Igor Shesterkin remains the backbone of New York's Cup hopes", team:"Rangers", source:"ESPN · NHL", link:"https://www.espn.com/nhl/team/_/name/nyr", desc:"The elite goaltender keeps New York competitive year after year.", pub:new Date(Date.now()-432000000).toISOString() },
-    { title:"NY Islanders 2026 offseason: what comes next for Long Island hockey", team:"Islanders", source:"ESPN · Islanders", link:"https://www.espn.com/nhl/team/_/name/nyi/new-york-islanders", desc:"Key decisions this summer will shape the Islanders' competitive window.", pub:new Date(Date.now()-259200000).toISOString() },
-    { title:"NJ Devils 2026: Jack and Luke Hughes give New Jersey its brightest future in years", team:"Devils", source:"ESPN · Devils", link:"https://www.espn.com/nhl/team/_/name/njd/new-jersey-devils", desc:"The Hughes brothers are the foundation of a Devils rebuild.", pub:new Date(Date.now()-172800000).toISOString() },
-    { title:"NY Liberty chase third straight WNBA title behind Stewart and Ionescu", team:"Liberty", source:"ESPN · Liberty", link:"https://www.espn.com/wnba/team/_/name/ny/new-york-liberty", desc:"Breanna Stewart and Sabrina Ionescu lead the defending champions.", pub:new Date(Date.now()-86400000).toISOString() },
-    { title:"NYCFC 2026 season: can they challenge for the MLS Cup?", team:"NYCFC", source:"ESPN · MLS", link:"https://www.espn.com/soccer/team/_/id/18479", desc:"NYCFC looks to build on a strong 2025 campaign.", pub:new Date(Date.now()-259200000).toISOString() },
+    { title:"New York Jets 2026 training camp preview — battles to watch", team:"Jets", source:"ESPN · Jets", link:"https://www.espn.com/nfl/team/news/_/name/nyj", desc:"Key position battles and storylines as the Jets head into camp.", pub:new Date(Date.now()-172800000).toISOString() },
+    { title:"Garrett Wilson among NFL's most dynamic receivers in 2026", team:"Jets", source:"ESPN · NFL", link:"https://www.espn.com/nfl/team/news/_/name/nyj", desc:"Wilson's emergence gives the Jets a true No. 1 weapon.", pub:new Date(Date.now()-259200000).toISOString() },
+    { title:"Brooklyn Nets 2026: building around youth and draft capital", team:"Nets", source:"ESPN · Nets", link:"https://www.espn.com/nba/team/news/_/name/bkn", desc:"The Nets enter a new era focused on sustainable rebuilding.", pub:new Date(Date.now()-172800000).toISOString() },
+    { title:"Brooklyn Nets lottery pick gives new hope to long-suffering fans", team:"Nets", source:"ESPN · NBA", link:"https://www.espn.com/nba/team/news/_/name/bkn", desc:"Nets fans have reason for optimism as the rebuild continues.", pub:new Date(Date.now()-345600000).toISOString() },
+    { title:"New York Rangers 2026 offseason: retooling for another playoff run", team:"Rangers", source:"ESPN · Rangers", link:"https://www.espn.com/nhl/team/news/_/name/nyr", desc:"The Blueshirts face key free agent decisions this summer.", pub:new Date(Date.now()-172800000).toISOString() },
+    { title:"Rangers' Igor Shesterkin remains the backbone of New York's Cup hopes", team:"Rangers", source:"ESPN · NHL", link:"https://www.espn.com/nhl/team/news/_/name/nyr", desc:"The elite goaltender keeps New York competitive year after year.", pub:new Date(Date.now()-432000000).toISOString() },
+    { title:"NY Islanders 2026 offseason: what comes next for Long Island hockey", team:"Islanders", source:"ESPN · Islanders", link:"https://www.espn.com/nhl/team/news/_/name/nyi", desc:"Key decisions this summer will shape the Islanders' competitive window.", pub:new Date(Date.now()-259200000).toISOString() },
+    { title:"NJ Devils 2026: Jack and Luke Hughes give New Jersey its brightest future in years", team:"Devils", source:"ESPN · Devils", link:"https://www.espn.com/nhl/team/news/_/name/njd", desc:"The Hughes brothers are the foundation of a Devils rebuild.", pub:new Date(Date.now()-172800000).toISOString() },
+    { title:"NY Liberty chase third straight WNBA title behind Stewart and Ionescu", team:"Liberty", source:"ESPN · Liberty", link:"https://www.espn.com/wnba/team/news/_/name/ny", desc:"Breanna Stewart and Sabrina Ionescu lead the defending champions.", pub:new Date(Date.now()-86400000).toISOString() },
+    { title:"NYCFC 2026 season: can they challenge for the MLS Cup?", team:"NYCFC", source:"ESPN · MLS", link:"https://www.espn.com/soccer/club/new-york-city-fc/18479/news", desc:"NYCFC looks to build on a strong 2025 campaign.", pub:new Date(Date.now()-259200000).toISOString() },
     { title:"NY Red Bulls 2026: young talent pushing for playoff contention", team:"Red Bulls", source:"ESPN · MLS", link:"https://www.espn.com/soccer/team/_/id/16335", desc:"The Red Bulls' academy pipeline continues to deliver results.", pub:new Date(Date.now()-345600000).toISOString() },
-    { title:"Gotham FC 2026: NWSL's New Jersey franchise building for glory", team:"Gotham FC", source:"ESPN · NWSL", link:"https://www.espn.com/soccer/team/_/id/1163", desc:"Gotham FC pushes for another deep NWSL playoff run.", pub:new Date(Date.now()-345600000).toISOString() },
+    { title:"Gotham FC 2026: NWSL's New Jersey franchise building for glory", team:"Gotham FC", source:"ESPN · NWSL", link:"https://www.espn.com/soccer/club/gotham-fc/1163/news", desc:"Gotham FC pushes for another deep NWSL playoff run.", pub:new Date(Date.now()-345600000).toISOString() },
   ];
   STATIC_STORIES.forEach(s => {
     if (seen.has(s.title)) return;
@@ -1740,20 +1740,38 @@ function timeAgo(pub) {
   return `${days}d ago`
 }
 
+function getSourceDomain(item) {
+  try {
+    if (item.link && item.link !== "#") {
+      const url = new URL(item.link);
+      return url.hostname.replace("www.","");
+    }
+  } catch(e) {}
+  return item.source?.split("·").pop()?.trim() || "ESPN";
+}
+
+function isValidLink(link) {
+  if (!link || link === "#") return false;
+  try { new URL(link); return true; } catch(e) { return false; }
+}
+
 function NewsCardFeatured({ item }) {
   const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c"
   const sportEmoji = { MLB:"⚾", NFL:"🏈", NBA:"🏀", NHL:"🏒", WNBA:"🏀", MLS:"⚽", NWSL:"⚽" }[item.sport] || "📰"
+  const domain = getSourceDomain(item);
+  const hasLink = isValidLink(item.link);
+  const isReddit = item.link?.includes("reddit.com");
   return (
-    <a href={item.link} target="_blank" rel="noopener noreferrer" style={styles.newsFeatured}>
-      {/* Hero image */}
+    <a href={hasLink ? item.link : "#"} target={hasLink ? "_blank" : "_self"} rel="noopener noreferrer"
+      style={{...styles.newsFeatured, cursor: hasLink ? "pointer" : "default"}}>
       {item.image && (
         <div style={{ margin:"-20px -20px 0", height:180, overflow:"hidden", borderRadius:"2px 2px 0 0" }}>
-          <img src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} loading="lazy" />
+          <img src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} loading="lazy"
+            onError={e => e.target.parentNode.style.display="none"} />
         </div>
       )}
-      {/* Color bar under image or at top */}
       <div style={{ height:3, background:teamColor, margin: item.image ? "0 -20px 16px" : "-20px -20px 16px" }} />
-      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10, flexWrap:"wrap" }}>
         <span style={{ fontSize:16 }}>{sportEmoji}</span>
         {item.team && (
           <span style={{ fontSize:9, letterSpacing:"0.18em", color:teamColor, fontWeight:900, textTransform:"uppercase", background:`${teamColor}22`, padding:"2px 7px", borderRadius:2 }}>
@@ -1763,24 +1781,32 @@ function NewsCardFeatured({ item }) {
         <span style={{ fontSize:9, letterSpacing:"0.12em", color:"#555", fontWeight:700, textTransform:"uppercase" }}>
           {item.source?.replace(/ESPN · /,"")}
         </span>
+        <span style={{ fontSize:8, color:"#444", padding:"1px 5px", background:"#1a1a1a", borderRadius:2, marginLeft:2 }}>
+          {isReddit ? "reddit" : domain}
+        </span>
         <span style={{ fontSize:9, color:"#444", marginLeft:"auto" }}>{timeAgo(item.pub)}</span>
       </div>
       <h2 style={styles.newsFeaturedTitle}>{item.title}</h2>
       {item.desc && <p style={styles.newsFeaturedDesc}>{item.desc.slice(0,160)}{item.desc.length > 160 ? "…" : ""}</p>}
-      <span style={styles.newsReadMore}>READ FULL STORY →</span>
+      {hasLink && <span style={styles.newsReadMore}>READ FULL STORY → {domain}</span>}
+      {!hasLink && <span style={{...styles.newsReadMore, color:"#555"}}>No direct link available</span>}
     </a>
   )
 }
 
 function NewsCardSmall({ item, index }) {
   const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c"
+  const domain = getSourceDomain(item);
+  const hasLink = isValidLink(item.link);
+  const isReddit = item.link?.includes("reddit.com");
   return (
-    <a href={item.link} target="_blank" rel="noopener noreferrer"
-      style={{...styles.newsSmall, ...(index % 2 === 0 ? {} : styles.newsSmallAlt), display:"flex", gap:10, alignItems:"flex-start"}}>
-      {/* Thumbnail */}
+    <a href={hasLink ? item.link : "#"} target={hasLink ? "_blank" : "_self"} rel="noopener noreferrer"
+      style={{...styles.newsSmall, ...(index % 2 === 0 ? {} : styles.newsSmallAlt), display:"flex", gap:10, alignItems:"flex-start",
+        cursor: hasLink ? "pointer" : "default", opacity: hasLink ? 1 : 0.7}}>
       {item.image ? (
         <div style={{ width:72, height:54, flexShrink:0, overflow:"hidden", borderRadius:2 }}>
-          <img src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} loading="lazy" />
+          <img src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} loading="lazy"
+            onError={e => e.target.parentNode.innerHTML = `<div style="width:72px;height:54px;background:${teamColor}22;display:flex;align-items:center;justify-content:center;font-size:22px">📰</div>`} />
         </div>
       ) : (
         <div style={{ width:72, height:54, flexShrink:0, background:`${teamColor}22`, borderRadius:2, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>
@@ -1795,6 +1821,9 @@ function NewsCardSmall({ item, index }) {
             </span>
           )}
           <span style={styles.newsSmallSource}>{item.source?.replace(/ESPN · /,"")}</span>
+          <span style={{ fontSize:8, color:"#555", padding:"1px 4px", background:"#151515", borderRadius:2 }}>
+            {isReddit ? "reddit" : domain}
+          </span>
           {item.pub && <span style={styles.newsSmallDate}>{timeAgo(item.pub)}</span>}
         </div>
         <p style={styles.newsSmallTitle}>{item.title}</p>
@@ -4208,7 +4237,7 @@ const TODAY_IN_NY_SPORTS = [
   { month:2, day:22, year:1980, team:"Islanders", emoji:"🏒", title:"Islanders Begin Their Dynasty Season", desc:"On their way to the first of four consecutive Stanley Cups, the Islanders are establishing themselves as one of the great NHL teams of all time." },
   { month:2, day:24, year:1975, team:"Islanders", emoji:"🏒", title:"Denis Potvin Named NHL All-Star First Team", desc:"The Islanders captain earns his first All-Star selection. He will win four Norris Trophies and four consecutive Stanley Cups." },
   { month:2, day:26, year:1987, team:"Yankees",   emoji:"⚾", title:"Don Mattingly Named AL MVP", desc:"Donnie Baseball is recognized as the best player in the American League — the most beloved Yankee of his generation, still waiting for his first World Series ring." },
-  { month:2, day:28, year:1963, team:"Rangers",   emoji:"🏒", title:"Andy Bathgate Traded to Toronto", desc:"The Rangers' greatest star of the early 1960s is sent to the Leafs. He finally wins a Cup in Toronto. New York hockey enters a long dark period." },
+  { month:2, day:29, year:1916, team:"Yankees",   emoji:"⚾", title:"Leap Day — Yankees Spring Training Extra Day", desc:"Every four years, February gets an extra day — and for NY sports fans, it's one more day to think about the Yankees, Mets, Knicks, Rangers, Giants, Jets, Islanders, Devils, Liberty, and all the great moments that define the greatest sports city in the world." },
   // ── MARCH ────────────────────────────────────────────────────────────────
   { month:3, day:2,  year:1962, team:"Knicks",    emoji:"🏀", title:"Wilt Chamberlain Scores 100 Points — Against the Knicks", desc:"In Hershey PA, Wilt scores 100 with the Knicks as the victims. The game still defines the outer limits of what one player can achieve in a single night." },
   { month:3, day:6,  year:1961, team:"Yankees",   emoji:"⚾", title:"M&M Boys Report to Spring Training", desc:"Roger Maris and Mickey Mantle prepare for what becomes the greatest home run chase in baseball history — chasing Babe Ruth's sacred record of 60." },
