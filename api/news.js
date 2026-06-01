@@ -124,7 +124,27 @@ export default async function handler(req, res) {
     });
   }
 
-  // ── GOOGLE NEWS — extract real article URL from description HTML ──────────
+  // ── GOOGLE NEWS — extract real article URL ──────────────────────────────────
+  function extractRealUrl(text) {
+    // Strategy 1: direct href to non-Google domain (2022+ format)
+    const directHrefs = [...text.matchAll(/href="(https?:\/\/[^"]+)"/g)].map(m=>m[1]);
+    const direct = directHrefs.find(u => !u.includes("google.com"));
+    if (direct) return decodeEntities(direct);
+
+    // Strategy 2: entity-encoded href (&lt;a href=&quot;URL&quot;&gt;)
+    const entityHrefs = [...text.matchAll(/href=(?:&quot;|&#34;)(https?:\/\/[^&"]+)/g)].map(m=>m[1]);
+    const entity = entityHrefs.find(u => !u.includes("google.com"));
+    if (entity) return entity;
+
+    // Strategy 3: Google redirect with url= or q= param
+    const redirectMatch = text.match(/news\.google\.com[^"\s]*[?&](?:url|q)=(https?[^&"\s<]+)/);
+    if (redirectMatch) {
+      try { return decodeURIComponent(redirectMatch[1]); } catch { return redirectMatch[1]; }
+    }
+
+    return null;
+  }
+
   function parseGoogleNews(xml, src, team) {
     if (!xml) return;
     const items = xml.match(/<item[\s\S]*?<\/item>/g) || [];
@@ -133,25 +153,28 @@ export default async function handler(req, res) {
         item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
         item.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1] || ""
       );
+      if (!title) return;
 
-      // Google News description CDATA contains: <a href="REAL_URL">Title — Source</a>
+      // Get raw description — try CDATA first then plain
       const descCdata = item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1] || "";
+      const descPlain = item.match(/<description[^>]*>([\s\S]*?)<\/description>/)?.[1] || "";
+      const descRaw   = descCdata || descPlain;
 
-      // Extract ALL hrefs from description — first non-Google one is the article
-      const hrefs = [...descCdata.matchAll(/href="(https?:\/\/[^"]+)"/g)].map(m=>m[1]);
-      const articleUrl = hrefs.find(u => !u.includes("news.google.com") && !u.includes("google.com"));
+      // Try to find real URL in description
+      let articleUrl = extractRealUrl(descRaw);
 
-      if (!articleUrl) return; // skip if we can't find a real URL
+      // Also try the raw item text in case description is empty
+      if (!articleUrl) articleUrl = extractRealUrl(item);
 
-      // Description text — strip HTML and Google redirect noise
-      const descText = cleanText(descCdata
-        .replace(/<a[^>]*>[\s\S]*?<\/a>/g,"") // remove anchor tags
+      if (!articleUrl) return;
+
+      const descText = cleanText(descRaw
+        .replace(/<a[^>]*>[\s\S]*?<\/a>/g,"")
         .replace(/https?:\/\/\S+/g,"")
       ).slice(0,300);
 
       const pub = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
-
-      if (title && articleUrl) addItem(title, articleUrl, descText, pub, src, team, null);
+      addItem(title, articleUrl, descText, pub, src, team, null);
     });
   }
 
