@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
 
 // ─── SUPABASE CONFIG ───────────────────────────────────────────────────────
 const SUPABASE_URL = "https://fnxoucliekhotvartyfu.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZueG91Y2xpZWtob3R2YXJ0eWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTI3MzEsImV4cCI6MjA4OTUyODczMX0.V4A75JO9s-7MbDRY7VMydwydOvdkU4SNSz_BRoVAoqA";
 
 // Dark mode context — must be declared before any component that uses it
-const DarkModeCtx = React.createContext(true);
+const DarkModeCtx = createContext(true);
 
 async function sbFetch(table, params = "") {
   try {
@@ -1748,7 +1748,7 @@ function isValidLink(link) {
 
 // Detect dark mode from root element — passed via context
 function NewsCardFeatured({ item }) {
-  const dark = React.useContext(DarkModeCtx);
+  const dark = useContext(DarkModeCtx);
   const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c";
   const sportEmoji = { MLB:"⚾", NFL:"🏈", NBA:"🏀", NHL:"🏒", WNBA:"🏀", MLS:"⚽", NWSL:"⚽" }[item.sport] || "📰";
   const domain = getSourceDomain(item);
@@ -1793,7 +1793,7 @@ function NewsCardFeatured({ item }) {
 }
 
 function NewsCardSmall({ item, index }) {
-  const dark = React.useContext(DarkModeCtx);
+  const dark = useContext(DarkModeCtx);
   const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c";
   const domain = getSourceDomain(item);
   const hasLink = isValidLink(item.link);
