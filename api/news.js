@@ -6,6 +6,28 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "GET");
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
 
+  // Debug mode: ?debug=1 returns raw test results
+  if (req.query?.debug === "1") {
+    const testUrl = "https://news.google.com/rss/search?q=%22new+york+jets%22+nfl&hl=en-US&gl=US&ceid=US:en";
+    try {
+      const r = await fetch(testUrl, {
+        headers: { "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" }
+      });
+      const text = await r.text();
+      const items = text.match(/<item[\s\S]*?<\/item>/g) || [];
+      const firstItem = items[0] || "NO ITEMS";
+      return res.status(200).json({
+        status: r.status,
+        ok: r.ok,
+        items_found: items.length,
+        first_item_preview: firstItem.slice(0, 800),
+        raw_preview: text.slice(0, 300),
+      });
+    } catch(e) {
+      return res.status(200).json({ error: String(e), message: "Google News fetch failed" });
+    }
+  }
+
   const results = [];
   const seen    = new Set();
 
