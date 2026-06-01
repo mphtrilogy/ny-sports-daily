@@ -1,12 +1,25 @@
 // api/news.js — Vercel Serverless Function
+// Confirmed working from Vercel: NY Post, amNY, Google News (102 items)
+// Blocked from Vercel: SB Nation blogs, rss2json
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
 
-  const results = [];
-  const seen = new Set();
+  // Debug mode
+  if (req.query?.debug === "1") {
+    const xml = await get("https://nypost.com/tag/new-york-jets/feed/");
+    if (!xml) return res.status(200).json({ error:"NY Post returned null" });
+    const firstItem = xml.slice(xml.indexOf("<item"));
+    const item = firstItem.match(/<item[\s\S]*?<\/item>/)?.[0] || "NO ITEM";
+    return res.status(200).json({
+      raw_item: item.slice(0,1000),
+      link_tag_match: item.match(/<link>(https?:\/\/[^<\s]+)/i)?.[1] || "NO LINK FOUND",
+      guid_match: item.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i)?.[1]?.trim() || "NO GUID",
+    });
+  }
 
+  // ── UTILS ─────────────────────────────────────────────────────────────────
   function decodeEntities(s) {
     return (s||"")
       .replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">")
@@ -33,7 +46,7 @@ export default async function handler(req, res) {
       const ctrl = new AbortController();
       setTimeout(() => ctrl.abort(), 10000);
       const r = await fetch(url, { signal:ctrl.signal, headers:{
-        "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
         "Accept":"application/rss+xml,application/xml,text/xml,*/*"
       }});
       if (!r.ok) return null;
@@ -41,24 +54,43 @@ export default async function handler(req, res) {
     } catch { return null; }
   }
 
+  // ── RSS LINK EXTRACTOR ────────────────────────────────────────────────────
+  // NY Post uses WordPress RSS where <link> appears as raw text between tags
+  // with no closing tag in many cases. We use multiple strategies.
   function getLink(item) {
-    const linkInTag = item.match(/<link>(https?:\/\/[^<\s]+)/i)?.[1]?.trim();
-    if (linkInTag) return linkInTag;
+    // Strategy 1: <link>https://...</link> — standard wrapped
+    const wrapped = item.match(/<link>\s*(https?:\/\/[^\s<]+)/i)?.[1]?.trim();
+    if (wrapped) return wrapped;
+
+    // Strategy 2: <guid isPermaLink="true">URL</guid>
+    const guidTrue = /<guid[^>]+isPermaLink\s*=\s*['"]true['"]/i.test(item);
+    if (guidTrue) {
+      const g = item.match(/<guid[^>]*>\s*(https?:\/\/[^<]+)\s*<\/guid>/i)?.[1]?.trim();
+      if (g) return g;
+    }
+
+    // Strategy 3: <guid> without isPermaLink="false" — treat as URL if it is one
     const guidFalse = /<guid[^>]+isPermaLink\s*=\s*['"]false['"]/i.test(item);
     if (!guidFalse) {
-      const guid = item.match(/<guid[^>]*>(https?:\/\/[^<]+)<\/guid>/i)?.[1]?.trim();
-      if (guid) return guid;
+      const g = item.match(/<guid[^>]*>\s*(https?:\/\/[^<]+)\s*<\/guid>/i)?.[1]?.trim();
+      if (g) return g;
     }
-    const afterSelfClose = item.match(/<link\s*\/>\s*(https?:\/\/[^\s<]+)/i)?.[1]?.trim();
-    if (afterSelfClose) return afterSelfClose;
-    const guidCdata = item.match(/<guid[^>]*><!\[CDATA\[(https?:\/\/[^\]]+)\]\]>/i)?.[1]?.trim();
-    if (guidCdata) return guidCdata;
+
+    // Strategy 4: self-closing <link/> followed by URL
+    const selfClose = item.match(/<link\s*\/>\s*(https?:\/\/[^\s<]+)/i)?.[1]?.trim();
+    if (selfClose) return selfClose;
+
     return "";
   }
 
+  // ── RSS PARSER ────────────────────────────────────────────────────────────
   function parseRSS(xml, source, team) {
     if (!xml) return;
-    const items = xml.match(/<item[\s\S]*?<\/item>/g) || [];
+    // Strip everything before first <item> to avoid channel-level <link> matching
+    const firstItem = xml.indexOf("<item");
+    if (firstItem < 0) return;
+    const itemsXml = xml.slice(firstItem);
+    const items = itemsXml.match(/<item[\s\S]*?<\/item>/g) || [];
     items.slice(0,20).forEach(item => {
       const title =
         item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
@@ -75,33 +107,19 @@ export default async function handler(req, res) {
     });
   }
 
-  // ── NY POST ────────────────────────────────────────────────────────────────
+  // ── FEEDS ─────────────────────────────────────────────────────────────────
   const NY_POST = [
-    { url:"https://nypost.com/tag/new-york-yankees/feed/",    team:"Yankees",   src:"NY Post" },
-    { url:"https://nypost.com/tag/new-york-mets/feed/",       team:"Mets",      src:"NY Post" },
-    { url:"https://nypost.com/tag/new-york-jets/feed/",       team:"Jets",      src:"NY Post" },
-    { url:"https://nypost.com/tag/new-york-giants/feed/",     team:"Giants",    src:"NY Post" },
-    { url:"https://nypost.com/tag/new-york-knicks/feed/",     team:"Knicks",    src:"NY Post" },
-    { url:"https://nypost.com/tag/brooklyn-nets/feed/",       team:"Nets",      src:"NY Post" },
-    { url:"https://nypost.com/tag/new-york-rangers/feed/",    team:"Rangers",   src:"NY Post" },
-    { url:"https://nypost.com/tag/new-york-islanders/feed/",  team:"Islanders", src:"NY Post" },
-    { url:"https://nypost.com/tag/new-jersey-devils/feed/",   team:"Devils",    src:"NY Post" },
+    { url:"https://nypost.com/tag/new-york-yankees/feed/",   team:"Yankees",   src:"NY Post" },
+    { url:"https://nypost.com/tag/new-york-mets/feed/",      team:"Mets",      src:"NY Post" },
+    { url:"https://nypost.com/tag/new-york-jets/feed/",      team:"Jets",      src:"NY Post" },
+    { url:"https://nypost.com/tag/new-york-giants/feed/",    team:"Giants",    src:"NY Post" },
+    { url:"https://nypost.com/tag/new-york-knicks/feed/",    team:"Knicks",    src:"NY Post" },
+    { url:"https://nypost.com/tag/brooklyn-nets/feed/",      team:"Nets",      src:"NY Post" },
+    { url:"https://nypost.com/tag/new-york-rangers/feed/",   team:"Rangers",   src:"NY Post" },
+    { url:"https://nypost.com/tag/new-york-islanders/feed/", team:"Islanders", src:"NY Post" },
+    { url:"https://nypost.com/tag/new-jersey-devils/feed/",  team:"Devils",    src:"NY Post" },
   ];
 
-  // ── SB NATION ──────────────────────────────────────────────────────────────
-  const SBN = [
-    { url:"https://www.pinstripealley.com/rss/current",     team:"Yankees",   src:"Pinstripe Alley"   },
-    { url:"https://www.amazinavenue.com/rss/current",        team:"Mets",      src:"Amazin' Avenue"    },
-    { url:"https://www.ganggreennation.com/rss/current",     team:"Jets",      src:"Gang Green Nation" },
-    { url:"https://www.bigblueview.com/rss/current",         team:"Giants",    src:"Big Blue View"     },
-    { url:"https://www.postingandtoasting.com/rss/current",  team:"Knicks",    src:"Posting & Toasting"},
-    { url:"https://www.netsdaily.com/rss/current",           team:"Nets",      src:"Nets Daily"        },
-    { url:"https://www.blueshirtbanter.com/rss/current",     team:"Rangers",   src:"Blueshirt Banter"  },
-    { url:"https://www.lighthousehockey.com/rss/current",    team:"Islanders", src:"Lighthouse Hockey" },
-    { url:"https://www.allaboutthejersey.com/rss/current",   team:"Devils",    src:"All About Jersey"  },
-  ];
-
-  // ── OTHER ──────────────────────────────────────────────────────────────────
   const OTHER = [
     { url:"https://www.mlbtraderumors.com/new-york-yankees/feed", team:"Yankees", src:"MLB Trade Rumors" },
     { url:"https://www.mlbtraderumors.com/new-york-mets/feed",    team:"Mets",    src:"MLB Trade Rumors" },
@@ -109,7 +127,7 @@ export default async function handler(req, res) {
     { url:"https://amny.com/sports/feed/",                        team:"All NY",  src:"amNY" },
   ];
 
-  // ── GOOGLE NEWS via rss2json ───────────────────────────────────────────────
+  // Google News — confirmed working from Vercel (102 items per feed)
   const GOOGLE = [
     { url:"https://news.google.com/rss/search?q=%22new+york+yankees%22&hl=en-US&gl=US&ceid=US:en",     team:"Yankees"   },
     { url:"https://news.google.com/rss/search?q=%22new+york+mets%22&hl=en-US&gl=US&ceid=US:en",        team:"Mets"      },
@@ -123,26 +141,37 @@ export default async function handler(req, res) {
     { url:"https://news.google.com/rss/search?q=%22new+york+liberty%22+wnba&hl=en-US&gl=US&ceid=US:en",team:"Liberty"   },
   ];
 
-  // Fetch all RSS feeds
-  await Promise.all([...NY_POST, ...SBN, ...OTHER].map(async ({url,team,src}) => {
+  // ── FETCH ALL ─────────────────────────────────────────────────────────────
+  await Promise.all([...NY_POST, ...OTHER].map(async ({url,team,src}) => {
     parseRSS(await get(url), src, team);
   }));
 
-  // Google News via rss2json — CBMi URLs work when clicked in browser
+  // Google News — fetch directly, parse items, use CBMi links (work in browser)
   await Promise.all(GOOGLE.map(async ({url,team}) => {
-    try {
-      const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=15`);
-      if (!r.ok) return;
-      const json = await r.json();
-      if (json.status !== "ok") return;
-      (json.items||[]).forEach(item => {
-        const title = clean((item.title||"").replace(/\s*-\s*[^-]+$/, ""));
-        const link = item.link || item.guid || "";
-        if (title && link.startsWith("http"))
-          add(title, link, (item.description||"").replace(/<[^>]*>/g,"").trim().slice(0,200),
-              item.pubDate||"", "Google News", team, item.thumbnail||null);
-      });
-    } catch {}
+    const xml = await get(url);
+    if (!xml) return;
+    // Google News XML has items at the channel level — slice past channel tags
+    const items = xml.match(/<item[\s\S]*?<\/item>/g) || [];
+    items.slice(0,15).forEach(item => {
+      // Title — strip "- Publisher Name" suffix
+      const rawTitle =
+        item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
+        item.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1] || "";
+      const title = clean(rawTitle).replace(/\s*[-–]\s*[^-–]{1,50}$/, "").trim();
+      if (!title) return;
+
+      // Google News <link> is the CBMi redirect URL — works when clicked in browser
+      // It appears between </title> and <guid> — extract with a specific pattern
+      const linkMatch = item.match(/<link>(https?:\/\/news\.google\.com[^<\s]+)/i) ||
+                        item.match(/<link>(https?:\/\/[^<\s]+)/i);
+      const link = linkMatch?.[1]?.trim() || "";
+      if (!link.startsWith("http")) return;
+
+      const pub = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
+      // Source name from <source> tag
+      const sourceName = item.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1]?.trim() || "Google News";
+      add(title, link, "", pub, `Google News · ${clean(sourceName)}`, team, null);
+    });
   }));
 
   results.sort((a,b) => new Date(b.pub||0) - new Date(a.pub||0));
