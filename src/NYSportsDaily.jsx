@@ -1015,9 +1015,17 @@ export default function NYSportsDaily() {
   const allLeagues = ["ALL", ...SPORT_ENDPOINTS.map(e => e.label)];
 
   return (
-    <div style={{...styles.root, ...(darkMode ? {} : {
-      background:"#f5f5f0", color:"#111",
-    })}}>
+    <DarkModeCtx.Provider value={darkMode}>
+    <div style={{
+      ...styles.root,
+      ...(darkMode ? {
+        background: "#0a0a0a",
+        color: "#f0ece4",
+      } : {
+        background: "#f8f6f1",
+        color: "#111111",
+      })
+    }}>
       {/* NOISE TEXTURE OVERLAY */}
       <div style={styles.noise} />
 
@@ -1347,6 +1355,7 @@ export default function NYSportsDaily() {
         <p style={styles.bmcSub}>Enjoying NY Sports Daily? A coffee keeps the lights on!</p>
       </footer>
     </div>
+    </DarkModeCtx.Provider>
   );
 }
 
@@ -1734,17 +1743,25 @@ function isValidLink(link) {
   try { new URL(link); return true; } catch(e) { return false; }
 }
 
+// Detect dark mode from root element — passed via context or default true
+const DarkModeCtx = React.createContext(true);
+
 function NewsCardFeatured({ item }) {
-  const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c"
-  const sportEmoji = { MLB:"⚾", NFL:"🏈", NBA:"🏀", NHL:"🏒", WNBA:"🏀", MLS:"⚽", NWSL:"⚽" }[item.sport] || "📰"
+  const dark = React.useContext(DarkModeCtx);
+  const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c";
+  const sportEmoji = { MLB:"⚾", NFL:"🏈", NBA:"🏀", NHL:"🏒", WNBA:"🏀", MLS:"⚽", NWSL:"⚽" }[item.sport] || "📰";
   const domain = getSourceDomain(item);
   const hasLink = isValidLink(item.link);
-  const isReddit = item.link?.includes("reddit.com");
+  const cardBg   = dark ? "#141414" : "#ffffff";
+  const titleClr = dark ? "#ffffff"  : "#111111";
+  const descClr  = dark ? "#aaaaaa"  : "#555555";
+  const borderClr= dark ? "#2e2e2e"  : "#e0e0e0";
   return (
     <a href={hasLink ? item.link : "#"} target={hasLink ? "_blank" : "_self"} rel="noopener noreferrer"
-      style={{...styles.newsFeatured, cursor: hasLink ? "pointer" : "default"}}>
+      style={{...styles.newsFeatured, background:cardBg, border:`1px solid ${borderClr}`,
+        cursor: hasLink ? "pointer" : "default", boxShadow: dark ? "0 2px 8px rgba(0,0,0,0.6)" : "0 1px 4px rgba(0,0,0,0.1)"}}>
       {item.image && (
-        <div style={{ margin:"-20px -20px 0", height:180, overflow:"hidden", borderRadius:"2px 2px 0 0" }}>
+        <div style={{ margin:"-20px -20px 0", height:180, overflow:"hidden", borderRadius:"3px 3px 0 0" }}>
           <img src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} loading="lazy"
             onError={e => e.target.parentNode.style.display="none"} />
         </div>
@@ -1753,63 +1770,74 @@ function NewsCardFeatured({ item }) {
       <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10, flexWrap:"wrap" }}>
         <span style={{ fontSize:16 }}>{sportEmoji}</span>
         {item.team && (
-          <span style={{ fontSize:9, letterSpacing:"0.18em", color:teamColor, fontWeight:900, textTransform:"uppercase", background:`${teamColor}22`, padding:"2px 7px", borderRadius:2 }}>
+          <span style={{ fontSize:10, letterSpacing:"0.15em", color:teamColor, fontWeight:900, textTransform:"uppercase",
+            background:`${teamColor}22`, padding:"2px 7px", borderRadius:2 }}>
             {item.team}
           </span>
         )}
-        <span style={{ fontSize:9, letterSpacing:"0.12em", color:"#555", fontWeight:700, textTransform:"uppercase" }}>
+        <span style={{ fontSize:10, letterSpacing:"0.1em", color: dark ? "#666" : "#888", fontWeight:700, textTransform:"uppercase" }}>
           {item.source?.replace(/ESPN · /,"")}
         </span>
-        <span style={{ fontSize:8, color:"#444", padding:"1px 5px", background:"#1a1a1a", borderRadius:2, marginLeft:2 }}>
-          {isReddit ? "reddit" : domain}
+        <span style={{ fontSize:9, color: dark ? "#444" : "#bbb", padding:"1px 5px",
+          background: dark ? "#1a1a1a" : "#f0f0f0", borderRadius:2, marginLeft:2 }}>
+          {domain}
         </span>
-        <span style={{ fontSize:9, color:"#444", marginLeft:"auto" }}>{timeAgo(item.pub)}</span>
+        <span style={{ fontSize:10, color: dark ? "#555" : "#999", marginLeft:"auto" }}>{timeAgo(item.pub)}</span>
       </div>
-      <h2 style={styles.newsFeaturedTitle}>{item.title}</h2>
-      {item.desc && <p style={styles.newsFeaturedDesc}>{item.desc.slice(0,160)}{item.desc.length > 160 ? "…" : ""}</p>}
+      <h2 style={{...styles.newsFeaturedTitle, color:titleClr}}>{item.title}</h2>
+      {item.desc && <p style={{...styles.newsFeaturedDesc, color:descClr}}>{item.desc.slice(0,160)}{item.desc.length > 160 ? "…" : ""}</p>}
       {hasLink && <span style={styles.newsReadMore}>READ FULL STORY → {domain}</span>}
-      {!hasLink && <span style={{...styles.newsReadMore, color:"#555"}}>No direct link available</span>}
     </a>
-  )
+  );
 }
 
 function NewsCardSmall({ item, index }) {
-  const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c"
+  const dark = React.useContext(DarkModeCtx);
+  const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c";
   const domain = getSourceDomain(item);
   const hasLink = isValidLink(item.link);
-  const isReddit = item.link?.includes("reddit.com");
+  const bg     = dark ? (index%2===0 ? "#0e0e0e" : "#111") : (index%2===0 ? "#fff" : "#f8f6f1");
+  const titleC = dark ? "#e8e8e8" : "#111";
+  const srcC   = dark ? "#666"    : "#888";
+  const dateC  = dark ? "#555"    : "#999";
+  const domBg  = dark ? "#151515" : "#eeeeee";
   return (
     <a href={hasLink ? item.link : "#"} target={hasLink ? "_blank" : "_self"} rel="noopener noreferrer"
-      style={{...styles.newsSmall, ...(index % 2 === 0 ? {} : styles.newsSmallAlt), display:"flex", gap:10, alignItems:"flex-start",
-        cursor: hasLink ? "pointer" : "default", opacity: hasLink ? 1 : 0.7}}>
-      {item.image ? (
-        <div style={{ width:72, height:54, flexShrink:0, overflow:"hidden", borderRadius:2 }}>
-          <img src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} loading="lazy"
-            onError={e => e.target.parentNode.innerHTML = `<div style="width:72px;height:54px;background:${teamColor}22;display:flex;align-items:center;justify-content:center;font-size:22px">📰</div>`} />
-        </div>
-      ) : (
-        <div style={{ width:72, height:54, flexShrink:0, background:`${teamColor}22`, borderRadius:2, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>
-          {{ MLB:"⚾", NFL:"🏈", NBA:"🏀", NHL:"🏒", WNBA:"🏀", MLS:"⚽", NWSL:"⚽" }[item.sport] || "📰"}
-        </div>
-      )}
-      <div style={{ flex:1, minWidth:0 }}>
-        <div style={styles.newsSmallMeta}>
-          {item.team && (
-            <span style={{ fontSize:8, letterSpacing:"0.15em", color:teamColor, fontWeight:900, textTransform:"uppercase", background:`${teamColor}22`, padding:"1px 5px", borderRadius:2, flexShrink:0 }}>
-              {item.team}
+      style={{...styles.newsSmall, background:bg, cursor: hasLink ? "pointer" : "default",
+        opacity: hasLink ? 1 : 0.7, borderBottom: `1px solid ${dark ? "#222" : "#e8e8e8"}`}}>
+      <div style={{display:"flex", gap:10, alignItems:"flex-start"}}>
+        {item.image ? (
+          <div style={{ width:72, height:54, flexShrink:0, overflow:"hidden", borderRadius:2 }}>
+            <img src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} loading="lazy"
+              onError={e => e.target.parentNode.innerHTML = `<div style="width:72px;height:54px;background:${teamColor}22;display:flex;align-items:center;justify-content:center;font-size:22px">📰</div>`} />
+          </div>
+        ) : (
+          <div style={{ width:72, height:54, flexShrink:0, background:`${teamColor}18`, borderRadius:2,
+            display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>
+            {{ MLB:"⚾", NFL:"🏈", NBA:"🏀", NHL:"🏒", WNBA:"🏀", MLS:"⚽", NWSL:"⚽" }[item.sport] || "📰"}
+          </div>
+        )}
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{...styles.newsSmallMeta}}>
+            {item.team && (
+              <span style={{ fontSize:9, letterSpacing:"0.12em", color:teamColor, fontWeight:900,
+                textTransform:"uppercase", background:`${teamColor}22`, padding:"1px 5px", borderRadius:2, flexShrink:0 }}>
+                {item.team}
+              </span>
+            )}
+            <span style={{...styles.newsSmallSource, color:srcC}}>{item.source?.replace(/ESPN · /,"")}</span>
+            <span style={{ fontSize:9, color:dateC, padding:"1px 4px", background:domBg, borderRadius:2 }}>
+              {domain}
             </span>
-          )}
-          <span style={styles.newsSmallSource}>{item.source?.replace(/ESPN · /,"")}</span>
-          <span style={{ fontSize:8, color:"#555", padding:"1px 4px", background:"#151515", borderRadius:2 }}>
-            {isReddit ? "reddit" : domain}
-          </span>
-          {item.pub && <span style={styles.newsSmallDate}>{timeAgo(item.pub)}</span>}
+            {item.pub && <span style={{...styles.newsSmallDate, color:dateC}}>{timeAgo(item.pub)}</span>}
+          </div>
+          <p style={{...styles.newsSmallTitle, color:titleC}}>{item.title}</p>
         </div>
-        <p style={styles.newsSmallTitle}>{item.title}</p>
       </div>
     </a>
-  )
+  );
 }
+
 
 function GoogleNewsSection({ team }) {
   const [items, setItems]       = useState([]);
@@ -1964,15 +1992,15 @@ function NewsTab({ news, loading }) {
       {section === "HEADLINES" && (
         <>
           {/* Source filter */}
-          <div style={{display:"flex", gap:6, flexWrap:"wrap", padding:"8px 0 12px", borderBottom:"1px solid #1a1a1a", marginBottom:12}}>
-            <span style={{fontSize:9, color:"#555", alignSelf:"center", letterSpacing:"0.1em", marginRight:4}}>SOURCE:</span>
-            {["ALL","ESPN","NY POST","GOOGLE NEWS","REDDIT"].map(s => (
+          <div style={{display:"flex", gap:6, flexWrap:"wrap", padding:"10px 0 14px", borderBottom:"1px solid #222", marginBottom:14}}>
+            <span style={{fontSize:10, color:"#666", alignSelf:"center", letterSpacing:"0.1em", marginRight:4, fontWeight:700}}>SOURCE:</span>
+            {["ALL","ESPN","NY POST","GOOGLE NEWS"].map(s => (
               <button key={s} onClick={() => setSourceFilter(s)}
-                style={{fontSize:9, padding:"3px 10px", letterSpacing:"0.1em", fontWeight:700,
+                style={{fontSize:10, padding:"4px 12px", letterSpacing:"0.08em", fontWeight:700,
                   background: sourceFilter===s ? "#c8201c" : "transparent",
-                  color: sourceFilter===s ? "#fff" : "#555",
-                  border: sourceFilter===s ? "1px solid #c8201c" : "1px solid #333",
-                  cursor:"pointer", fontFamily:"'Georgia',serif"}}>
+                  color: sourceFilter===s ? "#fff" : "#777",
+                  border: sourceFilter===s ? "1px solid #c8201c" : "1px solid #444",
+                  cursor:"pointer", fontFamily:"'Georgia',serif", borderRadius:2}}>
                 {s}
               </button>
             ))}
@@ -7626,10 +7654,10 @@ function CrosswordTab() {
 // ─── STYLES ────────────────────────────────────────────────────────────────
 const styles = {
   root: {
-    background: "#0e0e0e",
+    background: "#0a0a0a",
     minHeight: "100vh",
     fontFamily: "'Georgia', 'Times New Roman', serif",
-    color: "#e8e0d0",
+    color: "#f0ece4",
     position: "relative",
     overflow: "hidden",
   },
@@ -7916,43 +7944,44 @@ const styles = {
   newsGrid: { display:"flex", flexDirection:"column" },
   newsFeatured: {
     display: "block", textDecoration: "none", color: "inherit",
-    background: "#161616", border: "1px solid #2a2a2a",
-    padding: "20px", borderRadius: 2,
-    transition: "border-color 0.15s, transform 0.15s",
+    background: "#141414", border: "1px solid #2e2e2e",
+    padding: "20px", borderRadius: 3,
+    transition: "border-color 0.15s, box-shadow 0.15s",
     cursor: "pointer",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.5)",
   },
   newsFeaturedSource: {
-    fontSize: 9, letterSpacing: "0.2em", color: "#c8201c",
+    fontSize: 10, letterSpacing: "0.18em", color: "#c8201c",
     fontWeight: 900, marginBottom: 8, textTransform: "uppercase",
   },
   newsFeaturedTitle: {
-    margin: "0 0 10px", fontSize: "clamp(15px, 2.5vw, 20px)",
+    margin: "0 0 10px", fontSize: "clamp(16px, 2.5vw, 21px)",
     fontWeight: 900, lineHeight: 1.25, letterSpacing: "-0.01em",
-    color: "#e8e0d0", fontFamily: "'Georgia', serif",
+    color: "#ffffff", fontFamily: "'Georgia', serif",
   },
   newsFeaturedDesc: {
-    margin: "0 0 12px", fontSize: 13, lineHeight: 1.6, color: "#888",
+    margin: "0 0 12px", fontSize: 13, lineHeight: 1.65, color: "#aaa",
     fontFamily: "'Georgia', serif",
   },
   newsReadMore: {
-    fontSize: 9, color: "#c8201c", fontWeight: 900, letterSpacing: "0.12em",
+    fontSize: 10, color: "#c8201c", fontWeight: 900, letterSpacing: "0.12em",
   },
   newsDivider: {
     display: "flex", alignItems: "center", gap: 12,
-    margin: "20px 0 16px", borderTop: "1px solid #2a2a2a", paddingTop: 12,
+    margin: "24px 0 16px", borderTop: "2px solid #222", paddingTop: 12,
   },
-  newsDividerText: { fontSize: 9, color: "#555", letterSpacing: "0.2em", fontWeight: 900 },
+  newsDividerText: { fontSize: 10, color: "#666", letterSpacing: "0.2em", fontWeight: 900 },
   newsSmall: {
     display: "block", textDecoration: "none", color: "inherit",
-    padding: "12px 14px", borderBottom: "1px solid #1e1e1e",
+    padding: "12px 14px", borderBottom: "1px solid #222",
     transition: "background 0.12s", cursor: "pointer",
   },
   newsSmallAlt: { background: "#0f0f0f" },
   newsSmallMeta: { display: "flex", gap: 8, marginBottom: 5, alignItems: "center", flexWrap: "wrap" },
-  newsSmallSource: { fontSize: 8, letterSpacing: "0.15em", color: "#555", fontWeight: 900, textTransform: "uppercase" },
-  newsSmallDate: { fontSize: 8, color: "#444", marginLeft: "auto" },
+  newsSmallSource: { fontSize: 9, letterSpacing: "0.12em", color: "#666", fontWeight: 900, textTransform: "uppercase" },
+  newsSmallDate: { fontSize: 9, color: "#555", marginLeft: "auto" },
   newsSmallTitle: {
-    margin: 0, fontSize: 14, fontWeight: 700, lineHeight: 1.4, color: "#ccc",
+    margin: 0, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: "#e8e8e8",
     fontFamily: "'Georgia', serif",
   },
 
