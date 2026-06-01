@@ -5472,10 +5472,12 @@ function ForgottenTab() {
 
 // ─── STATS TAB ────────────────────────────────────────────────────────────
 function StatsTab() {
-  const [activeSection, setActiveSection] = useState("LEADERS");
+  const [activeSection, setActiveSection] = useState("PLAYOFFS");
   const [activeLeague, setActiveLeague]   = useState("MLB");
   const [liveLeaders, setLiveLeaders]     = useState([]);
   const [loadingLeaders, setLoadingLeaders] = useState(false);
+  const [playoffData, setPlayoffData]     = useState({});
+  const [loadingPlayoffs, setLoadingPlayoffs] = useState(true);
   const year = new Date().getFullYear();
 
   const LEAGUE_MAP = {
@@ -5706,7 +5708,98 @@ function StatsTab() {
     ], nyTeams:["Liberty"], ref:"https://www.basketball-reference.com/wnba" },
   };
 
-  const sections = ["LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS"];
+  const sections = ["PLAYOFFS","LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS"];
+
+  // Fetch playoff standings for all active NY sports leagues
+  useEffect(() => {
+    async function fetchAllPlayoffData() {
+      setLoadingPlayoffs(true);
+      const LEAGUES = [
+        { key:"MLB",  sport:"baseball",   league:"mlb",   label:"MLB"  },
+        { key:"NBA",  sport:"basketball", league:"nba",   label:"NBA"  },
+        { key:"NHL",  sport:"hockey",     league:"nhl",   label:"NHL"  },
+        { key:"NFL",  sport:"football",   league:"nfl",   label:"NFL"  },
+        { key:"WNBA", sport:"basketball", league:"wnba",  label:"WNBA" },
+      ];
+      const NY_TEAM_IDS = {
+        MLB:  ["10","21"],        // Yankees, Mets
+        NFL:  ["20","19"],        // Jets, Giants
+        NBA:  ["18","17"],        // Knicks, Nets
+        NHL:  ["13","22","1"],    // Rangers, Islanders, Devils
+        WNBA: ["20"],             // Liberty
+      };
+      const NY_NAMES = {
+        "10":"Yankees","21":"Mets","20":"Jets","19":"Giants",
+        "18":"Knicks","17":"Nets","13":"Rangers","22":"Islanders",
+        "1":"Devils","20":"Liberty",
+      };
+
+      const results = {};
+      await Promise.all(LEAGUES.map(async ({ key, sport, league, label }) => {
+        try {
+          const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/standings`);
+          if (!r.ok) return;
+          const data = await r.json();
+          const groups = data.children || data.standings?.entries || [];
+
+          const allTeams = [];
+          // ESPN returns standings as conference/division groups
+          const processGroup = (group) => {
+            if (group.standings?.entries) {
+              group.standings.entries.forEach(entry => {
+                const team = entry.team;
+                const stats = {};
+                (entry.stats || []).forEach(s => { stats[s.name] = s.value; });
+                allTeams.push({
+                  id: String(team.id),
+                  name: team.displayName || team.name,
+                  abbr: team.abbreviation,
+                  wins: stats.wins || stats.w || 0,
+                  losses: stats.losses || stats.l || 0,
+                  pct: stats.winPercent || stats.gamesBehind !== undefined ? null : null,
+                  gb: stats.gamesBehind ?? null,
+                  divRank: entry.stats?.find(s=>s.name==="divisionRank")?.value ?? null,
+                  clinched: entry.stats?.find(s=>s.name==="clinched")?.value || null,
+                  logo: team.logos?.[0]?.href || null,
+                  color: team.color ? `#${team.color}` : "#888",
+                });
+              });
+            }
+            if (group.children) group.children.forEach(processGroup);
+          };
+          groups.forEach(processGroup);
+
+          // Find NY teams and compute playoff position
+          const nyIds = NY_TEAM_IDS[key] || [];
+          const nyTeams = allTeams.filter(t => nyIds.includes(t.id));
+
+          // Sort all teams by wins desc to find overall rank
+          const sorted = [...allTeams].sort((a,b) => b.wins - a.wins || a.losses - b.losses);
+          const leagueSize = sorted.length;
+
+          // Determine playoff spots (rough approximation by league)
+          const playoffSpots = { MLB:12, NFL:14, NBA:16, NHL:16, WNBA:8 }[key] || 16;
+          const playoffCutoff = Math.ceil(playoffSpots / 2); // per conference approx
+
+          results[key] = {
+            label,
+            nyTeams: nyTeams.map(t => {
+              const rank = sorted.findIndex(s=>s.id===t.id) + 1;
+              const inPlayoffs = rank <= playoffSpots;
+              const pct = t.wins + t.losses > 0 ? (t.wins / (t.wins + t.losses)) : 0;
+              const gamesBack = t.gb;
+              return { ...t, rank, inPlayoffs, pct, totalTeams: leagueSize };
+            }),
+            allTeams: sorted,
+            playoffSpots,
+          };
+        } catch(e) {}
+      }));
+      setPlayoffData(results);
+      setLoadingPlayoffs(false);
+    }
+    fetchAllPlayoffData();
+  }, []);
 
   return (
     <div style={styles.statsRoot}>
@@ -5724,6 +5817,107 @@ function StatsTab() {
           </button>
         ))}
       </div>
+
+      {/* PLAYOFFS / WILD CARD TRACKER */}
+      {activeSection === "PLAYOFFS" && (
+        <div>
+          <div style={styles.stdDivisionHeader}>🏆 NY TEAMS PLAYOFF TRACKER — {year}</div>
+          <div style={{fontSize:10, color:"#666", marginBottom:16, fontStyle:"italic"}}>
+            Live standings from ESPN — shows current playoff position for each NY team
+          </div>
+
+          {loadingPlayoffs ? (
+            <div style={styles.loading}>
+              <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
+              <p style={styles.loadingText}>LOADING PLAYOFF STANDINGS...</p>
+            </div>
+          ) : (
+            <div style={{display:"flex", flexDirection:"column", gap:20}}>
+              {["MLB","NBA","NHL","NFL","WNBA"].map(leagueKey => {
+                const ld = playoffData[leagueKey];
+                if (!ld?.nyTeams?.length) return null;
+                return (
+                  <div key={leagueKey}>
+                    <div style={{...styles.stdDivisionHeader, fontSize:10, color:"#c8201c", marginBottom:8}}>
+                      {{MLB:"⚾",NBA:"🏀",NHL:"🏒",NFL:"🏈",WNBA:"🏀"}[leagueKey]} {leagueKey} — {ld.label}
+                    </div>
+                    {ld.nyTeams.map((team, i) => {
+                      const inPlay = team.inPlayoffs;
+                      const pctStr = team.pct > 0 ? (team.pct * 100).toFixed(1) + "%" : "—";
+                      const statusColor = inPlay ? "#22c55e" : "#c8201c";
+                      const statusText  = inPlay ? "✅ IN PLAYOFFS" : "❌ ON THE OUTSIDE";
+                      const barWidth    = Math.min(100, Math.round(team.pct * 100));
+                      return (
+                        <div key={team.id} style={{
+                          padding:"14px 16px", marginBottom:8,
+                          background:"#141414", border:`1px solid ${team.color}44`,
+                          borderLeft:`4px solid ${inPlay ? "#22c55e" : "#c8201c"}`,
+                          borderRadius:3,
+                        }}>
+                          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8, marginBottom:10}}>
+                            <div style={{display:"flex", alignItems:"center", gap:10}}>
+                              {team.logo && <img src={team.logo} alt="" style={{width:32,height:32,objectFit:"contain"}} />}
+                              <div>
+                                <div style={{fontSize:16, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{team.name}</div>
+                                <div style={{fontSize:10, color:"#666"}}>
+                                  {leagueKey} · #{team.rank} overall of {team.totalTeams} teams
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{textAlign:"right"}}>
+                              <div style={{fontSize:11, fontWeight:900, color:statusColor, letterSpacing:"0.1em"}}>{statusText}</div>
+                              {team.gb !== null && team.gb > 0 && (
+                                <div style={{fontSize:10, color:"#888"}}>{team.gb} GB of playoff spot</div>
+                              )}
+                              {inPlay && team.gb === 0 && (
+                                <div style={{fontSize:10, color:"#22c55e"}}>Division leader</div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Record and win bar */}
+                          <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:8, flexWrap:"wrap"}}>
+                            <span style={{fontSize:14, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>
+                              {team.wins}–{team.losses}
+                            </span>
+                            <span style={{fontSize:11, color:"#888"}}>{pctStr}</span>
+                            {team.clinched && (
+                              <span style={{fontSize:9, background:"#22c55e22", color:"#22c55e",
+                                padding:"2px 8px", borderRadius:2, fontWeight:900, letterSpacing:"0.1em"}}>
+                                {team.clinched === "x" ? "CLINCHED PLAYOFF" : team.clinched === "y" ? "CLINCHED DIVISION" : "ELIMINATED"}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Win percentage bar */}
+                          <div style={{height:6, background:"#222", borderRadius:3, overflow:"hidden"}}>
+                            <div style={{height:"100%", width:`${barWidth}%`,
+                              background: inPlay ? "#22c55e" : "#c8201c",
+                              borderRadius:3, transition:"width 0.5s ease"}} />
+                          </div>
+
+                          {/* Magic number / games remaining note */}
+                          <div style={{marginTop:8, fontSize:9, color:"#555", display:"flex", gap:16, flexWrap:"wrap"}}>
+                            <a href={`https://www.espn.com/${leagueKey.toLowerCase()}/team/_/id/${team.id}`}
+                              target="_blank" rel="noopener noreferrer" style={styles.histLink}>
+                              Full Schedule & Standings →
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Off-season note for NFL/NHL */}
+          <div style={{marginTop:16, padding:"10px 14px", background:"#111", borderLeft:"2px solid #2a2a2a", fontSize:10, color:"#555"}}>
+            💡 Standings update live from ESPN. Some leagues may be in offseason — check back when the season begins.
+          </div>
+        </div>
+      )}
 
       {/* LEADERS */}
       {activeSection === "LEADERS" && (
