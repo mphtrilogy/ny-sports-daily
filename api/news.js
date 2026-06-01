@@ -4,15 +4,8 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
 
-  // Debug mode
-  if (req.query?.debug === "1") {
-    const tests = await Promise.all([
-      get("https://amny.com/sports/feed/").then(x => ({ feed:"amNY", ok:!!x, preview:x?.slice(0,200) })).catch(e => ({ feed:"amNY", ok:false, error:String(e) })),
-      get("https://news.google.com/rss/search?q=%22new+york+jets%22+nfl&hl=en-US&gl=US&ceid=US:en").then(x => ({ feed:"Google Jets", ok:!!x, items: (x?.match(/<item/g)||[]).length, preview:x?.slice(0,300) })).catch(e => ({ feed:"Google Jets", ok:false, error:String(e) })),
-      get("https://www.pinstripealley.com/rss/current").then(x => ({ feed:"Pinstripe Alley", ok:!!x, preview:x?.slice(0,200) })).catch(e => ({ feed:"SBN", ok:false, error:String(e) })),
-    ]);
-    return res.status(200).json({ tests });
-  }
+  const results = [];
+  const seen = new Set();
 
   function decodeEntities(s) {
     return (s||"")
@@ -135,25 +128,21 @@ export default async function handler(req, res) {
     parseRSS(await get(url), src, team);
   }));
 
-  // Google News — direct fetch from Vercel (no CORS restriction server-side)
+  // Google News via rss2json — CBMi URLs work when clicked in browser
   await Promise.all(GOOGLE.map(async ({url,team}) => {
-    const xml = await get(url);
-    if (!xml) return;
-    const items = xml.match(/<item[\s\S]*?<\/item>/g) || [];
-    items.slice(0,15).forEach(item => {
-      const title = clean(
-        (item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
-         item.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1] || "")
-        .replace(/\s*-\s*[^-]+$/, "")
-      );
-      // Google News <link> is the CBMi URL — works in browser
-      const link =
-        item.match(/<link>(https?:\/\/[^<\s]+)/i)?.[1]?.trim() ||
-        item.match(/<guid[^>]*>(https?:\/\/[^<]+)<\/guid>/i)?.[1]?.trim() || "";
-      const pub = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
-      if (title && link.startsWith("http"))
-        add(title, link, "", pub, "Google News", team, null);
-    });
+    try {
+      const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=15`);
+      if (!r.ok) return;
+      const json = await r.json();
+      if (json.status !== "ok") return;
+      (json.items||[]).forEach(item => {
+        const title = clean((item.title||"").replace(/\s*-\s*[^-]+$/, ""));
+        const link = item.link || item.guid || "";
+        if (title && link.startsWith("http"))
+          add(title, link, (item.description||"").replace(/<[^>]*>/g,"").trim().slice(0,200),
+              item.pubDate||"", "Google News", team, item.thumbnail||null);
+      });
+    } catch {}
   }));
 
   results.sort((a,b) => new Date(b.pub||0) - new Date(a.pub||0));
