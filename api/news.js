@@ -147,57 +147,63 @@ export default async function handler(req, res) {
   }
 
   // ── GOOGLE NEWS — extract real article URL ──────────────────────────────────
-  function extractRealUrl(text) {
-    // Strategy 1: direct href to non-Google domain (2022+ format)
-    const directHrefs = [...text.matchAll(/href="(https?:\/\/[^"]+)"/g)].map(m=>m[1]);
-    const direct = directHrefs.find(u => !u.includes("google.com"));
-    if (direct) return decodeEntities(direct);
+  // Decode a Google News CBMi... article ID to real URL via their redirect
+  async function decodeGoogleNewsUrl(googleUrl) {
+    try {
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 5000);
+      const r = await fetch(googleUrl, {
+        signal: ctrl.signal,
+        redirect: "follow",
+        headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" }
+      });
+      // After redirect, r.url is the real article URL
+      if (r.url && !r.url.includes("news.google.com")) return r.url;
+      // If still on Google, check Location header
+      const loc = r.headers.get("location");
+      if (loc && !loc.includes("news.google.com")) return loc;
+      return null;
+    } catch { return null; }
+  }
 
-    // Strategy 2: entity-encoded href (&lt;a href=&quot;URL&quot;&gt;)
-    const entityHrefs = [...text.matchAll(/href=(?:&quot;|&#34;)(https?:\/\/[^&"]+)/g)].map(m=>m[1]);
-    const entity = entityHrefs.find(u => !u.includes("google.com"));
-    if (entity) return entity;
-
-    // Strategy 3: Google redirect with url= or q= param
-    const redirectMatch = text.match(/news\.google\.com[^"\s]*[?&](?:url|q)=(https?[^&"\s<]+)/);
-    if (redirectMatch) {
-      try { return decodeURIComponent(redirectMatch[1]); } catch { return redirectMatch[1]; }
-    }
-
+  function extractGoogleHref(text) {
+    // Entity-encoded: &lt;a href=&quot;URL&quot;&gt; or &lt;a href="URL"&gt;
+    const entityMatch = text.match(/href=(?:&quot;|")(https?:\/\/[^&"<\s]+)/);
+    if (entityMatch) return decodeEntities(entityMatch[1]);
+    // Direct href="URL"
+    const directMatch = text.match(/href="(https?:\/\/[^"]+)"/);
+    if (directMatch) return directMatch[1];
     return null;
   }
 
-  function parseGoogleNews(xml, src, team) {
+  async function parseGoogleNews(xml, src, team) {
     if (!xml) return;
     const items = xml.match(/<item[\s\S]*?<\/item>/g) || [];
-    items.slice(0, 15).forEach(item => {
+    // Process up to 8 items per team (limit redirects)
+    const parsed = items.slice(0, 8).map(item => {
       const title = cleanText(
         item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
         item.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1] || ""
       );
-      if (!title) return;
-
-      // Get raw description — try CDATA first then plain
-      const descCdata = item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1] || "";
-      const descPlain = item.match(/<description[^>]*>([\s\S]*?)<\/description>/)?.[1] || "";
-      const descRaw   = descCdata || descPlain;
-
-      // Try to find real URL in description
-      let articleUrl = extractRealUrl(descRaw);
-
-      // Also try the raw item text in case description is empty
-      if (!articleUrl) articleUrl = extractRealUrl(item);
-
-      if (!articleUrl) return;
-
-      const descText = cleanText(descRaw
-        .replace(/<a[^>]*>[\s\S]*?<\/a>/g,"")
-        .replace(/https?:\/\/\S+/g,"")
-      ).slice(0,300);
-
+      if (!title) return null;
+      // Extract Google redirect URL from description (entity-encoded href)
+      const descRaw =
+        item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1] ||
+        item.match(/<description[^>]*>([\s\S]*?)<\/description>/)?.[1] || "";
+      const googleUrl = extractGoogleHref(descRaw) || extractGoogleHref(item);
       const pub = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
-      addItem(title, articleUrl, descText, pub, src, team, null);
-    });
+      const descText = cleanText(descRaw.replace(/<[^>]*>/g," ")).slice(0,200);
+      return { title, googleUrl, pub, descText };
+    }).filter(Boolean);
+
+    // Follow all Google redirects in parallel to get real article URLs
+    await Promise.all(parsed.map(async ({ title, googleUrl, pub, descText }) => {
+      if (!googleUrl) return;
+      const realUrl = await decodeGoogleNewsUrl(googleUrl);
+      if (realUrl && isGoodUrl(realUrl)) {
+        addItem(title, realUrl, descText, pub, src, team, null);
+      }
+    }));
   }
 
   // ── FEEDS ─────────────────────────────────────────────────────────────────
@@ -229,6 +235,19 @@ export default async function handler(req, res) {
     team:f.team, src:"Google News"
   }));
 
+  // Bleacher Report — open RSS, works from Vercel, team-specific
+  const BLEACHER = [
+    { url:"https://bleacherreport.com/new-york-yankees/feed",      team:"Yankees",   src:"Bleacher Report" },
+    { url:"https://bleacherreport.com/new-york-mets/feed",         team:"Mets",      src:"Bleacher Report" },
+    { url:"https://bleacherreport.com/new-york-jets/feed",         team:"Jets",      src:"Bleacher Report" },
+    { url:"https://bleacherreport.com/new-york-giants/feed",       team:"Giants",    src:"Bleacher Report" },
+    { url:"https://bleacherreport.com/new-york-knicks/feed",       team:"Knicks",    src:"Bleacher Report" },
+    { url:"https://bleacherreport.com/brooklyn-nets/feed",         team:"Nets",      src:"Bleacher Report" },
+    { url:"https://bleacherreport.com/new-york-rangers/feed",      team:"Rangers",   src:"Bleacher Report" },
+    { url:"https://bleacherreport.com/new-york-islanders/feed",    team:"Islanders", src:"Bleacher Report" },
+    { url:"https://bleacherreport.com/new-jersey-devils/feed",     team:"Devils",    src:"Bleacher Report" },
+  ];
+
   const MLB_TR = [
     { url:"https://www.mlbtraderumors.com/new-york-yankees/feed", team:"Yankees", src:"MLB Trade Rumors" },
     { url:"https://www.mlbtraderumors.com/new-york-mets/feed",    team:"Mets",    src:"MLB Trade Rumors" },
@@ -256,8 +275,13 @@ export default async function handler(req, res) {
     parseRSS(await safeFetch(url), src, team);
   }));
 
+  // Google News: follow redirects to get real article URLs
   await Promise.all(GOOGLE.map(async ({url,team,src}) => {
-    parseGoogleNews(await safeFetch(url), src, team);
+    await parseGoogleNews(await safeFetch(url), src, team);
+  }));
+
+  await Promise.all(BLEACHER.map(async ({url,team,src}) => {
+    parseRSS(await safeFetch(url), src, team);
   }));
 
   results.sort((a,b) => new Date(b.pub||0) - new Date(a.pub||0));
