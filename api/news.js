@@ -1,33 +1,20 @@
 // api/news.js — Vercel Serverless Function
-// Confirmed working from Vercel: NY Post, amNY, Google News (102 items)
-// Blocked from Vercel: SB Nation blogs, rss2json
+// Confirmed from debug: NY Post link_tag_match works, Google News 102 items, amNY ok
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
 
-  // Debug mode
-  if (req.query?.debug === "1") {
-    const xml = await get("https://nypost.com/tag/new-york-jets/feed/");
-    if (!xml) return res.status(200).json({ error:"NY Post returned null" });
-    const firstItem = xml.slice(xml.indexOf("<item"));
-    const item = firstItem.match(/<item[\s\S]*?<\/item>/)?.[0] || "NO ITEM";
-    return res.status(200).json({
-      raw_item: item.slice(0,1000),
-      link_tag_match: item.match(/<link>(https?:\/\/[^<\s]+)/i)?.[1] || "NO LINK FOUND",
-      guid_match: item.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i)?.[1]?.trim() || "NO GUID",
-    });
-  }
+  const results = [];
+  const seen = new Set();
 
-  // ── UTILS ─────────────────────────────────────────────────────────────────
   function decodeEntities(s) {
     return (s||"")
       .replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">")
       .replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&nbsp;/g," ")
-      .replace(/&#8216;/g,"'").replace(/&#8217;/g,"'")
+      .replace(/&#038;/g,"&").replace(/&#8216;/g,"'").replace(/&#8217;/g,"'")
       .replace(/&#8220;/g,'"').replace(/&#8221;/g,'"')
-      .replace(/&#8212;/g,"—").replace(/&#8211;/g,"–")
-      .replace(/&#\d+;/g,"");
+      .replace(/&#8212;/g,"—").replace(/&#8211;/g,"–").replace(/&#\d+;/g,"");
   }
   const stripHTML = s => (s||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();
   const clean = s => stripHTML(decodeEntities(s||"")).trim();
@@ -54,43 +41,32 @@ export default async function handler(req, res) {
     } catch { return null; }
   }
 
-  // ── RSS LINK EXTRACTOR ────────────────────────────────────────────────────
-  // NY Post uses WordPress RSS where <link> appears as raw text between tags
-  // with no closing tag in many cases. We use multiple strategies.
+  // Confirmed working from debug:
+  // <link>https://nypost.com/2026/06/01/sports/...</link>  ← this is the pattern
   function getLink(item) {
-    // Strategy 1: <link>https://...</link> — standard wrapped
-    const wrapped = item.match(/<link>\s*(https?:\/\/[^\s<]+)/i)?.[1]?.trim();
-    if (wrapped) return wrapped;
+    // Primary: <link> tag containing https URL (with any whitespace around it)
+    const m1 = item.match(/<link>\s*(https?:\/\/[^\s<]+)\s*<\/link>/i);
+    if (m1) return m1[1].trim();
 
-    // Strategy 2: <guid isPermaLink="true">URL</guid>
-    const guidTrue = /<guid[^>]+isPermaLink\s*=\s*['"]true['"]/i.test(item);
-    if (guidTrue) {
-      const g = item.match(/<guid[^>]*>\s*(https?:\/\/[^<]+)\s*<\/guid>/i)?.[1]?.trim();
-      if (g) return g;
-    }
+    // Fallback: <link> with URL but no closing tag (some feeds)
+    const m2 = item.match(/<link>\s*(https?:\/\/[^\s<]+)/i);
+    if (m2) return m2[1].trim();
 
-    // Strategy 3: <guid> without isPermaLink="false" — treat as URL if it is one
+    // Last resort: guid if it's a real permalink (not NY Post style ?post_type=)
     const guidFalse = /<guid[^>]+isPermaLink\s*=\s*['"]false['"]/i.test(item);
     if (!guidFalse) {
-      const g = item.match(/<guid[^>]*>\s*(https?:\/\/[^<]+)\s*<\/guid>/i)?.[1]?.trim();
-      if (g) return g;
+      const m3 = item.match(/<guid[^>]*>\s*(https?:\/\/[^<\s?]+[^<\s]*)\s*<\/guid>/i);
+      if (m3 && !m3[1].includes("?post_type=")) return m3[1].trim();
     }
-
-    // Strategy 4: self-closing <link/> followed by URL
-    const selfClose = item.match(/<link\s*\/>\s*(https?:\/\/[^\s<]+)/i)?.[1]?.trim();
-    if (selfClose) return selfClose;
-
     return "";
   }
 
-  // ── RSS PARSER ────────────────────────────────────────────────────────────
   function parseRSS(xml, source, team) {
     if (!xml) return;
-    // Strip everything before first <item> to avoid channel-level <link> matching
-    const firstItem = xml.indexOf("<item");
-    if (firstItem < 0) return;
-    const itemsXml = xml.slice(firstItem);
-    const items = itemsXml.match(/<item[\s\S]*?<\/item>/g) || [];
+    // Slice to first <item> to avoid channel-level <link> contamination
+    const start = xml.indexOf("<item");
+    if (start < 0) return;
+    const items = xml.slice(start).match(/<item[\s\S]*?<\/item>/g) || [];
     items.slice(0,20).forEach(item => {
       const title =
         item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
@@ -101,8 +77,8 @@ export default async function handler(req, res) {
         item.match(/<description[^>]*>([\s\S]*?)<\/description>/)?.[1] || "";
       const pub = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
       const image =
-        item.match(/<media:content[^>]+url="([^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i)?.[1] ||
-        item.match(/<enclosure[^>]+url="([^"]+\.(?:jpg|jpeg|png|webp))"/i)?.[1] || null;
+        item.match(/<enclosure[^>]+url="([^"]+\.(?:jpg|jpeg|png|webp))"/i)?.[1] ||
+        item.match(/<media:content[^>]+url="([^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i)?.[1] || null;
       if (title && link) add(clean(title), link, desc, pub, source, team, image);
     });
   }
@@ -123,11 +99,12 @@ export default async function handler(req, res) {
   const OTHER = [
     { url:"https://www.mlbtraderumors.com/new-york-yankees/feed", team:"Yankees", src:"MLB Trade Rumors" },
     { url:"https://www.mlbtraderumors.com/new-york-mets/feed",    team:"Mets",    src:"MLB Trade Rumors" },
-    { url:"https://sny.tv/rss/articles",                          team:"Mets",    src:"SNY"  },
-    { url:"https://amny.com/sports/feed/",                        team:"All NY",  src:"amNY" },
+    { url:"https://sny.tv/rss/articles",                          team:"Mets",    src:"SNY"              },
+    { url:"https://amny.com/sports/feed/",                        team:"All NY",  src:"amNY"             },
   ];
 
-  // Google News — confirmed working from Vercel (102 items per feed)
+  // Google News — 102 items confirmed working from Vercel
+  // CBMi links work when clicked in browser (redirect to real article)
   const GOOGLE = [
     { url:"https://news.google.com/rss/search?q=%22new+york+yankees%22&hl=en-US&gl=US&ceid=US:en",     team:"Yankees"   },
     { url:"https://news.google.com/rss/search?q=%22new+york+mets%22&hl=en-US&gl=US&ceid=US:en",        team:"Mets"      },
@@ -141,36 +118,29 @@ export default async function handler(req, res) {
     { url:"https://news.google.com/rss/search?q=%22new+york+liberty%22+wnba&hl=en-US&gl=US&ceid=US:en",team:"Liberty"   },
   ];
 
-  // ── FETCH ALL ─────────────────────────────────────────────────────────────
+  // ── FETCH ─────────────────────────────────────────────────────────────────
   await Promise.all([...NY_POST, ...OTHER].map(async ({url,team,src}) => {
     parseRSS(await get(url), src, team);
   }));
 
-  // Google News — fetch directly, parse items, use CBMi links (work in browser)
   await Promise.all(GOOGLE.map(async ({url,team}) => {
     const xml = await get(url);
     if (!xml) return;
-    // Google News XML has items at the channel level — slice past channel tags
-    const items = xml.match(/<item[\s\S]*?<\/item>/g) || [];
+    const start = xml.indexOf("<item");
+    if (start < 0) return;
+    const items = xml.slice(start).match(/<item[\s\S]*?<\/item>/g) || [];
     items.slice(0,15).forEach(item => {
-      // Title — strip "- Publisher Name" suffix
       const rawTitle =
         item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
         item.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1] || "";
       const title = clean(rawTitle).replace(/\s*[-–]\s*[^-–]{1,50}$/, "").trim();
       if (!title) return;
-
-      // Google News <link> is the CBMi redirect URL — works when clicked in browser
-      // It appears between </title> and <guid> — extract with a specific pattern
-      const linkMatch = item.match(/<link>(https?:\/\/news\.google\.com[^<\s]+)/i) ||
-                        item.match(/<link>(https?:\/\/[^<\s]+)/i);
-      const link = linkMatch?.[1]?.trim() || "";
+      // Google News <link> = CBMi redirect URL — works in browser
+      const link = item.match(/<link>\s*(https?:\/\/[^\s<]+)/i)?.[1]?.trim() || "";
       if (!link.startsWith("http")) return;
-
       const pub = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
-      // Source name from <source> tag
-      const sourceName = item.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1]?.trim() || "Google News";
-      add(title, link, "", pub, `Google News · ${clean(sourceName)}`, team, null);
+      const src = clean(item.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1] || "");
+      add(title, link, "", pub, `Google News · ${src||"News"}`, team, null);
     });
   }));
 
