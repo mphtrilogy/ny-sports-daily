@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 const SUPABASE_URL = "https://fnxoucliekhotvartyfu.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZueG91Y2xpZWtob3R2YXJ0eWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTI3MzEsImV4cCI6MjA4OTUyODczMX0.V4A75JO9s-7MbDRY7VMydwydOvdkU4SNSz_BRoVAoqA";
 
+// Dark mode context — must be declared before any component that uses it
+const DarkModeCtx = React.createContext(true);
+
 async function sbFetch(table, params = "") {
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${params}`, {
@@ -1743,9 +1746,7 @@ function isValidLink(link) {
   try { new URL(link); return true; } catch(e) { return false; }
 }
 
-// Detect dark mode from root element — passed via context or default true
-const DarkModeCtx = React.createContext(true);
-
+// Detect dark mode from root element — passed via context
 function NewsCardFeatured({ item }) {
   const dark = React.useContext(DarkModeCtx);
   const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c";
