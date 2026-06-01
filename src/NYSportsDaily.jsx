@@ -5472,12 +5472,10 @@ function ForgottenTab() {
 
 // ─── STATS TAB ────────────────────────────────────────────────────────────
 function StatsTab() {
-  const [activeSection, setActiveSection] = useState("PLAYOFFS");
+  const [activeSection, setActiveSection] = useState("LEADERS");
   const [activeLeague, setActiveLeague]   = useState("MLB");
   const [liveLeaders, setLiveLeaders]     = useState([]);
   const [loadingLeaders, setLoadingLeaders] = useState(false);
-  const [playoffData, setPlayoffData]     = useState({});
-  const [loadingPlayoffs, setLoadingPlayoffs] = useState(true);
   const year = new Date().getFullYear();
 
   const LEAGUE_MAP = {
@@ -5708,101 +5706,8 @@ function StatsTab() {
     ], nyTeams:["Liberty"], ref:"https://www.basketball-reference.com/wnba" },
   };
 
-  const sections = ["PLAYOFFS","LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS"];
+  const sections = ["LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS"];
 
-  // Fetch playoff standings for all active NY sports leagues
-  useEffect(() => {
-    async function fetchAllPlayoffData() {
-      setLoadingPlayoffs(true);
-      const LEAGUES = [
-        { key:"MLB",  sport:"baseball",   league:"mlb",   label:"MLB"  },
-        { key:"NBA",  sport:"basketball", league:"nba",   label:"NBA"  },
-        { key:"NHL",  sport:"hockey",     league:"nhl",   label:"NHL"  },
-        { key:"NFL",  sport:"football",   league:"nfl",   label:"NFL"  },
-        { key:"WNBA", sport:"basketball", league:"wnba",  label:"WNBA" },
-      ];
-      const NY_TEAM_IDS = {
-        MLB:  ["10","21"],        // Yankees, Mets
-        NFL:  ["20","19"],        // Jets, Giants
-        NBA:  ["18","17"],        // Knicks, Nets
-        NHL:  ["13","22","1"],    // Rangers, Islanders, Devils
-        WNBA: ["20"],             // Liberty
-      };
-      const NY_NAMES = {
-        "10":"Yankees","21":"Mets","20":"Jets","19":"Giants",
-        "18":"Knicks","17":"Nets","13":"Rangers","22":"Islanders",
-        "1":"Devils","20":"Liberty",
-      };
-
-      const results = {};
-      await Promise.all(LEAGUES.map(async ({ key, sport, league, label }) => {
-        try {
-          const r = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/${league}/standings`);
-          if (!r.ok) return;
-          const data = await r.json();
-          const groups = data.children || data.standings?.entries || [];
-
-          const allTeams = [];
-          // ESPN returns standings as conference/division groups
-          const processGroup = (group) => {
-            if (group.standings?.entries) {
-              group.standings.entries.forEach(entry => {
-                const team = entry.team;
-                const stats = {};
-                (entry.stats || []).forEach(s => { stats[s.name] = s.value; });
-                allTeams.push({
-                  id: String(team.id),
-                  name: team.displayName || team.name,
-                  abbr: team.abbreviation,
-                  wins: stats.wins || stats.w || 0,
-                  losses: stats.losses || stats.l || 0,
-                  pct: stats.winPercent || stats.gamesBehind !== undefined ? null : null,
-                  gb: stats.gamesBehind ?? null,
-                  divRank: entry.stats?.find(s=>s.name==="divisionRank")?.value ?? null,
-                  clinched: entry.stats?.find(s=>s.name==="clinched")?.value || null,
-                  logo: team.logos?.[0]?.href || null,
-                  color: team.color ? `#${team.color}` : "#888",
-                });
-              });
-            }
-            if (group.children) group.children.forEach(processGroup);
-          };
-          groups.forEach(processGroup);
-
-          // Find NY teams and compute playoff position
-          const nyIds = NY_TEAM_IDS[key] || [];
-          const nyTeams = allTeams.filter(t => nyIds.includes(t.id));
-
-          // Sort all teams by wins desc to find overall rank
-          const sorted = [...allTeams].sort((a,b) => b.wins - a.wins || a.losses - b.losses);
-          const leagueSize = sorted.length;
-
-          // Determine playoff spots (rough approximation by league)
-          const playoffSpots = { MLB:12, NFL:14, NBA:16, NHL:16, WNBA:8 }[key] || 16;
-          const playoffCutoff = Math.ceil(playoffSpots / 2); // per conference approx
-
-          results[key] = {
-            label,
-            nyTeams: nyTeams.map(t => {
-              const rank = sorted.findIndex(s=>s.id===t.id) + 1;
-              const inPlayoffs = rank <= playoffSpots;
-              const pct = t.wins + t.losses > 0 ? (t.wins / (t.wins + t.losses)) : 0;
-              const gamesBack = t.gb;
-              return { ...t, rank, inPlayoffs, pct, totalTeams: leagueSize };
-            }),
-            allTeams: sorted,
-            playoffSpots,
-          };
-        } catch(e) {}
-      }));
-      setPlayoffData(results);
-      setLoadingPlayoffs(false);
-    }
-    fetchAllPlayoffData();
-  }, []);
-
-  return (
-    <div style={styles.statsRoot}>
       <div style={styles.stdHeader}>
         <h2 style={styles.stdTitle}>NY SPORTS STATS & HISTORY</h2>
         <p style={styles.stdSub}>LEADERS · DROUGHT TRACKER · DRAFT HISTORY · RIVALRIES · TEAM LINKS · RADIO</p>
@@ -5817,107 +5722,6 @@ function StatsTab() {
           </button>
         ))}
       </div>
-
-      {/* PLAYOFFS / WILD CARD TRACKER */}
-      {activeSection === "PLAYOFFS" && (
-        <div>
-          <div style={styles.stdDivisionHeader}>🏆 NY TEAMS PLAYOFF TRACKER — {year}</div>
-          <div style={{fontSize:10, color:"#666", marginBottom:16, fontStyle:"italic"}}>
-            Live standings from ESPN — shows current playoff position for each NY team
-          </div>
-
-          {loadingPlayoffs ? (
-            <div style={styles.loading}>
-              <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
-              <p style={styles.loadingText}>LOADING PLAYOFF STANDINGS...</p>
-            </div>
-          ) : (
-            <div style={{display:"flex", flexDirection:"column", gap:20}}>
-              {["MLB","NBA","NHL","NFL","WNBA"].map(leagueKey => {
-                const ld = playoffData[leagueKey];
-                if (!ld?.nyTeams?.length) return null;
-                return (
-                  <div key={leagueKey}>
-                    <div style={{...styles.stdDivisionHeader, fontSize:10, color:"#c8201c", marginBottom:8}}>
-                      {{MLB:"⚾",NBA:"🏀",NHL:"🏒",NFL:"🏈",WNBA:"🏀"}[leagueKey]} {leagueKey} — {ld.label}
-                    </div>
-                    {ld.nyTeams.map((team, i) => {
-                      const inPlay = team.inPlayoffs;
-                      const pctStr = team.pct > 0 ? (team.pct * 100).toFixed(1) + "%" : "—";
-                      const statusColor = inPlay ? "#22c55e" : "#c8201c";
-                      const statusText  = inPlay ? "✅ IN PLAYOFFS" : "❌ ON THE OUTSIDE";
-                      const barWidth    = Math.min(100, Math.round(team.pct * 100));
-                      return (
-                        <div key={team.id} style={{
-                          padding:"14px 16px", marginBottom:8,
-                          background:"#141414", border:`1px solid ${team.color}44`,
-                          borderLeft:`4px solid ${inPlay ? "#22c55e" : "#c8201c"}`,
-                          borderRadius:3,
-                        }}>
-                          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8, marginBottom:10}}>
-                            <div style={{display:"flex", alignItems:"center", gap:10}}>
-                              {team.logo && <img src={team.logo} alt="" style={{width:32,height:32,objectFit:"contain"}} />}
-                              <div>
-                                <div style={{fontSize:16, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{team.name}</div>
-                                <div style={{fontSize:10, color:"#666"}}>
-                                  {leagueKey} · #{team.rank} overall of {team.totalTeams} teams
-                                </div>
-                              </div>
-                            </div>
-                            <div style={{textAlign:"right"}}>
-                              <div style={{fontSize:11, fontWeight:900, color:statusColor, letterSpacing:"0.1em"}}>{statusText}</div>
-                              {team.gb !== null && team.gb > 0 && (
-                                <div style={{fontSize:10, color:"#888"}}>{team.gb} GB of playoff spot</div>
-                              )}
-                              {inPlay && team.gb === 0 && (
-                                <div style={{fontSize:10, color:"#22c55e"}}>Division leader</div>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Record and win bar */}
-                          <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:8, flexWrap:"wrap"}}>
-                            <span style={{fontSize:14, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>
-                              {team.wins}–{team.losses}
-                            </span>
-                            <span style={{fontSize:11, color:"#888"}}>{pctStr}</span>
-                            {team.clinched && (
-                              <span style={{fontSize:9, background:"#22c55e22", color:"#22c55e",
-                                padding:"2px 8px", borderRadius:2, fontWeight:900, letterSpacing:"0.1em"}}>
-                                {team.clinched === "x" ? "CLINCHED PLAYOFF" : team.clinched === "y" ? "CLINCHED DIVISION" : "ELIMINATED"}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Win percentage bar */}
-                          <div style={{height:6, background:"#222", borderRadius:3, overflow:"hidden"}}>
-                            <div style={{height:"100%", width:`${barWidth}%`,
-                              background: inPlay ? "#22c55e" : "#c8201c",
-                              borderRadius:3, transition:"width 0.5s ease"}} />
-                          </div>
-
-                          {/* Magic number / games remaining note */}
-                          <div style={{marginTop:8, fontSize:9, color:"#555", display:"flex", gap:16, flexWrap:"wrap"}}>
-                            <a href={`https://www.espn.com/${leagueKey.toLowerCase()}/team/_/id/${team.id}`}
-                              target="_blank" rel="noopener noreferrer" style={styles.histLink}>
-                              Full Schedule & Standings →
-                            </a>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Off-season note for NFL/NHL */}
-          <div style={{marginTop:16, padding:"10px 14px", background:"#111", borderLeft:"2px solid #2a2a2a", fontSize:10, color:"#555"}}>
-            💡 Standings update live from ESPN. Some leagues may be in offseason — check back when the season begins.
-          </div>
-        </div>
-      )}
 
       {/* LEADERS */}
       {activeSection === "LEADERS" && (
@@ -6276,7 +6080,6 @@ function StatsTab() {
 
           <div style={styles.stdDivisionHeader}>📚 NY SPORTS BOOKS</div>
           {[
-            // YANKEES
             { title:"The Yankee Years", author:"Joe Torre & Tom Verducci", tag:"yankee+years+torre+verducci", desc:"Inside the dynasty from the manager who led them to 4 World Series titles" },
             { title:"Summer of '49", author:"David Halberstam", tag:"summer+of+49+halberstam+yankees", desc:"Yankees vs Red Sox — the greatest rivalry told by a master storyteller" },
             { title:"The Last Boy: Mickey Mantle", author:"Jane Leavy", tag:"last+boy+mickey+mantle+biography", desc:"The definitive Mantle biography — heroism, pain and unfulfilled greatness" },
@@ -6287,33 +6090,28 @@ function StatsTab() {
             { title:"Joe DiMaggio: The Hero's Life", author:"Richard Ben Cramer", tag:"joe+dimaggio+hero+life+cramer", desc:"The real DiMaggio behind the myth — one of the great sports biographies" },
             { title:"Derek Jeter: The Life You Imagine", author:"Derek Jeter", tag:"derek+jeter+life+you+imagine", desc:"The Captain's own story from childhood to the major leagues" },
             { title:"Yogi: A Life Behind the Mask", author:"Jon Pessah", tag:"yogi+berra+biography+pessah", desc:"The definitive biography of one of baseball's greatest characters" },
-            // METS
             { title:"The Bad Guys Won", author:"Jeff Pearlman", tag:"bad+guys+won+1986+mets+pearlman", desc:"The wild, outrageous story of the drug-fueled 1986 Mets championship team" },
             { title:"The Miracle Mets", author:"Stanley Cohen", tag:"miracle+mets+1969+cohen", desc:"The complete story of the 1969 Amazin' Mets championship season" },
             { title:"Doc: A Memoir", author:"Dwight Gooden", tag:"doc+memoir+dwight+gooden", desc:"Gooden's raw honest account of his extraordinary rise and fall" },
             { title:"Mike and the Mad Dog", author:"Bob Raissman", tag:"WFAN+mike+francesca+mad+dog+russo", desc:"The story behind the greatest sports radio show in New York history" },
             { title:"Tom Seaver: A Terrific Life", author:"Various", tag:"tom+seaver+biography+mets", desc:"The life of Tom Terrific — the greatest Met of all time" },
             { title:"Queens Reigns Supreme: Mets Dynasty", author:"Various", tag:"new+york+mets+history+book", desc:"The complete history of the New York Mets franchise" },
-            // JETS/GIANTS
             { title:"Namath: A Biography", author:"Mark Kriegel", tag:"namath+biography+kriegel+jets", desc:"The definitive biography of Broadway Joe and the greatest upset in Super Bowl history" },
             { title:"I Can't Wait Until Tomorrow", author:"Joe Namath", tag:"namath+cant+wait+tomorrow+autobiography", desc:"Namath's own tell-all autobiography — one of sports greatest memoirs" },
             { title:"LT: Over the Edge", author:"Lawrence Taylor", tag:"lawrence+taylor+LT+autobiography", desc:"LT's brutal honest autobiography — greatness, addiction and survival" },
             { title:"Parcells: A Football Life", author:"Bill Parcells", tag:"bill+parcells+football+life+biography", desc:"The Big Tuna's coaching career from Giants to beyond" },
             { title:"Eli Manning: The Making of a Champion", author:"Various", tag:"eli+manning+giants+super+bowl+book", desc:"The story of two Super Bowl upsets and the quarterback who delivered them" },
             { title:"Gang Green: The Rise and Fall of the Jets", author:"Dennis Derossett", tag:"new+york+jets+history+book+gang+green", desc:"The complete history of the Jets franchise" },
-            // KNICKS
             { title:"When the Garden Was Eden", author:"Harvey Araton", tag:"when+garden+was+eden+knicks+araton", desc:"The legendary Knicks of the early 70s — Reed, Frazier, Bradley, DeBusschere" },
             { title:"My Life in Basketball: Walt Frazier", author:"Walt Frazier", tag:"walt+frazier+clyde+autobiography+knicks", desc:"Clyde's story — from the streets to the Garden to four decades as the voice of the Knicks" },
             { title:"Patrick Ewing: A Life in Basketball", author:"Various", tag:"patrick+ewing+biography+knicks", desc:"The life and career of the greatest Knick" },
             { title:"The Rivalry: Bill Russell, Wilt Chamberlain", author:"John Taylor", tag:"rivalry+russell+wilt+knicks+basketball", desc:"The NBA's golden age and the battles that shaped the Knicks' greatest years" },
-            // RANGERS/ISLANDERS/DEVILS
             { title:"Blood on the Ice", author:"Gare Joyce", tag:"rangers+messier+1994+stanley+cup+blood+ice", desc:"The Rangers 1994 championship run — ending the 54-year drought" },
             { title:"Thunder and Lightning", author:"Phil Esposito", tag:"phil+esposito+rangers+autobiography", desc:"The Rangers GM's story of building the 1994 championship team" },
             { title:"Mike Bossy: The Boss", author:"Mike Bossy", tag:"mike+bossy+islanders+autobiography", desc:"The greatest pure goal scorer in NHL history tells his own story" },
             { title:"Four on the Floor", author:"Various", tag:"new+york+islanders+dynasty+four+cups", desc:"The story of the Islanders' four consecutive Stanley Cup championships" },
             { title:"Mark Messier: Hockey's Legendary Captain", author:"Various", tag:"mark+messier+biography+captain", desc:"The life and career of hockey's greatest leader" },
             { title:"Denis Potvin: Power On Ice", author:"Denis Potvin", tag:"denis+potvin+islanders+autobiography", desc:"The Islanders captain's story — breaking Orr's record and winning four Cups" },
-            // GENERAL NY SPORTS
             { title:"The Boys of Summer", author:"Roger Kahn", tag:"boys+of+summer+roger+kahn+dodgers", desc:"The greatest sports book ever written — the Brooklyn Dodgers and their place in NY history" },
             { title:"New York Sports: A History", author:"Various", tag:"new+york+sports+history+book", desc:"The complete history of sports in the greatest city in the world" },
             { title:"Ghosts of Flatbush", author:"Michael Shapiro", tag:"ghosts+flatbush+brooklyn+dodgers+history", desc:"The Brooklyn Dodgers — NY's heartbreak story told in full" },
@@ -6322,7 +6120,6 @@ function StatsTab() {
             { title:"Friday Night Lights", author:"H.G. Bissinger", tag:"friday+night+lights+football+book", desc:"Not NY but the greatest football book ever written — essential reading for any fan" },
             { title:"Ball Four", author:"Jim Bouton", tag:"ball+four+jim+bouton+yankees", desc:"The Yankees pitcher's diary that blew the lid off baseball — still controversial" },
             { title:"The Bronx is Burning", author:"Jonathan Mahler", tag:"bronx+is+burning+1977+yankees+book", desc:"1977 NYC, Billy Martin, Reggie Jackson and the summer that defined an era" },
-            // WFAN/NY MEDIA
             { title:"The Last Commissioner", author:"Fay Vincent", tag:"fay+vincent+baseball+commissioner+book", desc:"Inside baseball from the man who ran it during the Yankees' early 90s resurgence" },
             { title:"Steinbrenner", author:"Bill Madden", tag:"steinbrenner+biography+bill+madden", desc:"The complete biography of the Boss — turbulent, brilliant and unforgettable" },
             { title:"Mariano Rivera: The Closer", author:"Mariano Rivera", tag:"mariano+rivera+closer+autobiography", desc:"Mo's own story — the greatest closer in baseball history" },
@@ -6732,68 +6529,227 @@ function ShopTab() {
 
 function StandingsTab({ standings, loading }) {
   const [activeLeague, setActiveLeague] = useState("MLB");
+  const [activeView, setActiveView]     = useState("PLAYOFF"); // PLAYOFF | STANDINGS
   const leagues = ["MLB","NFL","NBA","NHL","WNBA","MLS"];
+  const [playoffData, setPlayoffData]   = useState({});
+  const [loadingPlayoffs, setLoadingPlayoffs] = useState(true);
+
+  // NY team identifiers in ESPN standings
+  const NY_IDS = {
+    MLB:  { teams:["10","21"],        names:{"10":"Yankees","21":"Mets"} },
+    NFL:  { teams:["20","19"],        names:{"20":"Jets","19":"Giants"} },
+    NBA:  { teams:["18","17"],        names:{"18":"Knicks","17":"Nets"} },
+    NHL:  { teams:["13","22","1"],    names:{"13":"Rangers","22":"Islanders","1":"Devils"} },
+    WNBA: { teams:["20"],            names:{"20":"Liberty"} },
+  };
+
+  const LEAGUE_CONFIGS = [
+    { key:"MLB",  sport:"baseball",   league:"mlb",   emoji:"⚾", spots:12, label:"MLB Wild Card" },
+    { key:"NBA",  sport:"basketball", league:"nba",   emoji:"🏀", spots:16, label:"NBA Playoffs"  },
+    { key:"NHL",  sport:"hockey",     league:"nhl",   emoji:"🏒", spots:16, label:"NHL Playoffs"  },
+    { key:"NFL",  sport:"football",   league:"nfl",   emoji:"🏈", spots:14, label:"NFL Playoffs"  },
+    { key:"WNBA", sport:"basketball", league:"wnba",  emoji:"🏀", spots:8,  label:"WNBA Playoffs" },
+  ];
+
+  useEffect(() => {
+    async function load() {
+      setLoadingPlayoffs(true);
+      const out = {};
+      await Promise.all(LEAGUE_CONFIGS.map(async ({ key, sport, league, spots }) => {
+        try {
+          // Use /apis/v2/ for standings (confirmed correct endpoint)
+          const r = await fetch(`https://site.api.espn.com/apis/v2/sports/${sport}/${league}/standings`);
+          if (!r.ok) return;
+          const data = await r.json();
+          const allTeams = [];
+          function walk(node) {
+            if (node?.standings?.entries) {
+              node.standings.entries.forEach(e => {
+                const t = e.team;
+                const stats = {};
+                (e.stats||[]).forEach(s => { stats[s.name] = s.displayValue ?? s.value; });
+                allTeams.push({
+                  id: String(t.id),
+                  name: t.shortDisplayName || t.displayName || t.name,
+                  abbr: t.abbreviation,
+                  logo: t.logos?.[0]?.href || null,
+                  color: t.color ? `#${t.color}` : "#888",
+                  wins:   parseFloat(stats.wins   || stats.w   || 0),
+                  losses: parseFloat(stats.losses  || stats.l   || 0),
+                  pct:    parseFloat(stats.winPercent || 0),
+                  gb:     stats.gamesBehind || stats.gb || null,
+                  pts:    parseFloat(stats.points || 0),
+                  clinched: stats.clinched || null,
+                });
+              });
+            }
+            (node?.children || []).forEach(walk);
+          }
+          (data.children || []).forEach(walk);
+          if (!allTeams.length) return;
+
+          // Sort by wins (or points for NHL)
+          const sorted = [...allTeams].sort((a,b) =>
+            key==="NHL" ? b.pts-a.pts : b.wins-a.losses-(a.wins-b.losses) || b.pct-a.pct
+          );
+
+          const nyConfig = NY_IDS[key];
+          if (!nyConfig) return;
+          const nyTeams = allTeams.filter(t => nyConfig.teams.includes(t.id))
+            .map(t => {
+              const rank = sorted.findIndex(s=>s.id===t.id)+1;
+              const halfSpots = Math.ceil(spots/2);
+              const inPlayoffs = rank <= halfSpots || rank <= spots;
+              return { ...t, rank, inPlayoffs, totalTeams: allTeams.length };
+            });
+          if (nyTeams.length) out[key] = { nyTeams, label: LEAGUE_CONFIGS.find(l=>l.key===key)?.label, emoji: LEAGUE_CONFIGS.find(l=>l.key===key)?.emoji, spots };
+        } catch(e) {}
+      }));
+      setPlayoffData(out);
+      setLoadingPlayoffs(false);
+    }
+    load();
+  }, []);
 
   const filtered = standings.filter(s => s.league === activeLeague);
 
   return (
     <div style={styles.stdRoot}>
       <div style={styles.stdHeader}>
-        <h2 style={styles.stdTitle}>NY TEAMS STANDINGS</h2>
+        <h2 style={styles.stdTitle}>📊 NY TEAMS STANDINGS & PLAYOFF TRACKER</h2>
         <p style={styles.stdSub}>WHERE YOUR TEAMS STAND RIGHT NOW</p>
       </div>
 
-      {/* League filter */}
-      <div style={styles.filterGroup}>
-        {leagues.map(l => (
-          <button key={l} onClick={() => setActiveLeague(l)}
-            style={{...styles.filterBtn, ...(activeLeague===l ? styles.filterBtnActive : {})}}>
-            {l}
+      {/* View toggle */}
+      <div style={{display:"flex", gap:6, marginBottom:16}}>
+        {["PLAYOFF PICTURE","FULL STANDINGS"].map(v => (
+          <button key={v} onClick={() => setActiveView(v==="PLAYOFF PICTURE" ? "PLAYOFF" : "STANDINGS")}
+            style={{...styles.filterBtn, ...(activeView===(v==="PLAYOFF PICTURE"?"PLAYOFF":"STANDINGS") ? styles.filterBtnActive : {}), fontSize:10, padding:"6px 14px"}}>
+            {v}
           </button>
         ))}
       </div>
 
-      {loading ? (
-        <div style={styles.loading}>
-          <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
-          <p style={styles.loadingText}>LOADING STANDINGS...</p>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div style={styles.empty}>
-          <span style={styles.emptyIcon}>📊</span>
-          <p style={styles.emptyText}>NO STANDINGS AVAILABLE</p>
-        </div>
-      ) : (
-        <div style={styles.stdGroups}>
-          {filtered.map((group, gi) => (
-            <div key={gi} style={styles.stdGroup}>
-              <div style={styles.stdDivisionHeader}>{group.division}</div>
-              <div style={styles.stdTable}>
-                {/* Header */}
-                <div style={styles.stdRowHeader}>
-                  <span style={styles.stdColTeam}>TEAM</span>
-                  <span style={styles.stdColStat}>W</span>
-                  <span style={styles.stdColStat}>L</span>
-                  <span style={styles.stdColStat}>PCT</span>
-                  <span style={styles.stdColStat}>GB</span>
-                </div>
-                {group.rows.map((row, i) => (
-                  <div key={i} style={{...styles.stdRow, ...(row.isNY ? styles.stdRowNY : {}), ...(i%2===0?{}:styles.stdRowAlt)}}>
-                    <span style={styles.stdColTeam}>
-                      {row.logo && <img src={row.logo} alt="" style={styles.stdLogo} onError={e=>e.target.style.display="none"} />}
-                      <span style={{...styles.stdTeamName, ...(row.isNY?{color:"#e8e0d0",fontWeight:900}:{})}}>{row.team}</span>
-                      {row.isNY && <span style={styles.stdNYBadge}>NY</span>}
-                    </span>
-                    <span style={styles.stdColStat}>{row.w}</span>
-                    <span style={styles.stdColStat}>{row.l}</span>
-                    <span style={styles.stdColStat}>{row.pct}</span>
-                    <span style={styles.stdColStat}>{row.gb}</span>
-                  </div>
-                ))}
+      {/* ── PLAYOFF PICTURE ── */}
+      {activeView === "PLAYOFF" && (
+        <div>
+          {loadingPlayoffs ? (
+            <div style={styles.loading}>
+              <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
+              <p style={styles.loadingText}>LOADING PLAYOFF PICTURE...</p>
+            </div>
+          ) : Object.keys(playoffData).length === 0 ? (
+            <div style={{padding:"20px 0", color:"#666", fontSize:12}}>
+              Standings data unavailable — some leagues may be in offseason. Check back when the season starts.
+            </div>
+          ) : (
+            <div style={{display:"flex", flexDirection:"column", gap:10}}>
+              {LEAGUE_CONFIGS.map(({ key, emoji }) => {
+                const ld = playoffData[key];
+                if (!ld?.nyTeams?.length) return null;
+                return ld.nyTeams.map(team => {
+                  const inPlay = team.inPlayoffs;
+                  const pct = team.pct > 0 ? (team.pct*100).toFixed(1)+"%" : team.wins > 0 ? ((team.wins/(team.wins+team.losses))*100).toFixed(1)+"%" : "—";
+                  const barW = Math.min(100, team.pct>0 ? Math.round(team.pct*100) : team.wins>0 ? Math.round(team.wins/(team.wins+team.losses)*100) : 0);
+                  const record = key==="NHL" ? `${team.wins}W · ${team.pts}PTS` : `${team.wins}–${team.losses}`;
+                  return (
+                    <div key={team.id} style={{
+                      display:"flex", alignItems:"center", gap:12,
+                      padding:"12px 16px",
+                      background:"#141414",
+                      border:`1px solid ${inPlay?"#22c55e44":"#c8201c33"}`,
+                      borderLeft:`4px solid ${inPlay?"#22c55e":"#c8201c"}`,
+                      borderRadius:3, flexWrap:"wrap",
+                    }}>
+                      {team.logo && <img src={team.logo} alt="" style={{width:36,height:36,objectFit:"contain",flexShrink:0}} onError={e=>e.target.style.display="none"} />}
+                      <div style={{flex:1, minWidth:120}}>
+                        <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:4, flexWrap:"wrap"}}>
+                          <span style={{fontSize:14, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{team.name}</span>
+                          <span style={{fontSize:9, color:"#666", letterSpacing:"0.1em"}}>{emoji} {key}</span>
+                        </div>
+                        <div style={{display:"flex", alignItems:"center", gap:8}}>
+                          <div style={{flex:1, height:6, background:"#222", borderRadius:3, overflow:"hidden", minWidth:80}}>
+                            <div style={{height:"100%", width:`${barW}%`, background:inPlay?"#22c55e":"#c8201c", borderRadius:3}} />
+                          </div>
+                          <span style={{fontSize:11, fontWeight:700, color:"#aaa", whiteSpace:"nowrap"}}>{record}</span>
+                        </div>
+                      </div>
+                      <div style={{textAlign:"right", flexShrink:0}}>
+                        <div style={{fontSize:11, fontWeight:900, letterSpacing:"0.08em",
+                          color: inPlay ? "#22c55e" : "#c8201c"}}>
+                          {inPlay ? "✅ IN" : "❌ OUT"}
+                        </div>
+                        <div style={{fontSize:10, color:"#555"}}>
+                          #{team.rank} of {team.totalTeams}
+                          {team.gb && team.gb !== "0" && ` · ${team.gb} GB`}
+                        </div>
+                        {team.clinched && <div style={{fontSize:9, color:"#22c55e", marginTop:2}}>{team.clinched}</div>}
+                      </div>
+                    </div>
+                  );
+                });
+              })}
+              <div style={{fontSize:9, color:"#555", padding:"8px 0", fontStyle:"italic"}}>
+                Live from ESPN · Updates with each game · {new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}
               </div>
             </div>
-          ))}
+          )}
         </div>
+      )}
+
+      {/* ── FULL STANDINGS ── */}
+      {activeView === "STANDINGS" && (
+        <>
+          <div style={styles.filterGroup}>
+            {leagues.map(l => (
+              <button key={l} onClick={() => setActiveLeague(l)}
+                style={{...styles.filterBtn, ...(activeLeague===l ? styles.filterBtnActive : {})}}>
+                {l}
+              </button>
+            ))}
+          </div>
+          {loading ? (
+            <div style={styles.loading}>
+              <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
+              <p style={styles.loadingText}>LOADING STANDINGS...</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={styles.empty}>
+              <span style={styles.emptyIcon}>📊</span>
+              <p style={styles.emptyText}>NO STANDINGS AVAILABLE</p>
+            </div>
+          ) : (
+            <div style={styles.stdGroups}>
+              {filtered.map((group, gi) => (
+                <div key={gi} style={styles.stdGroup}>
+                  <div style={styles.stdDivisionHeader}>{group.division}</div>
+                  <div style={styles.stdTable}>
+                    <div style={styles.stdRowHeader}>
+                      <span style={styles.stdColTeam}>TEAM</span>
+                      <span style={styles.stdColStat}>W</span>
+                      <span style={styles.stdColStat}>L</span>
+                      <span style={styles.stdColStat}>PCT</span>
+                      <span style={styles.stdColStat}>GB</span>
+                    </div>
+                    {group.rows.map((row, i) => (
+                      <div key={i} style={{...styles.stdRow, ...(row.isNY ? styles.stdRowNY : {}), ...(i%2===0?{}:styles.stdRowAlt)}}>
+                        <span style={styles.stdColTeam}>
+                          {row.logo && <img src={row.logo} alt="" style={styles.stdLogo} onError={e=>e.target.style.display="none"} />}
+                          <span style={{...styles.stdTeamName, ...(row.isNY?{color:"#e8e0d0",fontWeight:900}:{})}}>{row.team}</span>
+                          {row.isNY && <span style={styles.stdNYBadge}>NY</span>}
+                        </span>
+                        <span style={styles.stdColStat}>{row.w}</span>
+                        <span style={styles.stdColStat}>{row.l}</span>
+                        <span style={styles.stdColStat}>{row.pct}</span>
+                        <span style={styles.stdColStat}>{row.gb}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
