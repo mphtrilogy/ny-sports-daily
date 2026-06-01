@@ -880,7 +880,7 @@ async function fetchNYNews() {
   }));
 
 
-  // ── 4. OUR OWN API ROUTE — NY Post, SB Nation, MLB Trade Rumors ───────────
+  // ── 4. OUR OWN API ROUTE — NY Post, Google News, SB Nation ────────────────
   try {
     const apiJson = await safeFetch("/api/news");
     if (apiJson?.articles) {
@@ -891,42 +891,6 @@ async function fetchNYNews() {
       });
     }
   } catch(e) {}
-
-  // ── 5. GOOGLE NEWS via rss2json (client-side, works from browser) ─────────
-  // rss2json fetches Google News RSS with CORS — this runs in the browser
-  const GOOGLE_FEEDS = [
-    { url:"https://news.google.com/rss/search?q=%22new+york+yankees%22&hl=en-US&gl=US&ceid=US:en",    name:"Google News", team:"Yankees"   },
-    { url:"https://news.google.com/rss/search?q=%22new+york+mets%22&hl=en-US&gl=US&ceid=US:en",       name:"Google News", team:"Mets"      },
-    { url:"https://news.google.com/rss/search?q=%22new+york+jets%22+nfl&hl=en-US&gl=US&ceid=US:en",   name:"Google News", team:"Jets"      },
-    { url:"https://news.google.com/rss/search?q=%22new+york+giants%22+nfl&hl=en-US&gl=US&ceid=US:en", name:"Google News", team:"Giants"    },
-    { url:"https://news.google.com/rss/search?q=%22new+york+knicks%22&hl=en-US&gl=US&ceid=US:en",     name:"Google News", team:"Knicks"    },
-    { url:"https://news.google.com/rss/search?q=%22brooklyn+nets%22+nba&hl=en-US&gl=US&ceid=US:en",   name:"Google News", team:"Nets"      },
-    { url:"https://news.google.com/rss/search?q=%22new+york+rangers%22+nhl&hl=en-US&gl=US&ceid=US:en",name:"Google News", team:"Rangers"   },
-    { url:"https://news.google.com/rss/search?q=%22new+york+islanders%22&hl=en-US&gl=US&ceid=US:en",  name:"Google News", team:"Islanders" },
-    { url:"https://news.google.com/rss/search?q=%22new+jersey+devils%22+nhl&hl=en-US&gl=US&ceid=US:en",name:"Google News",team:"Devils"    },
-    { url:"https://news.google.com/rss/search?q=%22new+york+liberty%22+wnba&hl=en-US&gl=US&ceid=US:en",name:"Google News",team:"Liberty"   },
-  ];
-  await Promise.all(GOOGLE_FEEDS.map(async ({ url, name, team }) => {
-    try {
-      const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=15`);
-      const json = await r.json();
-      if (json.status !== "ok" || !json.items?.length) return;
-      json.items.forEach(item => {
-        const title = (item.title || "").replace(/\s*-\s*[^-]+$/, "").trim();
-        if (!title || seen.has(title)) return;
-        // Build a Google News search link — takes user directly to the article
-        const searchLink = `https://news.google.com/search?q=${encodeURIComponent(title)}&hl=en-US&gl=US`;
-        seen.add(title);
-        results.push({
-          title, isNY:true, source:name, team, sport:"NEWS",
-          link:  searchLink,
-          desc:  (item.description||"").replace(/<[^>]*>/g,"").trim().slice(0,250),
-          pub:   item.pubDate || "",
-          image: item.thumbnail || null,
-        });
-      });
-    } catch(e) {}
-  }));
 
   // ── 5. Reddit ──────────────────────────────────────────────────────────────
   const REDDIT_SUBS = [
