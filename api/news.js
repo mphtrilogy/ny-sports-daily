@@ -182,29 +182,57 @@ export default async function handler(req, res) {
   async function parseGoogleNews(xml, src, team) {
     if (!xml) return;
     const items = xml.match(/<item[\s\S]*?<\/item>/g) || [];
-    // Process up to 8 items per team (limit redirects)
-    const parsed = items.slice(0, 8).map(item => {
+
+    // For each item, extract the <source url="PUBLISHER_FEED"> tag
+    // Then fetch that publisher's own RSS to get the real article URL
+    const parsed = items.slice(0, 10).map(item => {
       const title = cleanText(
         item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
         item.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1] || ""
-      );
-      if (!title) return null;
-      // Extract Google redirect URL from description (entity-encoded href)
-      const descRaw =
-        item.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1] ||
-        item.match(/<description[^>]*>([\s\S]*?)<\/description>/)?.[1] || "";
-      const googleUrl = extractGoogleHref(descRaw) || extractGoogleHref(item);
-      const pub = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
-      const descText = cleanText(descRaw.replace(/<[^>]*>/g," ")).slice(0,200);
-      return { title, googleUrl, pub, descText };
-    }).filter(Boolean);
+      ).replace(/\s*-\s*[^-]+$/, "").trim(); // strip "- Publisher Name" suffix
 
-    // Follow all Google redirects in parallel to get real article URLs
-    await Promise.all(parsed.map(async ({ title, googleUrl, pub, descText }) => {
-      if (!googleUrl) return;
-      const realUrl = await decodeGoogleNewsUrl(googleUrl);
-      if (realUrl && isGoodUrl(realUrl)) {
-        addItem(title, realUrl, descText, pub, src, team, null);
+      // <source url="REAL_FEED_URL">Publisher</source>
+      const sourceUrl = item.match(/<source[^>]+url="([^"]+)"/)?.[1];
+      const pub = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
+      return { title, sourceUrl, pub };
+    }).filter(p => p.title && p.sourceUrl);
+
+    // Fetch each publisher feed and find the matching article by title
+    await Promise.all(parsed.map(async ({ title, sourceUrl, pub }) => {
+      if (!isGoodUrl(sourceUrl)) return;
+      const feedXml = await safeFetch(sourceUrl);
+      if (!feedXml) return;
+
+      // Find item in publisher feed whose title matches
+      const feedItems = feedXml.match(/<item[\s\S]*?<\/item>/g) || [];
+      for (const fitem of feedItems.slice(0, 20)) {
+        const ftitle = cleanText(
+          fitem.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
+          fitem.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1] || ""
+        );
+        // Check if titles match closely (Google title may be shortened)
+        const match = ftitle.toLowerCase().includes(title.toLowerCase().slice(0, 30)) ||
+                      title.toLowerCase().includes(ftitle.toLowerCase().slice(0, 30));
+        if (!match) continue;
+
+        // Got a match — extract the real URL from the publisher feed item
+        const guidFalse = /<guid[^>]+isPermaLink\s*=\s*["']false["'][^>]*>([\s\S]*?)<\/guid>/i.exec(fitem);
+        const guidDefault = /<guid[^>]*>([\s\S]*?)<\/guid>/i.exec(fitem);
+        const linkWrapped = fitem.match(/<link>(https?:\/\/[^<]+)<\/link>/i)?.[1]?.trim();
+        const linkRaw = fitem.match(/<link[^>]*>\s*(https?:\/\/[^\s<"]+)/i)?.[1]?.trim();
+
+        let realUrl = "";
+        if (!guidFalse && guidDefault?.[1]?.startsWith("http")) realUrl = guidDefault[1].trim();
+        if (!realUrl && linkWrapped && isGoodUrl(linkWrapped)) realUrl = linkWrapped;
+        if (!realUrl && linkRaw && isGoodUrl(linkRaw)) realUrl = linkRaw;
+
+        if (realUrl && isGoodUrl(realUrl)) {
+          const desc = cleanText(
+            fitem.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1] || ""
+          ).slice(0, 300);
+          addItem(ftitle || title, realUrl, desc, pub, src, team, null);
+          break;
+        }
       }
     }));
   }
