@@ -6766,9 +6766,9 @@ function SpinTab() {
       const TEAM_MAP = {
         "YANKEES":"YANKEES","METS":"METS","JETS":"JETS","GIANTS":"GIANTS",
         "KNICKS":"KNICKS","RANGERS":"RANGERS","ISLANDERS":"ISLANDERS",
-        "NETS":"NETS","LIBERTY":"LIBERTY",
-        // These don't have dedicated facts yet — will show random NY fact
-        "DEVILS":null,"RED BULLS":null,"GOTHAM FC":null,
+        "NETS":"NETS","LIBERTY":"LIBERTY","DEVILS":"DEVILS",
+        "RED BULLS":"RED BULLS","GOTHAM FC":"GOTHAM FC",
+        "NYCFC":"NYCFC",
       };
       const teamKey = TEAM_MAP[team];
       const row = teamKey
