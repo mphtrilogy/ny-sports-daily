@@ -3615,7 +3615,7 @@ function SiteSearch({ query, onSelect }) {
     { team:"Rangers", score:72, title:"ELEVATED SUFFERING — 1994 was the last Cup" },
     { team:"Giants", score:65, title:"MODERATE SUFFERING — 4 Super Bowls but recent drought" },
     { team:"Islanders", score:62, title:"MODERATE SUFFERING — 43 years since dynasty ended" },
-    { team:"Nets", score:55, title:"EXISTENTIAL CONFUSION — never won an NBA title" },
+    { team:"Nets", score:74, title:"DEEP SUFFERING — never won an NBA title in any city" },
     { team:"Yankees", score:35, title:"BASELINE SUFFERING — 27 titles but 17-year drought" },
     { team:"Devils", score:22, title:"SURPRISINGLY MANAGEABLE — 3 Cups in 9 years" },
     { team:"Liberty", score:15, title:"REIGNING CHAMPIONS — back-to-back WNBA titles" },
@@ -5162,7 +5162,7 @@ function MiseryTab() {
       score:98,
       title:"DEFCON 1 — MAXIMUM SUFFERING",
       last:"1969", drought:57,
-      lowlights:["56 years without a Super Bowl — longest drought in the NFL","Missed on Dan Marino in 1983 (took Ken O'Brien)","Brett Favre torn Achilles Week 4, 2008","Sanchez Butt Fumble on national TV 2012","Sam Darnold's ghost haunts every draft pick","Aaron Rodgers: Achilles in Week 1, 2023"],
+      lowlights:["57 years without a Super Bowl — longest drought in the NFL","Missed on Dan Marino in 1983 (took Ken O'Brien)","Brett Favre torn shoulder/elbow, threw 8 INTs in 2008 — fell apart after promising start","Sanchez Butt Fumble on national TV 2012","Sam Darnold seeing ghosts on MNF — a truly historic lowlight","Aaron Rodgers: torn Achilles on play 4 of his debut, 2023"],
       brightside:"They do have Super Bowl III and Broadway Joe's guarantee — the greatest single moment any NY franchise has ever produced. Hope, however faint, springs eternal each fall.",
     },
     {
@@ -5207,11 +5207,11 @@ function MiseryTab() {
     },
     {
       team:"Nets", emoji:"🏀", color:"#000000",
-      score:55,
-      title:"EXISTENTIAL CONFUSION",
+      score:74,
+      title:"DEEP SUFFERING — ZERO NBA TITLES",
       last:"Never (NBA)", drought:999,
-      lowlights:["Never won an NBA championship","Dr. J sold to 76ers to pay the ABA-NBA merger fee","KD/Kyrie/Harden Big 3 never won a single playoff round","Moved from Jersey to Brooklyn — identity crisis","Brook Lopez era was good but not good enough"],
-      brightside:"Dr. J's two ABA championships count in the heart even if not in the NBA ledger. Brooklyn gave the franchise a real identity and a beautiful home.",
+      lowlights:["Never won an NBA championship in ANY city (NJ or Brooklyn)","Dr. J sold to 76ers for $3M just to pay the ABA merger fee — franchise-altering betrayal","KD/Kyrie/Harden Big 3 assembled — never won a single playoff SERIES together","Kyrie flat-earther chaos derailed two promising seasons","The Simmons trade: gave up Harden for a player who refused to play","Moved from NJ to Brooklyn — 10+ years still no title, no Finals"],
+      brightside:"Brooklyn gave the franchise genuine identity, a beautiful arena, and real star power for the first time in decades. The draft capital stockpile means the next chapter could be written by a transcendent young core.",
     },
     {
       team:"Yankees", emoji:"⚾", color:"#003087",
