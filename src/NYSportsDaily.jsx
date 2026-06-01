@@ -1832,6 +1832,81 @@ function NewsCardSmall({ item, index }) {
   )
 }
 
+function GoogleNewsSection({ team }) {
+  const [items, setItems]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+
+  const TEAM_QUERIES = {
+    ALL:        "new york sports",
+    Yankees:    '"new york yankees"',
+    Mets:       '"new york mets"',
+    Jets:       '"new york jets" nfl',
+    Giants:     '"new york giants" nfl',
+    Knicks:     '"new york knicks"',
+    Nets:       '"brooklyn nets" nba',
+    Rangers:    '"new york rangers" nhl',
+    Islanders:  '"new york islanders"',
+    Devils:     '"new jersey devils" nhl',
+    Liberty:    '"new york liberty" wnba',
+    NYCFC:      '"nycfc" soccer',
+    "Red Bulls":'"new york red bulls"',
+    "Gotham FC":'"gotham fc" nwsl',
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    setItems([]);
+    const q = TEAM_QUERIES[team] || TEAM_QUERIES.ALL;
+    const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
+    // Use rss2json to parse Google News RSS from browser (works client-side)
+    fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=15`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === "ok" && data.items?.length) {
+          setItems(data.items.map(item => ({
+            title: item.title?.replace(/\s*-\s*[^-]+$/, "").trim(),
+            source: item.author || item.title?.match(/\s*-\s*([^-]+)$/)?.[1]?.trim() || "Google News",
+            pub: item.pubDate,
+            // Link to Google News search for this headline — user clicks through to article
+            link: `https://news.google.com/search?q=${encodeURIComponent(item.title?.replace(/\s*-\s*[^-]+$/,"").trim()||"")}&hl=en-US`,
+          })));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [team]);
+
+  if (loading) return null;
+  if (!items.length) return null;
+
+  return (
+    <div style={{marginTop:24}}>
+      <div style={styles.newsDivider}>
+        <span style={styles.newsDividerText}>📰 MORE HEADLINES VIA GOOGLE NEWS</span>
+      </div>
+      <div style={{padding:"8px 0", marginBottom:8, fontSize:9, color:"#555"}}>
+        Headlines from across the web · Click any story to search Google News for the full article
+      </div>
+      <div style={{display:"flex", flexDirection:"column", gap:0}}>
+        {items.map((item, i) => (
+          <a key={i} href={item.link} target="_blank" rel="noopener noreferrer"
+            style={{display:"flex", justifyContent:"space-between", alignItems:"center",
+              padding:"8px 10px", borderBottom:"1px solid #1a1a1a", textDecoration:"none",
+              background: i%2===0 ? "#0e0e0e" : "#111",
+              gap:10}}>
+            <span style={{fontSize:12, color:"#e8e0d0", fontFamily:"'Georgia',serif", lineHeight:1.3, flex:1}}>
+              {item.title}
+            </span>
+            <span style={{fontSize:9, color:"#555", flexShrink:0, whiteSpace:"nowrap"}}>
+              {item.source} · Google News →
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function NewsTab({ news, loading }) {
   const [section, setSection] = useState("HEADLINES");
   const [filter, setFilter] = useState("NY");
@@ -1952,6 +2027,8 @@ function NewsTab({ news, loading }) {
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))", gap:0 }}>
                 {filtered.slice(4,80).map((item,i) => <NewsCardSmall key={i} item={item} index={i} />)}
               </div>
+              {/* Google News Headlines — titles from Google News, link to search */}
+              <GoogleNewsSection team={teamFilter} />
             </>
           )}
         </>
