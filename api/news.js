@@ -1,5 +1,4 @@
 // api/news.js — Vercel Serverless Function
-// NY Sports Daily news aggregator
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -12,13 +11,13 @@ export default async function handler(req, res) {
     return (s||"")
       .replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">")
       .replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&nbsp;/g," ")
-      .replace(/&#8216;/g,"'").replace(/&#8217;/g,"'").replace(/&#8220;/g,'"')
-      .replace(/&#8221;/g,'"').replace(/&#8212;/g,"—").replace(/&#8211;/g,"–")
+      .replace(/&#8216;/g,"'").replace(/&#8217;/g,"'")
+      .replace(/&#8220;/g,'"').replace(/&#8221;/g,'"')
+      .replace(/&#8212;/g,"—").replace(/&#8211;/g,"–")
       .replace(/&#\d+;/g,"");
   }
   const stripHTML = s => (s||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();
   const clean = s => stripHTML(decodeEntities(s||"")).trim();
-  const isUrl = u => !!(u && u.startsWith("http"));
 
   function add(title, link, desc, pub, source, team, image) {
     const t = clean(title);
@@ -42,33 +41,18 @@ export default async function handler(req, res) {
     } catch { return null; }
   }
 
-  // Extract best link from an RSS <item> block
   function getLink(item) {
-    // 1. <link> tag — in RSS the item <link> is the article URL
-    //    WordPress puts it as bare text: <link>https://...</link>
-    //    OR after a self-closing: <link/>\nhttps://...
     const linkInTag = item.match(/<link>(https?:\/\/[^<\s]+)/i)?.[1]?.trim();
     if (linkInTag) return linkInTag;
-
-    // 2. <guid isPermaLink="true"> or <guid> with no isPermaLink attr
     const guidFalse = /<guid[^>]+isPermaLink\s*=\s*['"]false['"]/i.test(item);
     if (!guidFalse) {
       const guid = item.match(/<guid[^>]*>(https?:\/\/[^<]+)<\/guid>/i)?.[1]?.trim();
       if (guid) return guid;
     }
-
-    // 3. <link/> followed by URL on same or next line
     const afterSelfClose = item.match(/<link\s*\/>\s*(https?:\/\/[^\s<]+)/i)?.[1]?.trim();
     if (afterSelfClose) return afterSelfClose;
-
-    // 4. atom:link with rel="alternate"
-    const atomAlt = item.match(/<atom:link[^>]+rel=['"]alternate['"][^>]+href=['"]([^'"]+)['"]/i)?.[1];
-    if (atomAlt && isUrl(atomAlt)) return atomAlt;
-
-    // 5. Any CDATA guid that's a URL
     const guidCdata = item.match(/<guid[^>]*><!\[CDATA\[(https?:\/\/[^\]]+)\]\]>/i)?.[1]?.trim();
     if (guidCdata) return guidCdata;
-
     return "";
   }
 
@@ -86,51 +70,12 @@ export default async function handler(req, res) {
       const pub = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
       const image =
         item.match(/<media:content[^>]+url="([^"]+\.(?:jpg|jpeg|png|webp)[^"]*)"/i)?.[1] ||
-        item.match(/<enclosure[^>]+url="([^"]+\.(?:jpg|jpeg|png|webp))"/i)?.[1] ||
-        item.match(/<media:thumbnail[^>]+url="([^"]+)"/i)?.[1] || null;
+        item.match(/<enclosure[^>]+url="([^"]+\.(?:jpg|jpeg|png|webp))"/i)?.[1] || null;
       if (title && link) add(clean(title), link, desc, pub, source, team, image);
     });
   }
 
-  // Google News: extract <source url="PUBLISHER_FEED"> and fetch real article
-  async function parseGoogleNews(xml, src, team) {
-    if (!xml) return;
-    const items = xml.match(/<item[\s\S]*?<\/item>/g) || [];
-    await Promise.all(items.slice(0,8).map(async item => {
-      // Title — strip trailing " - Publisher Name"
-      const rawTitle =
-        item.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
-        item.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1] || "";
-      const title = clean(rawTitle).replace(/\s*-\s*[^-]{1,40}$/, "").trim();
-      if (!title) return;
-
-      // Publisher's own RSS feed URL from <source url="...">
-      const sourceUrl = item.match(/<source[^>]+url="([^"]+)"/)?.[1];
-      const pub = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || "";
-      if (!sourceUrl || !isUrl(sourceUrl)) return;
-
-      // Fetch publisher feed and find matching article
-      const feedXml = await get(sourceUrl);
-      if (!feedXml) return;
-      const feedItems = feedXml.match(/<item[\s\S]*?<\/item>/g) || [];
-      for (const fi of feedItems.slice(0,15)) {
-        const ftitle = clean(
-          fi.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/)?.[1] ||
-          fi.match(/<title[^>]*>([\s\S]*?)<\/title>/)?.[1] || ""
-        );
-        const titleCore = title.toLowerCase().slice(0,25);
-        if (!ftitle.toLowerCase().includes(titleCore) &&
-            !titleCore.includes(ftitle.toLowerCase().slice(0,25))) continue;
-        const link = getLink(fi);
-        if (!link) continue;
-        const desc = fi.match(/<description><!\[CDATA\[([\s\S]*?)\]\]><\/description>/)?.[1] || "";
-        add(ftitle||title, link, clean(desc).slice(0,300), pub, src, team, null);
-        break;
-      }
-    }));
-  }
-
-  // ── FEEDS ──────────────────────────────────────────────────────────────────
+  // ── NY POST ────────────────────────────────────────────────────────────────
   const NY_POST = [
     { url:"https://nypost.com/tag/new-york-yankees/feed/",    team:"Yankees",   src:"NY Post" },
     { url:"https://nypost.com/tag/new-york-mets/feed/",       team:"Mets",      src:"NY Post" },
@@ -143,53 +88,8 @@ export default async function handler(req, res) {
     { url:"https://nypost.com/tag/new-jersey-devils/feed/",   team:"Devils",    src:"NY Post" },
   ];
 
-  const GOOGLE = [
-    { q:'"new york yankees"',       team:"Yankees"   },
-    { q:'"new york mets"',          team:"Mets"      },
-    { q:'"new york jets" nfl',      team:"Jets"      },
-    { q:'"new york giants" nfl',    team:"Giants"    },
-    { q:'"new york knicks"',        team:"Knicks"    },
-    { q:'"brooklyn nets" nba',      team:"Nets"      },
-    { q:'"new york rangers" nhl',   team:"Rangers"   },
-    { q:'"new york islanders"',     team:"Islanders" },
-    { q:'"new jersey devils" nhl',  team:"Devils"    },
-    { q:'"new york liberty" wnba',  team:"Liberty"   },
-  ].map(f => ({
-    url:`https://news.google.com/rss/search?q=${encodeURIComponent(f.q)}&hl=en-US&gl=US&ceid=US:en`,
-    team:f.team, src:"Google News"
-  }));
-
-  const GOOGLE = [
-    { url:"https://news.google.com/rss/search?q=%22new+york+yankees%22&hl=en-US&gl=US&ceid=US:en",    team:"Yankees",   src:"Google News" },
-    { url:"https://news.google.com/rss/search?q=%22new+york+mets%22&hl=en-US&gl=US&ceid=US:en",       team:"Mets",      src:"Google News" },
-    { url:"https://news.google.com/rss/search?q=%22new+york+jets%22+nfl&hl=en-US&gl=US&ceid=US:en",   team:"Jets",      src:"Google News" },
-    { url:"https://news.google.com/rss/search?q=%22new+york+giants%22+nfl&hl=en-US&gl=US&ceid=US:en", team:"Giants",    src:"Google News" },
-    { url:"https://news.google.com/rss/search?q=%22new+york+knicks%22&hl=en-US&gl=US&ceid=US:en",     team:"Knicks",    src:"Google News" },
-    { url:"https://news.google.com/rss/search?q=%22brooklyn+nets%22+nba&hl=en-US&gl=US&ceid=US:en",   team:"Nets",      src:"Google News" },
-    { url:"https://news.google.com/rss/search?q=%22new+york+rangers%22+nhl&hl=en-US&gl=US&ceid=US:en",team:"Rangers",   src:"Google News" },
-    { url:"https://news.google.com/rss/search?q=%22new+york+islanders%22&hl=en-US&gl=US&ceid=US:en",  team:"Islanders", src:"Google News" },
-    { url:"https://news.google.com/rss/search?q=%22new+jersey+devils%22+nhl&hl=en-US&gl=US&ceid=US:en",team:"Devils",   src:"Google News" },
-    { url:"https://news.google.com/rss/search?q=%22new+york+liberty%22+wnba&hl=en-US&gl=US&ceid=US:en",team:"Liberty",  src:"Google News" },
-  ];
-
-  // Fetch Google News via rss2json (works server-side, Google URLs work when clicked)
-  await Promise.all(GOOGLE.map(async ({ url, team, src }) => {
-    try {
-      const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=15`);
-      if (!r.ok) return;
-      const json = await r.json();
-      if (json.status !== "ok") return;
-      (json.items||[]).forEach(item => {
-        const title = (item.title||"").replace(/\s*-\s*[^-]+$/, "").trim();
-        if (!title) return;
-        // item.link from rss2json for Google News = the Google article URL — works when clicked
-        const link = item.link || item.guid || "";
-        if (!link.startsWith("http")) return;
-        add(title, link, (item.description||"").replace(/<[^>]*>/g,"").trim().slice(0,200),
-            item.pubDate||"", src, team, item.thumbnail||null);
-      });
-    } catch {}
-  }));
+  // ── SB NATION ──────────────────────────────────────────────────────────────
+  const SBN = [
     { url:"https://www.pinstripealley.com/rss/current",     team:"Yankees",   src:"Pinstripe Alley"   },
     { url:"https://www.amazinavenue.com/rss/current",        team:"Mets",      src:"Amazin' Avenue"    },
     { url:"https://www.ganggreennation.com/rss/current",     team:"Jets",      src:"Gang Green Nation" },
@@ -201,6 +101,7 @@ export default async function handler(req, res) {
     { url:"https://www.allaboutthejersey.com/rss/current",   team:"Devils",    src:"All About Jersey"  },
   ];
 
+  // ── OTHER ──────────────────────────────────────────────────────────────────
   const OTHER = [
     { url:"https://www.mlbtraderumors.com/new-york-yankees/feed", team:"Yankees", src:"MLB Trade Rumors" },
     { url:"https://www.mlbtraderumors.com/new-york-mets/feed",    team:"Mets",    src:"MLB Trade Rumors" },
@@ -208,14 +109,40 @@ export default async function handler(req, res) {
     { url:"https://amny.com/sports/feed/",                        team:"All NY",  src:"amNY" },
   ];
 
-  // Fetch RSS feeds in parallel
+  // ── GOOGLE NEWS via rss2json ───────────────────────────────────────────────
+  const GOOGLE = [
+    { url:"https://news.google.com/rss/search?q=%22new+york+yankees%22&hl=en-US&gl=US&ceid=US:en",     team:"Yankees"   },
+    { url:"https://news.google.com/rss/search?q=%22new+york+mets%22&hl=en-US&gl=US&ceid=US:en",        team:"Mets"      },
+    { url:"https://news.google.com/rss/search?q=%22new+york+jets%22+nfl&hl=en-US&gl=US&ceid=US:en",    team:"Jets"      },
+    { url:"https://news.google.com/rss/search?q=%22new+york+giants%22+nfl&hl=en-US&gl=US&ceid=US:en",  team:"Giants"    },
+    { url:"https://news.google.com/rss/search?q=%22new+york+knicks%22&hl=en-US&gl=US&ceid=US:en",      team:"Knicks"    },
+    { url:"https://news.google.com/rss/search?q=%22brooklyn+nets%22+nba&hl=en-US&gl=US&ceid=US:en",    team:"Nets"      },
+    { url:"https://news.google.com/rss/search?q=%22new+york+rangers%22+nhl&hl=en-US&gl=US&ceid=US:en", team:"Rangers"   },
+    { url:"https://news.google.com/rss/search?q=%22new+york+islanders%22&hl=en-US&gl=US&ceid=US:en",   team:"Islanders" },
+    { url:"https://news.google.com/rss/search?q=%22new+jersey+devils%22+nhl&hl=en-US&gl=US&ceid=US:en",team:"Devils"    },
+    { url:"https://news.google.com/rss/search?q=%22new+york+liberty%22+wnba&hl=en-US&gl=US&ceid=US:en",team:"Liberty"   },
+  ];
+
+  // Fetch all RSS feeds
   await Promise.all([...NY_POST, ...SBN, ...OTHER].map(async ({url,team,src}) => {
     parseRSS(await get(url), src, team);
   }));
 
-  // Google News — fetch publisher feeds to get real URLs
-  await Promise.all(GOOGLE.map(async ({url,team,src}) => {
-    await parseGoogleNews(await get(url), src, team);
+  // Google News via rss2json — CBMi URLs work when clicked in browser
+  await Promise.all(GOOGLE.map(async ({url,team}) => {
+    try {
+      const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=15`);
+      if (!r.ok) return;
+      const json = await r.json();
+      if (json.status !== "ok") return;
+      (json.items||[]).forEach(item => {
+        const title = clean((item.title||"").replace(/\s*-\s*[^-]+$/, ""));
+        const link = item.link || item.guid || "";
+        if (title && link.startsWith("http"))
+          add(title, link, (item.description||"").replace(/<[^>]*>/g,"").trim().slice(0,200),
+              item.pubDate||"", "Google News", team, item.thumbnail||null);
+      });
+    } catch {}
   }));
 
   results.sort((a,b) => new Date(b.pub||0) - new Date(a.pub||0));
