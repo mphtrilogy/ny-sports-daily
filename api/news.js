@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   function add(title, link, desc, pub, source, team, image) {
     const t = clean(title);
     const l = (link||"").trim();
-    if (!t || !isUrl(l) || seen.has(t)) return;
+    if (!t || !l.startsWith("http") || seen.has(t)) return;
     seen.add(t);
     results.push({ title:t, link:l, desc:clean(desc).slice(0,300),
       pub:pub||new Date().toISOString(), source, team, isNY:true, image:image||null });
@@ -159,7 +159,37 @@ export default async function handler(req, res) {
     team:f.team, src:"Google News"
   }));
 
-  const SBN = [
+  const GOOGLE = [
+    { url:"https://news.google.com/rss/search?q=%22new+york+yankees%22&hl=en-US&gl=US&ceid=US:en",    team:"Yankees",   src:"Google News" },
+    { url:"https://news.google.com/rss/search?q=%22new+york+mets%22&hl=en-US&gl=US&ceid=US:en",       team:"Mets",      src:"Google News" },
+    { url:"https://news.google.com/rss/search?q=%22new+york+jets%22+nfl&hl=en-US&gl=US&ceid=US:en",   team:"Jets",      src:"Google News" },
+    { url:"https://news.google.com/rss/search?q=%22new+york+giants%22+nfl&hl=en-US&gl=US&ceid=US:en", team:"Giants",    src:"Google News" },
+    { url:"https://news.google.com/rss/search?q=%22new+york+knicks%22&hl=en-US&gl=US&ceid=US:en",     team:"Knicks",    src:"Google News" },
+    { url:"https://news.google.com/rss/search?q=%22brooklyn+nets%22+nba&hl=en-US&gl=US&ceid=US:en",   team:"Nets",      src:"Google News" },
+    { url:"https://news.google.com/rss/search?q=%22new+york+rangers%22+nhl&hl=en-US&gl=US&ceid=US:en",team:"Rangers",   src:"Google News" },
+    { url:"https://news.google.com/rss/search?q=%22new+york+islanders%22&hl=en-US&gl=US&ceid=US:en",  team:"Islanders", src:"Google News" },
+    { url:"https://news.google.com/rss/search?q=%22new+jersey+devils%22+nhl&hl=en-US&gl=US&ceid=US:en",team:"Devils",   src:"Google News" },
+    { url:"https://news.google.com/rss/search?q=%22new+york+liberty%22+wnba&hl=en-US&gl=US&ceid=US:en",team:"Liberty",  src:"Google News" },
+  ];
+
+  // Fetch Google News via rss2json (works server-side, Google URLs work when clicked)
+  await Promise.all(GOOGLE.map(async ({ url, team, src }) => {
+    try {
+      const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=15`);
+      if (!r.ok) return;
+      const json = await r.json();
+      if (json.status !== "ok") return;
+      (json.items||[]).forEach(item => {
+        const title = (item.title||"").replace(/\s*-\s*[^-]+$/, "").trim();
+        if (!title) return;
+        // item.link from rss2json for Google News = the Google article URL — works when clicked
+        const link = item.link || item.guid || "";
+        if (!link.startsWith("http")) return;
+        add(title, link, (item.description||"").replace(/<[^>]*>/g,"").trim().slice(0,200),
+            item.pubDate||"", src, team, item.thumbnail||null);
+      });
+    } catch {}
+  }));
     { url:"https://www.pinstripealley.com/rss/current",     team:"Yankees",   src:"Pinstripe Alley"   },
     { url:"https://www.amazinavenue.com/rss/current",        team:"Mets",      src:"Amazin' Avenue"    },
     { url:"https://www.ganggreennation.com/rss/current",     team:"Jets",      src:"Gang Green Nation" },
