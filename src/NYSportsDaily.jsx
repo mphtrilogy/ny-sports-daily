@@ -4794,7 +4794,6 @@ function TodayTab() {
 
 // ─── POLLS TAB ─────────────────────────────────────────────────────────────
 const ALL_POLLS = [
-  // WEEK 1-8: GOAT BY TEAM
   { id:"goat_yankee",       question:"Who is the greatest Yankee of all time?",                        options:["Babe Ruth","Lou Gehrig","Mickey Mantle","Joe DiMaggio","Derek Jeter"] },
   { id:"goat_met",          question:"Who is the greatest Met of all time?",                           options:["Tom Seaver","Mike Piazza","Dwight Gooden","David Wright","Pete Alonso"] },
   { id:"goat_knick",        question:"Who is the greatest Knick of all time?",                         options:["Patrick Ewing","Walt Frazier","Willis Reed","Carmelo Anthony","Jalen Brunson"] },
@@ -4803,7 +4802,6 @@ const ALL_POLLS = [
   { id:"goat_ranger",       question:"Who is the greatest Ranger of all time?",                        options:["Mark Messier","Brian Leetch","Rod Gilbert","Mike Richter","Henrik Lundqvist"] },
   { id:"goat_islander",     question:"Who is the greatest Islander of all time?",                      options:["Bryan Trottier","Mike Bossy","Denis Potvin","Billy Smith","John Tavares"] },
   { id:"goat_devil",        question:"Who is the greatest Devil of all time?",                         options:["Martin Brodeur","Scott Stevens","Patrik Elias","Scott Niedermayer","Ken Daneyko"] },
-  // WEEK 9-16: MOMENTS & VENUES
   { id:"best_moment",       question:"Greatest NY sports moment ever?",                                options:["1969 Mets WS","Namath Guarantee","Rangers 1994 Cup","Helmet Catch","Piazza 9/11 HR"] },
   { id:"best_stadium",      question:"Best NY sports venue?",                                          options:["Yankee Stadium","Madison Square Garden","MetLife Stadium","Citi Field","UBS Arena"] },
   { id:"misery_leader",     question:"Which NY team makes you suffer the most?",                       options:["Jets","Mets","Knicks","Islanders","Rangers"] },
@@ -4812,7 +4810,6 @@ const ALL_POLLS = [
   { id:"best_choke",        question:"Most painful NY sports collapse?",                               options:["2004 ALCS (Yankees blew 3-0)","2007 Mets (7-game September collapse)","2015 Mets World Series","2019 Yankees ALCS"] },
   { id:"best_dynasty",      question:"Greatest NY dynasty?",                                           options:["Yankees (any era)","Islanders 1980-83","Knicks early 70s","Devils 1995-2003","Liberty 2024-25"] },
   { id:"best_single_season",question:"Greatest single NY team season?",                                options:["1927 Yankees","1986 Mets","1998 Yankees","1969 Mets","1970 Knicks"] },
-  // WEEK 17-24: POSITIONS & INDIVIDUALS
   { id:"best_qb",           question:"Best NY quarterback ever?",                                      options:["Joe Namath","Eli Manning","Phil Simms","Y.A. Tittle"] },
   { id:"best_pitcher",      question:"Best NY pitcher of all time?",                                   options:["Tom Seaver","Whitey Ford","Dwight Gooden","Mariano Rivera","Jacob deGrom"] },
   { id:"best_coach",        question:"Greatest NY coach/manager ever?",                                options:["Casey Stengel","Bill Parcells","Red Holzman","Al Arbour","Joe Torre"] },
@@ -4821,7 +4818,6 @@ const ALL_POLLS = [
   { id:"best_broadcaster",  question:"Best NY sports broadcaster ever?",                               options:["Bob Murphy","Phil Rizzuto","Marv Albert","Mike Breen","Gary Cohen"] },
   { id:"best_walkup",       question:"Best NY sports entrance/walk-up moment?",                        options:["Enter Sandman (Rivera)","Jeter's intro at the Stadium","MSG Rangers goal song","Mets Piazza at-bats"] },
   { id:"best_owner",        question:"Most impactful NY sports owner?",                                options:["George Steinbrenner","Steve Cohen","James Dolan (complicated)","Charles Wang"] },
-  // WEEK 25-32: DEEP DEBATES
   { id:"seaver_gooden",     question:"Better career as a Met — Seaver or Gooden?",                    options:["Tom Seaver — no question","Doc Gooden — peak was higher","Too close to call"] },
   { id:"mets_1969_1986",    question:"Better Mets team — 1969 or 1986?",                              options:["1969 — the miracle makes it","1986 — best team top to bottom","Both equally legendary"] },
   { id:"best_trade_ever",   question:"Best trade in NY sports history?",                               options:["Yankees acquire Babe Ruth (1920)","Piazza trade to Mets (1998)","Jason Kidd to Nets (2001)","Messier trade to Rangers (1991)"] },
@@ -4830,7 +4826,6 @@ const ALL_POLLS = [
   { id:"best_individual",   question:"Greatest single individual performance in NY sports?",           options:["Reggie 3 HRs consecutive pitches (1977)","Messier hat trick guarantee (1994)","Simms 22/25 in SB XXI","Secretariat 31 lengths (1973)","Seaver 19 Ks including 10 straight (1970)"] },
   { id:"subway_series",     question:"Who wins the all-time Subway Series?",                          options:["Yankees — no contest","Mets — heart over history","Too close to call"] },
   { id:"most_lovable_loser",question:"Most lovable NY team despite the suffering?",                    options:["The Jets — forever hopeful","The Knicks — MSG still rocks","The Mets — Ya Gotta Believe","The Islanders — loyal Long Island"] },
-  // WEEK 33-40: FUN & CULTURE
   { id:"best_chant",        question:"Best NY sports chant or song?",                                 options:["Enter Sandman (Yankees)","Let's Go Mets","Let's Go Rangers","DE-FENSE (Knicks/Giants)","1940! (Rangers fans to taunt them)"] },
   { id:"best_jersey",       question:"Best NY sports jersey ever designed?",                           options:["Yankees pinstripes","Mets '86 home blues","Rangers white with crest","Knicks blue and orange","Giants blue"] },
   { id:"best_borough",      question:"Best borough for NY sports fans?",                               options:["The Bronx — Yankee country","Queens — Mets and US Open","Brooklyn — Nets and nostalgia","Manhattan — MSG rules","Long Island — Islanders diehards"] },
@@ -4839,7 +4834,6 @@ const ALL_POLLS = [
   { id:"best_moment_you_witnessed", question:"Which NY moment do you most wish you'd seen live?",    options:["Secretariat's Belmont (1973)","Rangers win Cup (1994)","Miracle Mets clinch (1969)","Namath's guarantee game (1969)","Reggie's 3 HRs (1977 WS)"] },
   { id:"goat_hitter",       question:"Greatest pure hitter to play in New York?",                     options:["Babe Ruth","Joe DiMaggio","Mickey Mantle","Mike Piazza","Derek Jeter"] },
   { id:"goat_defender",     question:"Greatest defensive player in NY sports history?",               options:["Lawrence Taylor (Giants)","Willis Reed (Knicks)","Martin Brodeur (Devils)","Denis Potvin (Islanders)","Darrelle Revis (Jets)"] },
-  // WEEK 41-48: ICONIC NY EVENTS
   { id:"us_open_best_match",question:"Greatest US Open Tennis moment at Flushing Meadows?",           options:["Connors 1991 run at age 39","Serena's first title at 17 (1999)","Arthur Ashe wins first Open Era (1968)","Sampras final career slam (2002)"] },
   { id:"bethpage_best",     question:"Best major golf at Bethpage Black?",                            options:["Tiger 2002 — only one under par","Koepka PGA 2019 — brutally dominated","Ryder Cup crowd energy 2025","Lucas Glover dramatic win 2009"] },
   { id:"belmont_best",      question:"Greatest Belmont Stakes moment?",                               options:["Secretariat 31 lengths (1973)","American Pharoah ends 37-year drought (2015)","Affirmed vs Alydar thriller (1978)","Seattle Slew stays undefeated (1977)"] },
@@ -4848,7 +4842,6 @@ const ALL_POLLS = [
   { id:"goat_golf_ny",      question:"Best golfer to play NY's US Open courses?",                     options:["Tiger Woods (Bethpage 2002)","Jack Nicklaus (multiple Open finals)","Bryson DeChambeau (Winged Foot 2020)","Brooks Koepka (Shinnecock 2018)"] },
   { id:"belmont_triple",    question:"Most dominant Triple Crown performance?",                        options:["Secretariat 1973 — 31 lengths","Seattle Slew 1977 — undefeated","Affirmed 1978 — beat Alydar every race","American Pharoah 2015 — ended the drought"] },
   { id:"best_ny_sports_year",question:"Best single year in NY sports history?",                       options:["1969 (Mets WS + Jets SB win)","1994 (Rangers Cup)","1998-2000 (Yankees dynasty peak)","1980-83 (Islanders 4 Cups)","1986 (Mets WS + Giants Super Bowl run)"] },
-  // WEEK 49-52: YEAR-END BIG ONES
   { id:"goat_net",          question:"Greatest Net of all time?",                                     options:["Julius Erving (ABA)","Jason Kidd","Dražen Petrović","Buck Williams","Vince Carter"] },
   { id:"goat_liberty",      question:"Greatest NY Liberty player ever?",                              options:["Breanna Stewart","Sabrina Ionescu","Teresa Weatherspoon","Tina Charles","Cappie Pondexter"] },
   { id:"goat_net_modern",   question:"Best era of Nets basketball?",                                  options:["Dr. J ABA championships (1974/1976)","Jason Kidd Finals runs (2002/2003)","KD/Kyrie Brooklyn era","Jason Williams/Vince Carter era"] },
@@ -5392,38 +5385,32 @@ function AwardsTab() {
 function ForgottenTab() {
   const [teamFilter, setTeamFilter] = useState("ALL");
   const FORGOTTEN = [
-    // Yankees
     { name:"Tommy John",       team:"Yankees", era:"1979–1982,1986–1989", emoji:"⚾", why:"The man who gave pitchers a second life. Tommy John surgery is named after him. Went 21-9 as a Yankee in 1979.", wiki:"https://en.wikipedia.org/wiki/Tommy_John" },
     { name:"Dave Righetti",    team:"Yankees", era:"1979–1990", emoji:"⚾", why:"No-hit the Red Sox on July 4, 1983. Led the AL in saves in 1986 with 46. The bridge between dynasty eras.", wiki:"https://en.wikipedia.org/wiki/Dave_Righetti" },
     { name:"Willie Randolph",  team:"Yankees", era:"1976–1988", emoji:"⚾", why:"The heartbeat of the late-70s Yankees dynasty. Six All-Star selections, four World Series. Criminally overlooked for the Hall.", wiki:"https://en.wikipedia.org/wiki/Willie_Randolph" },
     { name:"Ron Guidry",       team:"Yankees", era:"1975–1988", emoji:"⚾", why:"25-3 in 1978 — one of the most dominant single seasons by any pitcher ever. Louisiana Lightning.", wiki:"https://en.wikipedia.org/wiki/Ron_Guidry" },
     { name:"Chris Chambliss",  team:"Yankees", era:"1974–1979", emoji:"⚾", why:"His pennant-clinching home run off Mark Littell in 1976 is one of the most electrifying moments in Yankees playoff history.", wiki:"https://en.wikipedia.org/wiki/Chris_Chambliss" },
-    // Mets
     { name:"John Olerud",      team:"Mets",    era:"1997–1999", emoji:"⚾", why:"Hit .354 in 1998 — the best batting average by a Met since Cleon Jones in 1969. A complete player who deserved more recognition.", wiki:"https://en.wikipedia.org/wiki/John_Olerud" },
     { name:"Cleon Jones",      team:"Mets",    era:"1963–1975", emoji:"⚾", why:"Hit .340 in 1969 as the Mets won it all. Caught the final out of the 1969 World Series. Career New York Met.", wiki:"https://en.wikipedia.org/wiki/Cleon_Jones" },
     { name:"Al Leiter",        team:"Mets",    era:"1998–2004", emoji:"⚾", why:"The 2000 Subway Series ace. His two-out 9th inning against the Cubs in the 1999 wild card game remains one of the best single-game pitching performances in Mets history.", wiki:"https://en.wikipedia.org/wiki/Al_Leiter" },
     { name:"John Franco",      team:"Mets",    era:"1990–2001", emoji:"⚾", why:"All-time NL saves leader when he retired. A Queens kid who grew up rooting for the Mets and became their closer for a decade.", wiki:"https://en.wikipedia.org/wiki/John_Franco" },
     { name:"Edgardo Alfonzo",  team:"Mets",    era:"1995–2002", emoji:"⚾", why:"Hit .324 in 2000 with 25 HR. Perhaps the best all-around Mets player of the late 1990s. Maestro at 2B and 3B.", wiki:"https://en.wikipedia.org/wiki/Edgardo_Alfonzo" },
     { name:"Lenny Dykstra",    team:"Mets",    era:"1985–1989", emoji:"⚾", why:"Nails — the scrappiest lead-off hitter of his era. His single in Game 3 of the 1986 NLCS vs the Astros changed the series.", wiki:"https://en.wikipedia.org/wiki/Lenny_Dykstra" },
-    // Jets/Giants
     { name:"Wesley Walker",    team:"Jets",    era:"1977–1989", emoji:"🏈", why:"Legally blind in one eye — yet one of the most dangerous deep threats in NFL history. Part of the 1986 AFC Championship run.", wiki:"https://en.wikipedia.org/wiki/Wesley_Walker" },
     { name:"Otis Anderson",    team:"Giants",  era:"1986–1992", emoji:"🏈", why:"Super Bowl XXV MVP at age 34. Rushed for 102 yards. The unsung hero of the Giants' second championship.", wiki:"https://en.wikipedia.org/wiki/Ottis_Anderson" },
     { name:"Brad Van Pelt",    team:"Giants",  era:"1973–1983", emoji:"🏈", why:"Five straight Pro Bowls as a Giant. The unrecognized defensive leader who kept the franchise alive through a dark decade before LT and Parcells.", wiki:"https://en.wikipedia.org/wiki/Brad_Van_Pelt" },
     { name:"Joe Klecko",       team:"Jets",    era:"1977–1987", emoji:"🏈", why:"The only player in NFL history to be named to the Pro Bowl at three different positions — DE, DT, and NT. Heart of the NY Sack Exchange.", wiki:"https://en.wikipedia.org/wiki/Joe_Klecko" },
     { name:"Freeman McNeil",   team:"Jets",    era:"1981–1992", emoji:"🏈", why:"Led the NFL in rushing in 1982. A quiet, durable back who was the Jets' best offensive player through a decade of mediocrity.", wiki:"https://en.wikipedia.org/wiki/Freeman_McNeil" },
-    // Knicks
     { name:"Dick Barnett",     team:"Knicks",  era:"1965–1974", emoji:"🏀", why:"'Fall back, baby!' Two championships. An elegant shooter who anchored the backcourt alongside Frazier. Underappreciated champion.", wiki:"https://en.wikipedia.org/wiki/Dick_Barnett" },
     { name:"Bernard King",     team:"Knicks",  era:"1982–1987", emoji:"🏀", why:"Scored 60 points at Madison Square Garden in 1984. Before knee injuries, he was as unstoppable as anyone in the NBA — a pure scorer.", wiki:"https://en.wikipedia.org/wiki/Bernard_King" },
     { name:"Kerry Kittles",    team:"Nets",    era:"1996–2004", emoji:"🏀", why:"The building block of the Jason Kidd Finals teams. His smooth shooting and relentless defense made the Nets dangerous.", wiki:"https://en.wikipedia.org/wiki/Kerry_Kittles" },
     { name:"Micheal Ray Richardson", team:"Knicks", era:"1978–1982", emoji:"🏀", why:"One of the most gifted players the Knicks ever had. His 'The ship be sinking' quote is iconic. Addiction robbed the game of something special.", wiki:"https://en.wikipedia.org/wiki/Micheal_Ray_Richardson" },
-    // Rangers/Islanders/Devils
     { name:"Rod Gilbert",      team:"Rangers", era:"1960–1978", emoji:"🏒", why:"All-time Rangers scoring leader for decades. Overcame serious back surgery to become the franchise icon. First Ranger to have his number retired.", wiki:"https://en.wikipedia.org/wiki/Rod_Gilbert" },
     { name:"Ed Giacomin",      team:"Rangers", era:"1965–1975", emoji:"🏒", why:"Fast Eddie — goaltender who played with such personality MSG named the ice after him conceptually. HOF career, beloved in NY.", wiki:"https://en.wikipedia.org/wiki/Ed_Giacomin" },
     { name:"Bob Nystrom",      team:"Islanders",era:"1972–1986",emoji:"🏒", why:"Scored the OT goal that won the Islanders' first Stanley Cup in 1980. As beloved in Nassau County as any player in franchise history.", wiki:"https://en.wikipedia.org/wiki/Bob_Nystrom" },
     { name:"Butch Goring",     team:"Islanders",era:"1980–1985",emoji:"🏒", why:"The missing piece. Acquired mid-season 1980, he was the Conn Smythe winner that year and the defensive forward who made the dynasty work.", wiki:"https://en.wikipedia.org/wiki/Butch_Goring" },
     { name:"Patrik Elias",     team:"Devils",  era:"1994–2016", emoji:"🏒", why:"The all-time leading scorer in Devils history who played his entire career in New Jersey — quietly building one of the great NHL careers.", wiki:"https://en.wikipedia.org/wiki/Patrik_Elias" },
     { name:"Ken Daneyko",      team:"Devils",  era:"1983–2003", emoji:"🏒", why:"Mr. Devil — played all 1,283 NHL games in a Devils uniform. Three Cups. The soul of New Jersey hockey for 20 years.", wiki:"https://en.wikipedia.org/wiki/Ken_Daneyko" },
-    // US Open / Golf / Racing
     { name:"Corey Pavin",      team:"Shinnecock",era:"1995",   emoji:"⛳", why:"His 4-wood approach to the 72nd green at Shinnecock to win the 1995 US Open is one of the greatest clutch shots in golf history.", wiki:"https://en.wikipedia.org/wiki/Corey_Pavin" },
     { name:"Raymond Floyd",    team:"Shinnecock",era:"1986",   emoji:"⛳", why:"Won the 1986 US Open at Shinnecock Hills at age 43 — making him the oldest US Open champion in history at the time.", wiki:"https://en.wikipedia.org/wiki/Raymond_Floyd" },
   ];
@@ -5645,21 +5632,17 @@ function StatsTab() {
   };
 
   const RIVALS_DATA = [
-    // MLB
     { team1:"Yankees", team2:"Red Sox",    sport:"MLB", t1wins:"27 WS titles to 9", note:"Baseball's greatest rivalry — 100+ years of pure hatred" },
     { team1:"Yankees", team2:"Mets",       sport:"MLB", t1wins:"2000 Subway Series", note:"Queens vs The Bronx — the city divided every summer" },
     { team1:"Mets",    team2:"Phillies",   sport:"MLB", t1wins:"Split historically", note:"NL East division rivals — always intense" },
     { team1:"Yankees", team2:"Orioles",    sport:"MLB", t1wins:"Yankees lead AL East", note:"AL East rivals — old-school battles in the division" },
-    // NFL
     { team1:"Jets",    team2:"Dolphins",   sport:"NFL", t1wins:"Split all time", note:"AFC East rivals — Miami always haunted the Jets" },
     { team1:"Jets",    team2:"Bills",      sport:"NFL", t1wins:"Bills dominate recent era", note:"AFC East division battle" },
     { team1:"Giants",  team2:"Eagles",     sport:"NFL", t1wins:"Split historically", note:"NFC East — LT vs Philly, brutal division games" },
     { team1:"Giants",  team2:"Cowboys",    sport:"NFL", t1wins:"Cowboys lead all-time", note:"NFC East — America's Team vs NY's team" },
-    // NHL
     { team1:"Rangers", team2:"Islanders",  sport:"NHL", t1wins:"Rangers lead overall", note:"The Battle of New York — defining tri-state hockey wars" },
     { team1:"Rangers", team2:"Devils",     sport:"NHL", t1wins:"Devils dominated 90s-00s", note:"Metropolitan rivals — Messier's guarantee the defining moment" },
     { team1:"Islanders",team2:"Devils",    sport:"NHL", t1wins:"Devils won 3 Cups", note:"NJ vs LI — two dynasties from the same era" },
-    // NBA
     { team1:"Knicks",  team2:"Celtics",    sport:"NBA", t1wins:"Celtics lead all-time", note:"Reed vs Cowens, Ewing vs Bird — classic battles" },
     { team1:"Knicks",  team2:"Heat",       sport:"NBA", t1wins:"Split in key series", note:"Riley's revenge — he coached both sides" },
     { team1:"Nets",    team2:"Knicks",     sport:"NBA", t1wins:"Split in modern era", note:"Brooklyn vs Manhattan — the city's NBA rivalry" },
