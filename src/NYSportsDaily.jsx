@@ -1887,7 +1887,8 @@ function GoogleNewsSection({ team }) {
 }
 
 function NewsTab({ news, loading }) {
-  const [section, setSection] = useState("HEADLINES");
+  const [section, setSection]       = useState("HEADLINES");
+  const [sourceFilter, setSourceFilter] = useState("ALL"); // ALL | ESPN | NY POST | GOOGLE
   const [filter, setFilter] = useState("NY");
   const [sport,  setSport]  = useState("ALL");
   const [teamFilter, setTeamFilter] = useState("ALL");
@@ -1920,7 +1921,6 @@ function NewsTab({ news, loading }) {
     const combined = (item.title + " " + (item.desc||"") + " " + (item.source||"")).toLowerCase();
     const isNY = item.isNY || NY_KEYWORDS_CHECK.some(kw => combined.includes(kw));
     if (filter === "NY" && !isNY) return false;
-    // For soccer teams, require team name actually in title to avoid generic PL/world soccer
     if (["Red Bulls","NYCFC","Gotham FC"].includes(item.team) && filter === "NY") {
       const t = (item.title||"").toLowerCase();
       if (!t.includes("red bull") && !t.includes("nycfc") && !t.includes("new york city fc") && !t.includes("gotham")) return false;
@@ -1933,6 +1933,13 @@ function NewsTab({ news, loading }) {
       if (item.team === teamFilter) return true;
       if (item.source?.includes(teamFilter)) return true;
       return false;
+    }
+    if (sourceFilter !== "ALL") {
+      const src = (item.source||"").toLowerCase();
+      if (sourceFilter === "ESPN"        && !src.includes("espn"))         return false;
+      if (sourceFilter === "NY POST"     && !src.includes("ny post"))      return false;
+      if (sourceFilter === "GOOGLE NEWS" && !src.includes("google news"))  return false;
+      if (sourceFilter === "REDDIT"      && !src.includes("reddit"))       return false;
     }
     return true;
   });
@@ -1956,6 +1963,20 @@ function NewsTab({ news, loading }) {
       {/* HEADLINES SECTION */}
       {section === "HEADLINES" && (
         <>
+          {/* Source filter */}
+          <div style={{display:"flex", gap:6, flexWrap:"wrap", padding:"8px 0 12px", borderBottom:"1px solid #1a1a1a", marginBottom:12}}>
+            <span style={{fontSize:9, color:"#555", alignSelf:"center", letterSpacing:"0.1em", marginRight:4}}>SOURCE:</span>
+            {["ALL","ESPN","NY POST","GOOGLE NEWS","REDDIT"].map(s => (
+              <button key={s} onClick={() => setSourceFilter(s)}
+                style={{fontSize:9, padding:"3px 10px", letterSpacing:"0.1em", fontWeight:700,
+                  background: sourceFilter===s ? "#c8201c" : "transparent",
+                  color: sourceFilter===s ? "#fff" : "#555",
+                  border: sourceFilter===s ? "1px solid #c8201c" : "1px solid #333",
+                  cursor:"pointer", fontFamily:"'Georgia',serif"}}>
+                {s}
+              </button>
+            ))}
+          </div>
           <div style={{display:"flex", gap:8, flexWrap:"wrap", marginBottom:12, alignItems:"center"}}>
             <div style={{display:"flex", gap:4, marginRight:8}}>
               {["NY","ALL"].map(f => (
@@ -3794,10 +3815,8 @@ function SiteSearch({ query, onSelect }) {
 
 // ─── RECAP TAB ─────────────────────────────────────────────────────────────
 function RecapTab({ scores }) {
-  const [ytResults, setYtResults] = useState({});
-  const [loadingYT, setLoadingYT] = useState(false);
   const [yesterdayScores, setYesterdayScores] = useState([]);
-  const [loadingYesterday, setLoadingYesterday] = useState(true);
+  const [loadingYesterday, setLoadingYesterday]   = useState(true);
 
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
@@ -3811,36 +3830,36 @@ function RecapTab({ scores }) {
     });
   }, []);
 
-  // NY teams from scores
   const NY_NAMES = ["yankees","mets","jets","giants","knicks","nets","rangers","islanders","devils","liberty","nycfc","gotham","red bulls"];
-  const yesterdayNYGames = yesterdayScores.filter(s =>
-    [s.homeTeam, s.awayTeam].some(t => NY_NAMES.some(n => (t||"").toLowerCase().includes(n)))
-  );
 
-  // Fetch YouTube highlights for a team
-  async function fetchYTHighlights(query) {
-    if (ytResults[query]) return;
-    setLoadingYT(true);
-    try {
-      // Use YouTube's oEmbed + no-auth search via public RSS
-      const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&sp=EgIIAQ%3D%3D`;
-      setYtResults(prev => ({...prev, [query]: {url: searchUrl, query}}));
-    } catch(e) {}
-    setLoadingYT(false);
-  }
+  // Strict NY filter — must contain an actual NY team name, not just TX Rangers or SF Giants
+  const NY_EXCLUSIONS = ["texas rangers","texas ","sf giants","san francisco giants","kansas city","royals","houston","seattle mariners","boston red","minnesota twins","toronto blue","chicago white","cleveland","detroit","tampa bay","baltimore orioles","oakland","los angeles angels"];
+
+  const yesterdayNYGames = yesterdayScores.filter(s => {
+    const teams = `${s.homeTeam||""} ${s.awayTeam||""}`.toLowerCase();
+    // Must have an NY team
+    const hasNY = NY_NAMES.some(n => teams.includes(n));
+    // Must NOT be a non-NY game that accidentally matches (e.g. Texas Rangers)
+    if (teams.includes("rangers") && !teams.includes("new york rangers")) return false;
+    if (teams.includes("giants") && !teams.includes("new york giants")) return false;
+    return hasNY;
+  });
 
   const NY_TEAMS_RECAP = [
-    {name:"Yankees",   keywords:"New York Yankees highlights",    color:"#003087", emoji:"⚾"},
-    {name:"Mets",      keywords:"New York Mets highlights",       color:"#FF5910", emoji:"⚾"},
-    {name:"Knicks",    keywords:"New York Knicks highlights",     color:"#006BB6", emoji:"🏀"},
-    {name:"Nets",      keywords:"Brooklyn Nets highlights",       color:"#000000", emoji:"🏀"},
-    {name:"Rangers",   keywords:"New York Rangers highlights",    color:"#0038A8", emoji:"🏒"},
-    {name:"Islanders", keywords:"NY Islanders highlights",        color:"#00539B", emoji:"🏒"},
-    {name:"Devils",    keywords:"New Jersey Devils highlights",   color:"#CE1126", emoji:"🏒"},
-    {name:"Liberty",   keywords:"New York Liberty highlights",    color:"#007A5E", emoji:"🏀"},
-    {name:"Jets",      keywords:"New York Jets highlights",       color:"#125740", emoji:"🏈"},
-    {name:"Giants",    keywords:"New York Giants highlights",     color:"#0B2265", emoji:"🏈"},
+    {name:"Yankees",   keywords:"New York Yankees highlights",  color:"#003087", emoji:"⚾", espn:"https://www.espn.com/mlb/team/_/name/nyy"},
+    {name:"Mets",      keywords:"New York Mets highlights",     color:"#FF5910", emoji:"⚾", espn:"https://www.espn.com/mlb/team/_/name/nym"},
+    {name:"Knicks",    keywords:"New York Knicks highlights",   color:"#006BB6", emoji:"🏀", espn:"https://www.espn.com/nba/team/_/name/ny"},
+    {name:"Nets",      keywords:"Brooklyn Nets highlights",     color:"#444",    emoji:"🏀", espn:"https://www.espn.com/nba/team/_/name/bkn"},
+    {name:"Rangers",   keywords:"New York Rangers highlights",  color:"#0038A8", emoji:"🏒", espn:"https://www.espn.com/nhl/team/_/name/nyr"},
+    {name:"Islanders", keywords:"NY Islanders highlights",      color:"#00539B", emoji:"🏒", espn:"https://www.espn.com/nhl/team/_/name/nyi"},
+    {name:"Devils",    keywords:"New Jersey Devils highlights", color:"#CE1126", emoji:"🏒", espn:"https://www.espn.com/nhl/team/_/name/njd"},
+    {name:"Liberty",   keywords:"New York Liberty highlights",  color:"#007A5E", emoji:"🏀", espn:"https://www.espn.com/wnba/team/_/name/ny"},
+    {name:"Jets",      keywords:"New York Jets highlights",     color:"#125740", emoji:"🏈", espn:"https://www.espn.com/nfl/team/_/name/nyj"},
+    {name:"Giants",    keywords:"New York Giants highlights",   color:"#0B2265", emoji:"🏈", espn:"https://www.espn.com/nfl/team/_/name/nyg"},
   ];
+
+  const today = new Date();
+  const dateStr = `${today.toLocaleDateString("en-US",{month:"short",day:"numeric"})} ${today.getFullYear()}`;
 
   return (
     <div style={styles.statsRoot}>
@@ -3849,7 +3868,7 @@ function RecapTab({ scores }) {
         <p style={styles.stdSub}>{yDate.toUpperCase()} · NY SPORTS RESULTS · VIDEO HIGHLIGHTS</p>
       </div>
 
-      {/* Yesterday's NY scores */}
+      {/* Yesterday's NY scores with box score links */}
       {loadingYesterday ? (
         <div style={styles.loading}>
           <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
@@ -3858,85 +3877,77 @@ function RecapTab({ scores }) {
       ) : yesterdayNYGames.length > 0 ? (
         <>
           <div style={styles.stdDivisionHeader}>🏆 YESTERDAY'S NY RESULTS — {yDate.toUpperCase()}</div>
-          {yesterdayNYGames.map((g, i) => (
-            <div key={i} style={{...styles.recapScoreRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
-              <div style={styles.recapTeams}>
-                <span style={styles.recapSport}>[{g.sport}]</span>
-                <span style={styles.recapAway}>{g.awayTeam}</span>
-                <span style={styles.recapScore}>{g.awayScore} — {g.homeScore}</span>
-                <span style={styles.recapHome}>{g.homeTeam}</span>
+          {yesterdayNYGames.map((g, i) => {
+            const sportSlug = {MLB:"mlb",NBA:"nba",NHL:"nhl",NFL:"nfl",WNBA:"wnba"}[g.sport] || "mlb";
+            const boxScoreUrl = g.gameId
+              ? `https://www.espn.com/${sportSlug}/boxscore/_/gameId/${g.gameId}`
+              : `https://www.espn.com/${sportSlug}/scoreboard`;
+            const awayWin = (g.awayScore||0) > (g.homeScore||0);
+            const homeWin = (g.homeScore||0) > (g.awayScore||0);
+            return (
+              <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between",
+                padding:"10px 14px", borderBottom:"1px solid #1a1a1a",
+                background: i%2===0 ? "#0e0e0e" : "#111", flexWrap:"wrap", gap:8}}>
+                <div style={{display:"flex", alignItems:"center", gap:10, flex:1, minWidth:200}}>
+                  <span style={{fontSize:9, color:"#c8201c", fontWeight:900, letterSpacing:"0.1em"}}>[{g.sport}]</span>
+                  <span style={{fontSize:13, fontWeight: awayWin ? 900 : 400, color: awayWin ? "#fff" : "#aaa", fontFamily:"'Georgia',serif"}}>{g.awayTeam}</span>
+                  <span style={{fontSize:15, fontWeight:900, color:"#e8e0d0", minWidth:60, textAlign:"center"}}>
+                    {g.awayScore ?? "—"} — {g.homeScore ?? "—"}
+                  </span>
+                  <span style={{fontSize:13, fontWeight: homeWin ? 900 : 400, color: homeWin ? "#fff" : "#aaa", fontFamily:"'Georgia',serif"}}>{g.homeTeam}</span>
+                  {g.statusDesc && <span style={{fontSize:9, color:"#666", marginLeft:4}}>{g.statusDesc}</span>}
+                </div>
+                <a href={boxScoreUrl} target="_blank" rel="noopener noreferrer"
+                  style={{...styles.histLink, fontSize:9, flexShrink:0}}>📊 BOX SCORE →</a>
               </div>
-              {g.statusDesc && <span style={styles.recapStatus}>{g.statusDesc}</span>}
-            </div>
-          ))}
+            );
+          })}
         </>
       ) : (
         <div style={{padding:"12px 0 20px"}}>
           <div style={styles.stdDivisionHeader}>🏆 YESTERDAY'S NY RESULTS — {yDate.toUpperCase()}</div>
-          <p style={{fontSize:12, color:"#555", padding:"8px 0"}}>No NY games found for yesterday. Teams may have had an off day — check ESPN or the SCORES tab for the full picture.</p>
+          <p style={{fontSize:12, color:"#555", padding:"8px 0"}}>No NY games yesterday — check the SCORES tab for upcoming games.</p>
         </div>
       )}
 
       {/* Video Highlights */}
-      <div style={{...styles.stdDivisionHeader, marginTop:20}}>🎬 VIDEO HIGHLIGHTS — CLICK TO WATCH ON YOUTUBE</div>
-      <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Click any team below to find today's highlights on YouTube. Results open in YouTube — always fresh, always free.</p>
-      </div>
-
+      <div style={{...styles.stdDivisionHeader, marginTop:20}}>🎬 VIDEO HIGHLIGHTS</div>
+      <div style={{marginBottom:12, fontSize:10, color:"#555"}}>Click any team to find today's highlights on YouTube</div>
       <div style={styles.ytTeamGrid}>
         {NY_TEAMS_RECAP.map((t, i) => {
-          const today = new Date();
-          const dateStr = `${today.toLocaleDateString("en-US",{month:"short",day:"numeric"})} ${today.getFullYear()}`;
-          const searchQuery = `${t.keywords} ${dateStr}`;
-          const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(searchQuery)}&sp=EgIIAQ%3D%3D`;
+          const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${t.keywords} ${dateStr}`)}&sp=EgIIAQ%3D%3D`;
           return (
-            <a key={i} href={ytUrl} target="_blank" rel="noopener noreferrer"
-              style={{...styles.ytTeamCard, background:`linear-gradient(135deg, ${t.color}22 0%, #0a0a0a 100%)`, borderLeft:`3px solid ${t.color}`}}>
-              <span style={styles.ytEmoji}>{t.emoji}</span>
-              <div style={styles.ytInfo}>
-                <span style={styles.ytTeamName}>{t.name}</span>
-                <span style={styles.ytSubtext}>Latest highlights →</span>
-              </div>
-              <span style={{fontSize:18}}>▶</span>
-            </a>
+            <div key={i} style={{display:"flex", gap:6, flexDirection:"column"}}>
+              <a href={ytUrl} target="_blank" rel="noopener noreferrer"
+                style={{...styles.ytTeamCard, background:`linear-gradient(135deg, ${t.color}22 0%, #0a0a0a 100%)`, borderLeft:`3px solid ${t.color}`}}>
+                <span style={styles.ytEmoji}>{t.emoji}</span>
+                <div style={styles.ytInfo}>
+                  <span style={styles.ytTeamName}>{t.name}</span>
+                  <span style={styles.ytSubtext}>▶ YouTube highlights</span>
+                </div>
+              </a>
+              <a href={t.espn} target="_blank" rel="noopener noreferrer"
+                style={{fontSize:9, color:"#555", textDecoration:"none", textAlign:"center",
+                  padding:"3px 6px", border:"1px solid #222", letterSpacing:"0.08em"}}>
+                📊 ESPN RECAP
+              </a>
+            </div>
           );
         })}
       </div>
 
-      {/* ESPN Highlights links */}
-      <div style={{...styles.stdDivisionHeader, marginTop:20}}>📰 ADDITIONAL RECAP SOURCES</div>
-      {[
-        { name:"ESPN MLB Recap",   url:"https://www.espn.com/mlb/",           desc:"Box scores, highlights and reports from last night's baseball" },
-        { name:"ESPN NBA Recap",   url:"https://www.espn.com/nba/",           desc:"Last night's basketball — scores, standouts and video" },
-        { name:"ESPN NHL Recap",   url:"https://www.espn.com/nhl/",           desc:"Hockey scores, goals and highlights from last night" },
-        { name:"ESPN NFL Recap",   url:"https://www.espn.com/nfl/",           desc:"Latest football news, camp updates and game recaps" },
-        { name:"SNY Yankees/Mets", url:"https://sny.tv/",                     desc:"SNY's NY-focused baseball coverage — best Mets/Yankees recap" },
-        { name:"MSG Knicks/Rangers",url:"https://www.msgnetworks.com/",       desc:"Post-game shows and video highlights from MSG" },
-        { name:"YouTube NY Sports", url:"https://www.youtube.com/results?search_query=new+york+sports+highlights+today&sp=EgIIAQ%3D%3D", desc:"Search YouTube directly for today's NY sports highlights" },
-        { name:"r/NYYankees",      url:"https://reddit.com/r/NYYankees/new/", desc:"Fan reactions, game threads and post-game discussion" },
-        { name:"r/NewYorkMets",    url:"https://reddit.com/r/NewYorkMets/new/",desc:"Mets fans react to last night in real time" },
-        { name:"r/NYKnicks",       url:"https://reddit.com/r/NYKnicks/new/",  desc:"Knicks game threads and post-game breakdowns" },
-      ].map((r, i) => (
-        <a key={i} href={r.url} target="_blank" rel="noopener noreferrer"
-          style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
-          <div style={styles.beatWriterIcon}>🔗</div>
-          <div style={styles.beatWriterInfo}>
-            <span style={styles.beatWriterName}>{r.name}</span>
-            <span style={styles.beatWriterDesc}>{r.desc}</span>
-          </div>
-          <span style={styles.beatWriterArrow}>→</span>
-        </a>
-      ))}
-
-      {/* Tomorrow's big games */}
+      {/* Tomorrow's NY games */}
       <div style={{...styles.stdDivisionHeader, marginTop:20}}>📅 TOMORROW'S NY GAMES</div>
       {(() => {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const tmrGames = scores.filter(s => {
           const d = new Date(s.gameDate || s.date);
+          const teams = `${s.homeTeam||""} ${s.awayTeam||""}`.toLowerCase();
+          if (teams.includes("rangers") && !teams.includes("new york rangers")) return false;
+          if (teams.includes("giants") && !teams.includes("new york giants")) return false;
           return d.toDateString() === tomorrow.toDateString() &&
-            [s.homeTeam, s.awayTeam].some(t => NY_NAMES.some(n => (t||"").toLowerCase().includes(n)));
+            NY_NAMES.some(n => teams.includes(n));
         });
         if (!tmrGames.length) return (
           <p style={{fontSize:12, color:"#555", padding:"8px 0"}}>No NY games scheduled for tomorrow yet — check the SCHEDULE tab.</p>
