@@ -5482,16 +5482,16 @@ function StatsTab() {
   };
 
   const DROUGHT_DATA = [
-    { team:"Jets",      emoji:"🏈", last:1969,  sport:"NFL"  },
-    { team:"Knicks",    emoji:"🏀", last:1973,  sport:"NBA"  },
-    { team:"Rangers",   emoji:"🏒", last:1994,  sport:"NHL"  },
-    { team:"Mets",      emoji:"⚾", last:1986,  sport:"MLB"  },
-    { team:"Giants",    emoji:"🏈", last:2011,  sport:"NFL"  },
-    { team:"Islanders", emoji:"🏒", last:1983,  sport:"NHL"  },
-    { team:"Yankees",   emoji:"⚾", last:2009,  sport:"MLB"  },
-    { team:"Devils",    emoji:"🏒", last:2003,  sport:"NHL"  },
-    { team:"Nets",      emoji:"🏀", last:null,  sport:"NBA"  },
-    { team:"Liberty",   emoji:"🏀", last:2024,  sport:"WNBA" },
+    { team:"Jets",      emoji:"🏈", last:1969, sport:"NFL"  },
+    { team:"Knicks",    emoji:"🏀", last:1973, sport:"NBA"  },
+    { team:"Islanders", emoji:"🏒", last:1983, sport:"NHL"  },
+    { team:"Mets",      emoji:"⚾", last:1986, sport:"MLB"  },
+    { team:"Rangers",   emoji:"🏒", last:1994, sport:"NHL"  },
+    { team:"Devils",    emoji:"🏒", last:2003, sport:"NHL"  },
+    { team:"Giants",    emoji:"🏈", last:2011, sport:"NFL"  },
+    { team:"Yankees",   emoji:"⚾", last:2009, sport:"MLB"  },
+    { team:"Nets",      emoji:"🏀", last:null, sport:"NBA"  },
+    { team:"Liberty",   emoji:"🏀", last:2024, sport:"WNBA" },
   ].sort((a,b) => {
     const ya = a.last ? (year - a.last) : 999;
     const yb = b.last ? (year - b.last) : 999;
@@ -5500,41 +5500,85 @@ function StatsTab() {
 
   const DRAFT_DATA = {
     Yankees: [
-      { year:2009, pick:"#30", name:"Slade Heathcott", note:"High ceiling OF — never panned out." },
-      { year:1991, pick:"#1",  name:"Brien Taylor",    note:"Can't-miss LHP who never threw a MLB pitch." },
-      { year:1995, pick:"#6",  name:"Derek Jeter",     note:"Best draft pick in franchise history." },
+      { year:1991, pick:"#1",  name:"Brien Taylor",      note:"Can't-miss LHP who never threw a MLB pitch. Shoulder injury in bar fight." },
+      { year:1995, pick:"#6",  name:"Derek Jeter",        note:"Best pick in franchise history. 5 WS titles. The Captain." },
+      { year:2001, pick:"#3",  name:"Mark Teixeira",      note:"Traded for prospects. Became an All-Star first baseman." },
     ],
     Mets: [
-      { year:1966, pick:"#1",  name:"Steve Chilcott",  note:"Only #1 pick never to reach majors." },
-      { year:1992, pick:"#5",  name:"Paul Wilson",     note:"Part of Generation K — big bust." },
-      { year:2001, pick:"#1",  name:"David Wright",    note:"The Face of the Franchise. A true Met." },
+      { year:1966, pick:"#1",  name:"Steve Chilcott",     note:"Only #1 overall pick who never reached the majors." },
+      { year:1980, pick:"#1",  name:"Darryl Strawberry",  note:"The Straw Man — 252 Mets HR, 8x All-Star, unfulfilled potential." },
+      { year:2001, pick:"#1",  name:"David Wright",       note:"The Face of the Franchise. Career cut short by injury. A true Met." },
     ],
     Jets: [
-      { year:1965, pick:"#1",  name:"Joe Namath",      note:"The guarantee. Super Bowl III champion." },
-      { year:1996, pick:"#1",  name:"Keyshawn Johnson",note:"Please give me the ball — and they did." },
-      { year:2018, pick:"#3",  name:"Sam Darnold",     note:"Saw ghosts. Traded for pennies." },
+      { year:1965, pick:"#1",  name:"Joe Namath",         note:"The guarantee. Super Bowl III. Broadway Joe. The greatest Jet ever." },
+      { year:1996, pick:"#1",  name:"Keyshawn Johnson",   note:"'Please give me the damn ball' — and they gave it to him." },
+      { year:2018, pick:"#3",  name:"Sam Darnold",        note:"'I'm seeing ghosts.' Traded for pennies on the dollar." },
     ],
     Giants: [
-      { year:1981, pick:"#2",  name:"Lawrence Taylor", note:"Greatest defensive player in NFL history." },
-      { year:2004, pick:"#4",  name:"Philip Rivers",   note:"Traded draft day for Eli Manning." },
-      { year:2025, pick:"#3",  name:"Abdul Carter",    note:"Penn State pass rusher. The next LT?" },
+      { year:1981, pick:"#2",  name:"Lawrence Taylor",    note:"Greatest defensive player in NFL history. Redefined the LB position." },
+      { year:2004, pick:"#4",  name:"Eli Manning",        note:"Traded from SD on draft night. Won 2 Super Bowls. Beloved Giant." },
+      { year:2025, pick:"#3",  name:"Abdul Carter",       note:"Penn State pass rusher. Could be the next LT." },
     ],
     Knicks: [
-      { year:1985, pick:"#1",  name:"Patrick Ewing",   note:"The franchise cornerstone. 15 great years." },
-      { year:1999, pick:"#15", name:"Ron Artest",       note:"Traded for cap space. Became Ron World Peace." },
-      { year:2023, pick:"#13", name:"Jalen Brunson",   note:"Not a draft pick — best FA signing in years." },
+      { year:1985, pick:"#1",  name:"Patrick Ewing",      note:"Won the NBA's first draft lottery. Franchise cornerstone. 15 seasons." },
+      { year:2015, pick:"#4",  name:"Kristaps Porzingis", note:"The Unicorn — traded at his own request. Still stings." },
+      { year:2023, pick:"#13", name:"Jalen Brunson",      note:"Free agent signing, not a draft pick. Best Knick acquisition in decades." },
+    ],
+    Rangers: [
+      { year:1988, pick:"#1",  name:"Brian Leetch",       note:"First American-born Conn Smythe winner. Greatest Ranger defenseman ever." },
+      { year:1991, pick:"#1",  name:"Alexei Kovalev",     note:"Dazzling skill, maddening inconsistency. 1994 Cup champion." },
+      { year:2019, pick:"#2",  name:"Kaapo Kakko",        note:"Finnish winger — part of the youth movement that rebuilt the Rangers." },
+    ],
+    Islanders: [
+      { year:1973, pick:"#1",  name:"Denis Potvin",       note:"Four consecutive Cup championships. Best defenseman of his era." },
+      { year:1977, pick:"#15", name:"Mike Bossy",         note:"53 goals as a rookie. Nine consecutive 50-goal seasons. Unmatched." },
+      { year:1980, pick:"#22", name:"Pat LaFontaine",     note:"One of the most gifted players in franchise history — traded too soon." },
     ],
   };
 
   const RIVALS_DATA = [
-    { team1:"Yankees", team2:"Red Sox",   sport:"MLB", note:"Baseball's greatest rivalry — 100+ years of pure hatred" },
-    { team1:"Yankees", team2:"Mets",      sport:"MLB", note:"Queens vs The Bronx — the city divided every summer" },
-    { team1:"Jets",    team2:"Dolphins",  sport:"NFL", note:"AFC East rivals — Miami always haunted the Jets" },
-    { team1:"Giants",  team2:"Eagles",    sport:"NFL", note:"NFC East — the most bitter divisional rivalry in NY" },
-    { team1:"Rangers", team2:"Islanders", sport:"NHL", note:"The Battle of New York — defining tri-state hockey wars" },
-    { team1:"Rangers", team2:"Devils",    sport:"NHL", note:"Metropolitan rivals — Messier guarantee the defining moment" },
-    { team1:"Knicks",  team2:"Celtics",   sport:"NBA", note:"Reed vs Cowens, Ewing vs Bird — classic battles" },
-    { team1:"Nets",    team2:"Knicks",    sport:"NBA", note:"Brooklyn vs Manhattan — the city NBA rivalry" },
+    { team1:"Yankees",   team2:"Red Sox",    sport:"MLB", wins:"27 WS to 9",     note:"Baseball's greatest rivalry — 100+ years of pure hatred. The Bambino Curse. Aaron Boone. 2004 ALCS." },
+    { team1:"Yankees",   team2:"Mets",       sport:"MLB", wins:"2000 Subway Series 4-1", note:"Queens vs The Bronx — the city divided every summer. The 2000 Subway Series was a Yankee sweep." },
+    { team1:"Jets",      team2:"Dolphins",   sport:"NFL", wins:"Series split",    note:"AFC East — Dan Marino haunted Jets fans for two decades. Chad Pennington went to Miami and beat them." },
+    { team1:"Giants",    team2:"Eagles",     sport:"NFL", wins:"Series split",    note:"NFC East — Lawrence Taylor vs Randall Cunningham. Eli Manning vs DeSean Jackson. Brutal division games." },
+    { team1:"Giants",    team2:"Cowboys",    sport:"NFL", wins:"Cowboys lead",    note:"America's Team vs NY's team. The rivalry that defines NFC East football. Lawrence Taylor vs Troy Aikman." },
+    { team1:"Rangers",   team2:"Islanders",  sport:"NHL", wins:"Rangers lead",   note:"The Battle of New York — Denis Potvin vs the Rangers. John Roach incidents. Four-Cup dynasty tensions." },
+    { team1:"Rangers",   team2:"Devils",     sport:"NHL", wins:"Devils 90s-00s", note:"Messier's guarantee. The Devils' trap neutralized Ranger skill. Metropolitan rivals forever." },
+    { team1:"Islanders", team2:"Devils",     sport:"NHL", wins:"Devils 3 Cups",  note:"NJ vs Long Island — two dynasties from the same hockey era fighting for the same territory." },
+    { team1:"Knicks",    team2:"Celtics",    sport:"NBA", wins:"Celtics lead",   note:"Willis Reed vs Dave Cowens. Ewing vs Bird. The most heated NBA rivalry NY has ever known." },
+    { team1:"Knicks",    team2:"Heat",       sport:"NBA", wins:"Split",          note:"Pat Riley's revenge — he coached both teams and crushed the Knicks with Miami. 1990s bad blood forever." },
+    { team1:"Nets",      team2:"Knicks",     sport:"NBA", wins:"Split modern era",note:"Brooklyn vs Manhattan — the city's NBA rivalry. The Nets' Big 3 era vs Knicks rebuilding." },
+    { team1:"Mets",      team2:"Phillies",   sport:"MLB", wins:"Split",          note:"NL East division rivals — always intense. Ryan Howard, Chase Utley, and Citizens Bank Park hatred." },
+  ];
+
+  const TEAM_LINKS = [
+    { name:"Yankees Official",   url:"https://www.mlb.com/yankees",       emoji:"⚾",  desc:"mlb.com/yankees" },
+    { name:"Mets Official",       url:"https://www.mlb.com/mets",          emoji:"⚾",  desc:"mlb.com/mets" },
+    { name:"Jets Official",       url:"https://www.newyorkjets.com",       emoji:"🏈",  desc:"newyorkjets.com" },
+    { name:"Giants Official",     url:"https://www.giants.com",            emoji:"🏈",  desc:"giants.com" },
+    { name:"Knicks Official",     url:"https://www.nba.com/knicks",        emoji:"🏀",  desc:"nba.com/knicks" },
+    { name:"Nets Official",       url:"https://www.nba.com/nets",          emoji:"🏀",  desc:"nba.com/nets" },
+    { name:"Rangers Official",    url:"https://www.nhl.com/rangers",       emoji:"🏒",  desc:"nhl.com/rangers" },
+    { name:"Islanders Official",  url:"https://www.nhl.com/islanders",     emoji:"🏒",  desc:"nhl.com/islanders" },
+    { name:"Devils Official",     url:"https://www.nhl.com/devils",        emoji:"🏒",  desc:"nhl.com/devils" },
+    { name:"Liberty Official",    url:"https://liberty.wnba.com",          emoji:"🏀",  desc:"liberty.wnba.com" },
+    { name:"ESPN NY Sports",      url:"https://www.espn.com/new-york/",    emoji:"📺",  desc:"espn.com/new-york" },
+    { name:"NY Post Sports",      url:"https://nypost.com/sports/",        emoji:"📰",  desc:"nypost.com/sports" },
+    { name:"Pinstripe Alley",     url:"https://www.pinstripealley.com",    emoji:"✍️",  desc:"Yankees SB Nation blog" },
+    { name:"Amazin Avenue",       url:"https://www.amazinavenue.com",      emoji:"✍️",  desc:"Mets SB Nation blog" },
+    { name:"Blueshirt Banter",    url:"https://www.blueshirtbanter.com",   emoji:"✍️",  desc:"Rangers SB Nation blog" },
+    { name:"Gang Green Nation",   url:"https://www.ganggreennation.com",   emoji:"✍️",  desc:"Jets SB Nation blog" },
+    { name:"Big Blue View",       url:"https://www.bigblueview.com",       emoji:"✍️",  desc:"Giants SB Nation blog" },
+    { name:"Posting & Toasting",  url:"https://www.postingandtoasting.com",emoji:"✍️",  desc:"Knicks SB Nation blog" },
+    { name:"Lighthouse Hockey",   url:"https://www.lighthousehockey.com",  emoji:"✍️",  desc:"Islanders SB Nation blog" },
+    { name:"All About The Jersey",url:"https://www.allaboutthejersey.com", emoji:"✍️",  desc:"Devils SB Nation blog" },
+    { name:"r/NYYankees",         url:"https://reddit.com/r/NYYankees",    emoji:"💬",  desc:"185K members" },
+    { name:"r/NewYorkMets",       url:"https://reddit.com/r/NewYorkMets",  emoji:"💬",  desc:"Mets Reddit" },
+    { name:"r/nyjets",            url:"https://reddit.com/r/nyjets",       emoji:"💬",  desc:"Jets Reddit" },
+    { name:"r/NYKnicks",          url:"https://reddit.com/r/NYKnicks",     emoji:"💬",  desc:"385K members" },
+    { name:"r/rangers",           url:"https://reddit.com/r/rangers",      emoji:"💬",  desc:"Rangers Reddit" },
+    { name:"r/NewYorkIslanders",  url:"https://reddit.com/r/NewYorkIslanders",emoji:"💬",desc:"Islanders Reddit" },
+    { name:"r/devils",            url:"https://reddit.com/r/devils",       emoji:"💬",  desc:"Devils Reddit" },
   ];
 
   const sections = ["LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS"];
@@ -5549,22 +5593,23 @@ function StatsTab() {
         .then(r => r.json()).catch(() => null)
     )).then(results => {
       const all = [];
-      results.forEach((data, idx) => {
+      results.forEach(data => {
         if (!data?.leaders) return;
-        data.leaders.slice(0,3).forEach(cat => {
+        data.leaders.slice(0,4).forEach(cat => {
           if (!cat?.leaders) return;
           cat.leaders.slice(0,5).forEach(l => {
             all.push({
-              name: l.athlete?.displayName || "—",
-              team: l.athlete?.team?.abbreviation || "—",
-              stat: l.displayValue || "—",
+              name:     l.athlete?.displayName || "—",
+              team:     l.athlete?.team?.abbreviation || "—",
+              stat:     l.displayValue || "—",
               category: cat.displayName || "Stat",
-              sport: activeLeague,
+              sport:    activeLeague,
+              link:     l.athlete?.links?.[0]?.href || null,
             });
           });
         });
       });
-      setLiveLeaders(all.slice(0, 30));
+      setLiveLeaders(all.slice(0, 40));
       setLoadingLeaders(false);
     });
   }, [activeSection, activeLeague]);
@@ -5603,23 +5648,26 @@ function StatsTab() {
           ) : liveLeaders.length > 0 ? (
             <div>
               {liveLeaders.map((l,i) => (
-                <div key={i} style={{...styles.leaderRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+                <a key={i} href={l.link || `https://www.espn.com/search/results?q=${encodeURIComponent(l.name)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{...styles.leaderRow, ...(i%2===0?{}:{background:"#0f0f0f"}), textDecoration:"none"}}>
                   <span style={styles.leaderRank}>#{i+1}</span>
                   <span style={styles.leaderName}>{l.name}</span>
                   <span style={styles.leaderTeam}>{l.team}</span>
                   <span style={styles.leaderStat}>{l.stat}</span>
                   <span style={styles.leaderCat}>{l.category}</span>
-                </div>
+                  <span style={{fontSize:9, color:"#555", marginLeft:"auto"}}>→ ESPN</span>
+                </a>
               ))}
             </div>
           ) : (
             <div style={styles.empty}>
               <span style={styles.emptyIcon}>📊</span>
-              <p style={styles.emptyText}>NO LEADERS DATA AVAILABLE</p>
+              <p style={styles.emptyText}>NO LEADERS DATA — check back during the season</p>
             </div>
           )}
           <div style={{marginTop:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:11, color:"#aaa"}}>Stats via ESPN · Updates daily</p>
+            <p style={{margin:0, fontSize:11, color:"#aaa"}}>Live stats from ESPN · Click any player for full profile</p>
           </div>
         </div>
       )}
@@ -5627,11 +5675,12 @@ function StatsTab() {
       {activeSection === "DROUGHT" && (
         <div>
           <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa"}}>How long has it been since each NY team last won a championship?</p>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>How long has it been since each NY team last won a championship? Sorted by most desperate first.</p>
           </div>
           {DROUGHT_DATA.map((t, i) => {
-            const years = t.last ? (new Date().getFullYear() - t.last) : 999;
+            const years = t.last ? (year - t.last) : 999;
             const pct = Math.min(years / 60 * 100, 100);
+            const color = years > 40 ? "#c8201c" : years > 20 ? "#f59e0b" : years === 999 ? "#c8201c" : "#22c55e";
             return (
               <div key={i} style={{...styles.droughtRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
                 <span style={styles.droughtEmoji}>{t.emoji}</span>
@@ -5639,10 +5688,12 @@ function StatsTab() {
                   <span style={styles.droughtTeam}>{t.team}</span>
                   <span style={styles.droughtLast}>{t.last ? `Last: ${t.last} (${years} years ago)` : "Never won"}</span>
                   <div style={styles.droughtBar}>
-                    <div style={{...styles.droughtFill, width:`${pct}%`, background: years>30?"#c8201c":years>15?"#f59e0b":"#22c55e"}} />
+                    <div style={{...styles.droughtFill, width:`${pct}%`, background:color}} />
                   </div>
                 </div>
-                <span style={{...styles.droughtYears, color: years>30?"#c8201c":years>15?"#f59e0b":"#22c55e"}}>{t.last ? `${years}Y` : "∞"}</span>
+                <span style={{...styles.droughtYears, color}}>
+                  {t.last ? `${years}Y` : "∞"}
+                </span>
               </div>
             );
           })}
@@ -5652,18 +5703,24 @@ function StatsTab() {
       {activeSection === "DRAFT" && (
         <div>
           <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa"}}>First-round picks that defined NY sports history.</p>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>Notable draft picks — the best, worst, and most memorable selections in NY sports history.</p>
           </div>
           {Object.entries(DRAFT_DATA).map(([team, picks]) => (
-            <div key={team} style={{marginBottom:20}}>
-              <div style={styles.stdDivisionHeader}>{team.toUpperCase()} NOTABLE PICKS</div>
-              {picks.slice(0,5).map((p,i) => (
-                <div key={i} style={{...styles.draftRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
-                  <span style={styles.draftYear}>{p.year}</span>
-                  <span style={styles.draftPick}>{p.pick}</span>
-                  <span style={styles.draftName}>{p.name}</span>
-                  <span style={styles.draftNote}>{p.note}</span>
-                </div>
+            <div key={team} style={{marginBottom:24}}>
+              <div style={styles.stdDivisionHeader}>{team.toUpperCase()}</div>
+              {picks.map((p,i) => (
+                <a key={i}
+                  href={`https://www.google.com/search?q=${encodeURIComponent(p.name+" "+team+" draft pick baseball career")}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{...styles.draftRow, ...(i%2===0?{}:{background:"#0f0f0f"}), textDecoration:"none", display:"flex", alignItems:"flex-start", gap:10, padding:"10px 14px"}}>
+                  <span style={{...styles.draftYear, flexShrink:0}}>{p.year}</span>
+                  <span style={{...styles.draftPick, flexShrink:0, color:"#c8201c", fontWeight:900}}>{p.pick}</span>
+                  <div style={{flex:1}}>
+                    <div style={{...styles.draftName, marginBottom:3}}>{p.name}</div>
+                    <div style={{fontSize:11, color:"#777", lineHeight:1.4}}>{p.note}</div>
+                  </div>
+                  <span style={{fontSize:9, color:"#555", flexShrink:0}}>→ Google</span>
+                </a>
               ))}
             </div>
           ))}
@@ -5672,34 +5729,33 @@ function StatsTab() {
 
       {activeSection === "RIVALS" && (
         <div>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>The rivalries that define New York sports — blood, history, and hatred.</p>
+          </div>
           {RIVALS_DATA.map((r,i) => (
-            <div key={i} style={{...styles.rivalRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
-              <div style={styles.rivalTeams}>
-                <span style={styles.rivalT1}>{r.team1}</span>
-                <span style={styles.rivalVs}>vs</span>
-                <span style={styles.rivalT2}>{r.team2}</span>
-                <span style={styles.rivalSport}>[{r.sport}]</span>
+            <a key={i}
+              href={`https://www.google.com/search?q=${encodeURIComponent(r.team1+" vs "+r.team2+" rivalry history")}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{...styles.rivalRow, ...(i%2===0?{}:{background:"#0f0f0f"}), textDecoration:"none", display:"block", padding:"12px 14px", borderBottom:"1px solid #222"}}>
+              <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:6, flexWrap:"wrap"}}>
+                <span style={{fontSize:13, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{r.team1}</span>
+                <span style={{fontSize:10, color:"#c8201c", fontWeight:900}}>vs</span>
+                <span style={{fontSize:13, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{r.team2}</span>
+                <span style={{fontSize:9, color:"#666", letterSpacing:"0.1em"}}>[{r.sport}]</span>
+                {r.wins && <span style={{fontSize:10, color:"#888", marginLeft:"auto"}}>{r.wins}</span>}
               </div>
-              <p style={styles.rivalNote}>{r.note}</p>
-            </div>
+              <p style={{margin:0, fontSize:12, color:"#888", lineHeight:1.5}}>{r.note}</p>
+            </a>
           ))}
         </div>
       )}
 
       {activeSection === "TEAM LINKS" && (
         <div>
-          {[
-            {name:"Yankees Official",     url:"https://www.mlb.com/yankees",       emoji:"⚾", desc:"Official Yankees site"},
-            {name:"Mets Official",         url:"https://www.mlb.com/mets",          emoji:"⚾", desc:"Official Mets site"},
-            {name:"Jets Official",         url:"https://www.newyorkjets.com",       emoji:"🏈", desc:"Official Jets site"},
-            {name:"Giants Official",       url:"https://www.giants.com",            emoji:"🏈", desc:"Official Giants site"},
-            {name:"Knicks Official",       url:"https://www.nba.com/knicks",        emoji:"🏀", desc:"Official Knicks site"},
-            {name:"Nets Official",         url:"https://www.nba.com/nets",          emoji:"🏀", desc:"Official Nets site"},
-            {name:"Rangers Official",      url:"https://www.nhl.com/rangers",       emoji:"🏒", desc:"Official Rangers site"},
-            {name:"Islanders Official",    url:"https://www.nhl.com/islanders",     emoji:"🏒", desc:"Official Islanders site"},
-            {name:"Devils Official",       url:"https://www.nhl.com/devils",        emoji:"🏒", desc:"Official Devils site"},
-            {name:"Liberty Official",      url:"https://liberty.wnba.com",          emoji:"🏀", desc:"Official Liberty site"},
-          ].map((t,i) => (
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>Official sites, fan blogs, and Reddit communities for every NY team.</p>
+          </div>
+          {TEAM_LINKS.map((t,i) => (
             <a key={i} href={t.url} target="_blank" rel="noopener noreferrer"
               style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
               <div style={styles.beatWriterIcon}>{t.emoji}</div>
@@ -5715,9 +5771,6 @@ function StatsTab() {
     </div>
   );
 }
-
-// ─── SHOP TAB ─────────────────────────────────────────────────────────────
-// ─── RADIO TAB ────────────────────────────────────────────────────────────
 function RadioTab() {
   return (
     <div style={styles.statsRoot}>
