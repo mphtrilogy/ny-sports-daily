@@ -5581,6 +5581,61 @@ function StatsTab() {
     { name:"r/devils",            url:"https://reddit.com/r/devils",       emoji:"💬",  desc:"Devils Reddit" },
   ];
 
+  const STAT_SITES = {
+    MLB: [
+      { name:"Batting Average Leaders",    desc:"Current season batting average — active players",       url:"https://www.baseball-reference.com/leaders/batting_avg_active.shtml",      site:"Baseball Ref" },
+      { name:"Home Run Leaders",           desc:"Single season and active career home run leaders",       url:"https://www.baseball-reference.com/leaders/HR_active.shtml",               site:"Baseball Ref" },
+      { name:"RBI Leaders",                desc:"Runs batted in — season and career",                     url:"https://www.baseball-reference.com/leaders/RBI_active.shtml",              site:"Baseball Ref" },
+      { name:"ERA Leaders",                desc:"Earned run average — best pitchers this season",         url:"https://www.baseball-reference.com/leaders/earned_run_avg_active.shtml",   site:"Baseball Ref" },
+      { name:"Strikeout Leaders (Pitching)",desc:"Strikeouts by starting pitchers",                      url:"https://www.baseball-reference.com/leaders/SO_active.shtml",               site:"Baseball Ref" },
+      { name:"WAR Leaders",                desc:"Wins Above Replacement — best all-around players",       url:"https://www.baseball-reference.com/leaders/WAR_position_active.shtml",     site:"Baseball Ref" },
+      { name:"OPS Leaders",                desc:"On-base plus slugging — best offensive players",         url:"https://www.baseball-reference.com/leaders/onbase_plus_slugging_active.shtml",site:"Baseball Ref"},
+      { name:"Stolen Base Leaders",        desc:"Speed on the basepaths — SB leaders",                   url:"https://www.baseball-reference.com/leaders/SB_active.shtml",               site:"Baseball Ref" },
+      { name:"Yankees All-Time Leaders",   desc:"Career records in pinstripes — all categories",          url:"https://www.baseball-reference.com/teams/NYY/leaders.shtml",               site:"Baseball Ref" },
+      { name:"Mets All-Time Leaders",      desc:"Career records as a Met — all categories",               url:"https://www.baseball-reference.com/teams/NYM/leaders.shtml",               site:"Baseball Ref" },
+      { name:"Yankees 2026 Roster Stats",  desc:"Current season stats for every Yankee",                  url:"https://www.baseball-reference.com/teams/NYY/2026.shtml",                  site:"Baseball Ref" },
+      { name:"Mets 2026 Roster Stats",     desc:"Current season stats for every Met",                     url:"https://www.baseball-reference.com/teams/NYM/2026.shtml",                  site:"Baseball Ref" },
+    ],
+    NFL: [
+      { name:"Passing Yards Leaders",      desc:"Quarterback passing yards — current season",             url:"https://www.pro-football-reference.com/leaders/pass_yds_single_season.htm", site:"PFR" },
+      { name:"Rushing Yards Leaders",      desc:"Running back rushing yards — current season",            url:"https://www.pro-football-reference.com/leaders/rush_yds_single_season.htm", site:"PFR" },
+      { name:"Receiving Yards Leaders",    desc:"Wide receiver receiving yards",                          url:"https://www.pro-football-reference.com/leaders/rec_yds_single_season.htm",  site:"PFR" },
+      { name:"Sack Leaders",               desc:"Defensive sacks — current season",                       url:"https://www.pro-football-reference.com/leaders/sacks.htm",                  site:"PFR" },
+      { name:"Passer Rating Leaders",      desc:"QB efficiency — passer rating",                          url:"https://www.pro-football-reference.com/leaders/pass_rating_single_season.htm",site:"PFR"},
+      { name:"Jets All-Time Leaders",      desc:"Career records in green and white",                       url:"https://www.pro-football-reference.com/teams/nyj/leaders.htm",              site:"PFR" },
+      { name:"Giants All-Time Leaders",    desc:"Career records as a New York Giant",                      url:"https://www.pro-football-reference.com/teams/nyg/leaders.htm",              site:"PFR" },
+      { name:"NFL Standings 2026",         desc:"Full AFC and NFC standings",                              url:"https://www.espn.com/nfl/standings",                                         site:"ESPN" },
+    ],
+    NBA: [
+      { name:"Scoring Leaders",            desc:"Points per game — current NBA season",                   url:"https://www.basketball-reference.com/leaders/pts_per_g_active.html",        site:"BBall Ref" },
+      { name:"Assists Leaders",            desc:"Assists per game — playmakers",                           url:"https://www.basketball-reference.com/leaders/ast_per_g_active.html",        site:"BBall Ref" },
+      { name:"Rebounds Leaders",           desc:"Rebounds per game — big men",                            url:"https://www.basketball-reference.com/leaders/trb_per_g_active.html",        site:"BBall Ref" },
+      { name:"3-Point % Leaders",          desc:"Best shooters from deep",                                url:"https://www.basketball-reference.com/leaders/fg3_pct_active.html",          site:"BBall Ref" },
+      { name:"PER Leaders",                desc:"Player Efficiency Rating — best all-around players",     url:"https://www.basketball-reference.com/leaders/per_active.html",              site:"BBall Ref" },
+      { name:"Knicks All-Time Leaders",    desc:"Career records at Madison Square Garden",                 url:"https://www.basketball-reference.com/teams/NYK/leaders.html",               site:"BBall Ref" },
+      { name:"Nets All-Time Leaders",      desc:"Career records as a Brooklyn/NJ Net",                    url:"https://www.basketball-reference.com/teams/BRK/leaders.html",               site:"BBall Ref" },
+      { name:"NBA Standings 2026",         desc:"Full Eastern and Western Conference standings",           url:"https://www.espn.com/nba/standings",                                         site:"ESPN" },
+    ],
+    NHL: [
+      { name:"Points Leaders",             desc:"Goals + Assists — scoring leaders",                      url:"https://www.hockey-reference.com/leaders/points_active.html",               site:"Hockey Ref" },
+      { name:"Goals Leaders",             desc:"Goal scorers — current season leaders",                   url:"https://www.hockey-reference.com/leaders/goals_active.html",                site:"Hockey Ref" },
+      { name:"Assists Leaders",           desc:"Playmakers — primary assists leaders",                    url:"https://www.hockey-reference.com/leaders/assists_active.html",              site:"Hockey Ref" },
+      { name:"Save % Leaders",            desc:"Goaltender save percentage",                              url:"https://www.hockey-reference.com/leaders/save_pct_active.html",             site:"Hockey Ref" },
+      { name:"GAA Leaders",               desc:"Goals against average — best goaltenders",                url:"https://www.hockey-reference.com/leaders/goals_against_avg_active.html",    site:"Hockey Ref" },
+      { name:"Rangers All-Time Leaders",  desc:"Career records as a Broadway Blue",                       url:"https://www.hockey-reference.com/teams/NYR/leaders.html",                   site:"Hockey Ref" },
+      { name:"Islanders All-Time Leaders",desc:"Career records as an Islander",                           url:"https://www.hockey-reference.com/teams/NYI/leaders.html",                   site:"Hockey Ref" },
+      { name:"Devils All-Time Leaders",   desc:"Career records as a New Jersey Devil",                    url:"https://www.hockey-reference.com/teams/NJD/leaders.html",                   site:"Hockey Ref" },
+      { name:"NHL Standings 2026",        desc:"Full Metropolitan and Atlantic division standings",        url:"https://www.espn.com/nhl/standings",                                         site:"ESPN" },
+    ],
+    WNBA: [
+      { name:"WNBA Scoring Leaders",      desc:"Points per game — current WNBA season",                  url:"https://www.basketball-reference.com/wnba/leaders/pts_per_g_active.html",   site:"BBall Ref" },
+      { name:"WNBA Rebounds Leaders",     desc:"Rebounds per game",                                       url:"https://www.basketball-reference.com/wnba/leaders/trb_per_g_active.html",   site:"BBall Ref" },
+      { name:"WNBA Assists Leaders",      desc:"Assists per game — playmakers",                           url:"https://www.basketball-reference.com/wnba/leaders/ast_per_g_active.html",   site:"BBall Ref" },
+      { name:"Liberty All-Time Leaders",  desc:"Career records as a New York Liberty",                    url:"https://www.basketball-reference.com/wnba/teams/LIB/leaders.html",           site:"BBall Ref" },
+      { name:"WNBA Standings 2026",       desc:"Full league standings",                                   url:"https://www.espn.com/wnba/standings",                                        site:"ESPN" },
+    ],
+  };
+
   const sections = ["LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS"];
 
   useEffect(() => {
@@ -5633,41 +5688,34 @@ function StatsTab() {
       {activeSection === "LEADERS" && (
         <div>
           <div style={{...styles.filterGroup, flexWrap:"wrap", marginBottom:16}}>
-            {Object.keys(LEAGUE_MAP).map(l => (
+            {Object.keys(STAT_SITES).map(l => (
               <button key={l} onClick={() => setActiveLeague(l)}
                 style={{...styles.filterBtn, ...(activeLeague===l ? styles.filterBtnActive : {})}}>
                 {STATS_REFERENCE[l]?.emoji} {l}
               </button>
             ))}
           </div>
-          {loadingLeaders ? (
-            <div style={styles.loading}>
-              <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
-              <p style={styles.loadingText}>LOADING LEADERS...</p>
+          <div>
+            <div style={styles.stdDivisionHeader}>{STATS_REFERENCE[activeLeague]?.emoji} {activeLeague} STAT LEADERS & REFERENCE</div>
+            <div style={{marginBottom:12, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+              <p style={{margin:0, fontSize:12, color:"#aaa"}}>Live leaderboards from Baseball Reference, Pro Football Reference, Basketball Reference, and Hockey Reference. Click any category to see current leaders.</p>
             </div>
-          ) : liveLeaders.length > 0 ? (
-            <div>
-              {liveLeaders.map((l,i) => (
-                <a key={i} href={l.link || `https://www.espn.com/search/results?q=${encodeURIComponent(l.name)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  style={{...styles.leaderRow, ...(i%2===0?{}:{background:"#0f0f0f"}), textDecoration:"none"}}>
-                  <span style={styles.leaderRank}>#{i+1}</span>
-                  <span style={styles.leaderName}>{l.name}</span>
-                  <span style={styles.leaderTeam}>{l.team}</span>
-                  <span style={styles.leaderStat}>{l.stat}</span>
-                  <span style={styles.leaderCat}>{l.category}</span>
-                  <span style={{fontSize:9, color:"#555", marginLeft:"auto"}}>→ ESPN</span>
-                </a>
-              ))}
-            </div>
-          ) : (
-            <div style={styles.empty}>
-              <span style={styles.emptyIcon}>📊</span>
-              <p style={styles.emptyText}>NO LEADERS DATA — check back during the season</p>
-            </div>
-          )}
+            {(STAT_SITES[activeLeague] || []).map((cat, i) => (
+              <a key={i} href={cat.url} target="_blank" rel="noopener noreferrer"
+                style={{...styles.leaderRow, ...(i%2===0?{}:{background:"#0f0f0f"}), textDecoration:"none", display:"flex", alignItems:"center", gap:12}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13, fontWeight:700, color:"#e8e8e8", fontFamily:"'Georgia',serif", marginBottom:2}}>{cat.name}</div>
+                  <div style={{fontSize:10, color:"#666"}}>{cat.desc}</div>
+                </div>
+                <div style={{textAlign:"right", flexShrink:0}}>
+                  <div style={{fontSize:9, color:"#c8201c", fontWeight:900, letterSpacing:"0.1em"}}>{cat.site}</div>
+                  <div style={{fontSize:9, color:"#555"}}>VIEW LEADERS →</div>
+                </div>
+              </a>
+            ))}
+          </div>
           <div style={{marginTop:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:11, color:"#aaa"}}>Live stats from ESPN · Click any player for full profile</p>
+            <p style={{margin:0, fontSize:11, color:"#aaa"}}>Powered by Sports Reference · The gold standard for sports statistics since 2000</p>
           </div>
         </div>
       )}
