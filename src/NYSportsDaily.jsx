@@ -5544,7 +5544,7 @@ function StatsTab() {
     setLoadingLeaders(true);
     const cfg = LEAGUE_MAP[activeLeague];
     if (!cfg) { setLoadingLeaders(false); return; }
-    Promise.all(cfg.endpoints.map(ep =>
+    Promise.all(cfg.map(ep =>
       fetch(`https://site.api.espn.com/apis/site/v2/sports/${ep.sport}/${ep.league}/leaders`)
         .then(r => r.json()).catch(() => null)
     )).then(results => {
