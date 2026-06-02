@@ -1134,7 +1134,7 @@ export default function NYSportsDaily() {
         </div>
         {/* TAB NAV — Secondary */}
         <div style={{...styles.tabNav, marginTop:-16, borderBottom:"1px solid #1a1a1a", marginBottom:20}}>
-          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","TRIVIA","XWORD","SONGS & SPIN"].map(tab => (
+          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","TRIVIA","XWORD","SONGS","SPIN","BIRTHDAYS"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}), fontSize:9, padding:"7px 10px"}}>
               {tab}
@@ -1338,9 +1338,9 @@ export default function NYSportsDaily() {
           <CrosswordTab />
         )}
         {/* ──── SPIN TAB ──── */}
-        {activeTab === "SONGS & SPIN" && (
-          <SpinTab />
-        )}
+        {activeTab === "SONGS" && <SongsTab />}
+        {activeTab === "SPIN" && <SpinWheelTab />}
+        {activeTab === "BIRTHDAYS" && <BirthdaysTab />}
         {/* ──── SHOP TAB ──── */}
         {activeTab === "SHOP" && (
           <ShopTab />
@@ -3779,7 +3779,9 @@ function SiteSearch({ query, onSelect }) {
     { keywords:["history","all time","record","leaders","list","greatest"],   tab:"HISTORY",   icon:"📚", title:"History & Records",         sub:"All-time records, leaders, coaches" },
     { keywords:["this date","anniversary","today in","on this date"],        tab:"THIS DATE", icon:"📅", title:"On This Date",              sub:"NY sports history by date" },
     { keywords:["iconic","tennis","us open","belmont","secretariat","golf","shinnecock","bethpage","winged foot","pga","ryder"], tab:"NY EVENTS", icon:"🏆", title:"Iconic NY Events", sub:"US Open Tennis, Golf, Belmont Stakes" },
-    { keywords:["spin","songs","walk up","walkup","music","facts","random"], tab:"SONGS & SPIN",      icon:"🎰", title:"Songs & Spin",                sub:"Random NY sports facts" },
+    { keywords:["songs","walk up","walkup","music","walk-up"], tab:"SONGS", icon:"🎵", title:"Walk-Up Songs", sub:"Yankees, Mets walk-up music" },
+    { keywords:["spin","facts","random","ny facts","spin wheel"], tab:"SPIN", icon:"🎰", title:"NY Spin Wheel", sub:"Random NY sports facts" },
+    { keywords:["birthday","born today","born on this day"], tab:"BIRTHDAYS", icon:"🎂", title:"Birthdays Today", sub:"NY sports legends born today" },
     { keywords:["shop","buy","gear","jersey","memorabilia","book"],           tab:"SHOP",      icon:"🛒", title:"Shop",                      sub:"NY sports gear, books, memorabilia" },
     { keywords:["radio","podcast","listen","wfan","espn radio"],              tab:"RADIO",     icon:"📻", title:"Radio & Podcasts",          sub:"NY sports radio and podcasts" },
     { keywords:["crossword","xword","puzzle","word"],                         tab:"XWORD",     icon:"✏️", title:"Crossword",                 sub:"NY sports crossword puzzle" },
@@ -3845,7 +3847,9 @@ function SiteSearch({ query, onSelect }) {
 // ─── RECAP TAB ─────────────────────────────────────────────────────────────
 function RecapTab({ scores }) {
   const [yesterdayScores, setYesterdayScores] = useState([]);
-  const [loadingYesterday, setLoadingYesterday]   = useState(true);
+  const [loadingYesterday, setLoadingYesterday] = useState(true);
+  const [boxScores, setBoxScores] = useState({});
+  const [expandedGame, setExpandedGame] = useState(null);
 
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
@@ -3859,16 +3863,26 @@ function RecapTab({ scores }) {
     });
   }, []);
 
-  const NY_NAMES = ["yankees","mets","jets","giants","knicks","nets","rangers","islanders","devils","liberty","nycfc","gotham","red bulls"];
+  async function loadBoxScore(game) {
+    if (boxScores[game.gameId]) {
+      setExpandedGame(expandedGame === game.gameId ? null : game.gameId);
+      return;
+    }
+    if (!game.gameId) return;
+    const sl = SPORT_LEAGUE_MAP[game.sport];
+    if (!sl) return;
+    try {
+      const data = await fetchBoxScore(game.gameId, sl.sport, sl.league);
+      setBoxScores(prev => ({...prev, [game.gameId]: data}));
+      setExpandedGame(game.gameId);
+    } catch(e) {}
+  }
 
-  // Strict NY filter — must contain an actual NY team name, not just TX Rangers or SF Giants
-  const NY_EXCLUSIONS = ["texas rangers","texas ","sf giants","san francisco giants","kansas city","royals","houston","seattle mariners","boston red","minnesota twins","toronto blue","chicago white","cleveland","detroit","tampa bay","baltimore orioles","oakland","los angeles angels"];
+  const NY_NAMES = ["yankees","mets","jets","giants","knicks","nets","rangers","islanders","devils","liberty","nycfc","gotham","red bulls"];
 
   const yesterdayNYGames = yesterdayScores.filter(s => {
     const teams = `${s.homeTeam||""} ${s.awayTeam||""}`.toLowerCase();
-    // Must have an NY team
     const hasNY = NY_NAMES.some(n => teams.includes(n));
-    // Must NOT be a non-NY game that accidentally matches (e.g. Texas Rangers)
     if (teams.includes("rangers") && !teams.includes("new york rangers")) return false;
     if (teams.includes("giants") && !teams.includes("new york giants")) return false;
     return hasNY;
@@ -3890,6 +3904,14 @@ function RecapTab({ scores }) {
   const today = new Date();
   const dateStr = `${today.toLocaleDateString("en-US",{month:"short",day:"numeric"})} ${today.getFullYear()}`;
 
+  function getPeriodLabels(sport, count) {
+    if (sport === "MLB") return [...Array(count)].map((_,i) => i < 9 ? i+1 : i === 9 ? "E" : `E${i-8}`);
+    if (sport === "NFL") return ["Q1","Q2","Q3","Q4","OT"].slice(0, count);
+    if (sport === "NHL") return ["P1","P2","P3","OT","SO"].slice(0, count);
+    if (sport === "NBA") return ["Q1","Q2","Q3","Q4","OT"].slice(0, count);
+    return [...Array(count)].map((_,i) => i+1);
+  }
+
   return (
     <div style={styles.statsRoot}>
       <div style={styles.stdHeader}>
@@ -3897,7 +3919,6 @@ function RecapTab({ scores }) {
         <p style={styles.stdSub}>{yDate.toUpperCase()} · NY SPORTS RESULTS · VIDEO HIGHLIGHTS</p>
       </div>
 
-      {/* Yesterday's NY scores with box score links */}
       {loadingYesterday ? (
         <div style={styles.loading}>
           <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
@@ -3913,21 +3934,95 @@ function RecapTab({ scores }) {
               : `https://www.espn.com/${sportSlug}/scoreboard`;
             const awayWin = (g.awayScore||0) > (g.homeScore||0);
             const homeWin = (g.homeScore||0) > (g.awayScore||0);
+            const isExpanded = expandedGame === g.gameId;
+            const bs = boxScores[g.gameId];
             return (
-              <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between",
-                padding:"10px 14px", borderBottom:"1px solid #1a1a1a",
-                background: i%2===0 ? "#0e0e0e" : "#111", flexWrap:"wrap", gap:8}}>
-                <div style={{display:"flex", alignItems:"center", gap:10, flex:1, minWidth:200}}>
-                  <span style={{fontSize:9, color:"#c8201c", fontWeight:900, letterSpacing:"0.1em"}}>[{g.sport}]</span>
-                  <span style={{fontSize:13, fontWeight: awayWin ? 900 : 400, color: awayWin ? "#fff" : "#aaa", fontFamily:"'Georgia',serif"}}>{g.awayTeam}</span>
-                  <span style={{fontSize:15, fontWeight:900, color:"#e8e0d0", minWidth:60, textAlign:"center"}}>
-                    {g.awayScore ?? "—"} — {g.homeScore ?? "—"}
-                  </span>
-                  <span style={{fontSize:13, fontWeight: homeWin ? 900 : 400, color: homeWin ? "#fff" : "#aaa", fontFamily:"'Georgia',serif"}}>{g.homeTeam}</span>
-                  {g.statusDesc && <span style={{fontSize:9, color:"#666", marginLeft:4}}>{g.statusDesc}</span>}
+              <div key={i} style={{marginBottom:4, border:"1px solid #222", borderRadius:3, overflow:"hidden"}}>
+                {/* Score row */}
+                <div style={{display:"flex", alignItems:"center", justifyContent:"space-between",
+                  padding:"10px 14px", background: i%2===0 ? "#0e0e0e" : "#111", flexWrap:"wrap", gap:8}}>
+                  <div style={{display:"flex", alignItems:"center", gap:10, flex:1, minWidth:200}}>
+                    <span style={{fontSize:9, color:"#c8201c", fontWeight:900, letterSpacing:"0.1em"}}>{g.sport}</span>
+                    <span style={{fontSize:13, fontWeight: awayWin?900:400, color: awayWin?"#fff":"#aaa",
+                      fontFamily:"'Georgia',serif"}}>{g.awayTeam}</span>
+                    <span style={{fontSize:16, fontWeight:900, color:"#fff", minWidth:70, textAlign:"center",
+                      fontFamily:"'Georgia',serif", letterSpacing:"0.05em"}}>
+                      {g.awayScore ?? "—"} – {g.homeScore ?? "—"}
+                    </span>
+                    <span style={{fontSize:13, fontWeight: homeWin?900:400, color: homeWin?"#fff":"#aaa",
+                      fontFamily:"'Georgia',serif"}}>{g.homeTeam}</span>
+                    {g.statusDesc && <span style={{fontSize:9, color:"#666"}}>{g.statusDesc}</span>}
+                  </div>
+                  <div style={{display:"flex", gap:8, flexShrink:0}}>
+                    {g.gameId && (
+                      <button onClick={() => loadBoxScore(g)}
+                        style={{fontSize:9, padding:"3px 10px", background:"#161616", border:"1px solid #333",
+                          color:"#aaa", cursor:"pointer", letterSpacing:"0.08em", fontWeight:700}}>
+                        {isExpanded ? "▲ HIDE" : "📊 LINE SCORE"}
+                      </button>
+                    )}
+                    <a href={boxScoreUrl} target="_blank" rel="noopener noreferrer"
+                      style={{...styles.histLink, fontSize:9}}>ESPN →</a>
+                  </div>
                 </div>
-                <a href={boxScoreUrl} target="_blank" rel="noopener noreferrer"
-                  style={{...styles.histLink, fontSize:9, flexShrink:0}}>📊 BOX SCORE →</a>
+
+                {/* Line score expanded */}
+                {isExpanded && bs && bs.linescores?.length > 0 && (
+                  <div style={{padding:"12px 14px", background:"#080808", overflowX:"auto"}}>
+                    {/* Period header */}
+                    {(() => {
+                      const periods = bs.linescores[0]?.periods || [];
+                      const labels = getPeriodLabels(g.sport, periods.length);
+                      return (
+                        <table style={{width:"100%", borderCollapse:"collapse", fontFamily:"'Georgia',serif", minWidth:320}}>
+                          <thead>
+                            <tr>
+                              <td style={{fontSize:9, color:"#555", padding:"3px 8px 3px 0", letterSpacing:"0.1em", minWidth:120}}>TEAM</td>
+                              {labels.map((lbl,j) => (
+                                <td key={j} style={{fontSize:9, color:"#666", textAlign:"center", padding:"3px 6px", minWidth:28, fontWeight:900}}>{lbl}</td>
+                              ))}
+                              <td style={{fontSize:9, color:"#c8201c", textAlign:"center", padding:"3px 6px", fontWeight:900, minWidth:36}}>TOT</td>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {bs.linescores.map((team, ti) => (
+                              <tr key={ti} style={{borderTop:"1px solid #1a1a1a"}}>
+                                <td style={{fontSize:12, fontWeight:700, color: ti===0&&awayWin||ti===1&&homeWin ? "#fff":"#aaa",
+                                  padding:"6px 8px 6px 0", whiteSpace:"nowrap"}}>{team.name}</td>
+                                {(team.periods||[]).map((p,j) => (
+                                  <td key={j} style={{fontSize:12, textAlign:"center", padding:"6px",
+                                    color: p === "0" || p === "-" ? "#444" : "#ccc",
+                                    fontWeight: p !== "0" && p !== "-" ? 700 : 400}}>{p}</td>
+                                ))}
+                                <td style={{fontSize:13, fontWeight:900, textAlign:"center", padding:"6px",
+                                  color: ti===0&&awayWin||ti===1&&homeWin ? "#22c55e" : "#fff"}}>
+                                  {ti===0 ? g.awayScore : g.homeScore}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      );
+                    })()}
+
+                    {/* Key stats if available */}
+                    {bs.playerStats?.length > 0 && (
+                      <div style={{marginTop:10, borderTop:"1px solid #1a1a1a", paddingTop:8}}>
+                        <div style={{fontSize:9, color:"#555", letterSpacing:"0.1em", fontWeight:900, marginBottom:6}}>KEY PERFORMERS</div>
+                        <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
+                          {bs.playerStats.slice(0,6).map((p,j) => (
+                            <div key={j} style={{fontSize:10, color:"#aaa", background:"#111",
+                              padding:"4px 8px", borderRadius:2, border:"1px solid #222"}}>
+                              <span style={{color:"#fff", fontWeight:700}}>{p.name}</span>
+                              <span style={{color:"#666", marginLeft:4}}>{p.team}</span>
+                              <span style={{color:"#c8201c", marginLeft:4}}>{p.stat}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -3965,7 +4060,7 @@ function RecapTab({ scores }) {
         })}
       </div>
 
-      {/* Tomorrow's NY games */}
+      {/* Tomorrow's games */}
       <div style={{...styles.stdDivisionHeader, marginTop:20}}>📅 TOMORROW'S NY GAMES</div>
       {(() => {
         const tomorrow = new Date();
@@ -3978,20 +4073,16 @@ function RecapTab({ scores }) {
           return d.toDateString() === tomorrow.toDateString() &&
             NY_NAMES.some(n => teams.includes(n));
         });
-        if (!tmrGames.length) return (
-          <p style={{fontSize:12, color:"#555", padding:"8px 0"}}>No NY games scheduled for tomorrow yet — check the SCHEDULE tab.</p>
-        );
-        return tmrGames.map((g, i) => (
-          <div key={i} style={{...styles.recapScoreRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
-            <div style={styles.recapTeams}>
-              <span style={styles.recapSport}>[{g.sport}]</span>
-              <span style={styles.recapAway}>{g.awayTeam}</span>
-              <span style={{...styles.recapScore, color:"#888"}}>vs</span>
-              <span style={styles.recapHome}>{g.homeTeam}</span>
+        if (!tmrGames.length) return <p style={{fontSize:12, color:"#555", padding:"8px 0"}}>No NY games scheduled for tomorrow.</p>;
+        return tmrGames.map((g,i) => (
+          <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between",
+            padding:"10px 14px", borderBottom:"1px solid #1a1a1a",
+            background: i%2===0?"#0e0e0e":"#111", flexWrap:"wrap", gap:8}}>
+            <div style={{display:"flex", alignItems:"center", gap:10}}>
+              <span style={{fontSize:9, color:"#c8201c", fontWeight:900}}>{g.sport}</span>
+              <span style={{fontSize:13, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{g.awayTeam} @ {g.homeTeam}</span>
             </div>
-            {g.broadcasts?.length > 0 && (
-              <span style={styles.recapStatus}>📺 {g.broadcasts.join(", ")}</span>
-            )}
+            <span style={{fontSize:11, color:"#888"}}>{g.statusDesc || g.gameTime || "TBD"}</span>
           </div>
         ));
       })()}
@@ -3999,7 +4090,6 @@ function RecapTab({ scores }) {
   );
 }
 
-// ─── NY ICONIC EVENTS TAB ─────────────────────────────────────────────────
 function IconicTab() {
   const [section, setSection] = useState("TENNIS");
 
@@ -6868,6 +6958,375 @@ function SpinTab() {
     </div>
   );
 }
+
+
+// ─── SONGS TAB (walk-up songs only, extracted from SpinTab) ────────────────
+function SongsTab() {
+  return (
+    <div style={styles.spinRoot}>
+      <div style={styles.spinHeader}>
+        <h2 style={styles.spinTitle}>🎵 WALK-UP SONGS</h2>
+        <p style={styles.spinSub}>YANKEES · METS · 2026 CURRENT ROSTER</p>
+      </div>
+
+      <div style={{marginBottom:16, padding:"10px 14px", background:"#111", border:"1px solid #2a2a2a"}}>
+        <div style={{display:"flex", gap:10, flexWrap:"wrap"}}>
+          <span style={{fontSize:9, color:"#555", alignSelf:"center"}}>🔗 FULL ROSTERS:</span>
+          <a href="https://platemusic.com/team/yankees" target="_blank" rel="noopener noreferrer" style={styles.histLink}>⚾ Yankees 2026</a>
+          <a href="https://platemusic.com/team/mets" target="_blank" rel="noopener noreferrer" style={styles.histLink}>⚾ Mets 2026</a>
+          <a href="https://platemusic.com/team" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🎵 All MLB Teams</a>
+        </div>
+      </div>
+
+      {[
+        { team:"Yankees", color:"#003087", players:[
+          { player:"Aaron Judge",       pos:"RF", song:"Hot (Remix)", artist:"Young Thug ft. Gunna & Travis Scott" },
+          { player:"Giancarlo Stanton", pos:"DH", song:"Dreams and Nightmares", artist:"Meek Mill" },
+          { player:"Paul Goldschmidt",  pos:"1B", song:"Numb/Encore", artist:"Linkin Park" },
+          { player:"Cody Bellinger",    pos:"LF", song:"A Milli", artist:"Lil Wayne" },
+          { player:"Anthony Volpe",     pos:"SS", song:"Something", artist:"John Summit" },
+          { player:"Ryan McMahon",      pos:"3B", song:"Devil's Den", artist:"Hippie Sabotage" },
+          { player:"Gerrit Cole",       pos:"SP", song:"Gimme Shelter", artist:"The Rolling Stones" },
+          { player:"Carlos Rodón",      pos:"SP", song:"Would?", artist:"Alice in Chains" },
+          { player:"Clarke Schmidt",    pos:"RP", song:"Hey Ya!", artist:"OutKast" },
+        ]},
+        { team:"Mets", color:"#FF5910", players:[
+          { player:"Juan Soto",          pos:"RF", song:"Empire State of Mind", artist:"JAY-Z & Alicia Keys" },
+          { player:"Francisco Lindor",   pos:"SS", song:"My Girl", artist:"The Temptations" },
+          { player:"Francisco Alvarez",  pos:"C",  song:"TBD 2026", artist:"Various" },
+          { player:"Mark Vientos",       pos:"3B", song:"TBD 2026", artist:"Various" },
+          { player:"Brandon Nimmo",      pos:"LF", song:"Sweet Home Alabama", artist:"Lynyrd Skynyrd" },
+          { player:"Pete Alonso",        pos:"1B", song:"All I Do Is Win", artist:"DJ Khaled" },
+          { player:"Kodai Senga",        pos:"SP", song:"TBD 2026", artist:"Various" },
+          { player:"David Peterson",     pos:"SP", song:"TBD 2026", artist:"Various" },
+        ]},
+      ].map((team, ti) => (
+        <div key={ti} style={{marginBottom:24}}>
+          <div style={{...styles.stdDivisionHeader, borderLeft:`3px solid ${team.color}`}}>
+            ⚾ NEW YORK {team.team.toUpperCase()} — 2026 WALK-UP SONGS
+          </div>
+          {team.players.map((s, i) => (
+            <div key={i} style={{display:"flex", gap:10, padding:"8px 14px",
+              borderBottom:"1px solid #1a1a1a", background: i%2===0?"#0e0e0e":"#111",
+              alignItems:"center", flexWrap:"wrap"}}>
+              <div style={{flex:1, minWidth:0}}>
+                <div style={{display:"flex", gap:8, alignItems:"baseline", flexWrap:"wrap", marginBottom:2}}>
+                  <span style={{fontSize:12, fontWeight:900, color:"#e8e8e8", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                  <span style={{fontSize:9, color:"#666", letterSpacing:"0.08em"}}>{s.pos}</span>
+                </div>
+                <div style={{fontSize:11, color:"#FFD700"}}>"{s.song}" — <span style={{color:"#aaa"}}>{s.artist}</span></div>
+              </div>
+              <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
+                target="_blank" rel="noopener noreferrer"
+                style={{...styles.histLink, fontSize:11, flexShrink:0}}>▶ YouTube</a>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── SPIN WHEEL TAB (facts wheel only, extracted from SpinTab) ─────────────
+function SpinWheelTab() {
+  const [rotation, setRotation]   = useState(0);
+  const [spinning, setSpinning]   = useState(false);
+  const [result, setResult]       = useState(null);
+  const [fact, setFact]           = useState(null);
+  const [loading, setLoading]     = useState(false);
+  const spinStateRef              = useRef({ current: 0, target: 0, vel: 0, running: false });
+  const rafRef                    = useRef(null);
+
+  const N   = WHEEL_SEGMENTS.length;
+  const DEG = 360 / N;
+
+  function getWinner(rot) {
+    const norm = ((rot % 360) + 360) % 360;
+    const idx = Math.floor((360 - norm) / DEG) % N;
+    return WHEEL_SEGMENTS[idx];
+  }
+
+  function spin() {
+    if (spinning) return;
+    setResult(null); setFact(null);
+    const extraSpins  = (5 + Math.floor(Math.random() * 5)) * 360;
+    const extraDeg    = Math.floor(Math.random() * 360);
+    const target      = rotation + extraSpins + extraDeg;
+    spinStateRef.current = { start: rotation, target, startTime: null };
+    setSpinning(true);
+
+    function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+
+    function animate(ts) {
+      const s = spinStateRef.current;
+      if (!s.startTime) s.startTime = ts;
+      const elapsed  = ts - s.startTime;
+      const duration = 3500 + Math.random() * 1000;
+      const t        = Math.min(elapsed / duration, 1);
+      const current  = s.start + (s.target - s.start) * ease(t);
+      setRotation(current);
+      if (t < 1) {
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        setRotation(s.target);
+        setSpinning(false);
+        const winner = getWinner(s.target);
+        setResult(winner);
+        fetchFact(winner.label);
+      }
+    }
+    rafRef.current = requestAnimationFrame(animate);
+  }
+
+  async function fetchFact(team) {
+    setLoading(true);
+    try {
+      const TEAM_MAP = {
+        "YANKEES":"YANKEES","METS":"METS","JETS":"JETS","GIANTS":"GIANTS",
+        "KNICKS":"KNICKS","RANGERS":"RANGERS","ISLANDERS":"ISLANDERS",
+        "NETS":"NETS","LIBERTY":"LIBERTY","DEVILS":"DEVILS",
+        "RED BULLS":"RED BULLS","GOTHAM FC":"GOTHAM FC","NYCFC":"NYCFC",
+      };
+      const teamKey = TEAM_MAP[team];
+      const row = teamKey
+        ? await sbRandom("ny_spin_facts", `team=eq.${encodeURIComponent(teamKey)}&`)
+        : await sbRandom("ny_spin_facts");
+      setFact(row || null);
+    } catch(e) { setFact(null); }
+    setLoading(false);
+  }
+
+  const CATEGORY_COLORS = {
+    stat:   { bg:"#003087", text:"#fff", label:"📊 STAT"   },
+    moment: { bg:"#c8201c", text:"#fff", label:"⚡ MOMENT" },
+    record: { bg:"#FFD700", text:"#111", label:"🏆 RECORD" },
+    legend: { bg:"#6B21A8", text:"#fff", label:"🌟 LEGEND" },
+    weird:  { bg:"#065f46", text:"#fff", label:"🤔 WEIRD"  },
+  };
+  const catStyle = CATEGORY_COLORS[fact?.category] || CATEGORY_COLORS.weird;
+
+  return (
+    <div style={styles.spinRoot}>
+      <div style={styles.spinHeader}>
+        <h2 style={styles.spinTitle}>🎰 NY SPORTS SPIN</h2>
+        <p style={styles.spinSub}>SPIN FOR A RANDOM NY SPORTS FACT</p>
+      </div>
+
+      <div style={styles.spinArena}>
+        <div style={styles.spinPointer}>▼</div>
+        <div style={{transform:`rotate(${rotation}deg)`, transition:"none", display:"flex", alignItems:"center", justifyContent:"center"}}>
+          <SVGWheel rotation={0} />
+        </div>
+      </div>
+
+      <div style={{textAlign:"center", margin:"24px 0 12px"}}>
+        <button onClick={spin} disabled={spinning}
+          style={{...styles.spinBtn, opacity: spinning ? 0.6 : 1, cursor: spinning ? "default" : "pointer"}}>
+          {spinning ? "SPINNING..." : "🎰 SPIN THE WHEEL"}
+        </button>
+      </div>
+
+      {result && (
+        <div style={{...styles.spinResult, borderColor: result.color}}>
+          <div style={{fontSize:24, marginBottom:6}}>{result.emoji}</div>
+          <div style={{fontSize:11, fontWeight:900, color: result.color, letterSpacing:"0.15em", marginBottom:4}}>
+            {result.label}
+          </div>
+          {loading ? (
+            <div style={{fontSize:12, color:"#666"}}>Loading fact...</div>
+          ) : fact ? (
+            <>
+              <div style={{display:"inline-block", padding:"2px 8px", borderRadius:2, fontSize:9, fontWeight:900,
+                letterSpacing:"0.1em", background: catStyle.bg, color: catStyle.text, marginBottom:8}}>
+                {catStyle.label}
+              </div>
+              <div style={{fontSize:11, color:"#888", marginBottom:6, fontStyle:"italic"}}>{fact.teaser}</div>
+              <p style={{fontSize:13, color:"#e8e0d0", lineHeight:1.6, margin:0, fontFamily:"'Georgia',serif"}}>{fact.fact}</p>
+            </>
+          ) : (
+            <p style={{fontSize:13, color:"#888"}}>Spin to get a random NY sports fact!</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── BIRTHDAYS TODAY TAB ──────────────────────────────────────────────────
+function BirthdaysTab() {
+  const today = new Date();
+  const month = today.getMonth() + 1;
+  const day   = today.getDate();
+  const dateStr = today.toLocaleDateString("en-US", {month:"long", day:"numeric"});
+
+  const ALL_BIRTHDAYS = [
+    { month:1,  day:7,  name:"Willie Randolph",   team:"Yankees",   year:1954, sport:"MLB", note:"Yankees 2B and later Mets manager — played on four World Series teams" },
+    { month:1,  day:10, name:"Rod Gilbert",        team:"Rangers",   year:1941, sport:"NHL", note:"Rangers' all-time scoring leader — 406 goals, 1,021 points in pinstripes" },
+    { month:1,  day:14, name:"Carl Banks",         team:"Giants",    year:1962, sport:"NFL", note:"LB on two Super Bowl championship Giants teams alongside Lawrence Taylor" },
+    { month:1,  day:17, name:"Hakeem Nicks",       team:"Giants",    year:1988, sport:"NFL", note:"Key WR on the 2012 Super Bowl Giants team" },
+    { month:1,  day:19, name:"Phil Simms",         team:"Giants",    year:1954, sport:"NFL", note:"Giants QB who went 22/25 in Super Bowl XXI — 88% completion rate" },
+    { month:1,  day:21, name:"Jack Nicklaus",      team:"US Open",   year:1940, sport:"Golf", note:"Won the US Open at Baltusrol NJ twice — the greatest golfer ever" },
+    { month:1,  day:26, name:"Wayne Gretzky",      team:"Rangers",   year:1961, sport:"NHL", note:"The Great One wore Ranger blue at the end of his legendary career" },
+    { month:2,  day:1,  name:"Don Maynard",        team:"Jets",      year:1935, sport:"NFL", note:"First great Jets wide receiver — caught Joe Namath's passes to glory" },
+    { month:2,  day:6,  name:"Babe Ruth",          team:"Yankees",   year:1895, sport:"MLB", note:"The Sultan of Swat. 714 career HR. The greatest Yankee ever." },
+    { month:2,  day:9,  name:"Fran Tarkenton",     team:"Giants",    year:1940, sport:"NFL", note:"Scrambling QB who changed the Giants offense in the 1960s" },
+    { month:2,  day:18, name:"John McEnroe",       team:"US Open",   year:1959, sport:"Tennis", note:"Queens-born tennis legend — 4x US Open champion at Flushing Meadows" },
+    { month:2,  day:22, name:"Julius Erving",      team:"Nets",      year:1950, sport:"NBA", note:"Dr. J — two ABA championships with the NY Nets. The most electrifying player ever." },
+    { month:3,  day:2,  name:"Mel Stottlemyre",    team:"Yankees",   year:1941, sport:"MLB", note:"Yankees ace and legendary pitching coach — three World Series teams" },
+    { month:3,  day:12, name:"Tug McGraw",         team:"Mets",      year:1944, sport:"MLB", note:"Ya Gotta Believe! The 1973 Mets reliever who coined the greatest rallying cry" },
+    { month:3,  day:18, name:"Adam Clayton Powell III", team:"NY",  year:1946, sport:"Boxing", note:"NY sports patron — Madison Square Garden's most storied fights" },
+    { month:3,  day:20, name:"Pat Riley",          team:"Knicks",    year:1945, sport:"NBA", note:"Coached the Knicks to the 1994 Finals — the closest they've come since 1973" },
+    { month:3,  day:21, name:"Gary Carter",        team:"Mets",      year:1954, sport:"MLB", note:"'The Kid' — the heart of the 1986 champion Mets. Called the greatest catcher of his era." },
+    { month:3,  day:23, name:"Moses Malone",       team:"Nets",      year:1955, sport:"NBA", note:"Brief time with NJ Nets — Hall of Fame center and NBA legend" },
+    { month:4,  day:8,  name:"Yogi Berra",         team:"Yankees",   year:1925, sport:"MLB", note:"It ain't over till it's over. 10x World Series champion. The greatest catcher in baseball history." },
+    { month:4,  day:11, name:"Reggie Jackson",     team:"Yankees",   year:1946, sport:"MLB", note:"Mr. October — three home runs on three pitches in Game 6 of the 1977 World Series" },
+    { month:4,  day:12, name:"Joe Namath",         team:"Jets",      year:1943, sport:"NFL", note:"Broadway Joe — guaranteed the Super Bowl III win and delivered. The greatest Jet ever." },
+    { month:4,  day:18, name:"Mickey Rivers",      team:"Yankees",   year:1948, sport:"MLB", note:"Speedy CF on the 1977-78 championship Yankees teams" },
+    { month:4,  day:28, name:"Bucky Dent",         team:"Yankees",   year:1951, sport:"MLB", note:"His 1978 playoff home run at Fenway is one of the most iconic in baseball history" },
+    { month:5,  day:6,  name:"Willie Mays",        team:"NY Giants", year:1931, sport:"MLB", note:"The Say Hey Kid — possibly the greatest all-around player ever. Debuted with the NY Giants at the Polo Grounds." },
+    { month:5,  day:9,  name:"Pancho Gonzales",    team:"US Open",   year:1928, sport:"Tennis", note:"One of the greatest players in US Open history at Forest Hills and Flushing" },
+    { month:5,  day:14, name:"Dennis Martinez",    team:"Mets",      year:1955, sport:"MLB", note:"Veteran pitcher who closed out his career with the Mets" },
+    { month:5,  day:17, name:"Sugar Ray Leonard",  team:"MSG",       year:1956, sport:"Boxing", note:"Had legendary fights at Madison Square Garden — the best arena for boxing" },
+    { month:5,  day:20, name:"Mike Richter",       team:"Rangers",   year:1966, sport:"NHL", note:"Goaltender hero of the 1994 Stanley Cup championship — saved 4,000 shots that postseason" },
+    { month:5,  day:24, name:"John Elway",         team:"Giants",    year:1960, sport:"NFL", note:"Lost to the Giants in Super Bowl XXI — Simms' masterpiece performance" },
+    { month:6,  day:1,  name:"Ron Swoboda",        team:"Mets",      year:1945, sport:"MLB", note:"Made the greatest catch in 1969 World Series history to preserve Tom Seaver's gem" },
+    { month:6,  day:3,  name:"Allen Iverson",      team:"Knicks",    year:1975, sport:"NBA", note:"Faced the Knicks in memorable playoff battles — the Answer at MSG" },
+    { month:6,  day:6,  name:"Björn Borg",         team:"US Open",   year:1956, sport:"Tennis", note:"Won the US Open at Flushing Meadows — a tennis legend in New York" },
+    { month:6,  day:9,  name:"Les Borden",         team:"Yankees",   year:1938, sport:"MLB", note:"Part of the rich Yankees organizational history" },
+    { month:6,  day:11, name:"Mike Ditka",         team:"Giants",    year:1939, sport:"NFL", note:"Faced the Giants as a rival — legendary NFL figure connected to NY football history" },
+    { month:6,  day:17, name:"Barry Manilow",      team:"MSG",       year:1943, sport:"Culture", note:"Born in Brooklyn — performed at MSG countless times, the quintessential NY entertainer" },
+    { month:6,  day:19, name:"Lou Gehrig",         team:"Yankees",   year:1903, sport:"MLB", note:"The Iron Horse. 2,130 consecutive games. 'The luckiest man on the face of the earth.' The greatest Yankee who ever lived." },
+    { month:6,  day:21, name:"Bernard King",       team:"Knicks",    year:1956, sport:"NBA", note:"Scored 60 points at MSG — the most unstoppable scorer in Knicks history" },
+    { month:6,  day:25, name:"Willis Reed",        team:"Knicks",    year:1942, sport:"NBA", note:"Limped onto the court in Game 7 of the 1970 Finals — the greatest moment in Knicks history" },
+    { month:7,  day:2,  name:"Dave Winfield",      team:"Yankees",   year:1951, sport:"MLB", note:"Hall of Fame OF who battled Steinbrenner — 'Mr. May' redeemed himself many times over" },
+    { month:7,  day:4,  name:"Marcelino Lopez",    team:"Yankees",   year:1943, sport:"MLB", note:"Part of the rich Yankees pitching history in their dynasty years" },
+    { month:7,  day:6,  name:"Bill Johnson",       team:"Rangers",   year:1949, sport:"NHL", note:"Rangers goaltender who played during some of the team's toughest years" },
+    { month:7,  day:8,  name:"Billy Wagner",       team:"Mets",      year:1971, sport:"MLB", note:"Mets closer with a 95+ mph fastball — one of the most dominant relievers of his era" },
+    { month:7,  day:11, name:"George Bell",        team:"Yankees",   year:1959, sport:"MLB", note:"Played for the Yankees — part of the team's rich 1980s history" },
+    { month:7,  day:17, name:"Elston Howard",      team:"Yankees",   year:1929, sport:"MLB", note:"First Black Yankee — 1963 AL MVP, beloved captain and 9x World Series participant" },
+    { month:7,  day:18, name:"Patrick Ewing",      team:"Knicks",    year:1962, sport:"NBA", note:"The franchise cornerstone — 23,665 points in 15 Knick seasons. Always a champion in our hearts." },
+    { month:7,  day:22, name:"Bobby Thomson",      team:"Giants",    year:1923, sport:"MLB", note:"The Shot Heard Round the World — October 3, 1951. The most famous home run in baseball history." },
+    { month:7,  day:26, name:"Mick Jagger",        team:"MSG",       year:1943, sport:"Culture", note:"The Rolling Stones have played MSG more times than almost any other venue — a NY institution" },
+    { month:7,  day:28, name:"Tom Brady",          team:"Giants",    year:1977, sport:"NFL", note:"Lost two Super Bowls to the Giants — Eli Manning's greatest nemesis" },
+    { month:8,  day:4,  name:"Roger Clemens",      team:"Yankees",   year:1962, sport:"MLB", note:"The Rocket won two Cy Youngs in pinstripes — but his career legacy is complicated" },
+    { month:8,  day:7,  name:"David Cone",         team:"Yankees",   year:1963, sport:"MLB", note:"Threw a perfect game on Yogi Berra Day, 1999 — one of the most perfect moments in baseball" },
+    { month:8,  day:8,  name:"Brent Musburger",    team:"NY Sports", year:1939, sport:"Broadcasting", note:"Legendary broadcaster who called so many great NY sports moments" },
+    { month:8,  day:12, name:"Mark Messier",       team:"Rangers",   year:1961, sport:"NHL", note:"The Captain — guaranteed the 1994 Stanley Cup win, then delivered with a natural hat trick. The greatest Ranger ever." },
+    { month:8,  day:16, name:"Frank Gifford",      team:"Giants",    year:1930, sport:"NFL", note:"The most glamorous Giant of his era — All-Pro player turned legendary broadcaster" },
+    { month:8,  day:18, name:"Denis Potvin",       team:"Islanders", year:1953, sport:"NHL", note:"Led the Islanders to four consecutive Stanley Cups — the greatest defenseman of his era" },
+    { month:8,  day:20, name:"Reggie Miller",      team:"Knicks",    year:1965, sport:"NBA", note:"The villain — scored 8 points in 9 seconds to destroy the Knicks. MSG hated and loved him." },
+    { month:8,  day:24, name:"Mike Bossy",         team:"Islanders", year:1957, sport:"NHL", note:"Nine consecutive 50-goal seasons — the most prolific scorer in Islander history" },
+    { month:8,  day:28, name:"Phil Rizzuto",       team:"Yankees",   year:1917, sport:"MLB", note:"Holy Cow! The Scooter — SS and beloved broadcaster for the Yankees for 40 years" },
+    { month:9,  day:1,  name:"Rocky Marciano",     team:"MSG",       year:1923, sport:"Boxing", note:"Fought legendary bouts at MSG — the only undefeated heavyweight champion ever" },
+    { month:9,  day:5,  name:"Jesse James",        team:"Giants",    year:1987, sport:"NFL", note:"Part of the Giants' proud tradition at a key position" },
+    { month:9,  day:9,  name:"Whitey Ford",        team:"Yankees",   year:1928, sport:"MLB", note:"The Chairman of the Board — 10x World Series, .690 WS winning percentage, the greatest Yankee pitcher ever" },
+    { month:9,  day:11, name:"Tom Landry",         team:"Giants",    year:1924, sport:"NFL", note:"Defensive coordinator for the Giants before becoming Cowboys legend — shaped NY football" },
+    { month:9,  day:13, name:"Dave DeBusschere",   team:"Knicks",    year:1940, sport:"NBA", note:"Power forward on both championship Knicks teams — beloved New Yorker and true team player" },
+    { month:9,  day:19, name:"Joe Morgan",         team:"Mets",      year:1943, sport:"MLB", note:"Brief time managing the Mets — the Hall of Famer brought his winning pedigree to Queens" },
+    { month:9,  day:21, name:"Bill Murray",        team:"Mets",      year:1950, sport:"Culture", note:"The greatest celebrity Mets fan — born in Evanston but adopted New York as his spiritual home" },
+    { month:9,  day:23, name:"Larry Doby",         team:"Yankees",   year:1923, sport:"MLB", note:"Second Black player in MLB — briefly with the Yankees, forever part of baseball's civil rights story" },
+    { month:9,  day:27, name:"Mike Schmidt",       team:"Phillies",  year:1949, sport:"MLB", note:"Rivals of the Mets — the greatest third baseman ever who tormented NY for decades" },
+    { month:9,  day:29, name:"Bryant Gumbel",      team:"NY Media",  year:1948, sport:"Broadcasting", note:"NY sports broadcasting legend — his coverage of Yankees and NY sports is iconic" },
+    { month:10, day:1,  name:"Rod Carew",          team:"Yankees",   year:1945, sport:"MLB", note:"Hall of Famer who played his final years as an AL rival — one of the greatest hitters ever" },
+    { month:10, day:5,  name:"Mario Lemieux",      team:"Rangers",   year:1965, sport:"NHL", note:"Rangers' greatest rival in the early 90s — faced the Rangers in classic playoff battles" },
+    { month:10, day:8,  name:"Matt Damon",         team:"NY Sports", year:1970, sport:"Culture", note:"Born in Cambridge but deeply connected to NY sports culture through countless films" },
+    { month:10, day:13, name:"Rickey Henderson",   team:"Yankees",   year:1958, sport:"MLB", note:"The greatest leadoff hitter ever — stole 93 bases in his first Yankee season (1985)" },
+    { month:10, day:17, name:"Tom Seaver",         team:"Mets",      year:1944, sport:"MLB", note:"Tom Terrific — 311 wins, 2.86 ERA, three Cy Youngs. The greatest Met who ever lived." },
+    { month:10, day:19, name:"Evander Holyfield",  team:"MSG",       year:1962, sport:"Boxing", note:"Four world heavyweight title fights at MSG — a boxing legend in the greatest boxing arena" },
+    { month:10, day:21, name:"Whitey Herzog",      team:"Mets",      year:1931, sport:"MLB", note:"Manager and executive with the Mets organization before his Cardinals success" },
+    { month:10, day:25, name:"Tracy Austin",       team:"US Open",   year:1962, sport:"Tennis", note:"Won the US Open at 16 — the youngest ever. Flushing Meadows legend." },
+    { month:10, day:27, name:"Brian Leetch",       team:"Rangers",   year:1968, sport:"NHL", note:"First American to win the Conn Smythe — the greatest Rangers defenseman of the modern era" },
+    { month:11, day:1,  name:"Gary Carter",        team:"Mets",      year:1954, sport:"MLB", note:"Double birthday entry — The Kid was born November 1, 1954. 1986 World Series champion." },
+    { month:11, day:4,  name:"Ralph Branca",       team:"Giants",    year:1926, sport:"MLB", note:"Threw the pitch Bobby Thomson hit for the Shot Heard Round the World — the most famous pitch ever" },
+    { month:11, day:6,  name:"Mike Richter",       team:"Rangers",   year:1966, sport:"NHL", note:"(Also listed in May — checking) — 1994 Stanley Cup hero" },
+    { month:11, day:8,  name:"Jack Dempsey",       team:"MSG",       year:1895, sport:"Boxing", note:"The Manassa Mauler fought the most legendary bouts at MSG — the greatest fighter of the 1920s" },
+    { month:11, day:14, name:"Joe Frazier",        team:"MSG",       year:1944, sport:"Boxing", note:"Smokin Joe — fought Ali three times, including the Fight of the Century at MSG in 1971" },
+    { month:11, day:16, name:"Dwight Gooden",      team:"Mets",      year:1964, sport:"MLB", note:"Doc — 24-4, 1.53 ERA in 1985 at age 20. The most dominant young pitcher in baseball history." },
+    { month:11, day:18, name:"Darryl Strawberry",  team:"Mets",      year:1962, sport:"MLB", note:"The Straw Man — 252 Mets HR, 8 All-Star selections. Enormous talent, complicated legacy." },
+    { month:11, day:22, name:"Billie Jean King",   team:"US Open",   year:1943, sport:"Tennis", note:"The US Open's home court is named Billie Jean King National Tennis Center in her honor" },
+    { month:11, day:26, name:"Dale Berra",         team:"Yankees",   year:1956, sport:"MLB", note:"Son of the great Yogi — played for the Yankees following his father's legendary footsteps" },
+    { month:12, day:3,  name:"Walt Frazier",       team:"Knicks",    year:1945, sport:"NBA", note:"Clyde — the coolest man to ever play at MSG. Point guard on both championship Knicks teams. Broadcasting legend." },
+    { month:12, day:9,  name:"Dick Butkus",        team:"Giants",    year:1942, sport:"NFL", note:"The greatest linebacker before LT — a rival who made the Giants better by being great" },
+    { month:12, day:11, name:"John Kelly",         team:"NY Sports", year:1928, sport:"Broadcasting", note:"NY sports broadcasting pioneer" },
+    { month:12, day:13, name:"Larry Doby",         team:"Yankees",   year:1923, sport:"MLB", note:"(See also Sept 23) — one of baseball's most important figures" },
+    { month:12, day:16, name:"Frank Viola",        team:"Mets",      year:1960, sport:"MLB", note:"Cy Young winner who came to the Mets — part of the pitching rotation in the late 80s" },
+    { month:12, day:19, name:"Reggie White",       team:"Giants",    year:1961, sport:"NFL", note:"The Minister of Defense — faced the Giants in legendary NFC battles" },
+    { month:12, day:21, name:"Chris Evert",        team:"US Open",   year:1954, sport:"Tennis", note:"Won six US Opens — one of the greatest champions at Flushing Meadows" },
+    { month:12, day:23, name:"Bob Gibson",         team:"Mets",      year:1935, sport:"MLB", note:"Cardinals legend who dominated the Mets in the 1960s — the most intimidating pitcher of his era" },
+    { month:12, day:28, name:"Sidd Finch",         team:"Mets",      year:1985, sport:"MLB", note:"The legendary fictional 168 mph pitcher created by George Plimpton for Sports Illustrated — April Fools 1985" },
+  ];
+
+  const todayBirthdays = ALL_BIRTHDAYS.filter(b => b.month === month && b.day === day);
+
+  const SPORT_COLORS = {
+    MLB:"#003087", NFL:"#c8201c", NBA:"#F57C00", NHL:"#0038A8",
+    Tennis:"#22c55e", Boxing:"#7C3AED", Golf:"#065f46", Culture:"#BE185D", Broadcasting:"#0891B2"
+  };
+
+  return (
+    <div style={styles.statsRoot}>
+      <div style={styles.stdHeader}>
+        <h2 style={styles.stdTitle}>🎂 NY SPORTS BIRTHDAYS TODAY</h2>
+        <p style={styles.stdSub}>{dateStr.toUpperCase()} · WHO WAS BORN TODAY IN NY SPORTS HISTORY</p>
+      </div>
+
+      {todayBirthdays.length === 0 ? (
+        <div style={{padding:"30px 0", textAlign:"center"}}>
+          <div style={{fontSize:40, marginBottom:12}}>🎂</div>
+          <div style={{fontSize:14, color:"#aaa", fontFamily:"'Georgia',serif", marginBottom:8}}>
+            No major NY sports birthdays found for {dateStr}.
+          </div>
+          <div style={{fontSize:11, color:"#555"}}>
+            Check back tomorrow — or explore another date in the HISTORY tab.
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
+            <p style={{margin:0, fontSize:12, color:"#aaa"}}>
+              {todayBirthdays.length} NY sports legend{todayBirthdays.length !== 1 ? "s" : ""} born on {dateStr}
+            </p>
+          </div>
+          {todayBirthdays.map((b, i) => {
+            const color = SPORT_COLORS[b.sport] || "#888";
+            const age = new Date().getFullYear() - b.year;
+            return (
+              <a key={i}
+                href={`https://www.google.com/search?q=${encodeURIComponent(b.name+" "+b.team+" sports")}`}
+                target="_blank" rel="noopener noreferrer"
+                style={{display:"flex", alignItems:"flex-start", gap:14, padding:"14px 16px",
+                  borderBottom:"1px solid #1a1a1a", background: i%2===0?"#0e0e0e":"#111",
+                  borderLeft:`4px solid ${color}`, textDecoration:"none", marginBottom:4}}>
+                <div style={{flexShrink:0, width:52, height:52, borderRadius:"50%",
+                  background:`${color}22`, border:`2px solid ${color}44`,
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  flexDirection:"column", textAlign:"center"}}>
+                  <div style={{fontSize:14, fontWeight:900, color, lineHeight:1}}>{b.year}</div>
+                  <div style={{fontSize:9, color:"#666"}}>{age}y</div>
+                </div>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:4}}>
+                    <span style={{fontSize:16, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{b.name}</span>
+                    <span style={{fontSize:9, padding:"2px 7px", background:`${color}22`, color,
+                      fontWeight:900, letterSpacing:"0.1em", borderRadius:2}}>{b.team}</span>
+                    <span style={{fontSize:9, color:"#666"}}>[{b.sport}]</span>
+                  </div>
+                  <p style={{margin:0, fontSize:12, color:"#888", lineHeight:1.55, fontFamily:"'Georgia',serif"}}>{b.note}</p>
+                </div>
+                <span style={{fontSize:9, color:"#555", flexShrink:0, alignSelf:"center"}}>→</span>
+              </a>
+            );
+          })}
+        </div>
+      )}
+
+      <div style={{marginTop:20, padding:"10px 14px", background:"#111", borderLeft:"2px solid #2a2a2a", fontSize:10, color:"#555"}}>
+        🎂 {ALL_BIRTHDAYS.length} NY sports birthdays in our database · Refreshes automatically each day
+      </div>
+    </div>
+  );
+}
+
 
 // ─── TRIVIA + THIS DATE COMPONENT (AI-powered) ────────────────────────────
 function TriviaTab() {
