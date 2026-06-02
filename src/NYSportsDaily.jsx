@@ -5465,6 +5465,78 @@ function StatsTab() {
   const [loadingLeaders, setLoadingLeaders] = useState(false);
   const year = new Date().getFullYear();
 
+  const LEAGUE_MAP = {
+    MLB:  [{ sport:"baseball",   league:"mlb"  }],
+    NFL:  [{ sport:"football",   league:"nfl"  }],
+    NBA:  [{ sport:"basketball", league:"nba"  }],
+    NHL:  [{ sport:"hockey",     league:"nhl"  }],
+    WNBA: [{ sport:"basketball", league:"wnba" }],
+  };
+
+  const STATS_REFERENCE = {
+    MLB:  { emoji:"⚾", color:"#003087" },
+    NFL:  { emoji:"🏈", color:"#c8201c" },
+    NBA:  { emoji:"🏀", color:"#FF5910" },
+    NHL:  { emoji:"🏒", color:"#0038A8" },
+    WNBA: { emoji:"🏀", color:"#007A5E" },
+  };
+
+  const DROUGHT_DATA = [
+    { team:"Jets",      emoji:"🏈", last:1969,  sport:"NFL"  },
+    { team:"Knicks",    emoji:"🏀", last:1973,  sport:"NBA"  },
+    { team:"Rangers",   emoji:"🏒", last:1994,  sport:"NHL"  },
+    { team:"Mets",      emoji:"⚾", last:1986,  sport:"MLB"  },
+    { team:"Giants",    emoji:"🏈", last:2011,  sport:"NFL"  },
+    { team:"Islanders", emoji:"🏒", last:1983,  sport:"NHL"  },
+    { team:"Yankees",   emoji:"⚾", last:2009,  sport:"MLB"  },
+    { team:"Devils",    emoji:"🏒", last:2003,  sport:"NHL"  },
+    { team:"Nets",      emoji:"🏀", last:null,  sport:"NBA"  },
+    { team:"Liberty",   emoji:"🏀", last:2024,  sport:"WNBA" },
+  ].sort((a,b) => {
+    const ya = a.last ? (year - a.last) : 999;
+    const yb = b.last ? (year - b.last) : 999;
+    return yb - ya;
+  });
+
+  const DRAFT_DATA = {
+    Yankees: [
+      { year:2009, pick:"#30", name:"Slade Heathcott", note:"High ceiling OF — never panned out." },
+      { year:1991, pick:"#1",  name:"Brien Taylor",    note:"Can't-miss LHP who never threw a MLB pitch." },
+      { year:1995, pick:"#6",  name:"Derek Jeter",     note:"Best draft pick in franchise history." },
+    ],
+    Mets: [
+      { year:1966, pick:"#1",  name:"Steve Chilcott",  note:"Only #1 pick never to reach majors." },
+      { year:1992, pick:"#5",  name:"Paul Wilson",     note:"Part of Generation K — big bust." },
+      { year:2001, pick:"#1",  name:"David Wright",    note:"The Face of the Franchise. A true Met." },
+    ],
+    Jets: [
+      { year:1965, pick:"#1",  name:"Joe Namath",      note:"The guarantee. Super Bowl III champion." },
+      { year:1996, pick:"#1",  name:"Keyshawn Johnson",note:"Please give me the ball — and they did." },
+      { year:2018, pick:"#3",  name:"Sam Darnold",     note:"Saw ghosts. Traded for pennies." },
+    ],
+    Giants: [
+      { year:1981, pick:"#2",  name:"Lawrence Taylor", note:"Greatest defensive player in NFL history." },
+      { year:2004, pick:"#4",  name:"Philip Rivers",   note:"Traded draft day for Eli Manning." },
+      { year:2025, pick:"#3",  name:"Abdul Carter",    note:"Penn State pass rusher. The next LT?" },
+    ],
+    Knicks: [
+      { year:1985, pick:"#1",  name:"Patrick Ewing",   note:"The franchise cornerstone. 15 great years." },
+      { year:1999, pick:"#15", name:"Ron Artest",       note:"Traded for cap space. Became Ron World Peace." },
+      { year:2023, pick:"#13", name:"Jalen Brunson",   note:"Not a draft pick — best FA signing in years." },
+    ],
+  };
+
+  const RIVALS_DATA = [
+    { team1:"Yankees", team2:"Red Sox",   sport:"MLB", note:"Baseball's greatest rivalry — 100+ years of pure hatred" },
+    { team1:"Yankees", team2:"Mets",      sport:"MLB", note:"Queens vs The Bronx — the city divided every summer" },
+    { team1:"Jets",    team2:"Dolphins",  sport:"NFL", note:"AFC East rivals — Miami always haunted the Jets" },
+    { team1:"Giants",  team2:"Eagles",    sport:"NFL", note:"NFC East — the most bitter divisional rivalry in NY" },
+    { team1:"Rangers", team2:"Islanders", sport:"NHL", note:"The Battle of New York — defining tri-state hockey wars" },
+    { team1:"Rangers", team2:"Devils",    sport:"NHL", note:"Metropolitan rivals — Messier guarantee the defining moment" },
+    { team1:"Knicks",  team2:"Celtics",   sport:"NBA", note:"Reed vs Cowens, Ewing vs Bird — classic battles" },
+    { team1:"Nets",    team2:"Knicks",    sport:"NBA", note:"Brooklyn vs Manhattan — the city NBA rivalry" },
+  ];
+
   const sections = ["LEADERS","DROUGHT","DRAFT","RIVALS","TEAM LINKS"];
 
   useEffect(() => {
