@@ -781,7 +781,7 @@ async function fetchNYNews() {
     { team:"Mets",      must:["new york mets","mets ","mets'","mets,","mets.","the mets","citi field"], exclude:[] },
     { team:"Jets",      must:["new york jets","ny jets","jets ","jets'","jets,","jets.","gang green"], exclude:["winnipeg","nhl"] },
     { team:"Giants",    must:["new york giants","ny giants","giants ","giants'","giants,","giants.","big blue","eli manning","lawrence taylor"], exclude:["san francisco","sf giants","oracle park","giants park","los angeles","san diego","colorado","chicago","atlanta","cincinnati","miami","pittsburgh","st. louis","milwaukee","philadelphia phillies","arizona","houston","seattle"] },
-    { team:"Knicks",    must:["knicks","madison square garden"], exclude:[] },
+    { team:"Knicks",    must:["knicks","madison square garden","msg basketball","nba finals","brunson","jalen brunson","og anunoby","mikal bridges","karl-anthony towns","josh hart","new york knicks","knick ","knick'"], exclude:[] },
     { team:"Nets",      must:["brooklyn nets","nets ","nets'","nets,","nets.","barclays center"], exclude:[] },
     { team:"Rangers",   must:["new york rangers","ny rangers","rangers ","rangers'","rangers,","rangers.","blueshirts","henrik lundqvist","mark messier","brian leetch"], exclude:["texas rangers","texas ","t.rangers","royals","kansas city","los angeles angels","seattle mariners","houston astros","oakland","baltimore","boston red","minnesota twins","toronto blue","chicago white","cleveland","detroit","tampa bay"] },
     { team:"Islanders", must:["islanders","ubs arena","nassau coliseum","new york islanders"], exclude:[] },
@@ -820,7 +820,8 @@ async function fetchNYNews() {
   const STATIC_STORIES = [
     { title:"New York Jets 2026 training camp preview — battles to watch", team:"Jets", source:"ESPN · Jets", link:"https://www.espn.com/nfl/team/news/_/name/nyj", desc:"Key position battles and storylines as the Jets head into camp.", pub:new Date(Date.now()-172800000).toISOString() },
     { title:"Garrett Wilson among NFL's most dynamic receivers in 2026", team:"Jets", source:"ESPN · NFL", link:"https://www.espn.com/nfl/team/news/_/name/nyj", desc:"Wilson's emergence gives the Jets a true No. 1 weapon.", pub:new Date(Date.now()-259200000).toISOString() },
-    { title:"Brooklyn Nets 2026: building around youth and draft capital", team:"Nets", source:"ESPN · Nets", link:"https://www.espn.com/nba/team/news/_/name/bkn", desc:"The Nets enter a new era focused on sustainable rebuilding.", pub:new Date(Date.now()-172800000).toISOString() },
+    { title:"New York Knicks NBA Finals 2026 — latest news and updates", team:"Knicks", source:"ESPN · Knicks", link:"https://www.espn.com/nba/team/news/_/name/ny", desc:"The Knicks are in the NBA Finals. Latest news, analysis and game coverage.", pub:new Date(Date.now()-3600000).toISOString() },
+    { title:"Jalen Brunson leading the Knicks on the biggest stage in basketball", team:"Knicks", source:"ESPN · NBA", link:"https://www.espn.com/nba/team/news/_/name/ny", desc:"Brunson's leadership has the Knicks playing their best basketball.", pub:new Date(Date.now()-86400000).toISOString() }, source:"ESPN · Nets", link:"https://www.espn.com/nba/team/news/_/name/bkn", desc:"The Nets enter a new era focused on sustainable rebuilding.", pub:new Date(Date.now()-172800000).toISOString() },
     { title:"Brooklyn Nets lottery pick gives new hope to long-suffering fans", team:"Nets", source:"ESPN · NBA", link:"https://www.espn.com/nba/team/news/_/name/bkn", desc:"Nets fans have reason for optimism as the rebuild continues.", pub:new Date(Date.now()-345600000).toISOString() },
     { title:"New York Rangers 2026 offseason: retooling for another playoff run", team:"Rangers", source:"ESPN · Rangers", link:"https://www.espn.com/nhl/team/news/_/name/nyr", desc:"The Blueshirts face key free agent decisions this summer.", pub:new Date(Date.now()-172800000).toISOString() },
     { title:"Rangers' Igor Shesterkin remains the backbone of New York's Cup hopes", team:"Rangers", source:"ESPN · NHL", link:"https://www.espn.com/nhl/team/news/_/name/nyr", desc:"The elite goaltender keeps New York competitive year after year.", pub:new Date(Date.now()-432000000).toISOString() },
@@ -6360,320 +6361,408 @@ function ShopTab() {
 }
 
 function StandingsTab({ standings, loading }) {
-  const [activeLeague, setActiveLeague] = useState("MLB");
-  const [activeView, setActiveView]     = useState("PLAYOFF"); // PLAYOFF | STANDINGS
-  const leagues = ["MLB","NFL","NBA","NHL","WNBA","MLS"];
-  const [playoffData, setPlayoffData]   = useState({});
-  const [loadingPlayoffs, setLoadingPlayoffs] = useState(true);
+  const [sport, setSport]       = useState("MLB");
+  const [view, setView]         = useState("WILDCARD");
+  const [confData, setConfData] = useState({});
+  const [fetching, setFetching] = useState(false);
 
-  // NY team identifiers in ESPN standings
-  const NY_IDS = {
-    MLB:  { teams:["10","21"],        names:{"10":"Yankees","21":"Mets"} },
-    NFL:  { teams:["20","19"],        names:{"20":"Jets","19":"Giants"} },
-    NBA:  { teams:["18","17"],        names:{"18":"Knicks","17":"Nets"} },
-    NHL:  { teams:["13","22","1"],    names:{"13":"Rangers","22":"Islanders","1":"Devils"} },
-    WNBA: { teams:["20"],            names:{"20":"Liberty"} },
+  const NY_IDS = { 
+    MLB:["10","21"], NFL:["19","20"], NBA:["18","17"],
+    NHL:["13","22","1"], WNBA:["20"]
   };
 
-  const LEAGUE_CONFIGS = [
-    { key:"MLB",  sport:"baseball",   league:"mlb",   emoji:"⚾", spots:12, label:"MLB Wild Card" },
-    { key:"NBA",  sport:"basketball", league:"nba",   emoji:"🏀", spots:16, label:"NBA Playoffs"  },
-    { key:"NHL",  sport:"hockey",     league:"nhl",   emoji:"🏒", spots:16, label:"NHL Playoffs"  },
-    { key:"NFL",  sport:"football",   league:"nfl",   emoji:"🏈", spots:14, label:"NFL Playoffs"  },
-    { key:"WNBA", sport:"basketball", league:"wnba",  emoji:"🏀", spots:8,  label:"WNBA Playoffs" },
-  ];
+  // How many playoff spots per LEAGUE (total, both conferences combined)
+  // MLB: 12 total (3 div + 3 WC per league)
+  // NBA: 16 total (8 per conf)
+  // NHL: 16 total (8 per conf)  
+  // NFL: 14 total (7 per conf)
+  // WNBA: 8 total (single conf)
+  const CFG = {
+    MLB:  { sport:"baseball",   league:"mlb",  emoji:"⚾", divWinners:3, wcSpots:3, label:"MLB",  espnUrl:"mlb" },
+    NBA:  { sport:"basketball", league:"nba",  emoji:"🏀", divWinners:3, wcSpots:5, label:"NBA",  espnUrl:"nba" },
+    NHL:  { sport:"hockey",     league:"nhl",  emoji:"🏒", divWinners:3, wcSpots:5, label:"NHL",  espnUrl:"nhl" },
+    NFL:  { sport:"football",   league:"nfl",  emoji:"🏈", divWinners:4, wcSpots:3, label:"NFL",  espnUrl:"nfl" },
+    WNBA: { sport:"basketball", league:"wnba", emoji:"🏀", divWinners:0, wcSpots:8, label:"WNBA", espnUrl:"wnba" },
+  };
+  const cfg = CFG[sport];
+
+  function sortFn(a, b) {
+    if (sport === "NHL") return b.pts - a.pts || b.w - a.w;
+    const pa = parseFloat(a.pct) || (a.w+a.l > 0 ? a.w/(a.w+a.l) : 0);
+    const pb = parseFloat(b.pct) || (b.w+b.l > 0 ? b.w/(b.w+b.l) : 0);
+    return pb - pa || b.w - a.w;
+  }
 
   useEffect(() => {
     async function load() {
-      setLoadingPlayoffs(true);
-      const out = {};
-      await Promise.all(LEAGUE_CONFIGS.map(async ({ key, sport, league, spots }) => {
-        try {
-          const r = await fetch(`https://site.api.espn.com/apis/v2/sports/${sport}/${league}/standings`);
-          if (!r.ok) return;
-          const data = await r.json();
+      setFetching(true);
+      setConfData({});
+      try {
+        const r = await fetch(`https://site.api.espn.com/apis/v2/sports/${cfg.sport}/${cfg.league}/standings`);
+        if (!r.ok) throw new Error("ESPN standings failed");
+        const json = await r.json();
 
-          // Per-league playoff spots per CONFERENCE (not total)
-          // MLB: 6 per league (3 div winners + 3 wild cards)
-          // NBA: 8 per conference
-          // NHL: 8 per conference (3 div + 2 WC per conf)
-          // NFL: 7 per conference
-          // WNBA: 4 per conference (or 8 total single conf)
-          const spotsPerConf = {
-            MLB: 6, NBA: 8, NHL: 8, NFL: 7, WNBA: 8
-          }[key] || Math.ceil(spots/2);
+        // ESPN structure:
+        // json.children = conferences (AL, NL / East, West / AFC, NFC)
+        //   .children = divisions (AL East, AL Central, AL West)
+        //     .standings.entries = teams IN that division
 
-          // Walk tree keeping conference context
-          const conferences = [];
-          function walkConf(node, confName) {
-            if (node?.standings?.entries) {
-              const teams = node.standings.entries.map(e => {
-                const t = e.team;
-                const stats = {};
-                (e.stats||[]).forEach(s => { stats[s.name] = s.displayValue ?? s.value; });
-                return {
-                  id:       String(t.id),
-                  name:     t.shortDisplayName || t.displayName || t.name,
-                  abbr:     t.abbreviation,
-                  logo:     t.logos?.[0]?.href || null,
-                  color:    t.color ? `#${t.color}` : "#888",
-                  wins:     parseFloat(stats.wins   || stats.w  || 0),
-                  losses:   parseFloat(stats.losses || stats.l  || 0),
-                  pct:      parseFloat(stats.winPercent || 0),
-                  gb:       stats.gamesBehind ?? stats.gb ?? null,
-                  pts:      parseFloat(stats.points || 0),
-                  clinched: stats.clinched || null,
-                  conf:     confName,
-                };
-              });
-              if (teams.length) conferences.push({ name: confName, teams });
+        const result = {}; // confName -> { name, divs: { divName -> [teams] }, allTeams: [] }
+
+        function teamFromEntry(e, confName, divName) {
+          const t = e.team;
+          const s = {};
+          (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? st.value ?? "—"; });
+          return {
+            id:     String(t.id),
+            name:   t.shortDisplayName || t.name,
+            abbr:   t.abbreviation,
+            logo:   t.logos?.[0]?.href || null,
+            color:  t.color ? `#${t.color}` : "#888",
+            conf:   confName,
+            div:    divName,
+            w:      parseFloat(s.wins   || s.w  || 0),
+            l:      parseFloat(s.losses || s.l  || 0),
+            pct:    s.winPercent || "—",
+            gb:     s.gamesBehind ?? s.gb ?? "—",
+            pts:    parseFloat(s.points || 0),
+            strk:   s.streak || "—",
+            l10:    s.last10  || "—",
+            isNY:   (NY_IDS[sport]||[]).includes(String(t.id)),
+            // computed below
+            divRank:0, divLeader:false, inPlayoffs:false, pos:"", wcLabel:"",
+          };
+        }
+
+        // Walk the tree — only collect from DIVISION-level nodes
+        // (skip conference-level entries which are duplicates)
+        (json.children||[]).forEach(conf => {
+          const confName = conf.name || conf.abbreviation || "League";
+          if (!result[confName]) result[confName] = { name:confName, divs:{}, allTeams:[] };
+
+          const hasDivisions = (conf.children||[]).some(c => c.standings?.entries?.length > 0);
+
+          if (hasDivisions) {
+            // Normal case: Conference > Division > Teams
+            (conf.children||[]).forEach(div => {
+              const divName = div.name || div.abbreviation || confName;
+              const teams = (div.standings?.entries||[]).map(e => teamFromEntry(e, confName, divName));
+              if (!teams.length) return;
+              result[confName].divs[divName] = teams;
+            });
+          } else if (conf.standings?.entries?.length) {
+            // WNBA / single-conf leagues: conf entries directly
+            const teams = conf.standings.entries.map(e => teamFromEntry(e, confName, confName));
+            result[confName].divs[confName] = teams;
+          }
+        });
+
+        // Now assign positions per conference
+        Object.values(result).forEach(conf => {
+          const divNames = Object.keys(conf.divs);
+
+          // Step 1: Sort each division, identify div leaders
+          const divLeaderIds = new Set();
+          divNames.forEach(dn => {
+            const sorted = [...conf.divs[dn]].sort(sortFn);
+            sorted.forEach((t, i) => {
+              t.divRank = i + 1;
+              t.divSize = sorted.length;
+              if (i === 0) { t.divLeader = true; divLeaderIds.add(t.id); }
+            });
+            conf.divs[dn] = sorted; // replace with sorted version
+          });
+
+          // Step 2: Build allTeams (dedupe since ESPN may list teams in multiple divs)
+          const seen = new Set();
+          const all = divNames.flatMap(dn => conf.divs[dn])
+            .filter(t => { if(seen.has(t.id)) return false; seen.add(t.id); return true; });
+          const allSorted = [...all].sort(sortFn);
+          conf.allTeams = allSorted;
+
+          // Step 3: Assign playoff positions
+          // Division leaders: sorted by record among themselves
+          const divLeaders = allSorted.filter(t => divLeaderIds.has(t.id));
+          // Wild card: best non-div-leaders
+          const nonLeaders = allSorted.filter(t => !divLeaderIds.has(t.id));
+
+          // Seeding: div leaders get seeds 1-N by record, then WC teams
+          const { divWinners, wcSpots } = cfg;
+          const totalPlayoffSpots = divWinners + wcSpots;
+
+          divLeaders.forEach((t, i) => {
+            t.inPlayoffs = true;
+            t.pos = `DIV ${i+1}`;
+            t.wcLabel = `DIV ${i+1}`;
+            t.seed = i + 1;
+          });
+
+          nonLeaders.forEach((t, i) => {
+            if (i < wcSpots) {
+              t.inPlayoffs = true;
+              t.pos = `WC${i+1}`;
+              t.wcLabel = `WC${i+1}`;
+              t.seed = divWinners + i + 1;
+            } else {
+              t.inPlayoffs = false;
+              t.pos = `${i - wcSpots + 1} out`;
+              t.wcLabel = `${i - wcSpots + 1} out`;
             }
-            // recurse — divisions live inside conferences
-            (node?.children || []).forEach(child => {
-              const childName = child.name || confName;
-              walkConf(child, childName);
-            });
-          }
-
-          // Top-level children are conferences (AL/NL, East/West, etc.)
-          (data.children || []).forEach(conf => {
-            walkConf(conf, conf.name || conf.abbreviation || "Conf");
           });
+        });
 
-          if (!conferences.length) return;
-
-          // Flatten all teams (for total count) and build per-conf sorted lists
-          const allTeams = conferences.flatMap(c => c.teams);
-
-          // Group by top-level conference (AL/NL for MLB, East/West for NBA etc.)
-          // ESPN nests: Conference > Division > Teams
-          // We need to aggregate divisions back into their parent conference
-          const confMap = {};
-          conferences.forEach(c => {
-            // Use parent conf name (AL, NL, Eastern, Western)
-            // Heuristic: shorter/higher-level names are the conf
-            const parentKey = c.name;
-            if (!confMap[parentKey]) confMap[parentKey] = [];
-            confMap[parentKey].push(...c.teams);
-          });
-
-          // Dedupe teams per conf (they may appear in division AND conf nodes)
-          const confTeams = {};
-          Object.entries(confMap).forEach(([conf, teams]) => {
-            const seen = new Set();
-            confTeams[conf] = teams.filter(t => {
-              if (seen.has(t.id)) return false;
-              seen.add(t.id);
-              return true;
-            });
-          });
-
-          // For each conf, sort and assign playoff rank
-          const teamPlayoffStatus = {};
-          Object.entries(confTeams).forEach(([conf, teams]) => {
-            if (teams.length < 3) return; // skip division sub-nodes, only process full confs
-            const sorted = [...teams].sort((a,b) =>
-              key==="NHL" ? b.pts-a.pts : b.wins-a.losses-(a.wins-b.losses) || b.pct-a.pct
-            );
-            sorted.forEach((t, idx) => {
-              const rank = idx + 1;
-              const inPlayoffs = rank <= spotsPerConf;
-              let position = "";
-              if (rank === 1) position = "DIV LEAD";
-              else if (rank <= 3) position = `DIV ${rank}`;
-              else if (rank <= spotsPerConf) position = `WC${rank-3}`;
-              else position = `#${rank}`;
-              teamPlayoffStatus[t.id] = {
-                ...t, rank, inPlayoffs,
-                confRank: rank, confSize: sorted.length,
-                position, conf,
-                totalTeams: allTeams.length,
-              };
-            });
-          });
-
-          // Also do a full-league sort as fallback for single-conf leagues (WNBA)
-          if (Object.keys(teamPlayoffStatus).length === 0) {
-            const sorted = [...allTeams].sort((a,b) =>
-              key==="NHL" ? b.pts-a.pts : b.wins-a.losses-(a.wins-b.losses) || b.pct-a.pct
-            );
-            sorted.forEach((t, idx) => {
-              const rank = idx + 1;
-              teamPlayoffStatus[t.id] = {
-                ...t, rank, inPlayoffs: rank <= spots,
-                confRank: rank, confSize: sorted.length,
-                position: rank <= spots ? `#${rank}` : `#${rank}`,
-                conf: "League", totalTeams: allTeams.length,
-              };
-            });
-          }
-
-          const nyConfig = NY_IDS[key];
-          if (!nyConfig) return;
-          const nyTeams = nyConfig.teams
-            .map(id => teamPlayoffStatus[id])
-            .filter(Boolean);
-
-          if (nyTeams.length) {
-            out[key] = {
-              nyTeams,
-              label: LEAGUE_CONFIGS.find(l=>l.key===key)?.label,
-              emoji: LEAGUE_CONFIGS.find(l=>l.key===key)?.emoji,
-              spots, spotsPerConf,
-            };
-          }
-        } catch(e) { console.error(key, e); }
-      }));
-      setPlayoffData(out);
-      setLoadingPlayoffs(false);
+        setConfData(result);
+      } catch(err) {
+        console.error("Standings:", err);
+      }
+      setFetching(false);
     }
     load();
-  }, []);
+  }, [sport]);
 
-  const filtered = standings.filter(s => s.league === activeLeague);
+  // All NY teams across all confs
+  const nyTeams = Object.values(confData)
+    .flatMap(c => c.allTeams || [])
+    .filter(t => t.isNY)
+    .filter((t,i,a) => a.findIndex(x=>x.id===t.id)===i);
+
+  const views = sport === "WNBA" ? ["WILDCARD","FULL"] : ["WILDCARD","DIVISION","FULL"];
+
+  function PosChip({ team }) {
+    const isDivL = team.divLeader;
+    const isWC   = team.inPlayoffs && !isDivL;
+    const out    = !team.inPlayoffs;
+    const bg  = isDivL ? "#1d4ed822" : isWC ? "#16a34a22" : "#9f121222";
+    const clr = isDivL ? "#60a5fa"   : isWC ? "#4ade80"   : "#f87171";
+    return (
+      <span style={{fontSize:9, padding:"2px 7px", borderRadius:2, fontWeight:900,
+        letterSpacing:"0.05em", background:bg, color:clr, whiteSpace:"nowrap", flexShrink:0}}>
+        {team.wcLabel}
+      </span>
+    );
+  }
+
+  function GBCell({ val }) {
+    if (!val || val === "—" || val === "-" || parseFloat(val) === 0) {
+      return <span style={{fontSize:11, color:"#555", minWidth:44, textAlign:"right"}}>—</span>;
+    }
+    return <span style={{fontSize:11, color:"#888", minWidth:44, textAlign:"right", whiteSpace:"nowrap"}}>{val}</span>;
+  }
+
+  function TeamRow({ team, rank }) {
+    const pct = parseFloat(team.pct) || (team.w+team.l>0 ? team.w/(team.w+team.l) : 0);
+    const bar = Math.min(100, Math.round(pct*100));
+    const rec = sport==="NHL" ? `${team.w}W·${team.pts}pts` : `${team.w}–${team.l}`;
+    const bdColor = team.divLeader ? "#3b82f6" : team.inPlayoffs ? "#22c55e" : "transparent";
+    return (
+      <div style={{
+        display:"flex", alignItems:"center", gap:8, padding:"9px 14px",
+        background: team.isNY ? "#0b180b" : rank%2===0 ? "#111" : "#0e0e0e",
+        borderLeft:`4px solid ${bdColor}`,
+        borderBottom:"1px solid #1c1c1c",
+      }}>
+        <span style={{fontSize:10, color:"#555", minWidth:20, textAlign:"right", flexShrink:0}}>{rank}</span>
+        {team.logo
+          ? <img src={team.logo} alt="" style={{width:22,height:22,objectFit:"contain",flexShrink:0}}
+              onError={e=>e.target.style.display="none"}/>
+          : <span style={{width:22,flexShrink:0}}/>
+        }
+        <span style={{
+          flex:1, fontSize:13, fontWeight:team.isNY?900:500,
+          color:team.isNY?"#fff":"#ccc", fontFamily:"'Georgia',serif",
+          overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", minWidth:0,
+        }}>
+          {team.name}
+          {team.isNY && <span style={{fontSize:8,color:"#c8201c",marginLeft:5,fontWeight:900}}>NY</span>}
+        </span>
+        <div style={{width:40,height:4,background:"#222",borderRadius:2,overflow:"hidden",flexShrink:0}}>
+          <div style={{height:"100%",width:`${bar}%`,
+            background:team.divLeader?"#3b82f6":team.inPlayoffs?"#22c55e":"#444",borderRadius:2}}/>
+        </div>
+        <span style={{fontSize:12,fontWeight:700,color:"#e8e8e8",minWidth:60,textAlign:"right",
+          fontFamily:"'Georgia',serif",whiteSpace:"nowrap",flexShrink:0}}>
+          {rec}
+        </span>
+        <GBCell val={team.gb} />
+        <PosChip team={team} />
+      </div>
+    );
+  }
+
+  function CutLine({ label, color }) {
+    return (
+      <div style={{display:"flex",alignItems:"center",gap:8,padding:"4px 14px",background:"#080808"}}>
+        <div style={{flex:1,height:1,background:`${color}33`}}/>
+        <span style={{fontSize:9,color,fontWeight:900,letterSpacing:"0.1em",whiteSpace:"nowrap"}}>{label}</span>
+        <div style={{flex:1,height:1,background:`${color}33`}}/>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.stdRoot}>
       <div style={styles.stdHeader}>
-        <h2 style={styles.stdTitle}>📊 NY TEAMS STANDINGS & PLAYOFF TRACKER</h2>
-        <p style={styles.stdSub}>WHERE YOUR TEAMS STAND RIGHT NOW</p>
+        <h2 style={styles.stdTitle}>📊 STANDINGS & PLAYOFF TRACKER</h2>
+        <p style={styles.stdSub}>LIVE · DIVISION LEADERS · WILD CARD RACE · PLAYOFF PICTURE</p>
       </div>
 
-      {/* View toggle */}
-      <div style={{display:"flex", gap:6, marginBottom:16}}>
-        {["PLAYOFF PICTURE","FULL STANDINGS"].map(v => (
-          <button key={v} onClick={() => setActiveView(v==="PLAYOFF PICTURE" ? "PLAYOFF" : "STANDINGS")}
-            style={{...styles.filterBtn, ...(activeView===(v==="PLAYOFF PICTURE"?"PLAYOFF":"STANDINGS") ? styles.filterBtnActive : {}), fontSize:10, padding:"6px 14px"}}>
-            {v}
+      {/* NY glance strip */}
+      {nyTeams.length > 0 && !fetching && (
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:9,color:"#555",letterSpacing:"0.12em",fontWeight:900,marginBottom:8}}>
+            🗽 NY TEAMS — QUICK LOOK
+          </div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+            {nyTeams.map(t => (
+              <div key={t.id} style={{
+                display:"flex",alignItems:"center",gap:8,padding:"8px 12px",
+                background:"#141414",borderRadius:3,
+                border:`1px solid ${t.divLeader?"#3b82f644":t.inPlayoffs?"#22c55e44":"#c8201c33"}`,
+                borderLeft:`3px solid ${t.divLeader?"#3b82f6":t.inPlayoffs?"#22c55e":"#c8201c"}`,
+              }}>
+                {t.logo && <img src={t.logo} alt="" style={{width:28,height:28,objectFit:"contain"}}
+                  onError={e=>e.target.style.display="none"}/>}
+                <div>
+                  <div style={{fontSize:13,fontWeight:900,color:"#fff",fontFamily:"'Georgia',serif"}}>
+                    {t.name}
+                  </div>
+                  <div style={{fontSize:10,color:"#666"}}>
+                    {sport==="NHL"?`${t.w}W · ${t.pts}pts`:`${t.w}–${t.l}`} · {t.div}
+                  </div>
+                </div>
+                <div style={{textAlign:"right",marginLeft:4}}>
+                  <div style={{fontSize:11,fontWeight:900,
+                    color:t.divLeader?"#60a5fa":t.inPlayoffs?"#4ade80":"#f87171"}}>
+                    {t.divLeader?"🏆":t.inPlayoffs?"✅":"❌"} {t.wcLabel}
+                  </div>
+                  <div style={{fontSize:9,color:"#555"}}>{t.conf}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Sport tabs */}
+      <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:10}}>
+        {Object.keys(CFG).map(s => (
+          <button key={s} onClick={()=>{setSport(s);setView("WILDCARD");}}
+            style={{...styles.filterBtn,...(sport===s?styles.filterBtnActive:{}),fontSize:11,padding:"5px 14px"}}>
+            {CFG[s].emoji} {s}
           </button>
         ))}
       </div>
 
-      {/* ── PLAYOFF PICTURE ── */}
-      {activeView === "PLAYOFF" && (
-        <div>
-          {loadingPlayoffs ? (
-            <div style={styles.loading}>
-              <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
-              <p style={styles.loadingText}>LOADING PLAYOFF PICTURE...</p>
-            </div>
-          ) : Object.keys(playoffData).length === 0 ? (
-            <div style={{padding:"20px 0", color:"#666", fontSize:12}}>
-              Standings data unavailable — some leagues may be in offseason. Check back when the season starts.
-            </div>
-          ) : (
-            <div style={{display:"flex", flexDirection:"column", gap:10}}>
-              {LEAGUE_CONFIGS.map(({ key, emoji }) => {
-                const ld = playoffData[key];
-                if (!ld?.nyTeams?.length) return null;
-                return ld.nyTeams.map(team => {
-                  const inPlay = team.inPlayoffs;
-                  const record = key==="NHL"
-                    ? `${team.wins}W · ${team.pts}PTS`
-                    : `${team.wins}–${team.losses}`;
-                  const pctVal = team.pct > 0 ? team.pct : (team.wins+team.losses > 0 ? team.wins/(team.wins+team.losses) : 0);
-                  const barW = Math.min(100, Math.round(pctVal * 100));
-                  const gbText = team.gb && team.gb !== "0" && team.gb !== 0 ? `${team.gb} GB` : null;
-                  const posColor = inPlay ? "#22c55e" : "#c8201c";
-                  return (
-                    <div key={team.id} style={{
-                      display:"flex", alignItems:"center", gap:12,
-                      padding:"12px 16px", marginBottom:6,
-                      background:"#141414",
-                      border:`1px solid ${inPlay?"#22c55e33":"#c8201c22"}`,
-                      borderLeft:`4px solid ${inPlay?"#22c55e":"#c8201c"}`,
-                      borderRadius:3, flexWrap:"wrap",
-                    }}>
-                      {team.logo && <img src={team.logo} alt="" style={{width:36,height:36,objectFit:"contain",flexShrink:0}} onError={e=>e.target.style.display="none"} />}
-                      <div style={{flex:1, minWidth:120}}>
-                        <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:5, flexWrap:"wrap"}}>
-                          <span style={{fontSize:15, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{team.name}</span>
-                          <span style={{fontSize:9, color:"#555", letterSpacing:"0.1em"}}>{emoji} {key}</span>
-                          {team.conf && <span style={{fontSize:9, color:"#555"}}>{team.conf}</span>}
-                        </div>
-                        <div style={{display:"flex", alignItems:"center", gap:10}}>
-                          <div style={{flex:1, height:5, background:"#222", borderRadius:3, overflow:"hidden", minWidth:60}}>
-                            <div style={{height:"100%", width:`${barW}%`, background:inPlay?"#22c55e":"#c8201c", borderRadius:3}} />
-                          </div>
-                          <span style={{fontSize:12, fontWeight:700, color:"#aaa", whiteSpace:"nowrap"}}>{record}</span>
-                        </div>
-                      </div>
-                      <div style={{textAlign:"right", flexShrink:0}}>
-                        <div style={{fontSize:12, fontWeight:900, letterSpacing:"0.08em", color:posColor, marginBottom:2}}>
-                          {inPlay ? "✅" : "❌"} {team.position || (inPlay?"IN":"OUT")}
-                        </div>
-                        <div style={{fontSize:10, color:"#555"}}>
-                          #{team.confRank} of {team.confSize} in conf
-                        </div>
-                        {gbText && <div style={{fontSize:10, color:"#666"}}>{gbText} back</div>}
-                        {team.clinched && <div style={{fontSize:9, color:"#22c55e", marginTop:2, fontWeight:900}}>{team.clinched}</div>}
-                      </div>
-                    </div>
-                  );
-                });
-              })}
-              <div style={{fontSize:9, color:"#555", padding:"8px 0", fontStyle:"italic"}}>
-                Live from ESPN · Updates with each game · {new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      {/* View tabs */}
+      <div style={{display:"flex",gap:4,marginBottom:12}}>
+        {views.map(v => (
+          <button key={v} onClick={()=>setView(v)}
+            style={{...styles.filterBtn,...(view===v?styles.filterBtnActive:{}),fontSize:10,padding:"4px 12px"}}>
+            {v==="WILDCARD"?"🃏 Wild Card":v==="DIVISION"?"📐 Division":"📋 Full"}
+          </button>
+        ))}
+      </div>
 
-      {/* ── FULL STANDINGS ── */}
-      {activeView === "STANDINGS" && (
-        <>
-          <div style={styles.filterGroup}>
-            {leagues.map(l => (
-              <button key={l} onClick={() => setActiveLeague(l)}
-                style={{...styles.filterBtn, ...(activeLeague===l ? styles.filterBtnActive : {})}}>
-                {l}
-              </button>
-            ))}
+      {/* Legend */}
+      <div style={{display:"flex",gap:12,padding:"5px 14px",background:"#0a0a0a",
+        marginBottom:8,borderRadius:2,flexWrap:"wrap"}}>
+        {[
+          {color:"#3b82f6",label:"Division leader"},
+          {color:"#22c55e",label:"Wild card"},
+          {color:"#c8201c",label:"Out of playoffs"},
+        ].map((l,i) => (
+          <div key={i} style={{display:"flex",alignItems:"center",gap:5}}>
+            <div style={{width:10,height:10,background:l.color,borderRadius:1,flexShrink:0}}/>
+            <span style={{fontSize:10,color:"#666"}}>{l.label}</span>
           </div>
-          {loading ? (
-            <div style={styles.loading}>
-              <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
-              <p style={styles.loadingText}>LOADING STANDINGS...</p>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div style={styles.empty}>
-              <span style={styles.emptyIcon}>📊</span>
-              <p style={styles.emptyText}>NO STANDINGS AVAILABLE</p>
-            </div>
-          ) : (
-            <div style={styles.stdGroups}>
-              {filtered.map((group, gi) => (
-                <div key={gi} style={styles.stdGroup}>
-                  <div style={styles.stdDivisionHeader}>{group.division}</div>
-                  <div style={styles.stdTable}>
-                    <div style={styles.stdRowHeader}>
-                      <span style={styles.stdColTeam}>TEAM</span>
-                      <span style={styles.stdColStat}>W</span>
-                      <span style={styles.stdColStat}>L</span>
-                      <span style={styles.stdColStat}>PCT</span>
-                      <span style={styles.stdColStat}>GB</span>
-                    </div>
-                    {group.rows.map((row, i) => (
-                      <div key={i} style={{...styles.stdRow, ...(row.isNY ? styles.stdRowNY : {}), ...(i%2===0?{}:styles.stdRowAlt)}}>
-                        <span style={styles.stdColTeam}>
-                          {row.logo && <img src={row.logo} alt="" style={styles.stdLogo} onError={e=>e.target.style.display="none"} />}
-                          <span style={{...styles.stdTeamName, ...(row.isNY?{color:"#e8e0d0",fontWeight:900}:{})}}>{row.team}</span>
-                          {row.isNY && <span style={styles.stdNYBadge}>NY</span>}
-                        </span>
-                        <span style={styles.stdColStat}>{row.w}</span>
-                        <span style={styles.stdColStat}>{row.l}</span>
-                        <span style={styles.stdColStat}>{row.pct}</span>
-                        <span style={styles.stdColStat}>{row.gb}</span>
-                      </div>
-                    ))}
-                  </div>
+        ))}
+      </div>
+
+      {/* Col headers */}
+      <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",
+        borderBottom:"1px solid #2a2a2a",marginBottom:2}}>
+        <span style={{fontSize:9,color:"#444",minWidth:20}}>#</span>
+        <span style={{width:22,flexShrink:0}}/>
+        <span style={{flex:1,fontSize:9,color:"#444",letterSpacing:"0.1em"}}>TEAM</span>
+        <span style={{width:40,flexShrink:0}}/>
+        <span style={{fontSize:9,color:"#444",minWidth:60,textAlign:"right"}}>
+          {sport==="NHL"?"W–PTS":"W–L"}
+        </span>
+        <span style={{fontSize:9,color:"#444",minWidth:44,textAlign:"right"}}>GB</span>
+        <span style={{fontSize:9,color:"#444",minWidth:44,textAlign:"center"}}>POS</span>
+      </div>
+
+      {fetching ? (
+        <div style={styles.loading}>
+          <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
+          <p style={styles.loadingText}>LOADING {sport} STANDINGS…</p>
+        </div>
+      ) : Object.keys(confData).length === 0 ? (
+        <div style={{padding:"24px 14px",color:"#555",fontSize:12,textAlign:"center"}}>
+          No data — {sport} may be in offseason.
+          <br/>
+          <a href={`https://www.espn.com/${cfg.espnUrl}/standings`} target="_blank"
+            rel="noopener noreferrer" style={{...styles.histLink,marginTop:8,display:"inline-block"}}>
+            View on ESPN →
+          </a>
+        </div>
+      ) : view === "WILDCARD" ? (
+        Object.values(confData).map((conf, ci) => {
+          const divLeaders = [...(conf.allTeams||[]).filter(t=>t.divLeader)].sort(sortFn);
+          const wcIn       = [...(conf.allTeams||[]).filter(t=>t.inPlayoffs&&!t.divLeader)].sort(sortFn);
+          const wcOut      = [...(conf.allTeams||[]).filter(t=>!t.inPlayoffs)].sort(sortFn);
+          const rows       = [...divLeaders, ...wcIn, ...wcOut];
+          return (
+            <div key={ci} style={{marginBottom:24}}>
+              <div style={{...styles.stdDivisionHeader,display:"flex",justifyContent:"space-between"}}>
+                <span>{cfg.emoji} {conf.name}</span>
+                <span style={{fontSize:9,color:"#555"}}>
+                  {divLeaders.length} div leaders + {cfg.wcSpots} wild cards = {divLeaders.length+cfg.wcSpots} playoff spots
+                </span>
+              </div>
+              {rows.map((team, i) => (
+                <div key={team.id}>
+                  {i === divLeaders.length && divLeaders.length > 0 && (
+                    <CutLine label="── WILD CARD RACE ──" color="#3b82f6" />
+                  )}
+                  {i === divLeaders.length + wcIn.length && wcIn.length > 0 && (
+                    <CutLine label="── PLAYOFF CUTOFF ──" color="#c8201c" />
+                  )}
+                  <TeamRow team={team} rank={i+1} />
                 </div>
               ))}
             </div>
-          )}
-        </>
+          );
+        })
+      ) : view === "DIVISION" ? (
+        Object.values(confData).map((conf, ci) => (
+          <div key={ci} style={{marginBottom:24}}>
+            <div style={{fontSize:10,color:"#c8201c",fontWeight:900,letterSpacing:"0.15em",
+              padding:"6px 14px",background:"#0a0a0a",marginBottom:4}}>
+              {cfg.emoji} {conf.name}
+            </div>
+            {Object.entries(conf.divs).map(([divName, teams], di) => (
+              <div key={di} style={{marginBottom:12}}>
+                <div style={styles.stdDivisionHeader}>{divName}</div>
+                {teams.map((team, i) => <TeamRow key={team.id} team={team} rank={i+1}/>)}
+              </div>
+            ))}
+          </div>
+        ))
+      ) : (
+        Object.values(confData).map((conf, ci) => (
+          <div key={ci} style={{marginBottom:24}}>
+            <div style={styles.stdDivisionHeader}>{cfg.emoji} {conf.name} — Full Standings</div>
+            {(conf.allTeams||[]).map((team, i) => <TeamRow key={team.id} team={team} rank={i+1}/>)}
+          </div>
+        ))
       )}
+
+      <div style={{marginTop:12,fontSize:9,color:"#444",fontStyle:"italic",display:"flex",justifyContent:"space-between",flexWrap:"wrap"}}>
+        <span>Live from ESPN · Updates each page load</span>
+        <a href={`https://www.espn.com/${cfg.espnUrl}/standings`} target="_blank"
+          rel="noopener noreferrer" style={styles.histLink}>ESPN standings →</a>
+      </div>
     </div>
   );
 }
@@ -7452,7 +7541,6 @@ function BirthdaysTab() {
     { month:6,  day:6,  name:"Björn Borg",         team:"US Open",   year:1956, sport:"Tennis", note:"Won the US Open at Flushing Meadows — a tennis legend in New York" },
     { month:6,  day:9,  name:"Les Borden",         team:"Yankees",   year:1938, sport:"MLB", note:"Part of the rich Yankees organizational history" },
     { month:6,  day:11, name:"Mike Ditka",         team:"Giants",    year:1939, sport:"NFL", note:"Faced the Giants as a rival — legendary NFL figure connected to NY football history" },
-    { month:6,  day:17, name:"Barry Manilow",      team:"MSG",       year:1943, sport:"Culture", note:"Born in Brooklyn — performed at MSG countless times, the quintessential NY entertainer" },
     { month:6,  day:19, name:"Lou Gehrig",         team:"Yankees",   year:1903, sport:"MLB", note:"The Iron Horse. 2,130 consecutive games. 'The luckiest man on the face of the earth.' The greatest Yankee who ever lived." },
     { month:6,  day:21, name:"Bernard King",       team:"Knicks",    year:1956, sport:"NBA", note:"Scored 60 points at MSG — the most unstoppable scorer in Knicks history" },
     { month:6,  day:25, name:"Willis Reed",        team:"Knicks",    year:1942, sport:"NBA", note:"Limped onto the court in Game 7 of the 1970 Finals — the greatest moment in Knicks history" },
@@ -7464,7 +7552,6 @@ function BirthdaysTab() {
     { month:7,  day:17, name:"Elston Howard",      team:"Yankees",   year:1929, sport:"MLB", note:"First Black Yankee — 1963 AL MVP, beloved captain and 9x World Series participant" },
     { month:7,  day:18, name:"Patrick Ewing",      team:"Knicks",    year:1962, sport:"NBA", note:"The franchise cornerstone — 23,665 points in 15 Knick seasons. Always a champion in our hearts." },
     { month:7,  day:22, name:"Bobby Thomson",      team:"Giants",    year:1923, sport:"MLB", note:"The Shot Heard Round the World — October 3, 1951. The most famous home run in baseball history." },
-    { month:7,  day:26, name:"Mick Jagger",        team:"MSG",       year:1943, sport:"Culture", note:"The Rolling Stones have played MSG more times than almost any other venue — a NY institution" },
     { month:7,  day:28, name:"Tom Brady",          team:"Giants",    year:1977, sport:"NFL", note:"Lost two Super Bowls to the Giants — Eli Manning's greatest nemesis" },
     { month:8,  day:4,  name:"Roger Clemens",      team:"Yankees",   year:1962, sport:"MLB", note:"The Rocket won two Cy Youngs in pinstripes — but his career legacy is complicated" },
     { month:8,  day:7,  name:"David Cone",         team:"Yankees",   year:1963, sport:"MLB", note:"Threw a perfect game on Yogi Berra Day, 1999 — one of the most perfect moments in baseball" },
@@ -7481,13 +7568,11 @@ function BirthdaysTab() {
     { month:9,  day:11, name:"Tom Landry",         team:"Giants",    year:1924, sport:"NFL", note:"Defensive coordinator for the Giants before becoming Cowboys legend — shaped NY football" },
     { month:9,  day:13, name:"Dave DeBusschere",   team:"Knicks",    year:1940, sport:"NBA", note:"Power forward on both championship Knicks teams — beloved New Yorker and true team player" },
     { month:9,  day:19, name:"Joe Morgan",         team:"Mets",      year:1943, sport:"MLB", note:"Brief time managing the Mets — the Hall of Famer brought his winning pedigree to Queens" },
-    { month:9,  day:21, name:"Bill Murray",        team:"Mets",      year:1950, sport:"Culture", note:"The greatest celebrity Mets fan — born in Evanston but adopted New York as his spiritual home" },
     { month:9,  day:23, name:"Larry Doby",         team:"Yankees",   year:1923, sport:"MLB", note:"Second Black player in MLB — briefly with the Yankees, forever part of baseball's civil rights story" },
     { month:9,  day:27, name:"Mike Schmidt",       team:"Phillies",  year:1949, sport:"MLB", note:"Rivals of the Mets — the greatest third baseman ever who tormented NY for decades" },
     { month:9,  day:29, name:"Bryant Gumbel",      team:"NY Media",  year:1948, sport:"Broadcasting", note:"NY sports broadcasting legend — his coverage of Yankees and NY sports is iconic" },
     { month:10, day:1,  name:"Rod Carew",          team:"Yankees",   year:1945, sport:"MLB", note:"Hall of Famer who played his final years as an AL rival — one of the greatest hitters ever" },
     { month:10, day:5,  name:"Mario Lemieux",      team:"Rangers",   year:1965, sport:"NHL", note:"Rangers' greatest rival in the early 90s — faced the Rangers in classic playoff battles" },
-    { month:10, day:8,  name:"Matt Damon",         team:"NY Sports", year:1970, sport:"Culture", note:"Born in Cambridge but deeply connected to NY sports culture through countless films" },
     { month:10, day:13, name:"Rickey Henderson",   team:"Yankees",   year:1958, sport:"MLB", note:"The greatest leadoff hitter ever — stole 93 bases in his first Yankee season (1985)" },
     { month:10, day:17, name:"Tom Seaver",         team:"Mets",      year:1944, sport:"MLB", note:"Tom Terrific — 311 wins, 2.86 ERA, three Cy Youngs. The greatest Met who ever lived." },
     { month:10, day:19, name:"Evander Holyfield",  team:"MSG",       year:1962, sport:"Boxing", note:"Four world heavyweight title fights at MSG — a boxing legend in the greatest boxing arena" },
@@ -7512,278 +7597,282 @@ function BirthdaysTab() {
     { month:12, day:21, name:"Chris Evert",        team:"US Open",   year:1954, sport:"Tennis", note:"Won six US Opens — one of the greatest champions at Flushing Meadows" },
     { month:12, day:23, name:"Bob Gibson",         team:"Mets",      year:1935, sport:"MLB", note:"Cardinals legend who dominated the Mets in the 1960s — the most intimidating pitcher of his era" },
     { month:12, day:28, name:"Sidd Finch",         team:"Mets",      year:1985, sport:"MLB", note:"The legendary fictional 168 mph pitcher created by George Plimpton for Sports Illustrated — April Fools 1985" },
-        { month:1, day:1,  year:1944, name:"Gregg Allman",         team:"MSG",       sport:"Culture",     note:"Rock legend who played MSG countless times — the Southern rock icon beloved by NY fans" },
-        { month:1, day:2,  year:1969, name:"Edgar Martinez",       team:"Yankees",   sport:"MLB",         note:"Faced the Yankees in memorable AL battles — one of the greatest DHs in baseball history" },
-        { month:1, day:3,  year:1955, name:"Dee Snider",           team:"MSG",       sport:"Culture",     note:"Twisted Sister frontman born in Massapequa Long Island. We Are Not Gonna Take It echoes at MSG eternally" },
-        { month:1, day:4,  year:1960, name:"Michael Stipe",        team:"MSG",       sport:"Culture",     note:"R.E.M. frontman who played MSG — one of the great rock bands in Garden history" },
-        { month:1, day:5,  year:1946, name:"Diane Keaton",         team:"Yankees",   sport:"Culture",     note:"Annie Hall was set in NYC — Keaton attended Yankees games as a true adopted New Yorker" },
-        { month:1, day:6,  year:1939, name:"Lou Holtz",            team:"Jets",      sport:"NFL",         note:"Briefly coached the Jets in 1976 — went 3-10 but moved on to college greatness at Notre Dame" },
-        { month:1, day:8,  year:1935, name:"Elvis Presley",        team:"MSG",       sport:"Culture",     note:"The King played Madison Square Garden in 1972 — the greatest celebrity concert in Garden history" },
-        { month:1, day:9,  year:1934, name:"Bart Starr",           team:"Giants",    sport:"NFL",         note:"Defeated the Giants in the 1961 and 1962 NFL Championships — Green Bay legend vs NY pride" },
-        { month:1, day:11, year:1912, name:"Kim Novak",            team:"MSG",       sport:"Culture",     note:"Vertigo star who attended NY events — Hollywood glamour at its most sophisticated in New York" },
-        { month:1, day:12, year:1951, name:"Howard Stern",         team:"NY Media",  sport:"Broadcasting",note:"The King of All Media — born in Queens, defined NY radio and pop culture for 40 years" },
-        { month:1, day:13, year:1961, name:"Gheorghe Muresan",     team:"Nets",      sport:"NBA",         note:"The tallest player in NBA history at 7-foot-7 — briefly played for the New Jersey Nets" },
-        { month:1, day:15, year:1943, name:"Arthur Ashe",          team:"US Open",   sport:"Tennis",      note:"First Black man to win the US Open 1968 — the stadium at Flushing Meadows bears his name" },
-        { month:1, day:16, year:1959, name:"Sade",                 team:"MSG",       sport:"Culture",     note:"The iconic vocalist has performed multiple sold-out MSG shows — a NY institution" },
-        { month:1, day:18, year:1955, name:"Kevin Costner",        team:"Yankees",   sport:"Culture",     note:"Bull Durham and For Love of the Game — Hollywood greatest baseball actor, avid Yankees fan" },
-        { month:1, day:20, year:1966, name:"Edwin Diaz",           team:"Mets",      sport:"MLB",         note:"The Mets closer whose Narco entrance theme has become the most iconic walk-up in baseball" },
-        { month:1, day:22, year:1965, name:"Diane Lane",           team:"NY",        sport:"Culture",     note:"Born in NYC — one of New York own, a lifelong presence in the city cultural fabric" },
-        { month:1, day:23, year:1944, name:"Rutger Hauer",         team:"MSG",       sport:"Culture",     note:"Legendary actor who loved New York — appeared in several NYC-set classics" },
-        { month:1, day:24, year:1949, name:"John Belushi",         team:"MSG",       sport:"Culture",     note:"Blues Brothers played MSG — SNL legend who made New York his stage and his city" },
-        { month:1, day:25, year:1882, name:"Christy Mathewson",    team:"NY Giants", sport:"MLB",         note:"The Big Six — greatest pitcher of the dead ball era, starred at the Polo Grounds for the NY Giants" },
-        { month:1, day:27, year:1948, name:"Mikhail Baryshnikov",  team:"NY",        sport:"Culture",     note:"Defected to the West and made NYC his home — the greatest ballet dancer who ever graced this city" },
-        { month:1, day:28, year:1955, name:"Nick Price",           team:"US Open",   sport:"Golf",        note:"Won the PGA Championship twice — competed at Shinnecock Hills and Bethpage in US Opens" },
-        { month:1, day:29, year:1964, name:"Marc Anthony",         team:"Yankees",   sport:"Culture",     note:"Born in East Harlem — sang the anthem at countless NY sporting events, a true Nuyorican icon" },
-        { month:1, day:30, year:1882, name:"Franklin D. Roosevelt", team:"Yankees",  sport:"Culture",     note:"FDR threw out the first pitch at Yankee Stadium — the greatest president and the greatest stadium" },
-        { month:1, day:31, year:1947, name:"Nolan Ryan",           team:"Mets",      sport:"MLB",         note:"The Ryan Express began his career with the Mets — 5714 strikeouts started in Flushing Queens" },
-        { month:2, day:2,  year:1977, name:"Shakira",              team:"MSG",       sport:"Culture",     note:"Multiple sold-out MSG performances — one of the biggest international artists to play the Garden" },
-        { month:2, day:3,  year:1943, name:"Bobby Murcer",         team:"Yankees",   sport:"MLB",         note:"The heir apparent to Mickey Mantle — beloved Yankee player and broadcaster for 40 years" },
-        { month:2, day:4,  year:1954, name:"Dave Kingman",         team:"Mets",      sport:"MLB",         note:"Kong hit towering home runs for the Mets — once the franchise HR leader before Strawberry and Alonso" },
-        { month:2, day:5,  year:1934, name:"Hank Aaron",           team:"Braves",    sport:"MLB",         note:"Broke Babe Ruth home run record — his 755 HR surpassed the Yankee legend who preceded him" },
-        { month:2, day:7,  year:1962, name:"Garth Brooks",         team:"MSG",       sport:"Culture",     note:"Central Park concert drew 980000 fans in 1997 — the largest outdoor concert in NYC history" },
-        { month:2, day:8,  year:1931, name:"James Dean",           team:"Yankees",   sport:"Culture",     note:"Rebel Without a Cause icon who visited NYC — his brooding cool matched Yankee swagger perfectly" },
-        { month:2, day:10, year:1930, name:"Robert Wagner",        team:"Yankees",   sport:"Culture",     note:"Hart to Hart star and classic Hollywood leading man who attended Yankees games in his prime" },
-        { month:2, day:11, year:1936, name:"Burt Reynolds",        team:"Giants",    sport:"NFL",         note:"The Longest Yard star — played football at FSU and brought the game to Hollywood biggest screen" },
-        { month:2, day:13, year:1923, name:"Chuck Yeager",         team:"NY",        sport:"Culture",     note:"Broke the sound barrier, visited NYC in triumph — an American hero who toured the greatest city" },
-        { month:2, day:15, year:1954, name:"Matt Groening",        team:"Yankees",   sport:"Culture",     note:"The Simpsons creator is a huge Yankees fan — Mr. Burns wears pinstripes for a reason" },
-        { month:2, day:17, year:1963, name:"Michael Jordan",       team:"Knicks",    sport:"NBA",         note:"His greatest rival was the Knicks — Patrick Ewing vs Jordan defined 1990s NBA basketball" },
-        { month:2, day:19, year:1945, name:"Tony Iommi",           team:"MSG",       sport:"Culture",     note:"Black Sabbath guitarist — played MSG multiple times, one of rock greatest Garden performers" },
-        { month:2, day:20, year:1927, name:"Sidney Poitier",       team:"NY",        sport:"Culture",     note:"The first great Black movie star made New York his home — a towering figure in American culture" },
-        { month:2, day:21, year:1958, name:"Kelsey Grammer",       team:"Rangers",   sport:"NHL",         note:"Frasier star and avid Rangers fan — spotted at MSG regularly during the team championship years" },
-        { month:2, day:23, year:1944, name:"Johnny Winter",        team:"MSG",       sport:"Culture",     note:"Texas blues guitarist who made MSG a regular stop — one of rock most underrated live performers" },
-        { month:2, day:24, year:1955, name:"Steve Jobs",           team:"NY",        sport:"Culture",     note:"Presented iPod in NYC — his products changed how NY sports fans consumed games and highlights forever" },
-        { month:2, day:25, year:1943, name:"George Harrison",      team:"Shea",      sport:"Culture",     note:"The Beatles played Shea Stadium in 1965 and 1966 — the greatest concerts in stadium history" },
-        { month:2, day:26, year:1887, name:"Grover Cleveland Alexander", team:"Giants", sport:"MLB",      note:"Early pitching great who faced the NY Giants — one of the all-time strikeout leaders of the dead ball era" },
-        { month:2, day:27, year:1932, name:"Elizabeth Taylor",     team:"MSG",       sport:"Culture",     note:"Hollywood legend who attended multiple Madison Square Garden events — a Garden A-lister" },
-        { month:3, day:1,  year:1954, name:"Ron Howard",           team:"Yankees",   sport:"Culture",     note:"Huge Yankees fan — grew up watching Mickey Mantle and brought that NY sports passion to Hollywood" },
-        { month:3, day:3,  year:1947, name:"James Worthy",         team:"Knicks",    sport:"NBA",         note:"Showtime Laker who faced the Knicks in memorable battles — Big Game James at the Garden" },
-        { month:3, day:4,  year:1975, name:"David Beckham",        team:"Red Bulls", sport:"Soccer",      note:"Played against the NY Red Bulls with LA Galaxy — brought global soccer glamour to the NY market" },
-        { month:3, day:5,  year:1958, name:"Andy Gibb",            team:"MSG",       sport:"Culture",     note:"Bee Gees brother who performed at MSG — the Bee Gees NY concerts were among the greatest ever" },
-        { month:3, day:6,  year:1944, name:"Willie Stargell",      team:"Mets",      sport:"MLB",         note:"Pittsburgh Pirates legend who faced the Mets in classic NL East battles — one of baseball greats" },
-        { month:3, day:7,  year:1942, name:"Tammy Wynette",        team:"MSG",       sport:"Culture",     note:"Stand By Your Man — country legend who played the Garden multiple times" },
-        { month:3, day:9,  year:1934, name:"Yuri Gagarin",         team:"NY",        sport:"Culture",     note:"First man in space visited NYC to a ticker tape parade — the Canyon of Heroes welcomed him" },
-        { month:3, day:10, year:1958, name:"Sharon Stone",         team:"Rangers",   sport:"NHL",         note:"Basic Instinct star and Rangers fan — seen at MSG during the team 1994 championship run" },
-        { month:3, day:11, year:1931, name:"Rupert Murdoch",       team:"Yankees",   sport:"Culture",     note:"News Corp founder who owned the NY Post — his media empire shaped how New York covered sports" },
-        { month:3, day:13, year:1950, name:"William H. Macy",      team:"Yankees",   sport:"Culture",     note:"Prolific actor and Yankees fan — seen at the Stadium regularly over the decades" },
-        { month:3, day:14, year:1933, name:"Quincy Jones",         team:"MSG",       sport:"Culture",     note:"Music legend who produced events at MSG — the greatest music producer in American history called NY home" },
-        { month:3, day:16, year:1968, name:"Alan Shearer",         team:"Red Bulls", sport:"Soccer",      note:"Newcastle legend whose attacking style influenced the Premier League era that shaped NY soccer fandom" },
-        { month:3, day:17, year:1938, name:"Rudolf Nureyev",       team:"NY",        sport:"Culture",     note:"Defected to the West and made NYC his artistic home — the greatest male ballet dancer of the 20th century" },
-        { month:3, day:19, year:1955, name:"Bruce Willis",         team:"Yankees",   sport:"Culture",     note:"Die Hard star and Yankees fan — attended numerous games at both old and new Yankee Stadium" },
-        { month:3, day:22, year:1948, name:"Andrew Lloyd Webber",  team:"MSG",       sport:"Culture",     note:"Cats and Phantom on Broadway — the MSG of theater is on Broadway and Lloyd Webber ruled them both" },
-        { month:3, day:24, year:1930, name:"Steve McQueen",        team:"Yankees",   sport:"Culture",     note:"The King of Cool attended Yankees games — his Hollywood persona perfectly matched Yankee swagger" },
-        { month:3, day:25, year:1947, name:"Elton John",           team:"MSG",       sport:"Culture",     note:"Has sold out MSG more times than almost any artist — the Garden and Elton John are inseparable" },
-        { month:3, day:26, year:1944, name:"Diana Ross",           team:"MSG",       sport:"Culture",     note:"The Supremes and Diana Ross played MSG countless times — Motown royalty at the world most famous arena" },
-        { month:3, day:27, year:1963, name:"Quentin Tarantino",    team:"Yankees",   sport:"Culture",     note:"Yankees fan who set Pulp Fiction partly in NY — Inglourious Basterds opening is pure pinstripe confidence" },
-        { month:3, day:29, year:1943, name:"Denny McLain",         team:"Yankees",   sport:"MLB",         note:"The last 30-game winner in baseball history faced the Yankees in the AL during his 1968 Cy Young season" },
-        { month:3, day:30, year:1968, name:"Celine Dion",          team:"MSG",       sport:"Culture",     note:"Has sold out MSG multiple times — her My Heart Will Go On still echoes in the rafters at the Garden" },
-        { month:3, day:31, year:1935, name:"Herb Alpert",          team:"MSG",       sport:"Culture",     note:"A Taste of Honey — the Tijuana Brass leader brought Latin jazz to MSG in legendary shows" },
-        { month:4, day:1,  year:1932, name:"Debbie Reynolds",      team:"MSG",       sport:"Culture",     note:"Singin in the Rain legend who performed at MSG — Hollywood golden age met New York greatest arena" },
-        { month:4, day:2,  year:1939, name:"Marvin Gaye",          team:"MSG",       sport:"Culture",     note:"Let us Get It On — performed at MSG and his music played in arenas across New York for decades" },
-        { month:4, day:3,  year:1961, name:"Eddie Murphy",         team:"MSG",       sport:"Culture",     note:"Born in Brooklyn — Delirious and Raw MSG specials are the greatest stand-up comedy performances ever filmed" },
-        { month:4, day:4,  year:1965, name:"Robert Downey Jr.",    team:"Yankees",   sport:"Culture",     note:"Iron Man star and Yankees fan — born in Manhattan, NY own superhero" },
-        { month:4, day:5,  year:1977, name:"Pharrell Williams",    team:"Knicks",    sport:"NBA",         note:"Happy producer and Knicks supporter — his music played at MSG during some of the franchise best moments" },
-        { month:4, day:6,  year:1937, name:"Merle Haggard",        team:"MSG",       sport:"Culture",     note:"Country legend who performed at MSG — Okie from Muskogee played to packed New York crowds" },
-        { month:4, day:7,  year:1954, name:"Jackie Chan",          team:"MSG",       sport:"Culture",     note:"Action film legend who loves NYC — filmed in New York and attended MSG events regularly" },
-        { month:4, day:9,  year:1954, name:"Dennis Quaid",         team:"Yankees",   sport:"Culture",     note:"Born in Houston but a huge Yankees fan — The Natural-style baseball passion in a Hollywood star" },
-        { month:4, day:10, year:1947, name:"David Halberstam",     team:"Yankees",   sport:"Culture",     note:"Pulitzer Prize writer who wrote Summer of 49 — New York greatest sports author" },
-        { month:4, day:13, year:1939, name:"Seymour Siwoff",       team:"Yankees",   sport:"Broadcasting",note:"Elias Sports Bureau founder — defined baseball statistics in New York for 50 years" },
-        { month:4, day:14, year:1941, name:"Pete Rose",            team:"Mets",      sport:"MLB",         note:"Hit King faced the Mets countless times — his career hit record stands forever whatever else is said" },
-        { month:4, day:15, year:1947, name:"Kareem Abdul-Jabbar",  team:"Knicks",    sport:"NBA",         note:"Greatest scorer in NBA history faced the Knicks in legendary battles — 38387 career points" },
-        { month:4, day:16, year:1889, name:"Charlie Chaplin",      team:"NY",        sport:"Culture",     note:"The Little Tramp made films in NYC and loved American baseball — his 1920s visits to NY are legendary" },
-        { month:4, day:17, year:1897, name:"Thornton Wilder",      team:"Yankees",   sport:"Culture",     note:"Our Town playwright and Pulitzer winner who loved NY — American theater met American baseball in his heart" },
-        { month:4, day:19, year:1935, name:"Dudley Moore",         team:"MSG",       sport:"Culture",     note:"Arthur star and pianist who performed at Carnegie Hall and attended MSG events in his NY prime" },
-        { month:4, day:20, year:1949, name:"Jessica Lange",        team:"NY",        sport:"Culture",     note:"Academy Award winner who lived in Manhattan — a New Yorker by adoption and spirit" },
-        { month:4, day:21, year:1959, name:"James McBride",        team:"Yankees",   sport:"Culture",     note:"The Color of Water author — Pulitzer Prize winner and avid Yankees fan who writes about Brooklyn and baseball" },
-        { month:4, day:22, year:1916, name:"Yehudi Menuhin",       team:"MSG",       sport:"Culture",     note:"Violin virtuoso born in NY — the greatest classical musician to come from New York City" },
-        { month:4, day:23, year:1928, name:"Shirley Temple",       team:"Yankees",   sport:"Culture",     note:"America sweetest child star attended Yankees games — golden-age Hollywood at the House That Ruth Built" },
-        { month:4, day:24, year:1962, name:"Kelly Clarkson",       team:"MSG",       sport:"Culture",     note:"American Idol winner who has sold out MSG — her show moved to NYC making her a new New Yorker" },
-        { month:4, day:25, year:1940, name:"Al Pacino",            team:"Yankees",   sport:"Culture",     note:"Born in East Harlem — The Godfather Michael Corleone is a true New Yorker and Yankees fan" },
-        { month:4, day:26, year:1933, name:"Carol Burnett",        team:"MSG",       sport:"Culture",     note:"Comedy legend who performed at MSG — her TV variety show was produced in New York for years" },
-        { month:4, day:27, year:1922, name:"Jack Klugman",         team:"Mets",      sport:"MLB",         note:"The Odd Couple Oscar Madison was a Mets fan — Klugman himself was a genuine baseball enthusiast" },
-        { month:4, day:29, year:1954, name:"Jerry Seinfeld",       team:"Yankees",   sport:"Culture",     note:"Born in Brooklyn — the greatest comedy show ever made is about New York and Jerry loves the Yankees" },
-        { month:4, day:30, year:1933, name:"Willie Nelson",        team:"MSG",       sport:"Culture",     note:"Country legend who has played MSG — On the Road Again took him through New York every tour" },
-        { month:5, day:1,  year:1916, name:"Glenn Ford",           team:"Yankees",   sport:"Culture",     note:"Hollywood star who attended Yankees games during the golden age of both film and baseball" },
-        { month:5, day:2,  year:1903, name:"Bing Crosby",          team:"Yankees",   sport:"Culture",     note:"The Groaner attended World Series games — White Christmas creator loved the game almost as much as singing" },
-        { month:5, day:3,  year:1919, name:"Pete Seeger",          team:"NY",        sport:"Culture",     note:"Folk music legend born in Midtown Manhattan — his activism and art made him a quintessential New Yorker" },
-        { month:5, day:4,  year:1929, name:"Audrey Hepburn",       team:"NY",        sport:"Culture",     note:"Breakfast at Tiffany's — Holly Golightly was the most glamorous New Yorker ever put on screen" },
-        { month:5, day:5,  year:1988, name:"Adele",                team:"MSG",       sport:"Culture",     note:"Rolling in the Deep — sold out MSG multiple nights, her concerts among the arena most celebrated" },
-        { month:5, day:7,  year:1939, name:"Johnny Unitas",        team:"Giants",    sport:"NFL",         note:"Defeated the Giants in the greatest game ever played at Yankee Stadium — overtime 1958 NFL Championship" },
-        { month:5, day:8,  year:1884, name:"Harry Truman",         team:"Yankees",   sport:"Culture",     note:"Attended Yankees games as president — threw out first pitches during his administration" },
-        { month:5, day:10, year:1960, name:"Bono",                 team:"MSG",       sport:"Culture",     note:"U2 has sold out MSG more than almost any band — Bono birthday is celebrated every year in New York" },
-        { month:5, day:11, year:1943, name:"Eric Burdon",          team:"MSG",       sport:"Culture",     note:"House of the Rising Sun — the Animals frontman played MSG during the British Invasion greatest era" },
-        { month:5, day:13, year:1950, name:"Stevie Wonder",        team:"MSG",       sport:"Culture",     note:"Superstition — has performed at MSG multiple times with some of the most emotional concerts in Garden history" },
-        { month:5, day:15, year:1953, name:"George Brett",         team:"Yankees",   sport:"MLB",         note:"Pine Tar Game at Yankee Stadium — Brett pine tar bat controversy is one of baseball most iconic moments" },
-        { month:5, day:16, year:1966, name:"Janet Jackson",        team:"MSG",       sport:"Culture",     note:"Rhythm Nation and Control — Janet sold out MSG multiple times during her peak years" },
-        { month:5, day:18, year:1952, name:"George Strait",        team:"MSG",       sport:"Culture",     note:"King of Country has played MSG — his sold-out New York shows are legendary among country music fans" },
-        { month:5, day:19, year:1925, name:"Malcolm X",            team:"NY",        sport:"Culture",     note:"Born in Omaha but made Harlem his home — his influence on New York sports culture is profound and lasting" },
-        { month:5, day:21, year:1952, name:"Mr. T",                team:"MSG",       sport:"Boxing",      note:"I pity the fool who misses MSG boxing — Mr. T was a fixture in 1980s New York sports culture" },
-        { month:5, day:22, year:1959, name:"Morrissey",            team:"MSG",       sport:"Culture",     note:"The Smiths frontman has sold out MSG — one of the most devoted cult followings in New York music" },
-        { month:5, day:23, year:1948, name:"Bill Parcells",        team:"Giants",    sport:"NFL",         note:"The Big Tuna — coached the Giants to two Super Bowls, built the greatest NY football dynasty of the 1980s" },
-        { month:5, day:25, year:1963, name:"Mike Myers",           team:"Knicks",    sport:"NBA",         note:"Austin Powers star and hockey fan who became a Knicks supporter — the Garden welcomed him" },
-        { month:5, day:26, year:1964, name:"Lenny Kravitz",        team:"MSG",       sport:"Culture",     note:"Born in Manhattan Upper West Side — are you gonna go my way? He gone to MSG countless times" },
-        { month:5, day:27, year:1923, name:"Henry Kissinger",      team:"Yankees",   sport:"Culture",     note:"Secretary of State and avid Yankees fan — attended World Series games and represented NY on the world stage" },
-        { month:5, day:28, year:1944, name:"Gladys Knight",        team:"MSG",       sport:"Culture",     note:"Heard It Through the Grapevine — legendary MSG performances are Motown history in New York" },
-        { month:5, day:29, year:1917, name:"John F Kennedy",       team:"Yankees",   sport:"Culture",     note:"Attended Yankees games and threw out first pitches — the most charismatic president loved NY baseball" },
-        { month:5, day:30, year:1959, name:"Marie Osmond",         team:"MSG",       sport:"Culture",     note:"The Osmonds played MSG — Paper Roses echoed in the Garden during their 1970s peak popularity" },
-        { month:5, day:31, year:1930, name:"Clint Eastwood",       team:"Yankees",   sport:"Culture",     note:"Make my day — Dirty Harry creator is a huge sports fan whose stoicism masks a deep Yankees love" },
-        { month:6, day:2,  year:1941, name:"Charlie Watts",        team:"MSG",       sport:"Culture",     note:"Rolling Stones drummer played MSG more times than almost any musician — a Garden legend" },
-        { month:6, day:4,  year:1975, name:"Angelina Jolie",       team:"Yankees",   sport:"Culture",     note:"Born in Los Angeles but made Manhattan her home — a true New Yorker by adoption and spirit" },
-        { month:6, day:5,  year:1946, name:"Freddie Prinze",       team:"Yankees",   sport:"Culture",     note:"Chico and the Man comedian born in NYC — loved the Yankees, tragically died too young at 22" },
-        { month:6, day:7,  year:1958, name:"Prince",               team:"MSG",       sport:"Culture",     note:"Purple Rain — Prince MSG concerts are among the greatest performances in the arena history" },
-        { month:6, day:8,  year:1940, name:"Nancy Sinatra",        team:"Yankees",   sport:"Culture",     note:"These Boots Are Made for Walkin — Frank daughter and a New York musical legacy that endures forever" },
-        { month:6, day:10, year:1922, name:"Judy Garland",         team:"MSG",       sport:"Culture",     note:"Over the Rainbow legend whose MSG 1961 concert was called the greatest night in show business history" },
-        { month:6, day:12, year:1924, name:"George H.W. Bush",     team:"Yankees",   sport:"Culture",     note:"President and Yale first baseman — his love of baseball connected him to the Yankees national legacy" },
-        { month:6, day:13, year:1953, name:"Tim Allen",            team:"Yankees",   sport:"Culture",     note:"Home Improvement star and sports fan — NY cultural figure whose love of sports connected to Yankees fandom" },
-        { month:6, day:14, year:1946, name:"Donald Trump",         team:"Yankees",   sport:"Culture",     note:"Born in Queens, attended Yankees games throughout his life — a controversial but omnipresent NY figure" },
-        { month:6, day:16, year:1971, name:"Tupac Shakur",         team:"NY",        sport:"Culture",     note:"Bronx-influenced hip hop legend — NY rap culture and NY sports share the same energy and street pride" },
-        { month:6, day:18, year:1942, name:"Paul McCartney",       team:"Shea",      sport:"Culture",     note:"The Beatles played Shea Stadium in 1965 — the most famous concert in stadium history which McCartney helped create" },
-        { month:6, day:20, year:1967, name:"Nicole Kidman",        team:"US Open",   sport:"Tennis",      note:"Regular US Open attendee at Flushing Meadows — Australian tennis royalty at the sport biggest stage" },
-        { month:6, day:22, year:1964, name:"Dan Brown",            team:"Yankees",   sport:"Culture",     note:"The Da Vinci Code author is a massive Yankees fan — his love of the team runs through his NY visits" },
-        { month:6, day:23, year:1963, name:"Frances McDormand",    team:"NY",        sport:"Culture",     note:"Fargo and Three Billboards Oscar winner who made New York her permanent home" },
-        { month:6, day:24, year:1944, name:"Jeff Beck",            team:"MSG",       sport:"Culture",     note:"Guitar God who played MSG — his rock concerts at the Garden are legendary in music history" },
-        { month:6, day:26, year:1950, name:"Chris Mullin",         team:"Knicks",    sport:"NBA",         note:"St. John and USA Dream Team legend — Brooklyn born, a quintessential New York basketball player" },
-        { month:6, day:28, year:1946, name:"Gilda Radner",         team:"MSG",       sport:"Culture",     note:"SNL original cast member who made New York her stage — It Always Something and NY Sports always was" },
-        { month:6, day:29, year:1966, name:"Mike Tyson",           team:"MSG",       sport:"Boxing",      note:"Iron Mike fought his greatest fights at MSG — the most fearsome heavyweight in New York boxing history" },
-        { month:6, day:30, year:1985, name:"Michael Phelps",       team:"NY",        sport:"Swimming",    note:"Most decorated Olympian ever attended NY events — his 23 gold medals inspired NY sports fans everywhere" },
-        { month:7, day:1,  year:1961, name:"Diana Princess of Wales",team:"MSG",     sport:"Culture",     note:"Princess Diana attended a New York Rangers game at MSG in 1989 — one of the arena most glamorous nights" },
-        { month:7, day:3,  year:1947, name:"Dave Barry",           team:"Yankees",   sport:"Culture",     note:"Pulitzer Prize-winning humorist and Yankees fan — his sports columns capture the NY fan experience perfectly" },
-        { month:7, day:5,  year:1951, name:"Huey Lewis",           team:"MSG",       sport:"Culture",     note:"The Heart of Rock and Roll — Huey Lewis and the News played MSG in their 1980s commercial peak" },
-        { month:7, day:7,  year:1940, name:"Ringo Starr",          team:"Shea",      sport:"Culture",     note:"Beatles drummer who played Shea Stadium 1965-66 — part of the most legendary concerts in stadium history" },
-        { month:7, day:9,  year:1956, name:"Tom Hanks",            team:"Yankees",   sport:"Culture",     note:"A League of Their Own star and Yankees fan — There no crying in baseball but there is in the Bronx" },
-        { month:7, day:12, year:1904, name:"Pablo Neruda",         team:"NY",        sport:"Culture",     note:"Chilean Nobel laureate who visited NYC — the most romantic poet in history met America most romantic city" },
-        { month:7, day:13, year:1942, name:"Harrison Ford",        team:"Yankees",   sport:"Culture",     note:"Han Solo and Indiana Jones — Ford attended games at the old and new Yankee Stadium as a fan" },
-        { month:7, day:14, year:1941, name:"Chris Cross",          team:"MSG",       sport:"Culture",     note:"Sailing — yacht rock legend who played MSG during the 1980s greatest arena rock era" },
-        { month:7, day:15, year:1937, name:"Tommy Smothers",       team:"MSG",       sport:"Culture",     note:"Smothers Brothers performed at MSG — their political comedy resonated deeply with New York audiences" },
-        { month:7, day:16, year:1960, name:"Michael Flatley",      team:"MSG",       sport:"Culture",     note:"Lord of the Dance sold out MSG — his Irish step dancing phenomenon was born at Radio City and went to the Garden" },
-        { month:7, day:19, year:1947, name:"Brian May",            team:"MSG",       sport:"Culture",     note:"Queen guitarist — Bohemian Rhapsody played at MSG in concerts that are now the stuff of legend" },
-        { month:7, day:20, year:1873, name:"Cy Young",             team:"Giants",    sport:"MLB",         note:"The Cy Young Award bears his name — he faced the NY Giants and pitched in NYC during the dead ball era" },
-        { month:7, day:21, year:1948, name:"Cat Stevens",          team:"MSG",       sport:"Culture",     note:"Wild World — Cat Stevens played MSG before his spiritual journey took him away from the music world" },
-        { month:7, day:23, year:1952, name:"Woody Harrelson",      team:"Knicks",    sport:"NBA",         note:"White Men Can Not Jump star and Knicks fan — seen at MSG courtside during the Patrick Ewing era" },
-        { month:7, day:24, year:1969, name:"Jennifer Lopez",       team:"Yankees",   sport:"Culture",     note:"Born in the Bronx — she literally grew up in the Yankees backyard. NY greatest pop star." },
-        { month:7, day:25, year:1967, name:"Matt LeBlanc",         team:"Yankees",   sport:"Culture",     note:"Friends Joey Tribbiani is a quintessential New Yorker — LeBlanc love of the Yankees is well documented" },
-        { month:7, day:27, year:1948, name:"Peggy Fleming",        team:"MSG",       sport:"Figure Skating",note:"Olympic gold medalist who performed at MSG ice shows — a New York figure skating legend" },
-        { month:7, day:29, year:1954, name:"Jon Hamm",             team:"Yankees",   sport:"Culture",     note:"Don Draper of Mad Men — the show set in 1960s New York where Yankees games were the backdrop of the era" },
-        { month:7, day:31, year:1965, name:"J.K. Rowling",         team:"Yankees",   sport:"Culture",     note:"Harry Potter author who called New York her second home — attended games at the new Yankee Stadium" },
-        { month:8, day:2,  year:1932, name:"Peter O Toole",        team:"MSG",       sport:"Culture",     note:"Lawrence of Arabia star who attended MSG events — British cultural royalty in the greatest American arena" },
-        { month:8, day:3,  year:1940, name:"Martin Sheen",         team:"Yankees",   sport:"Culture",     note:"West Wing president and Yankees fan — his character would have been a loyal Bronx Bomber supporter" },
-        { month:8, day:5,  year:1906, name:"John Huston",          team:"Yankees",   sport:"Culture",     note:"Maltese Falcon director who attended Yankee Stadium during Hollywood golden era visits to New York" },
-        { month:8, day:6,  year:1881, name:"Alexander Fleming",    team:"NY",        sport:"Culture",     note:"Penicillin discoverer who visited NYC — the greatest life-saving discovery honored in the greatest city" },
-        { month:8, day:9,  year:1963, name:"Whitney Houston",      team:"MSG",       sport:"Culture",     note:"I Will Always Love You — Whitney Houston MSG concerts are among the greatest vocal performances ever staged" },
-        { month:8, day:10, year:1960, name:"Antonio Banderas",     team:"MSG",       sport:"Culture",     note:"Mask of Zorro star who attended MSG events — international cinema royalty at America arena" },
-        { month:8, day:11, year:1959, name:"Hulk Hogan",           team:"MSG",       sport:"Wrestling",   note:"Wrestled at MSG countless times — Madison Square Garden is the birthplace of WWF greatest moments" },
-        { month:8, day:13, year:1919, name:"Rex Harrison",         team:"MSG",       sport:"Culture",     note:"My Fair Lady star who attended MSG events during his New York theatrical career in the 1950s and 60s" },
-        { month:8, day:14, year:1945, name:"Steve Martin",         team:"Yankees",   sport:"Culture",     note:"Born in Waco but NYC is his spiritual home — the Jerk creator loves NY sports and comedy equally" },
-        { month:8, day:15, year:1950, name:"Princess Anne",        team:"US Open",   sport:"Tennis",      note:"British royalty attended the US Open at Flushing Meadows — a regular fixture at the tournament" },
-        { month:8, day:17, year:1943, name:"Robert De Niro",       team:"Yankees",   sport:"Culture",     note:"Born in Greenwich Village — the greatest actor of his generation is a lifelong New Yorker and Yankees fan" },
-        { month:8, day:19, year:1969, name:"Matthew Perry",        team:"Knicks",    sport:"NBA",         note:"Chandler Bing from Friends — the show set in NYC made the Knicks the sitcom world default team" },
-        { month:8, day:21, year:1952, name:"Joe Strummer",         team:"MSG",       sport:"Culture",     note:"The Clash frontman — London Calling echoed at MSG in one of punk greatest New York moments" },
-        { month:8, day:22, year:1934, name:"H. Norman Schwarzkopf",team:"Giants",    sport:"NFL",         note:"General Stormin Norman attended Giants games — the Gulf War hero was a proud New Jersey resident" },
-        { month:8, day:23, year:1949, name:"Shelley Long",         team:"Yankees",   sport:"Culture",     note:"Cheers Diane Chambers would have been a Yankees fan — Long herself attended games at the Stadium" },
-        { month:8, day:25, year:1954, name:"Elvis Costello",       team:"MSG",       sport:"Culture",     note:"Alison and Pump It Up — multiple MSG performances stand among the finest rock concerts in Garden history" },
-        { month:8, day:26, year:1980, name:"Macaulay Culkin",      team:"Yankees",   sport:"Culture",     note:"Home Alone star born in NYC — a quintessential New York kid who grew up with the Yankees as his team" },
-        { month:8, day:27, year:1870, name:"Theodore Dreiser",     team:"NY",        sport:"Culture",     note:"Sister Carrie author who documented NYC working class life — baseball was part of the American dream he captured" },
-        { month:8, day:29, year:1958, name:"Michael Jackson",      team:"MSG",       sport:"Culture",     note:"Thriller King played MSG in the most spectacular concerts the arena has ever seen — pure magic every time" },
-        { month:8, day:30, year:1797, name:"Mary Shelley",         team:"NY",        sport:"Culture",     note:"Frankenstein author whose gothic vision influenced countless New York artists and the city dark creative soul" },
-        { month:8, day:31, year:1945, name:"Van Morrison",         team:"MSG",       sport:"Culture",     note:"Brown Eyed Girl — Van the Man MSG concerts are treasured performances in New York music history" },
-        { month:9, day:2,  year:1948, name:"Terry Bradshaw",       team:"Giants",    sport:"NFL",         note:"Steelers legend who defeated the Giants in memorable Super Bowl era battles — his rivalry with NY defined an era" },
-        { month:9, day:3,  year:1965, name:"Charlie Sheen",        team:"Yankees",   sport:"Culture",     note:"Major League star who became synonymous with baseball movies — winning like the Yankees is his style" },
-        { month:9, day:4,  year:1981, name:"Beyonce",              team:"MSG",       sport:"Culture",     note:"Queen Bey has sold out MSG multiple nights — her Formation Tour MSG stop is among the greatest shows ever" },
-        { month:9, day:6,  year:1946, name:"Roger Waters",         team:"MSG",       sport:"Culture",     note:"Pink Floyd The Wall performed at MSG — one of the most ambitious rock productions ever staged at the Garden" },
-        { month:9, day:7,  year:1936, name:"Buddy Holly",          team:"MSG",       sport:"Culture",     note:"That Will Be the Day — Buddy Holly NY Paramount show in 1957 launched the rock and roll era in New York" },
-        { month:9, day:8,  year:1979, name:"Pink",                 team:"MSG",       sport:"Culture",     note:"Multiple sold-out MSG performances — her aerial acrobatics above the Garden floor are now legendary" },
-        { month:9, day:10, year:1960, name:"Colin Firth",          team:"US Open",   sport:"Tennis",      note:"British acting royalty who attended the US Open at Flushing Meadows — a tennis fan in America greatest city" },
-        { month:9, day:12, year:1944, name:"Barry White",          team:"MSG",       sport:"Culture",     note:"The Walrus of Love performed at MSG in the greatest soul shows the Garden has seen" },
-        { month:9, day:14, year:1933, name:"Kate Mulgrew",         team:"Yankees",   sport:"Culture",     note:"Star Trek Voyager Captain Janeway and a proud New Yorker — her Yankees fandom is well established" },
-        { month:9, day:16, year:1956, name:"Mickey Rourke",        team:"MSG",       sport:"Boxing",      note:"The Wrestler star who actually boxed — appeared at MSG boxing events during his brief fighting career" },
-        { month:9, day:17, year:1923, name:"Hank Williams",        team:"MSG",       sport:"Culture",     note:"Your Cheatin Heart — country music first superstar whose influence shaped every MSG country show that followed" },
-        { month:9, day:18, year:1939, name:"Frankie Avalon",       team:"MSG",       sport:"Culture",     note:"Venus and Bobby Sox idol who played NY venues — the original teen idol who made New York scream" },
-        { month:9, day:20, year:1934, name:"Sophia Loren",         team:"MSG",       sport:"Culture",     note:"Italian cinema legend who attended NY events — her presence made every New York evening more glamorous" },
-        { month:9, day:22, year:1961, name:"Rob Morrow",           team:"Yankees",   sport:"Culture",     note:"Northern Exposure and Numb3rs star — born in New Rochelle NY, a lifelong Yankees fan and New Yorker" },
-        { month:9, day:24, year:1936, name:"Jim Henson",           team:"NY",        sport:"Culture",     note:"The Muppets creator worked in NY — Kermit the Frog would definitely have been a Yankees fan" },
-        { month:9, day:25, year:1968, name:"Will Smith",           team:"Knicks",    sport:"NBA",         note:"The Fresh Prince grew up in Philly but his NY years made the Knicks his adopted team" },
-        { month:9, day:26, year:1948, name:"Olivia Newton-John",   team:"MSG",       sport:"Culture",     note:"Grease sensation whose multiple MSG performances are highlights of the arena soft-rock era" },
-        { month:9, day:28, year:1934, name:"Brigitte Bardot",      team:"NY",        sport:"Culture",     note:"The French icon who visited NYC in her prime — her Riviera glamour and NY sophistication were a perfect match" },
-        { month:9, day:30, year:1935, name:"Johnny Mathis",        team:"MSG",       sport:"Culture",     note:"Chances Are — the smooth jazz legend has performed at MSG multiple times over six decades" },
-        { month:10, day:2,  year:1890, name:"Groucho Marx",        team:"Yankees",   sport:"Culture",     note:"The Marx Brothers were quintessential New Yorkers — Groucho wit was born in the same city as Babe Ruth" },
-        { month:10, day:3,  year:1941, name:"Chubby Checker",      team:"MSG",       sport:"Culture",     note:"The Twist at MSG — he performed at the Garden in the early 1960s during the greatest dance craze in American history" },
-        { month:10, day:4,  year:1946, name:"Susan Sarandon",      team:"Yankees",   sport:"Culture",     note:"Bull Durham star and Yankees fan — she played Annie Savoy, baseball greatest romantic character" },
-        { month:10, day:6,  year:1942, name:"Britt Ekland",        team:"MSG",       sport:"Culture",     note:"Bond girl and Peter Sellers wife — a fixture in 1970s NY society and attendee of MSG events" },
-        { month:10, day:7,  year:1955, name:"Yo-Yo Ma",            team:"MSG",       sport:"Culture",     note:"The world greatest cellist was born in Paris but made New York his home — a true citizen of the greatest city" },
-        { month:10, day:9,  year:1940, name:"John Lennon",         team:"MSG",       sport:"Culture",     note:"Made New York his home until his murder in 1980 — Imagine and Double Fantasy were created in the Dakota NYC" },
-        { month:10, day:10, year:1946, name:"Ben Vereen",          team:"MSG",       sport:"Culture",     note:"Broadway and MSG performer — Pippin and multiple MSG shows made him a New York entertainment legend" },
-        { month:10, day:11, year:1956, name:"Luke Perry",          team:"Yankees",   sport:"Culture",     note:"Beverly Hills 90210 star and Yankees fan — his All-American image was rooted in a love of NY baseball" },
-        { month:10, day:12, year:1935, name:"Luciano Pavarotti",   team:"MSG",       sport:"Culture",     note:"The Three Tenors performed in NY — Pavarotti Met Opera performances made him the king of New York culture" },
-        { month:10, day:14, year:1939, name:"Ralph Lauren",        team:"Yankees",   sport:"Culture",     note:"Born Ralph Lifshitz in the Bronx — the greatest American fashion designer grew up in Yankees country" },
-        { month:10, day:15, year:1946, name:"Richard Carpenter",   team:"MSG",       sport:"Culture",     note:"The Carpenters Close to You sold out MSG — one of the greatest soft rock acts in the arena history" },
-        { month:10, day:16, year:1946, name:"Suzanne Somers",      team:"MSG",       sport:"Culture",     note:"Three Company star who attended MSG events — a cultural figure of the 1970s New York moment" },
-        { month:10, day:18, year:1956, name:"Martina Navratilova", team:"US Open",   sport:"Tennis",      note:"Won four US Open titles at Flushing Meadows — one of the all-time greats in tennis who called NY home" },
-        { month:10, day:20, year:1952, name:"Tom Petty",           team:"MSG",       sport:"Culture",     note:"Free Fallin at MSG — Tom Petty and the Heartbreakers MSG concerts are among the arena greatest performances" },
-        { month:10, day:22, year:1943, name:"Catherine Deneuve",   team:"NY",        sport:"Culture",     note:"French cinema greatest icon visited NYC regularly — the Cherbourg umbrella that sheltered New York sophistication" },
-        { month:10, day:23, year:1940, name:"Pele",                team:"Cosmos",    sport:"Soccer",      note:"The greatest soccer player ever played for the NY Cosmos 1975-77 — brought the beautiful game to NYC" },
-        { month:10, day:24, year:1969, name:"Wayne Rooney",        team:"Red Bulls", sport:"Soccer",      note:"England legend whose NY Red Bulls connection represents the Premier League influence on New York soccer" },
-        { month:10, day:26, year:1947, name:"Hillary Clinton",     team:"Yankees",   sport:"Culture",     note:"Claimed to be a lifelong Yankees fan — attended many games during her NY Senate career" },
-        { month:10, day:28, year:1955, name:"Bill Gates",          team:"Yankees",   sport:"Culture",     note:"The world richest man attended Yankee Stadium — his charitable work brought him to the Bronx many times" },
-        { month:10, day:29, year:1971, name:"Winona Ryder",        team:"NY",        sport:"Culture",     note:"Made New York her home — her 1990s films captured the downtown Manhattan scene sports fans also inhabited" },
-        { month:10, day:31, year:1936, name:"Michael Landon",      team:"Yankees",   sport:"Culture",     note:"Bonanza and Little House on the Prairie star — his all-American image was rooted in a love of NY baseball" },
-        { month:11, day:2,  year:1755, name:"Marie Antoinette",    team:"NY",        sport:"Culture",     note:"The French queen whose tragic fate inspired countless NY theatrical productions over two centuries" },
-        { month:11, day:3,  year:1952, name:"Roseanne Barr",       team:"Mets",      sport:"MLB",         note:"Roseanne star whose famously bad national anthem at Fenway made every Mets fan feel better about their team" },
-        { month:11, day:5,  year:1959, name:"Bryan Adams",         team:"MSG",       sport:"Culture",     note:"Summer of 69 — Canadian rocker who sold out MSG multiple times; Everything I Do brought the Garden to its knees" },
-        { month:11, day:7,  year:1918, name:"Billy Graham",        team:"MSG",       sport:"Culture",     note:"Held Madison Square Garden crusades that drew 100000 people — MSG was a spiritual home as much as sports arena" },
-        { month:11, day:9,  year:1934, name:"Carl Sagan",          team:"Yankees",   sport:"Culture",     note:"Cosmos author and Cornell professor who loved NY — billions and billions of Yankees fans across the cosmos" },
-        { month:11, day:10, year:1925, name:"Richard Burton",      team:"MSG",       sport:"Culture",     note:"Camelot on Broadway and MSG events — the great Welsh actor made New York his theatrical home" },
-        { month:11, day:11, year:1962, name:"Demi Moore",          team:"Rangers",   sport:"NHL",         note:"Ghost star who attended Rangers games at MSG during her 1990s Hollywood peak" },
-        { month:11, day:12, year:1954, name:"Neil Young",          team:"MSG",       sport:"Culture",     note:"Rockin in the Free World — Young MSG concerts are among the great rock performances in the arena history" },
-        { month:11, day:13, year:1955, name:"Whoopi Goldberg",     team:"Yankees",   sport:"Culture",     note:"Born in Manhattan — the Oscar winner and The View host has been a Yankees fan her entire life" },
-        { month:11, day:15, year:1929, name:"Ed Asner",            team:"Yankees",   sport:"Culture",     note:"Lou Grant star and Yankees fan — the gruff newsman would have been a natural in the Bronx press box" },
-        { month:11, day:17, year:1944, name:"Gordon Lightfoot",    team:"MSG",       sport:"Culture",     note:"Sundown and the Wreck of the Edmund Fitzgerald — Canadian folk legend who played MSG in his prime" },
-        { month:11, day:19, year:1961, name:"Meg Ryan",            team:"Yankees",   sport:"Culture",     note:"You Got Mail — the most romantic film about New York City features the Yankees as part of the setting" },
-        { month:11, day:20, year:1962, name:"Ming Yao",            team:"Knicks",    sport:"NBA",         note:"The 7-foot-6 Rockets center who battled the Knicks in memorable games — one of the game great big men" },
-        { month:11, day:21, year:1965, name:"Bjork",               team:"MSG",       sport:"Culture",     note:"The Icelandic avant-garde artist has performed at MSG — one of the most unique performers in the arena history" },
-        { month:11, day:23, year:1992, name:"Miley Cyrus",         team:"MSG",       sport:"Culture",     note:"Hannah Montana to Wrecking Ball — sold out MSG multiple times as one of pop biggest acts" },
-        { month:11, day:24, year:1868, name:"Scott Joplin",        team:"NY",        sport:"Culture",     note:"The King of Ragtime spent his final years in NYC — his music later played in arenas everywhere including MSG" },
-        { month:11, day:25, year:1960, name:"John F Kennedy Jr.",  team:"Yankees",   sport:"Culture",     note:"John John — America prince grew up in NYC and attended Yankees and Knicks games as a true New Yorker" },
-        { month:11, day:27, year:1942, name:"Jimi Hendrix",        team:"MSG",       sport:"Culture",     note:"Are You Experienced — Hendrix played MSG in 1968 in one of the arena greatest and most revolutionary concerts" },
-        { month:11, day:29, year:1959, name:"Andrew McCarthy",     team:"Yankees",   sport:"Culture",     note:"Pretty in Pink and Brat Pack member who made New York his home — a classic 1980s New Yorker" },
-        { month:11, day:30, year:1924, name:"Shirley Chisholm",    team:"Brooklyn",  sport:"Culture",     note:"First Black woman elected to Congress — born in Brooklyn, represented Bedford-Stuyvesant with fierce NY pride" },
-        { month:12, day:1,  year:1935, name:"Woody Allen",         team:"Yankees",   sport:"Culture",     note:"Born in the Bronx — America most prolific filmmaker is a Yankees fan who set countless films in New York" },
-        { month:12, day:2,  year:1968, name:"Lucy Liu",            team:"Knicks",    sport:"NBA",         note:"Born in Queens — Kill Bill and Charlies Angels star who grew up watching Knicks games at MSG" },
-        { month:12, day:4,  year:1964, name:"Marisa Tomei",        team:"Yankees",   sport:"Culture",     note:"Born in Brooklyn — Oscar winner for My Cousin Vinny and a lifelong New Yorker and Yankees fan" },
-        { month:12, day:5,  year:1935, name:"Little Richard",      team:"MSG",       sport:"Culture",     note:"Good Golly Miss Molly at MSG — the Architect of Rock and Roll brought his revolutionary sound to the Garden" },
-        { month:12, day:6,  year:1956, name:"Peter Buck",          team:"MSG",       sport:"Culture",     note:"REM guitarist who played MSG — Losing My Religion echoed in the arena during one of 90s rock finest moments" },
-        { month:12, day:7,  year:1956, name:"Larry Bird",          team:"Knicks",    sport:"NBA",         note:"Celtic legend whose rivalry with the Knicks defined the most intense NBA battles at Madison Square Garden" },
-        { month:12, day:8,  year:1943, name:"Jim Morrison",        team:"MSG",       sport:"Culture",     note:"The Doors played MSG in 1969 — Light My Fire in the world most famous arena is pure rock history" },
-        { month:12, day:10, year:1960, name:"Kenneth Branagh",     team:"MSG",       sport:"Culture",     note:"Hamlet director and actor who attended MSG events — Shakespearean drama and New York sports share a stage" },
-        { month:12, day:12, year:1915, name:"Frank Sinatra",       team:"Yankees",   sport:"Culture",     note:"Ol Blue Eyes — New York New York is the Yankees victory song. Sinatra and the Yankees are forever intertwined." },
-        { month:12, day:14, year:1940, name:"Charlie Rich",        team:"MSG",       sport:"Culture",     note:"The Silver Fox played MSG — Behind Closed Doors was one of country greatest Garden performances" },
-        { month:12, day:15, year:1952, name:"Jeff Buckley",        team:"MSG",       sport:"Culture",     note:"Grace — his MSG performance is one of the most emotional concerts in the arena history before his tragic death" },
-        { month:12, day:17, year:1946, name:"Bill Moyers",         team:"NY Media",  sport:"Broadcasting",note:"PBS anchor and political journalist who made NYC his base — the conscience of New York broadcasting" },
-        { month:12, day:18, year:1946, name:"Steven Spielberg",    team:"Yankees",   sport:"Culture",     note:"Schindler List director attended Yankees games — the greatest filmmaker of his era loves NY greatest team" },
-        { month:12, day:20, year:1946, name:"Uri Geller",          team:"NY",        sport:"Culture",     note:"Spoon-bending psychic who captivated NY in the 1970s — the greatest city for the greatest showmen" },
-        { month:12, day:22, year:1962, name:"Ralph Fiennes",       team:"MSG",       sport:"Culture",     note:"Schindler List and Harry Potter star who attended MSG events — London finest actor in New York arena" },
-        { month:12, day:24, year:1938, name:"Ava Gardner",         team:"Yankees",   sport:"Culture",     note:"Hollywood femme fatale attended Yankees games in the 1950s — glamour and pinstripes were a natural pairing" },
-        { month:12, day:25, year:1945, name:"Larry Csonka",        team:"Giants",    sport:"NFL",         note:"Miami Dolphins fullback who crushed the Giants in memorable AFC-NFC battles — the ground and pound legend" },
-        { month:12, day:26, year:1971, name:"Lars Ulrich",         team:"MSG",       sport:"Culture",     note:"Metallica drummer — Enter Sandman at MSG is one of the greatest rock performances in the arena history" },
-        { month:12, day:27, year:1948, name:"Gerard Depardieu",    team:"NY",        sport:"Culture",     note:"French cinema biggest star who filmed Green Card in NYC — his larger-than-life persona fit New York perfectly" },
-        { month:12, day:29, year:1946, name:"Marianne Faithfull",  team:"MSG",       sport:"Culture",     note:"As Tears Go By — Rolling Stones muse and solo artist who performed in New York during the swinging 60s" },
-        { month:12, day:30, year:1928, name:"Bo Diddley",          team:"MSG",       sport:"Culture",     note:"Who Do You Love — Bo Diddley Apollo Theater and MSG performances launched rock and roll in New York" },
-        { month:12, day:31, year:1943, name:"John Denver",         team:"MSG",       sport:"Culture",     note:"Rocky Mountain High — John Denver New Year Eve MSG concerts were a beloved NY tradition for decades" },
-    { month:2, day:12, year:1809, name:"Abraham Lincoln",     team:"Yankees",   sport:"Culture",     note:"Honest Abe would have loved the Yankees — the Great Emancipator and the greatest franchise share American greatness" },
+    { month:1, day:2,  year:1969, name:"Edgar Martinez",       team:"Yankees",   sport:"MLB",         note:"Faced the Yankees in memorable AL battles — one of the greatest DHs in baseball history" },
+    { month:1, day:6,  year:1939, name:"Lou Holtz",            team:"Jets",      sport:"NFL",         note:"Briefly coached the Jets in 1976 — went 3-10 but moved on to college greatness at Notre Dame" },
+    { month:1, day:9,  year:1934, name:"Bart Starr",           team:"Giants",    sport:"NFL",         note:"Defeated the Giants in the 1961 and 1962 NFL Championships — Green Bay legend vs NY pride" },
+    { month:1, day:12, year:1951, name:"Howard Stern",         team:"NY Media",  sport:"Broadcasting",note:"The King of All Media — born in Queens, defined NY radio and pop culture for 40 years" },
+    { month:1, day:13, year:1961, name:"Gheorghe Muresan",     team:"Nets",      sport:"NBA",         note:"The tallest player in NBA history at 7-foot-7 — briefly played for the New Jersey Nets" },
+    { month:1, day:15, year:1943, name:"Arthur Ashe",          team:"US Open",   sport:"Tennis",      note:"First Black man to win the US Open 1968 — the stadium at Flushing Meadows bears his name" },
+    { month:1, day:20, year:1966, name:"Edwin Diaz",           team:"Mets",      sport:"MLB",         note:"The Mets closer whose Narco entrance theme has become the most iconic walk-up in baseball" },
+    { month:1, day:25, year:1882, name:"Christy Mathewson",    team:"NY Giants", sport:"MLB",         note:"The Big Six — greatest pitcher of the dead ball era, starred at the Polo Grounds for the NY Giants" },
+    { month:1, day:28, year:1955, name:"Nick Price",           team:"US Open",   sport:"Golf",        note:"Won the PGA Championship twice — competed at Shinnecock Hills and Bethpage in US Opens" },
+    { month:1, day:31, year:1947, name:"Nolan Ryan",           team:"Mets",      sport:"MLB",         note:"The Ryan Express began his career with the Mets — 5714 strikeouts started in Flushing Queens" },
+    { month:2, day:3,  year:1943, name:"Bobby Murcer",         team:"Yankees",   sport:"MLB",         note:"The heir apparent to Mickey Mantle — beloved Yankee player and broadcaster for 40 years" },
+    { month:2, day:4,  year:1954, name:"Dave Kingman",         team:"Mets",      sport:"MLB",         note:"Kong hit towering home runs for the Mets — once the franchise HR leader before Strawberry and Alonso" },
+    { month:2, day:5,  year:1934, name:"Hank Aaron",           team:"Braves",    sport:"MLB",         note:"Broke Babe Ruth home run record — his 755 HR surpassed the Yankee legend who preceded him" },
+    { month:2, day:11, year:1936, name:"Burt Reynolds",        team:"Giants",    sport:"NFL",         note:"The Longest Yard star — played football at FSU and brought the game to Hollywood biggest screen" },
+    { month:2, day:17, year:1963, name:"Michael Jordan",       team:"Knicks",    sport:"NBA",         note:"His greatest rival was the Knicks — Patrick Ewing vs Jordan defined 1990s NBA basketball" },
+    { month:2, day:21, year:1958, name:"Kelsey Grammer",       team:"Rangers",   sport:"NHL",         note:"Frasier star and avid Rangers fan — spotted at MSG regularly during the team championship years" },
+    { month:2, day:26, year:1887, name:"Grover Cleveland Alexander", team:"Giants", sport:"MLB",      note:"Early pitching great who faced the NY Giants — one of the all-time strikeout leaders of the dead ball era" },
+    { month:3, day:3,  year:1947, name:"James Worthy",         team:"Knicks",    sport:"NBA",         note:"Showtime Laker who faced the Knicks in memorable battles — Big Game James at the Garden" },
+    { month:3, day:4,  year:1975, name:"David Beckham",        team:"Red Bulls", sport:"Soccer",      note:"Played against the NY Red Bulls with LA Galaxy — brought global soccer glamour to the NY market" },
+    { month:3, day:6,  year:1944, name:"Willie Stargell",      team:"Mets",      sport:"MLB",         note:"Pittsburgh Pirates legend who faced the Mets in classic NL East battles — one of baseball greats" },
+    { month:3, day:10, year:1958, name:"Sharon Stone",         team:"Rangers",   sport:"NHL",         note:"Basic Instinct star and Rangers fan — seen at MSG during the team 1994 championship run" },
+    { month:3, day:16, year:1968, name:"Alan Shearer",         team:"Red Bulls", sport:"Soccer",      note:"Newcastle legend whose attacking style influenced the Premier League era that shaped NY soccer fandom" },
+    { month:3, day:29, year:1943, name:"Denny McLain",         team:"Yankees",   sport:"MLB",         note:"The last 30-game winner in baseball history faced the Yankees in the AL during his 1968 Cy Young season" },
+    { month:4, day:5,  year:1977, name:"Pharrell Williams",    team:"Knicks",    sport:"NBA",         note:"Happy producer and Knicks supporter — his music played at MSG during some of the franchise best moments" },
+    { month:4, day:13, year:1939, name:"Seymour Siwoff",       team:"Yankees",   sport:"Broadcasting",note:"Elias Sports Bureau founder — defined baseball statistics in New York for 50 years" },
+    { month:4, day:14, year:1941, name:"Pete Rose",            team:"Mets",      sport:"MLB",         note:"Hit King faced the Mets countless times — his career hit record stands forever whatever else is said" },
+    { month:4, day:15, year:1947, name:"Kareem Abdul-Jabbar",  team:"Knicks",    sport:"NBA",         note:"Greatest scorer in NBA history faced the Knicks in legendary battles — 38387 career points" },
+    { month:4, day:27, year:1922, name:"Jack Klugman",         team:"Mets",      sport:"MLB",         note:"The Odd Couple Oscar Madison was a Mets fan — Klugman himself was a genuine baseball enthusiast" },
+    { month:5, day:7,  year:1939, name:"Johnny Unitas",        team:"Giants",    sport:"NFL",         note:"Defeated the Giants in the greatest game ever played at Yankee Stadium — overtime 1958 NFL Championship" },
+    { month:5, day:15, year:1953, name:"George Brett",         team:"Yankees",   sport:"MLB",         note:"Pine Tar Game at Yankee Stadium — Brett pine tar bat controversy is one of baseball most iconic moments" },
+    { month:5, day:21, year:1952, name:"Mr. T",                team:"MSG",       sport:"Boxing",      note:"I pity the fool who misses MSG boxing — Mr. T was a fixture in 1980s New York sports culture" },
+    { month:5, day:23, year:1948, name:"Bill Parcells",        team:"Giants",    sport:"NFL",         note:"The Big Tuna — coached the Giants to two Super Bowls, built the greatest NY football dynasty of the 1980s" },
+    { month:5, day:25, year:1963, name:"Mike Myers",           team:"Knicks",    sport:"NBA",         note:"Austin Powers star and hockey fan who became a Knicks supporter — the Garden welcomed him" },
+    { month:6, day:20, year:1967, name:"Nicole Kidman",        team:"US Open",   sport:"Tennis",      note:"Regular US Open attendee at Flushing Meadows — Australian tennis royalty at the sport biggest stage" },
+    { month:6, day:26, year:1950, name:"Chris Mullin",         team:"Knicks",    sport:"NBA",         note:"St. John and USA Dream Team legend — Brooklyn born, a quintessential New York basketball player" },
+    { month:6, day:29, year:1966, name:"Mike Tyson",           team:"MSG",       sport:"Boxing",      note:"Iron Mike fought his greatest fights at MSG — the most fearsome heavyweight in New York boxing history" },
+    { month:6, day:30, year:1985, name:"Michael Phelps",       team:"NY",        sport:"Swimming",    note:"Most decorated Olympian ever attended NY events — his 23 gold medals inspired NY sports fans everywhere" },
+    { month:7, day:20, year:1873, name:"Cy Young",             team:"Giants",    sport:"MLB",         note:"The Cy Young Award bears his name — he faced the NY Giants and pitched in NYC during the dead ball era" },
+    { month:7, day:23, year:1952, name:"Woody Harrelson",      team:"Knicks",    sport:"NBA",         note:"White Men Can Not Jump star and Knicks fan — seen at MSG courtside during the Patrick Ewing era" },
+    { month:7, day:27, year:1948, name:"Peggy Fleming",        team:"MSG",       sport:"Figure Skating",note:"Olympic gold medalist who performed at MSG ice shows — a New York figure skating legend" },
+    { month:8, day:11, year:1959, name:"Hulk Hogan",           team:"MSG",       sport:"Wrestling",   note:"Wrestled at MSG countless times — Madison Square Garden is the birthplace of WWF greatest moments" },
+    { month:8, day:15, year:1950, name:"Princess Anne",        team:"US Open",   sport:"Tennis",      note:"British royalty attended the US Open at Flushing Meadows — a regular fixture at the tournament" },
+    { month:8, day:19, year:1969, name:"Matthew Perry",        team:"Knicks",    sport:"NBA",         note:"Chandler Bing from Friends — the show set in NYC made the Knicks the sitcom world default team" },
+    { month:8, day:22, year:1934, name:"H. Norman Schwarzkopf",team:"Giants",    sport:"NFL",         note:"General Stormin Norman attended Giants games — the Gulf War hero was a proud New Jersey resident" },
+    { month:9, day:2,  year:1948, name:"Terry Bradshaw",       team:"Giants",    sport:"NFL",         note:"Steelers legend who defeated the Giants in memorable Super Bowl era battles — his rivalry with NY defined an era" },
+    { month:9, day:10, year:1960, name:"Colin Firth",          team:"US Open",   sport:"Tennis",      note:"British acting royalty who attended the US Open at Flushing Meadows — a tennis fan in America greatest city" },
+    { month:9, day:16, year:1956, name:"Mickey Rourke",        team:"MSG",       sport:"Boxing",      note:"The Wrestler star who actually boxed — appeared at MSG boxing events during his brief fighting career" },
+    { month:9, day:25, year:1968, name:"Will Smith",           team:"Knicks",    sport:"NBA",         note:"The Fresh Prince grew up in Philly but his NY years made the Knicks his adopted team" },
+    { month:10, day:18, year:1956, name:"Martina Navratilova", team:"US Open",   sport:"Tennis",      note:"Won four US Open titles at Flushing Meadows — one of the all-time greats in tennis who called NY home" },
+    { month:10, day:23, year:1940, name:"Pele",                team:"Cosmos",    sport:"Soccer",      note:"The greatest soccer player ever played for the NY Cosmos 1975-77 — brought the beautiful game to NYC" },
+    { month:10, day:24, year:1969, name:"Wayne Rooney",        team:"Red Bulls", sport:"Soccer",      note:"England legend whose NY Red Bulls connection represents the Premier League influence on New York soccer" },
+    { month:11, day:3,  year:1952, name:"Roseanne Barr",       team:"Mets",      sport:"MLB",         note:"Roseanne star whose famously bad national anthem at Fenway made every Mets fan feel better about their team" },
+    { month:11, day:11, year:1962, name:"Demi Moore",          team:"Rangers",   sport:"NHL",         note:"Ghost star who attended Rangers games at MSG during her 1990s Hollywood peak" },
+    { month:11, day:20, year:1962, name:"Ming Yao",            team:"Knicks",    sport:"NBA",         note:"The 7-foot-6 Rockets center who battled the Knicks in memorable games — one of the game great big men" },
+    { month:12, day:2,  year:1968, name:"Lucy Liu",            team:"Knicks",    sport:"NBA",         note:"Born in Queens — Kill Bill and Charlies Angels star who grew up watching Knicks games at MSG" },
+    { month:12, day:7,  year:1956, name:"Larry Bird",          team:"Knicks",    sport:"NBA",         note:"Celtic legend whose rivalry with the Knicks defined the most intense NBA battles at Madison Square Garden" },
+    { month:12, day:17, year:1946, name:"Bill Moyers",         team:"NY Media",  sport:"Broadcasting",note:"PBS anchor and political journalist who made NYC his base — the conscience of New York broadcasting" },
+    { month:12, day:25, year:1945, name:"Larry Csonka",        team:"Giants",    sport:"NFL",         note:"Miami Dolphins fullback who crushed the Giants in memorable AFC-NFC battles — the ground and pound legend" },
     { month:2, day:14, year:1948, name:"Ken Dryden",          team:"Rangers",   sport:"NHL",         note:"Hall of Fame goalie who stopped Rangers cold in the 1970s — his Montreal dynasty was NY hockey nightmare fuel" },
     { month:2, day:16, year:1920, name:"Patty Berg",          team:"US Open",   sport:"Golf",        note:"Golf legend and one of the founders of the LPGA Tour — women golf trailblazer who competed near NYC" },
     { month:2, day:28, year:1942, name:"Bubba Smith",         team:"Jets",      sport:"NFL",         note:"Police Academy star and NFL great who faced the Jets in memorable AFC battles during his Colts days" },
-    { month:2, day:29, year:1916, name:"James Mitchell",      team:"Yankees",   sport:"Culture",     note:"Leap Day legends are rare — the Yankees have hosted February 29 birthdays across 120 years of baseball" },
-    { month:3, day:8,  year:1943, name:"Lynn Anderson",       team:"MSG",       sport:"Culture",     note:"Rose Garden legend who performed at MSG — country music biggest crossover hit in the Garden history" },
-    { month:3, day:15, year:1941, name:"Mike Love",           team:"MSG",       sport:"Culture",     note:"Beach Boys co-founder who played MSG — Good Vibrations echoed at the Garden in one of 60s pop finest nights" },
-    { month:3, day:28, year:1948, name:"Dianne Wiest",        team:"Yankees",   sport:"Culture",     note:"Academy Award winner born in Kansas City who made New York her artistic home and the Yankees her team" },
     { month:5, day:12, year:1925, name:"Yogi Berra",          team:"Yankees",   sport:"MLB",         note:"It ain t over till it s over. 10x World Series champion. The greatest catcher in baseball history. Born May 12 1925." },
-    { month:6, day:15, year:1963, name:"Helen Hunt",          team:"Yankees",   sport:"Culture",     note:"Mad About You filmed in NYC — her character was the quintessential New Yorker who loved the Yankees" },
-    { month:6, day:27, year:1930, name:"Ross Perot",          team:"Yankees",   sport:"Culture",     note:"Texas billionaire who understood NY better than most — his campaigns resonated with Yankees fans everywhere" },
     { month:7, day:10, year:1943, name:"Arthur Ashe",         team:"US Open",   sport:"Tennis",      note:"Also remembered on Jan 15 — his US Open legacy at the stadium bearing his name is eternal in Flushing" },
     { month:7, day:30, year:1947, name:"Arnold Schwarzenegger",team:"MSG",      sport:"Bodybuilding", note:"Mr. Olympia competed at Madison Square Garden — the Terminator built his legend at the world most famous arena" },
-    { month:8, day:1,  year:1936, name:"Yves Saint Laurent",  team:"NY",        sport:"Culture",     note:"French fashion legend who made New York his second home — his designs graced every NY charity gala and sports event" },
-    { month:9, day:15, year:1941, name:"Norm Crosby",         team:"MSG",       sport:"Culture",     note:"Malapropism comedy legend who performed at MSG countless times — classic NY club and arena comedy" },
     { month:10, day:30, year:1937, name:"Claude Lemieux",     team:"Devils",    sport:"NHL",         note:"Three-time Stanley Cup winner including with the Devils — one of the most polarizing players in NHL history" },
-    { month:11, day:28, year:1943, name:"Randy Newman",       team:"MSG",       sport:"Culture",     note:"Short People and You Got a Friend in Me — performed at MSG and his satirical genius resonates with NY audiences" },
+    { month:1,  day:1,  name:"Branch Rickey",         team:"Yankees",    year:1881, sport:"MLB",    note:"Executive who helped shape baseball's integration era and faced the Yankees as Brooklyn Dodgers GM" },
+    { month:1,  day:3,  name:"Bobby Hull",               team:"Rangers",    year:1939, sport:"NHL",    note:"The Golden Jet whose booming slap shot terrorized Rangers goalies for two decades" },
+    { month:1,  day:4,  name:"Don Shula",                team:"Jets",       year:1930, sport:"NFL",    note:"Dolphins coach who went 17-0 in 1972 — his AFC East battles with the Jets defined the decade" },
+    { month:1,  day:5,  name:"Lenny Moore",              team:"Giants",     year:1933, sport:"NFL",    note:"Colts HB who shredded the Giants in the 1958 and 1959 NFL Championships" },
+    { month:1,  day:8,  name:"Floyd Patterson",          team:"MSG",        year:1935, sport:"Boxing", note:"Two-time heavyweight champion whose MSG bouts are the gold standard of New York boxing" },
+    { month:1,  day:11, name:"Joe Frazier",              team:"MSG",        year:1944, sport:"Boxing", note:"Smokin Joe fought Ali three times including the Fight of the Century at MSG in 1971 — boxing royalty" },
+    { month:1,  day:16, name:"A.J. Foyt",                team:"NY",         year:1935, sport:"Racing", note:"Four-time Indianapolis 500 winner who raced at Watkins Glen, New York's legendary road course" },
+    { month:1,  day:18, name:"Bobby Carpenter",          team:"Devils",     year:1963, sport:"NHL",    note:"Washington Capitals star who faced the Devils in Metro Division battles throughout the 1980s" },
+    { month:1,  day:22, name:"Oscar Robertson",          team:"Knicks",     year:1938, sport:"NBA",    note:"The Big O averaged a triple-double for an entire season — his battles against the Knicks defined the era" },
+    { month:1,  day:23, name:"John Riggins",             team:"Giants",     year:1949, sport:"NFL",    note:"Redskins RB who ran over NFL opponents — his battles against the Giants defined NFC power football" },
+    { month:1,  day:24, name:"Mark Bavaro",              team:"Giants",     year:1963, sport:"NFL",    note:"The most feared blocking TE of the 1980s — Bavaro dragged defenders during the Giants Super Bowl runs" },
+    { month:1,  day:27, name:"Nick Buoniconti",          team:"Jets",       year:1940, sport:"NFL",    note:"Dolphins LB who engineered the perfect 1972 season — his AFC East battles with the Jets were legendary" },
+    { month:1,  day:29, name:"Dave DeBusschere",         team:"Knicks",     year:1940, sport:"NBA",    note:"The trade from Detroit completed the Knicks' dynasty — power forward on both championship teams" },
+    { month:1,  day:30, name:"Ernie Banks",              team:"Mets",       year:1931, sport:"MLB",    note:"Mr. Cub faced the Mets in memorable NL battles — 512 career HR and the most beloved Cub ever" },
+    { month:2,  day:2,  name:"Red Holzman",              team:"Knicks",     year:1920, sport:"NBA",    note:"The greatest Knicks coach ever — won back-to-back championships in 1970 and 1973 with team basketball" },
+    { month:2,  day:7,  name:"Bob Waterfield",           team:"Giants",     year:1920, sport:"NFL",    note:"Rams QB and Hall of Famer whose teams faced the Giants in classic early NFL battles" },
+    { month:2,  day:8,  name:"Ted Williams",             team:"Yankees",    year:1918, sport:"MLB",    note:"The Splendid Splinter batted .406 in 1941 — his epic rivalry with the Yankees defined the AL for two decades" },
+    { month:2,  day:10, name:"Alex Karras",              team:"Giants",     year:1935, sport:"NFL",    note:"Lions DT who terrorized NFL offenses including the Giants — one of the most dominant interior linemen ever" },
+    { month:2,  day:13, name:"Chuck Noll",               team:"Jets",       year:1932, sport:"NFL",    note:"Steelers coach who defeated the Jets in memorable battles — four Super Bowl wins in the greatest dynasty" },
+    { month:2,  day:15, name:"Norm Van Brocklin",        team:"Giants",     year:1926, sport:"NFL",    note:"The Dutchman's Eagles beat the Giants in the 1960 NFL Championship — one of NY's most painful losses" },
+    { month:2,  day:19, name:"Tony Conigliaro",          team:"Yankees",    year:1945, sport:"MLB",    note:"Red Sox slugger whose tragic beaning shocked baseball — his rivalry with Yankee pitchers was electric" },
+    { month:2,  day:20, name:"Monte Irvin",              team:"Giants",     year:1919, sport:"MLB",    note:"NY Giants legend and Hall of Famer — one of the first Black stars in major league baseball" },
+    { month:2,  day:23, name:"Bobby Clarke",             team:"Rangers",    year:1949, sport:"NHL",    note:"Flyers captain whose ferocious play made him the Rangers' most despised opponent in the Broad Street Bullies era" },
+    { month:2,  day:24, name:"Cal Ripken Jr.",           team:"Yankees",    year:1960, sport:"MLB",    note:"The Iron Man — 2632 consecutive games echoes Lou Gehrig's legacy. His Orioles-Yankees AL battles were epic." },
+    { month:2,  day:25, name:"Jerry West",               team:"Knicks",     year:1938, sport:"NBA",    note:"The Logo's Lakers faced the Knicks in the 1970 and 1972 NBA Finals — two of the greatest championship series" },
+    { month:2,  day:27, name:"James Lofton",             team:"Giants",     year:1956, sport:"NFL",    note:"Hall of Fame WR who faced the Giants throughout his career — one of the fastest players in NFL history" },
+    { month:2,  day:29, name:"Al Rosen",                 team:"Yankees",    year:1924, sport:"MLB",    note:"Indians 3B who nearly beat the Yankees for the 1952 AL MVP — 43 HR in 1953 was the AL's gold standard" },
+    { month:3,  day:1,  name:"Sam Jones",                team:"Knicks",     year:1933, sport:"NBA",    note:"Celtics guard whose shooting wrist terrorized Knicks fans for a decade — 10 championships against NY" },
+    { month:3,  day:5,  name:"Willie Stargell",          team:"Mets",       year:1940, sport:"MLB",    note:"Pops faced the Mets in NL East battles — his 1979 world champion Pirates are the Mets' greatest rival" },
+    { month:3,  day:7,  name:"Jim Rice",                 team:"Yankees",    year:1953, sport:"MLB",    note:"Red Sox DH/LF whose monster AL East rivalries with the Yankees are among baseball's greatest divisional wars" },
+    { month:3,  day:8,  name:"Bob Watson",               team:"Yankees",    year:1946, sport:"MLB",    note:"First Black GM to win a World Series — his Yankees won the 1996 title. A true Yankees history maker." },
+    { month:3,  day:9,  name:"Ed Giacomin",              team:"Rangers",    year:1939, sport:"NHL",    note:"Fast Eddie — beloved Rangers goalie who wept openly when traded to Detroit. Ten seasons of brilliance." },
+    { month:3,  day:11, name:"Thurman Munson",           team:"Yankees",    year:1947, sport:"MLB",    note:"The Captain — the heart of the Yankees dynasty. Gone too soon on August 2, 1979. We will never forget." },
+    { month:3,  day:13, name:"Bernie Parent",            team:"Rangers",    year:1945, sport:"NHL",    note:"Flyers goalie whose back-to-back Vezinas crushed Rangers championship hopes in 1974-75 — the most frustrating rival" },
+    { month:3,  day:14, name:"Len Dawson",               team:"Jets",       year:1935, sport:"NFL",    note:"Chiefs QB who faced the Jets in AFL battles — his Super Bowl IV win cemented the AFL's legitimacy after Namath" },
+    { month:3,  day:15, name:"Norm Ullman",              team:"Rangers",    year:1935, sport:"NHL",    note:"Detroit Red Wings center who battled the Rangers in Original Six showdowns — 490 career goals" },
+    { month:3,  day:17, name:"Don Zimmer",               team:"Yankees",    year:1931, sport:"MLB",    note:"Long-time Yankees bench coach under Joe Torre — Zim sat next to Torre for four championships" },
+    { month:3,  day:19, name:"Richie Allen",             team:"Mets",       year:1942, sport:"MLB",    note:"Dick Allen's fiery bat and personality — 351 career HR and a force in the NL during the Mets' formative years" },
+    { month:3,  day:22, name:"Walt Bellamy",             team:"Knicks",     year:1939, sport:"NBA",    note:"Knicks center who averaged 31 points as a rookie in 1962 — a foundational piece before the championship era" },
+    { month:3,  day:24, name:"Honus Wagner",             team:"Yankees",    year:1874, sport:"MLB",    note:"The Flying Dutchman — his T206 card is the most valuable in history, and his Pirates faced the early Yankees" },
+    { month:3,  day:25, name:"Joe Torre",                team:"Yankees",    year:1940, sport:"MLB",    note:"Four World Series rings as manager. The classiest bench boss in franchise history. A Bronx legend forever." },
+    { month:3,  day:26, name:"Gale Sayers",              team:"Giants",     year:1943, sport:"NFL",    note:"The Kansas Comet — his explosive running terrified NFL defenses including the Giants in his brief brilliant career" },
+    { month:3,  day:27, name:"Sparky Anderson",          team:"Yankees",    year:1934, sport:"MLB",    note:"Captain Hook's Reds beat the Yankees in the 1976 World Series sweep — motivating the Bronx Zoo to win in 1977" },
+    { month:3,  day:28, name:"Bob Horner",               team:"Mets",       year:1957, sport:"MLB",    note:"Braves slugger whose home runs at Shea Stadium were a regular occurrence — 215 career HR in NL East wars" },
+    { month:3,  day:30, name:"Gordie Howe",              team:"Rangers",    year:1928, sport:"NHL",    note:"Mr. Hockey's Detroit Red Wings dominated the Original Six era — his battles with Rangers teams are hockey lore" },
+    { month:3,  day:31, name:"Phil Esposito",            team:"Rangers",    year:1942, sport:"NHL",    note:"Traded from Boston to New York — the fiery center captained the Rangers and became a beloved Garden legend" },
+    { month:4,  day:1,  name:"Jake LaMotta",             team:"MSG",        year:1922, sport:"Boxing", note:"The Bronx Bull — born in the Bronx, fought six bouts against Sugar Ray Robinson at MSG, became the Raging Bull" },
+    { month:4,  day:2,  name:"Mudcat Grant",             team:"Yankees",    year:1935, sport:"MLB",    note:"Twins pitcher who thrilled the AL in 1965 — faced the Yankees in memorable mid-1960s pennant battles" },
+    { month:4,  day:3,  name:"Gaylord Perry",            team:"Yankees",    year:1938, sport:"MLB",    note:"The spitball king — his 314 wins came partly from tormenting Yankee hitters with his doctored pitches" },
+    { month:4,  day:4,  name:"Mickey Cochrane",          team:"Yankees",    year:1903, sport:"MLB",    note:"One of the all-time great catchers — his Tigers beat the Yankees for the 1934-35 pennants in epic AL battles" },
+    { month:4,  day:6,  name:"Carl Hubbell",             team:"Giants",     year:1903, sport:"MLB",    note:"King Carl struck out Ruth, Gehrig, Foxx, Simmons and Cronin in the 1934 All-Star Game — a NY Giants legend" },
+    { month:4,  day:7,  name:"Ken Griffey Jr.",          team:"Yankees",    year:1969, sport:"MLB",    note:"630 career HR — his Mariners 1995 ALDS victory over the Yankees is still the most heartbreaking Bronx playoff loss" },
+    { month:4,  day:9,  name:"Seymour Siwoff",           team:"Yankees",    year:1939, sport:"Broadcasting", note:"Elias Sports Bureau founder — the man who defined baseball statistics in New York for 50 years" },
+    { month:4,  day:10, name:"Rod Carew",                team:"Yankees",    year:1945, sport:"MLB",    note:"Seven consecutive batting titles — his Twins and Angels vs Yankees AL races were the most competitive of the era" },
+    { month:4,  day:16, name:"Doug Harvey",              team:"Rangers",    year:1924, sport:"NHL",    note:"The greatest defenseman of the 1950s — his Montreal Canadiens were the Rangers' biggest obstacle to the Cup" },
+    { month:4,  day:17, name:"Fred Couples",             team:"US Open",    year:1959, sport:"Golf",   note:"Boom-Boom competed at Shinnecock Hills and Bethpage Black — a crowd favorite at Long Island's US Opens" },
+    { month:4,  day:19, name:"Sandy Koufax",             team:"Mets",       year:1935, sport:"MLB",    note:"The greatest pitcher of his era — his Dodgers facing the Mets in the 1960s was the ultimate NL showdown" },
+    { month:4,  day:20, name:"Tommy Davis",              team:"Mets",       year:1939, sport:"MLB",    note:"Dodgers outfielder who joined the Mets — two consecutive batting titles made him one of the NL's elite hitters" },
+    { month:4,  day:21, name:"Pete Rose",                team:"Mets",       year:1941, sport:"MLB",    note:"Charlie Hustle hit .300 for 15 consecutive seasons — his Reds vs Mets NL battles were the decade's defining rivalry" },
+    { month:4,  day:22, name:"Duke Snider",              team:"Mets",       year:1926, sport:"MLB",    note:"The Duke of Flatbush — 407 Brooklyn home runs made him the quintessential NY sports hero before the Mets existed" },
+    { month:4,  day:23, name:"Gerry Cooney",             team:"MSG",        year:1956, sport:"Boxing", note:"The Great White Hope from Huntington Long Island — his MSG fights drew massive New York crowds in the 1980s" },
+    { month:4,  day:24, name:"Johnny Bench",             team:"Mets",       year:1948, sport:"MLB",    note:"The greatest catcher of his era — his Reds vs Mets battles in the NL were the defining matchups of the 1970s" },
+    { month:4,  day:25, name:"Meadowlark Lemon",         team:"MSG",        year:1932, sport:"Basketball", note:"Harlem Globetrotters legend — his shows at MSG and NY arenas brought joy to generations of fans" },
+    { month:4,  day:26, name:"Eddie Collins",            team:"Yankees",    year:1887, sport:"MLB",    note:"Second baseman with 3315 hits — his White Sox teams battled the Yankees in memorable early-20th century AL wars" },
+    { month:4,  day:29, name:"Jerry Seinfeld",           team:"Yankees",    year:1954, sport:"Culture", note:"Born in Brooklyn, lifelong Yankees fan — the greatest comedy show ever made is about New York and baseball" },
+    { month:4,  day:30, name:"Sugar Ray Robinson",       team:"MSG",        year:1921, sport:"Boxing", note:"Pound for pound the greatest boxer ever — his MSG bouts are the gold standard of New York City boxing" },
+    { month:5,  day:1,  name:"Phil Rizzuto",             team:"Yankees",    year:1917, sport:"MLB",    note:"Holy Cow! The Scooter — played on 7 championship teams, beloved broadcaster for 40 years. A Yankees icon forever." },
+    { month:5,  day:2,  name:"Eddie Collins",            team:"Yankees",    year:1887, sport:"MLB",    note:"Hall of Fame second baseman with 3315 hits who faced the early Yankees in memorable AL confrontations" },
+    { month:5,  day:3,  name:"Pete Seeger",              team:"Yankees",    year:1919, sport:"Culture", note:"Folk legend born in Midtown Manhattan — Yankee Stadium's community ties ran through his neighborhood activism" },
+    { month:5,  day:8,  name:"Don Nelson",               team:"Knicks",     year:1940, sport:"NBA",    note:"Celtics player and later Warriors coach whose analytical approach to basketball influenced a generation of coaches" },
+    { month:5,  day:11, name:"Billy Martin",             team:"Yankees",    year:1928, sport:"MLB",    note:"Hired and fired five times by Steinbrenner — no relationship in sports history was more combustible or compelling" },
+    { month:5,  day:13, name:"Reggie Smith",             team:"Mets",       year:1945, sport:"MLB",    note:"Switch-hitting outfielder whose Red Sox and Dodgers battles with the Yankees defined AL and World Series history" },
+    { month:5,  day:16, name:"Carl Yastrzemski",         team:"Yankees",    year:1939, sport:"MLB",    note:"Yaz's 1967 Triple Crown — his Red Sox defeated the Yankees for the pennant in one of the greatest AL races ever" },
+    { month:5,  day:18, name:"Bobby Cox",                team:"Yankees",    year:1941, sport:"MLB",    note:"Yankees player turned Braves legend — his 14 division titles defined the Mets' greatest rivals of the 1990s-2000s" },
+    { month:5,  day:22, name:"Eddie Murray",             team:"Mets",       year:1956, sport:"MLB",    note:"Steady Eddie hit 504 career HR including a stint with the Mets — his Orioles were a perennial Yankees AL rival" },
+    { month:5,  day:26, name:"Henry Kissinger",          team:"Yankees",    year:1923, sport:"Culture", note:"Secretary of State and avid Yankees fan — attended World Series games and represented NY on the world stage" },
+    { month:5,  day:27, name:"Bob Hope",                 team:"Belmont",    year:1903, sport:"Golf",   note:"Golf legend and comedian who played Winged Foot and Bethpage — his love of Long Island courses was legendary" },
+    { month:5,  day:28, name:"Willie Davis",             team:"Mets",       year:1940, sport:"MLB",    note:"Dodgers CF who hit .279 lifetime — his West Coast Dodgers battles against the Mets were classic NL showdowns" },
+    { month:5,  day:29, name:"Johnny Vander Meer",       team:"Dodgers",    year:1914, sport:"MLB",    note:"The only pitcher to throw back-to-back no-hitters — the second came at Ebbets Field in Brooklyn in 1938" },
+    { month:5,  day:30, name:"Gale Sayers",              team:"Giants",     year:1943, sport:"NFL",    note:"The Kansas Comet's explosive runs terrified the Giants — the most devastating open-field runner in NFL history" },
+    { month:5,  day:31, name:"Joe Namath",               team:"Jets",       year:1943, sport:"NFL",    note:"Broadway Joe — the guarantee. Super Bowl III. The AFL is validated. The greatest moment in Jets history." },
+    { month:6,  day:2,  name:"Billy Williams",           team:"Mets",       year:1938, sport:"MLB",    note:"Cubs Hall of Famer whose sweet swing tormented Mets pitching — 426 career HR in classic NL battles" },
+    { month:6,  day:4,  name:"George Mikan",             team:"Knicks",     year:1924, sport:"NBA",    note:"The first great big man — his Lakers dominated the early NBA and set the standard the Knicks tried to match" },
+    { month:6,  day:5,  name:"Frankie Frisch",           team:"Giants",     year:1898, sport:"MLB",    note:"The Fordham Flash — NY Giants second baseman and manager, one of the defining players of the 1920s era" },
+    { month:6,  day:8,  name:"Willie McCovey",           team:"Mets",       year:1938, sport:"MLB",    note:"Stretch's line drive to Richardson ended the 1962 Series — one of the most dramatic finishes in baseball history" },
+    { month:6,  day:10, name:"Tris Speaker",             team:"Yankees",    year:1888, sport:"MLB",    note:"The Grey Eagle — his 3514 career hits and all-time defensive record made him one of the Yankees' greatest rivals" },
+    { month:6,  day:12, name:"Dave Cowens",              team:"Knicks",     year:1948, sport:"NBA",    note:"Celtics center whose physical battles with the Knicks in the early 1970s produced the most intense NBA fights ever" },
+    { month:6,  day:13, name:"Bob Sheppard",             team:"Yankees",    year:1910, sport:"Broadcasting", note:"The Voice of God — 56 years as Yankees PA announcer. Jeter used his recording even after his passing." },
+    { month:6,  day:15, name:"Jack Dempsey",             team:"MSG",        year:1895, sport:"Boxing", note:"The Manassa Mauler — heavyweight champion whose Madison Square Garden bouts set the standard for NY boxing" },
+    { month:6,  day:16, name:"Christy Mathewson",        team:"Giants",     year:1880, sport:"MLB",    note:"Three complete game shutouts in the 1905 World Series — the greatest pitching performance in baseball history" },
+    { month:6,  day:18, name:"Lou Brock",                team:"Mets",       year:1939, sport:"MLB",    note:"938 career stolen bases — his Cardinals vs Mets NL battles were the defining moments of the late 1960s" },
+    { month:6,  day:22, name:"Vida Blue",                team:"Yankees",    year:1949, sport:"MLB",    note:"The electrifying A's lefty nearly came to the Yankees — Commissioner Kuhn killed the blockbuster trade in 1976" },
+    { month:6,  day:23, name:"Wilma Rudolph",            team:"NY",         year:1940, sport:"Track",  note:"Three gold medals in Rome 1960 — the fastest woman alive inspired generations of NY school athletes" },
+    { month:6,  day:24, name:"Sam McDowell",             team:"Yankees",    year:1942, sport:"MLB",    note:"Sudden Sam finished his career with the Yankees — his 100 mph fastball once made him the AL's most feared pitcher" },
+    { month:6,  day:27, name:"John Havlicek",            team:"Knicks",     year:1940, sport:"NBA",    note:"Hondo's Celtics defeated the Knicks in heartbreaking fashion throughout the 1960s-70s — their greatest rival" },
+    { month:6,  day:28, name:"Harmon Killebrew",         team:"Yankees",    year:1936, sport:"MLB",    note:"The Killer's 573 HR made him the AL's most feared right-handed power hitter — his Twins vs Yankees battles were epic" },
+    { month:7,  day:1,  name:"Carl Lewis",               team:"NY",         year:1961, sport:"Track",  note:"Nine Olympic gold medals — the greatest track and field athlete ever competed at Icahn Stadium in New York" },
+    { month:7,  day:3,  name:"Leon Spinks",              team:"MSG",        year:1953, sport:"Boxing", note:"Shocked Ali for the heavyweight championship in 1978 — his New York fights drew massive boxing crowds" },
+    { month:7,  day:5,  name:"Al Arbour",                team:"Islanders",  year:1932, sport:"NHL",    note:"Architect of the dynasty — coached the Islanders to four consecutive Stanley Cups. 781 wins, the greatest Isles coach." },
+    { month:7,  day:7,  name:"Elston Howard",            team:"Yankees",    year:1929, sport:"MLB",    note:"First Black Yankee — 1963 AL MVP and 9 World Series trips. His barrier-breaking legacy is central to Yankees history." },
+    { month:7,  day:9,  name:"O.J. Simpson",             team:"Giants",     year:1947, sport:"NFL",    note:"The Juice rushed for 2003 yards in 1973 as a Bill — his AFC East battles against the Giants defined the mid-70s NFL" },
+    { month:7,  day:12, name:"Tom Dempsey",              team:"Giants",     year:1947, sport:"NFL",    note:"His 63-yard field goal record stood for decades — a feat that lives alongside the greatest Giants-era moments" },
+    { month:7,  day:14, name:"Billy Joel",               team:"Yankees",    year:1949, sport:"Culture", note:"Born in Hicksville, raised on Long Island — the Piano Man is NY's greatest musical fan and MSG legend" },
+    { month:7,  day:15, name:"Satchel Paige",            team:"Yankees",    year:1906, sport:"MLB",    note:"How old is Satch? Don't look back, something might be gaining on you. He finally made the majors at 42." },
+    { month:7,  day:16, name:"Shoeless Joe Jackson",     team:"Yankees",    year:1888, sport:"MLB",    note:"The Natural — his .356 career average is third highest ever. His Black Sox tragedy still haunts baseball" },
+    { month:7,  day:19, name:"George McGinnis",          team:"Knicks",     year:1950, sport:"NBA",    note:"76ers power forward whose battles against the Knicks in the mid-1970s produced some of the NBA's most physical play" },
+    { month:7,  day:21, name:"Gene Fullmer",             team:"MSG",        year:1931, sport:"Boxing", note:"Middleweight champion who fought Sugar Ray Robinson at MSG — one of boxing's most competitive weight class rivalries" },
+    { month:7,  day:24, name:"Barry Bonds",              team:"Mets",       year:1964, sport:"MLB",    note:"762 career HR — his Giants vs Mets NL West and interleague battles were some of baseball's greatest showdowns" },
+    { month:7,  day:25, name:"Walter Johnson",           team:"Yankees",    year:1887, sport:"MLB",    note:"The Big Train — 417 wins and the most feared fastball before the live ball era. Senators vs Yankees battles were epic." },
+    { month:8,  day:1,  name:"Yves Saint Laurent",       team:"US Open",    year:1936, sport:"Tennis", note:"The US Open's fashion culture has always intersected with luxury — tennis at Flushing Meadows is a fashion event" },
+    { month:8,  day:2,  name:"Dock Ellis",               team:"Yankees",    year:1945, sport:"MLB",    note:"Pirates pitcher who threw a no-hitter and later finished his career as a Yankee — one of baseball's most colorful characters" },
+    { month:8,  day:3,  name:"Tony Perez",               team:"Mets",       year:1942, sport:"MLB",    note:"Big Doggie hit 379 career HR — his Big Red Machine Reds were the Mets' most dominant rivals in the early 1970s" },
+    { month:8,  day:5,  name:"Red Schoendienst",         team:"Yankees",    year:1923, sport:"MLB",    note:"Cardinals Hall of Famer who battled the Yankees in the World Series — his 1946 and 1964 teams represent NL's best" },
+    { month:8,  day:6,  name:"Frank Chance",             team:"Giants",     year:1877, sport:"MLB",    note:"Tinker to Evers to Chance — the Cubs first baseman whose double play combination is baseball's most famous poem" },
+    { month:8,  day:9,  name:"Travis Jackson",           team:"Giants",     year:1903, sport:"MLB",    note:"NY Giants shortstop who played on two World Series championship teams in the 1920s-30s at the Polo Grounds" },
+    { month:8,  day:10, name:"Thurman Munson",           team:"Yankees",    year:1947, sport:"MLB",    note:"(The Captain) — Munson's tragic loss on August 2 1979 is the saddest day in Yankees history" },
+    { month:8,  day:13, name:"Gene Upshaw",              team:"Jets",       year:1945, sport:"NFL",    note:"Raiders OL whose blocks paved the way for Oakland's wins over the Jets in fierce AFC divisional battles" },
+    { month:8,  day:17, name:"Ted Kluszewski",           team:"Yankees",    year:1924, sport:"MLB",    note:"Big Klu's sleeveless arms and massive HR power made him a menace to Yankees pitching in the 1950s NL" },
+    { month:8,  day:21, name:"Usain Bolt",               team:"NY",         year:1986, sport:"Track",  note:"The fastest man in human history competed at Icahn Stadium in NYC — his relay career brought him to New York" },
+    { month:8,  day:23, name:"Ivan Lendl",               team:"US Open",    year:1960, sport:"Tennis", note:"Eight Grand Slam titles including three US Opens at Flushing Meadows — the most dominant player of the 1980s" },
+    { month:8,  day:25, name:"Larry Holmes",             team:"MSG",        year:1949, sport:"Boxing", note:"48-0 at his peak as heavyweight champion — his MSG title defenses helped define post-Ali boxing in New York" },
+    { month:8,  day:26, name:"Elroy Hirsch",             team:"Giants",     year:1923, sport:"NFL",    note:"Crazy Legs — Rams receiver who shredded NFL defenses including the Giants in the early receiver revolution" },
+    { month:8,  day:27, name:"Tommy Burns",              team:"MSG",        year:1881, sport:"Boxing", note:"First heavyweight champion of the modern era — his New York bouts set the template for MSG boxing" },
+    { month:8,  day:30, name:"Sandy Koufax",             team:"Dodgers",    year:1935, sport:"MLB",    note:"The most dominant four-year run in pitching history — his Brooklyn roots make him an honorary New Yorker forever" },
+    { month:8,  day:31, name:"Frank Robinson",           team:"Yankees",    year:1935, sport:"MLB",    note:"His 1961 Reds vs Yankees World Series is a classic — the NL's most dominant player facing baseball's greatest franchise" },
+    { month:9,  day:3,  name:"Allen Iverson",            team:"Knicks",     year:1975, sport:"NBA",    note:"The Answer's incredible playoff battles at MSG — the most exciting guard of his era vs the Knicks in the 2001 playoffs" },
+    { month:9,  day:4,  name:"Tom Watson",               team:"US Open",    year:1949, sport:"Golf",   note:"His classic battles at Shinnecock Hills and other New York courses define the US Open in the NY area" },
+    { month:9,  day:7,  name:"James Brooks",             team:"Giants",     year:1958, sport:"NFL",    note:"Bengals RB who faced the Giants in memorable AFC-NFC matchups — one of the most elusive backs of the 1980s" },
+    { month:9,  day:8,  name:"Clyde Lovellette",         team:"Knicks",     year:1929, sport:"NBA",    note:"Lakers center who battled the Knicks in the early NBA era — three championships against NY's title hopes" },
+    { month:9,  day:12, name:"Paul Henderson",           team:"Rangers",    year:1943, sport:"NHL",    note:"His Summit Series goal for Canada against the Soviets in 1972 is hockey's most famous moment — rivaling anything at MSG" },
+    { month:9,  day:14, name:"Hank Bauer",               team:"Yankees",    year:1922, sport:"MLB",    note:"Marine hero and Yankee outfielder — 7 World Series rings as a player. Don't mess with Hank Bauer." },
+    { month:9,  day:15, name:"Norm Crosby",              team:"MSG",        year:1927, sport:"Broadcasting", note:"Comedy legend who performed at MSG countless times — classic NY arena entertainment across five decades" },
+    { month:9,  day:17, name:"Grady Little",             team:"Yankees",    year:1950, sport:"MLB",    note:"The Sox manager who left Pedro in too long in Game 7 of 2003 — the Yankees benefited most from that decision" },
+    { month:9,  day:18, name:"Orlando Cepeda",           team:"Mets",       year:1937, sport:"MLB",    note:"The Baby Bull hit 379 career HR — his Giants and Cardinals vs Mets battles defined the NL rivalries of his era" },
+    { month:9,  day:20, name:"Red Auerbach",             team:"Knicks",     year:1917, sport:"NBA",    note:"Nine championships as Celtics coach — the brilliant strategist who denied the Knicks any title for 13 straight years" },
+    { month:9,  day:21, name:"Bill Murray",              team:"Mets",       year:1950, sport:"Culture", note:"Born in Evanston, adopted New Yorker and devoted Mets fan — a fixture at Shea Stadium and Citi Field for decades" },
+    { month:9,  day:22, name:"Deion Sanders",            team:"Yankees",    year:1967, sport:"MLB",    note:"Prime Time played outfield for the Yankees in 1989-90 while also starring in the NFL — the ultimate two-sport athlete" },
+    { month:9,  day:24, name:"Rafael Palmeiro",          team:"Yankees",    year:1964, sport:"MLB",    note:"3020 hits and 569 HR — his Orioles vs Yankees AL East battles were the mid-1990s most competitive division race" },
+    { month:9,  day:26, name:"Larry Bowa",               team:"Mets",       year:1945, sport:"MLB",    note:"Scrappy Phillies shortstop who battled the Mets in classic NL East wars — five-time Gold Glove winner" },
+    { month:9,  day:28, name:"Roger Maris",              team:"Yankees",    year:1934, sport:"MLB",    note:"The same birthday as his record-breaking 1961 season — 61 homers that broke Ruth's mark on the final day" },
+    { month:9,  day:30, name:"Maury Wills",              team:"Dodgers",    year:1932, sport:"MLB",    note:"104 stolen bases in 1962 — his Dodgers vs Yankees World Series and Dodgers vs Mets NL battles defined the era" },
+    { month:10, day:2,  name:"Lefty Grove",              team:"Yankees",    year:1900, sport:"MLB",    note:"300 wins and .680 winning percentage — his A's dominated the Yankees in the late 1920s in epic AL battles" },
+    { month:10, day:3,  name:"Charlie Gehringer",        team:"Yankees",    year:1903, sport:"MLB",    note:"The Mechanical Man batted .320 lifetime and faced the Yankees in World Series battles with the Tigers" },
+    { month:10, day:4,  name:"Barry Larkin",             team:"Mets",       year:1964, sport:"MLB",    note:"Reds shortstop who battled the Mets in the NL East — his 1990 Reds swept the A's in dominant fashion" },
+    { month:10, day:6,  name:"Tony La Russa",            team:"Yankees",    year:1944, sport:"MLB",    note:"Three World Series wins — his A's vs Yankees battles of the late 1980s were the AL's most compelling rivalry" },
+    { month:10, day:7,  name:"Al Kaline",                team:"Yankees",    year:1934, sport:"MLB",    note:"Mr. Tiger hit .297 lifetime — his Tigers vs Yankees AL battles for 22 seasons were baseball's most consistent rivalry" },
+    { month:10, day:9,  name:"Matt Damon",               team:"Yankees",    year:1970, sport:"Culture", note:"Good Will Hunting actor and Boston Red Sox fan whose genuine Yankees rivalry is the best celebrity sports rivalry" },
+    { month:10, day:10, name:"Nolan Ryan",               team:"Mets",       year:1947, sport:"MLB",    note:"Tom Terrific's perfect complement — Ryan's 5714 strikeouts began in a Mets uniform at Shea Stadium in Queens" },
+    { month:10, day:11, name:"Steve Young",              team:"Giants",     year:1961, sport:"NFL",    note:"49ers QB who twice defeated the Giants in the NFC — his rivalry with NY defenses is classic West Coast vs Gotham" },
+    { month:10, day:12, name:"Johnny Carson",            team:"Yankees",    year:1925, sport:"Broadcasting", note:"The Tonight Show host was a massive Yankees fan who incorporated baseball into his monologues for 30 years" },
+    { month:10, day:14, name:"Dick Howser",              team:"Yankees",    year:1936, sport:"MLB",    note:"Yankees manager in 1980 who won 103 games and was fired anyway — his Royals later won the 1985 World Series" },
+    { month:10, day:15, name:"Jim Palmer",               team:"Yankees",    year:1945, sport:"MLB",    note:"Three Cy Young awards as an Oriole — his Orioles vs Yankees World Series appearances define AL history" },
+    { month:10, day:16, name:"Bob Lemon",                team:"Yankees",    year:1920, sport:"MLB",    note:"Hall of Fame pitcher who managed the Yankees to the 1978 championship — replacing Billy Martin mid-season in the Bronx Zoo era" },
+    { month:10, day:20, name:"Tom Petty",                team:"Yankees",    year:1950, sport:"Culture", note:"American rock legend whose music played during Yankees pregame shows at the Stadium for decades" },
+    { month:10, day:22, name:"Bobby Abreu",              team:"Yankees",    year:1974, sport:"MLB",    note:"Traded to the Yankees at the 2006 deadline — his .292 career average and great plate approach were pure value" },
+    { month:10, day:26, name:"Bob Cousy",                team:"Knicks",     year:1928, sport:"NBA",    note:"The Cooz — his dribbling wizardry made him the most exciting player in the NBA's formative years at MSG" },
+    { month:10, day:28, name:"Charlie Joiner",           team:"Giants",     year:1947, sport:"NFL",    note:"Hall of Fame WR whose precise routes tormented defenses — defined the precision passing era the Giants aspired to match" },
+    { month:10, day:29, name:"Effa Manley",              team:"Newark Eagles",year:1897,sport:"MLB",  note:"First woman inducted into the Baseball Hall of Fame — co-owned the Newark Eagles of the Negro Leagues near NY" },
+    { month:10, day:31, name:"Manny Sanguillen",         team:"Yankees",    year:1944, sport:"MLB",    note:"Pirates catcher who batted .296 lifetime — his Bucs vs Yankees clashes in World Series battles are classic" },
+    { month:11, day:2,  name:"Bucky Dent",               team:"Yankees",    year:1951, sport:"MLB",    note:"The most famous home run in Yankees-Red Sox history — October 2, 1978, Fenway Park, off Mike Torrez. Pure legend." },
+    { month:11, day:5,  name:"Elroy Hirsch",             team:"Giants",     year:1923, sport:"NFL",    note:"Crazy Legs — Rams receiver who changed how NFL teams defended the pass in his era facing the Giants" },
+    { month:11, day:7,  name:"Al Arbour",                team:"Islanders",  year:1932, sport:"NHL",    note:"The architect — coached the Islanders to four consecutive Stanley Cups. 781 wins, the greatest Islander coach." },
+    { month:11, day:9,  name:"Whitey Ford",              team:"Yankees",    year:1928, sport:"MLB",    note:"The Chairman of the Board — 10 World Series trips, .690 Series winning percentage. The greatest Yankee pitcher ever." },
+    { month:11, day:10, name:"Ron Guidry",               team:"Yankees",    year:1950, sport:"MLB",    note:"Louisiana Lightning — 25-3 in 1978 is the greatest single-season pitching record in Yankees history. Gator forever." },
+    { month:11, day:12, name:"Joe DiMaggio",             team:"Yankees",    year:1914, sport:"MLB",    note:"The Yankee Clipper — 56-game hit streak, three MVPs, 13 World Series trips. The most elegant player in baseball history." },
+    { month:11, day:13, name:"Jack Nicklaus",            team:"US Open",    year:1940, sport:"Golf",   note:"Won the US Open at Baltusrol twice — the Golden Bear is the greatest golfer ever and a Long Island legend" },
+    { month:11, day:15, name:"Roger Craig",              team:"Giants",     year:1930, sport:"NFL",    note:"RB/DB who set multiple NFL records with the Giants in the 1950s — the most versatile player in franchise history" },
+    { month:11, day:17, name:"Bob Griese",               team:"Jets",       year:1945, sport:"NFL",    note:"The cerebral Dolphins QB who engineered the perfect 1972 season — his battles against the Jets defined the AFC East" },
+    { month:11, day:19, name:"Ted Turner",               team:"Yankees",    year:1938, sport:"MLB",    note:"Braves owner who turned Atlanta into the Yankees' biggest NL World Series rival through the 1990s dynasty" },
+    { month:11, day:21, name:"Ken Griffey Sr.",          team:"Yankees",    year:1950, sport:"MLB",    note:"Yankees outfielder who later played alongside his son Ken Jr. with the Mariners — the most remarkable father-son moment in sports" },
+    { month:11, day:23, name:"Luis Aparicio",            team:"Yankees",    year:1934, sport:"MLB",    note:"The greatest shortstop of the 1950s-60s with 506 SB — his White Sox and Red Sox were perpetual AL rivals" },
+    { month:11, day:24, name:"Oscar Gamble",             team:"Yankees",    year:1949, sport:"MLB",    note:"The Afro that would not fit under the cap — his huge 1976 Yankees season helped launch the Steinbrenner era" },
+    { month:11, day:25, name:"Joe DiMaggio Jr.",         team:"Yankees",    year:1941, sport:"MLB",    note:"The Jolter's son carried an impossible name — the DiMaggio legacy in New York transcends generations" },
+    { month:11, day:27, name:"Jed Lowrie",               team:"Mets",       year:1984, sport:"MLB",    note:"Utility man who signed a big Mets contract — his career illustrates the challenge of building around NL East core" },
+    { month:11, day:28, name:"Randy Newman",             team:"Yankees",    year:1943, sport:"Culture", note:"You've Got a Friend in Me composer — his I Love LA is the greatest anti-NY anthem, making him NY fans' beloved rival" },
+    { month:11, day:29, name:"Chadwick Boseman",         team:"Yankees",    year:1976, sport:"Culture", note:"Black Panther star who was a devoted Yankees fan — his 42 film immortalized Jackie Robinson's barrier-breaking legacy" },
+    { month:11, day:30, name:"Dick Clark",               team:"Yankees",    year:1929, sport:"Broadcasting", note:"America's Oldest Teenager ran the NY TV scene — his annual shows tied together NY culture and the Yankees world" },
+    { month:12, day:1,  name:"Lee Trevino",              team:"US Open",    year:1939, sport:"Golf",   note:"Super Mex won the US Open twice and played at Winged Foot and Merion — the most colorful champion in golf history" },
+    { month:12, day:4,  name:"Jim Plunkett",             team:"Giants",     year:1947, sport:"NFL",    note:"Two Super Bowl wins with the Raiders — his Oakland teams defeated the Jets in memorable playoff battles" },
+    { month:12, day:5,  name:"Dick Butkus",              team:"Giants",     year:1942, sport:"NFL",    note:"The most feared linebacker before Lawrence Taylor — his Bears vs Giants battles were the NFC's most violent matchups" },
+    { month:12, day:6,  name:"Larry Bird",               team:"Knicks",     year:1956, sport:"NBA",    note:"The Hick from French Lick — his Celtics vs Knicks battles at MSG are the arena's most passionate rivalry of the 1980s" },
+    { month:12, day:8,  name:"Bob Ojeda",                team:"Mets",       year:1957, sport:"MLB",    note:"Left-handed starter for the miracle 1986 Mets — his steady presence in the rotation was underrated and crucial" },
+    { month:12, day:10, name:"Otis Sistrunk",            team:"Jets",       year:1946, sport:"NFL",    note:"The Raiders DT who matched up against Jets offensive linemen in fierce AFC divisional battles of the 1970s" },
+    { month:12, day:14, name:"Reggie White",             team:"Giants",     year:1961, sport:"NFL",    note:"The Minister of Defense — the greatest defensive end ever faced the Giants twice a year and made every game a battle" },
+    { month:12, day:18, name:"Ty Cobb",                  team:"Yankees",    year:1886, sport:"MLB",    note:"The Georgia Peach batted .366 lifetime and played against the early Yankees — the most ferocious competitor in baseball" },
+    { month:12, day:20, name:"Bob Hayes",                team:"Giants",     year:1942, sport:"NFL",    note:"The World's Fastest Human won Olympic gold then terrorized NFL defenses including the Giants with his Cowboys" },
+    { month:12, day:22, name:"Steve Carlton",            team:"Mets",       year:1944, sport:"MLB",    note:"Lefty won 329 games and faced the Mets hundreds of times — his Phillies-Mets NL East wars were the decade's best rivalry" },
+    { month:12, day:24, name:"Carlton Fisk",             team:"Yankees",    year:1947, sport:"MLB",    note:"His 1975 Game 6 HR wave-fair is one of the most iconic moments ever — the greatest catching performance in Series history" },
+    { month:12, day:26, name:"Emlen Tunnell",            team:"Giants",     year:1925, sport:"NFL",    note:"First Black player inducted into the Pro Football Hall of Fame — played nine seasons for the NY Giants as the first great safety" },
+    { month:12, day:27, name:"Vic Seixas",               team:"US Open",    year:1923, sport:"Tennis", note:"Won the US Open at Forest Hills in 1954 — one of the great champions before the Open moved to Flushing Meadows" },
+    { month:12, day:29, name:"Sandy Koufax",             team:"Dodgers",    year:1935, sport:"MLB",    note:"The lefthander with the most dominant four-year run ever — his Brooklyn roots make him an honorary New Yorker" },
+    { month:12, day:30, name:"George Marshall",          team:"Giants",     year:1896, sport:"NFL",    note:"Redskins founder whose team's battles with the Giants helped define the NFL's early East division rivalry" },
+    { month:12, day:31, name:"Dick Clark",               team:"Yankees",    year:1929, sport:"Broadcasting", note:"The Rockin' New Year's Eve host who made Times Square and Yankees culture inseparable parts of New York identity" },
+    { month:2,  day:12, name:"Abraham Lincoln",       team:"Yankees",    year:1809, sport:"Culture",    note:"Honest Abe — his political life intersected with early American baseball as the sport spread during his presidency" },
+    { month:5,  day:4,  name:"Don Larsen",             team:"Yankees",    year:1929, sport:"MLB",        note:"His October 8 1956 perfect game in the World Series vs the Dodgers is the most perfect moment in baseball history" },
+    { month:5,  day:5,  name:"Willie Mays",            team:"NY Giants",  year:1931, sport:"MLB",        note:"The Say Hey Kid — The Catch in the 1954 World Series at the Polo Grounds is the greatest defensive play in history" },
+    { month:5,  day:10, name:"Phil Rizzuto",           team:"Yankees",    year:1917, sport:"MLB",        note:"Holy Cow! The Scooter — SS on 7 championship teams and beloved Yankees broadcaster for 40 years. A true icon." },
+    { month:5,  day:19, name:"Carl Yastrzemski",       team:"Yankees",    year:1939, sport:"MLB",        note:"Yaz's 1967 Triple Crown — his Red Sox defeated the Yankees for the AL pennant in one of the greatest races ever" },
+    { month:6,  day:7,  name:"Tom Seaver",             team:"Mets",       year:1944, sport:"MLB",        note:"Tom Terrific — 311 wins, 2.86 ERA, three Cy Youngs, 1969 World Championship. The greatest Met who ever lived." },
+    { month:6,  day:14, name:"Babe Ruth",              team:"Yankees",    year:1895, sport:"MLB",        note:"The Sultan of Swat. 714 career HR. Called Shot. 7 WS rings. The reason Yankee Stadium was called the House That Ruth Built." },
+    { month:6,  day:17, name:"Elston Howard",          team:"Yankees",    year:1929, sport:"MLB",        note:"First Black Yankee — 1963 AL MVP. His barrier-breaking legacy is one of the most important in Yankees history." },
+    { month:7,  day:13, name:"Dave Winfield",          team:"Yankees",    year:1951, sport:"MLB",        note:"Mr. May became Mr. October — his late-career heroics and the Steinbrenner feud are central to Yankees lore" },
+    { month:7,  day:26, name:"Jim Watt",               team:"MSG",        year:1948, sport:"Boxing",     note:"WBC lightweight champion who defended his title at Madison Square Garden in classic 1980s boxing bouts" },
+    { month:7,  day:29, name:"Mel Ott",                team:"Giants",     year:1909, sport:"MLB",        note:"Master Melvin hit 511 HR for the NY Giants at the Polo Grounds — one of the franchise's all-time greatest sluggers" },
+    { month:7,  day:31, name:"Hank Greenberg",         team:"Yankees",    year:1911, sport:"MLB",        note:"The Hebrew Hammer hit 58 HR in 1938 — his Tigers vs Yankees AL battles were the decade's defining pennant races" },
+    { month:8,  day:14, name:"Mike Bossy",             team:"Islanders",  year:1957, sport:"NHL",        note:"Nine straight 50-goal seasons and four Stanley Cups — the most prolific goal scorer in Islanders history forever" },
+    { month:8,  day:29, name:"Roy Campanella",         team:"Dodgers",    year:1921, sport:"MLB",        note:"Three NL MVPs as a Brooklyn Dodger — his career ended in a tragic car accident but his legacy endures forever" },
+    { month:9,  day:6,  name:"Chris Evert",            team:"US Open",    year:1954, sport:"Tennis",     note:"Six US Open titles at Flushing Meadows — Chrissie's baseline game defined an era of NY tennis dominance" },
+    { month:10, day:8,  name:"Goose Gossage",          team:"Yankees",    year:1951, sport:"MLB",        note:"The Goose — one of the most intimidating relievers ever wore pinstripes during the Yankees' championship era" },
+    { month:12, day:12, name:"Tracy Austin",           team:"US Open",    year:1962, sport:"Tennis",     note:"Won the US Open at 16 in 1979 — the youngest champion ever at Flushing Meadows. A tennis prodigy." },
+    { month:12, day:15, name:"Don Maynard",            team:"Jets",       year:1935, sport:"NFL",        note:"The first great Jet receiver and the first AFL player inducted into the Pro Football Hall of Fame" },
   ];
 
   const todayBirthdays = ALL_BIRTHDAYS.filter(b => b.month === month && b.day === day);
