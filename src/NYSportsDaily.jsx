@@ -50,7 +50,7 @@ const NY_TEAMS = {
   NFL:  [{ name: "Jets",    espnId: "20", color: "#125740" }, { name: "Giants", espnId: "19", color: "#0B2265" }],
   MLB:  [{ name: "Yankees", espnId: "10", color: "#003087" }, { name: "Mets",   espnId: "21", color: "#002D72" }],
   NBA:  [{ name: "Knicks",  espnId: "18", color: "#006BB6" }, { name: "Nets",   espnId: "17", color: "#000000" }],
-  NHL:  [{ name: "Rangers", espnId: "13", color: "#0038A8" }, { name: "Islanders", espnId: "22", color: "#00539B" }, { name: "NJ Devils", espnId: "1", color: "#CE1126" }],
+  NHL:  [{ name: "Rangers", espnId: "13", color: "#0038A8" }, { name: "Islanders", espnId: "12", color: "#00539B" }, { name: "NJ Devils", espnId: "11", color: "#CE1126" }],
   MLS:  [{ name: "NYCFC",   espnId: "18479", color: "#6CACE4" }, { name: "Red Bulls", espnId: "399", color: "#ED1C2E" }],
   WNBA: [{ name: "Liberty", espnId: "20",   color: "#6ECEB2" }],
   NWSL: [{ name: "Gotham FC", espnId: "1163", color: "#0A0A2E" }],
@@ -83,8 +83,8 @@ const NY_TEAM_NEWS = [
   { sport:"basketball", league:"nba",  id:"18",    name:"Knicks",    espnSlug:"ny"  },
   { sport:"basketball", league:"nba",  id:"17",    name:"Nets",      espnSlug:"bkn" },
   { sport:"hockey",     league:"nhl",  id:"13",    name:"Rangers",   espnSlug:"nyr" },
-  { sport:"hockey",     league:"nhl",  id:"22",    name:"Islanders", espnSlug:"nyi" },
-  { sport:"hockey",     league:"nhl",  id:"1",     name:"Devils",    espnSlug:"njd" },
+  { sport:"hockey",     league:"nhl",  id:"12",    name:"Islanders", espnSlug:"nyi" },
+  { sport:"hockey",     league:"nhl",  id:"11",    name:"Devils",    espnSlug:"njd" },
   { sport:"basketball", league:"wnba", id:"20",    name:"Liberty",   espnSlug:"ny"  },
   { sport:"soccer",     league:"usa.1",id:"18479", name:"NYCFC",     espnSlug:"nyc" },
   { sport:"soccer",     league:"nwsl", id:"1163",  name:"Gotham FC", espnSlug:"nj"  },
@@ -300,8 +300,8 @@ async function fetchNYSchedule() {
     { name:"Knicks",    sport:"basketball", league:"nba",        id:"18" },
     { name:"Nets",      sport:"basketball", league:"nba",        id:"17" },
     { name:"Rangers",   sport:"hockey",     league:"nhl",        id:"13" },
-    { name:"Islanders", sport:"hockey",     league:"nhl",        id:"22" },
-    { name:"NJ Devils", sport:"hockey",     league:"nhl",        id:"1"  },
+    { name:"Islanders", sport:"hockey",     league:"nhl",        id:"12" },
+    { name:"NJ Devils", sport:"hockey",     league:"nhl",        id:"11" },
     { name:"Liberty",   sport:"basketball", league:"wnba",       id:"20" },
     { name:"Gotham FC", sport:"soccer",     league:"nwsl",       id:"1163" },
     { name:"NYCFC",     sport:"soccer",     league:"usa.1",      id:"18479" },
@@ -6369,7 +6369,7 @@ function StandingsTab({ standings, loading }) {
 
   const NY_IDS = { 
     MLB:["10","21"], NFL:["19","20"], NBA:["18","17"],
-    NHL:["13","22","1"], WNBA:["20"]
+    NHL:["13","12","11"], WNBA:["20"]
   };
 
   // How many playoff spots per LEAGUE (total, both conferences combined)
