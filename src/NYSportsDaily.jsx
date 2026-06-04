@@ -6655,11 +6655,11 @@ function StandingsTab({ standings, loading }) {
       </div>
 
       {/* View tabs */}
-      <div style={{display:"flex",gap:4,marginBottom:12}}>
+      <div style={{display:"flex",gap:6,marginBottom:12}}>
         {views.map(v => (
           <button key={v} onClick={()=>setView(v)}
-            style={{...styles.filterBtn,...(view===v?styles.filterBtnActive:{}),fontSize:10,padding:"4px 12px"}}>
-            {v==="WILDCARD"?"🃏 Wild Card":v==="DIVISION"?"📐 Division":"📋 Full"}
+            style={{...styles.filterBtn,...(view===v?styles.filterBtnActive:{}),fontSize:10,padding:"6px 16px",fontWeight:700}}>
+            {v==="WILDCARD"?"🏆 PLAYOFF PICTURE":v==="DIVISION"?"📐 BY DIVISION":"📋 FULL STANDINGS"}
           </button>
         ))}
       </div>
@@ -6699,12 +6699,41 @@ function StandingsTab({ standings, loading }) {
           <p style={styles.loadingText}>LOADING {sport} STANDINGS…</p>
         </div>
       ) : Object.keys(confData).length === 0 ? (
-        <div style={{padding:"24px 14px",color:"#555",fontSize:12,textAlign:"center"}}>
-          No data — {sport} may be in offseason.
-          <br/>
+        // Fallback to prop-based standings if ESPN API returned nothing
+        <div>
+          <div style={{padding:"12px 14px", background:"#161616", borderLeft:"3px solid #f59e0b", marginBottom:12, fontSize:11, color:"#aaa"}}>
+            ⚠️ Live standings unavailable — {sport} may be in offseason or ESPN API is temporarily down.
+          </div>
+          {standings.filter(s => s.league === sport).map((group, gi) => (
+            <div key={gi} style={{marginBottom:16}}>
+              <div style={styles.stdDivisionHeader}>{group.division}</div>
+              <div style={styles.stdTable}>
+                <div style={styles.stdRowHeader}>
+                  <span style={styles.stdColTeam}>TEAM</span>
+                  <span style={styles.stdColStat}>W</span>
+                  <span style={styles.stdColStat}>L</span>
+                  <span style={styles.stdColStat}>PCT</span>
+                  <span style={styles.stdColStat}>GB</span>
+                </div>
+                {(group.rows||[]).map((row, i) => (
+                  <div key={i} style={{...styles.stdRow,...(row.isNY?styles.stdRowNY:{}),...(i%2===0?{}:styles.stdRowAlt)}}>
+                    <span style={styles.stdColTeam}>
+                      {row.logo && <img src={row.logo} alt="" style={styles.stdLogo} onError={e=>e.target.style.display="none"}/>}
+                      <span style={{...styles.stdTeamName,...(row.isNY?{color:"#e8e0d0",fontWeight:900}:{})}}>{row.team}</span>
+                      {row.isNY && <span style={styles.stdNYBadge}>NY</span>}
+                    </span>
+                    <span style={styles.stdColStat}>{row.w}</span>
+                    <span style={styles.stdColStat}>{row.l}</span>
+                    <span style={styles.stdColStat}>{row.pct}</span>
+                    <span style={styles.stdColStat}>{row.gb}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
           <a href={`https://www.espn.com/${cfg.espnUrl}/standings`} target="_blank"
-            rel="noopener noreferrer" style={{...styles.histLink,marginTop:8,display:"inline-block"}}>
-            View on ESPN →
+            rel="noopener noreferrer" style={{...styles.histLink,display:"inline-block",marginTop:8}}>
+            View full standings on ESPN →
           </a>
         </div>
       ) : view === "WILDCARD" ? (
