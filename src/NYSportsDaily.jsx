@@ -6363,7 +6363,7 @@ function ShopTab() {
 
 function StandingsTab({ standings, loading }) {
   const [sport, setSport]       = useState("MLB");
-  const [view, setView]         = useState("WILDCARD");
+  const [view, setView]         = useState("DIVISION");
   const [confData, setConfData] = useState({});
   const [fetching, setFetching] = useState(false);
 
@@ -6435,24 +6435,60 @@ function StandingsTab({ standings, loading }) {
           };
         }
 
-        // Walk the tree — only collect from DIVISION-level nodes
-        // (skip conference-level entries which are duplicates)
+        // Walk the tree — ESPN structure is:
+        // json.children = conferences (AL, NL / Eastern, Western / AFC, NFC)
+        //   .children = divisions (AL East, AL Central, AL West)
+        //     .standings.entries = teams IN that division
+
+        const result = {}; // confName -> { name, divs: { divName -> [teams] }, allTeams: [] }
+
+        function teamFromEntry(e, confName, divName) {
+          const t = e.team;
+          const s = {};
+          (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? st.value ?? "—"; });
+          return {
+            id:     String(t.id),
+            name:   t.shortDisplayName || t.name,
+            abbr:   t.abbreviation,
+            logo:   t.logos?.[0]?.href || null,
+            color:  t.color ? `#${t.color}` : "#888",
+            conf:   confName,
+            div:    divName,
+            w:      parseFloat(s.wins   || s.w  || 0),
+            l:      parseFloat(s.losses || s.l  || 0),
+            pct:    s.winPercent || "—",
+            gb:     s.gamesBehind ?? s.gb ?? "—",
+            pts:    parseFloat(s.points || 0),
+            strk:   s.streak || "—",
+            l10:    s.last10  || "—",
+            isNY:   (NY_IDS[sport]||[]).includes(String(t.id)),
+            divRank:0, divLeader:false, inPlayoffs:false, pos:"", wcLabel:"",
+          };
+        }
+
+        // ESPN returns: top-level children = conferences (American League, National League, etc.)
+        // Each conference has children = divisions
+        // Each division has standings.entries = teams
         (json.children||[]).forEach(conf => {
           const confName = conf.name || conf.abbreviation || "League";
           if (!result[confName]) result[confName] = { name:confName, divs:{}, allTeams:[] };
 
-          const hasDivisions = (conf.children||[]).some(c => c.standings?.entries?.length > 0);
-
-          if (hasDivisions) {
-            // Normal case: Conference > Division > Teams
-            (conf.children||[]).forEach(div => {
+          if (conf.children?.length) {
+            // Has divisions — normal structure
+            conf.children.forEach(div => {
               const divName = div.name || div.abbreviation || confName;
-              const teams = (div.standings?.entries||[]).map(e => teamFromEntry(e, confName, divName));
-              if (!teams.length) return;
-              result[confName].divs[divName] = teams;
+              if (!div.standings?.entries?.length) return;
+              const teams = div.standings.entries.map(e => teamFromEntry(e, confName, divName));
+              if (!result[confName].divs[divName]) result[confName].divs[divName] = [];
+              teams.forEach(t => {
+                // Dedupe within division
+                if (!result[confName].divs[divName].find(x => x.id === t.id)) {
+                  result[confName].divs[divName].push(t);
+                }
+              });
             });
           } else if (conf.standings?.entries?.length) {
-            // WNBA / single-conf leagues: conf entries directly
+            // No divisions (WNBA etc.) — flat list
             const teams = conf.standings.entries.map(e => teamFromEntry(e, confName, confName));
             result[confName].divs[confName] = teams;
           }
@@ -6527,7 +6563,7 @@ function StandingsTab({ standings, loading }) {
     .filter(t => t.isNY)
     .filter((t,i,a) => a.findIndex(x=>x.id===t.id)===i);
 
-  const views = sport === "WNBA" ? ["WILDCARD","FULL"] : ["WILDCARD","DIVISION","FULL"];
+  const views = sport === "WNBA" ? ["WILDCARD","FULL"] : ["DIVISION","WILDCARD","FULL"];
 
   function PosChip({ team }) {
     const isDivL = team.divLeader;
@@ -6647,7 +6683,7 @@ function StandingsTab({ standings, loading }) {
       {/* Sport tabs */}
       <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:10}}>
         {Object.keys(CFG).map(s => (
-          <button key={s} onClick={()=>{setSport(s);setView("WILDCARD");}}
+          <button key={s} onClick={()=>{setSport(s);setView("DIVISION");}}
             style={{...styles.filterBtn,...(sport===s?styles.filterBtnActive:{}),fontSize:11,padding:"5px 14px"}}>
             {CFG[s].emoji} {s}
           </button>
