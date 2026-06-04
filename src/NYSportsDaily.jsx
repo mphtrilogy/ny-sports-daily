@@ -6360,418 +6360,320 @@ function ShopTab() {
 }
 
 function StandingsTab({ standings, loading }) {
-  const [sport, setSport]     = useState("MLB");
-  const [view, setView]       = useState("WILDCARD");
-  const [data, setData]       = useState({});
-  const [fetching, setFetching] = useState(false);
+  const [activeLeague, setActiveLeague] = useState("MLB");
+  const [activeView, setActiveView]     = useState("PLAYOFF"); // PLAYOFF | STANDINGS
+  const leagues = ["MLB","NFL","NBA","NHL","WNBA","MLS"];
+  const [playoffData, setPlayoffData]   = useState({});
+  const [loadingPlayoffs, setLoadingPlayoffs] = useState(true);
 
-  const NY_TEAM_IDS = {
-    MLB:  ["10","21"],
-    NFL:  ["19","20"],
-    NBA:  ["18","17"],
-    NHL:  ["13","22","1"],
-    WNBA: ["20"],
+  // NY team identifiers in ESPN standings
+  const NY_IDS = {
+    MLB:  { teams:["10","21"],        names:{"10":"Yankees","21":"Mets"} },
+    NFL:  { teams:["20","19"],        names:{"20":"Jets","19":"Giants"} },
+    NBA:  { teams:["18","17"],        names:{"18":"Knicks","17":"Nets"} },
+    NHL:  { teams:["13","22","1"],    names:{"13":"Rangers","22":"Islanders","1":"Devils"} },
+    WNBA: { teams:["20"],            names:{"20":"Liberty"} },
   };
 
-  const SPORT_CONFIGS = {
-    MLB:  { sport:"baseball",   league:"mlb",  emoji:"⚾", wcPerConf:3, divPerConf:3, label:"MLB"  },
-    NBA:  { sport:"basketball", league:"nba",  emoji:"🏀", wcPerConf:4, divPerConf:3, label:"NBA"  },
-    NHL:  { sport:"hockey",     league:"nhl",  emoji:"🏒", wcPerConf:2, divPerConf:3, label:"NHL"  },
-    NFL:  { sport:"football",   league:"nfl",  emoji:"🏈", wcPerConf:3, divPerConf:4, label:"NFL"  },
-    WNBA: { sport:"basketball", league:"wnba", emoji:"🏀", wcPerConf:5, divPerConf:0, label:"WNBA" },
-  };
-
-  const cfg = SPORT_CONFIGS[sport];
-
-  function sortTeams(teams) {
-    return [...teams].sort((a,b) =>
-      sport === "NHL" ? b.pts - a.pts
-        : (parseFloat(b.pct)||0) - (parseFloat(a.pct)||0) || b.w - a.w
-    );
-  }
+  const LEAGUE_CONFIGS = [
+    { key:"MLB",  sport:"baseball",   league:"mlb",   emoji:"⚾", spots:12, label:"MLB Wild Card" },
+    { key:"NBA",  sport:"basketball", league:"nba",   emoji:"🏀", spots:16, label:"NBA Playoffs"  },
+    { key:"NHL",  sport:"hockey",     league:"nhl",   emoji:"🏒", spots:16, label:"NHL Playoffs"  },
+    { key:"NFL",  sport:"football",   league:"nfl",   emoji:"🏈", spots:14, label:"NFL Playoffs"  },
+    { key:"WNBA", sport:"basketball", league:"wnba",  emoji:"🏀", spots:8,  label:"WNBA Playoffs" },
+  ];
 
   useEffect(() => {
-    async function fetchStandings() {
-      setFetching(true);
-      setData({});
-      try {
-        const r = await fetch(
-          `https://site.api.espn.com/apis/v2/sports/${cfg.sport}/${cfg.league}/standings`
-        );
-        if (!r.ok) throw new Error("fetch failed");
-        const json = await r.json();
+    async function load() {
+      setLoadingPlayoffs(true);
+      const out = {};
+      await Promise.all(LEAGUE_CONFIGS.map(async ({ key, sport, league, spots }) => {
+        try {
+          const r = await fetch(`https://site.api.espn.com/apis/v2/sports/${sport}/${league}/standings`);
+          if (!r.ok) return;
+          const data = await r.json();
 
-        // ── Parse ESPN structure: League > Conference > Division > Teams ──
-        const parsed = {};  // { confName: { name, divs: { divName: [teams] } } }
+          // Per-league playoff spots per CONFERENCE (not total)
+          // MLB: 6 per league (3 div winners + 3 wild cards)
+          // NBA: 8 per conference
+          // NHL: 8 per conference (3 div + 2 WC per conf)
+          // NFL: 7 per conference
+          // WNBA: 4 per conference (or 8 total single conf)
+          const spotsPerConf = {
+            MLB: 6, NBA: 8, NHL: 8, NFL: 7, WNBA: 8
+          }[key] || Math.ceil(spots/2);
 
-        function parseEntries(entries, confName, divName) {
-          (entries||[]).forEach(e => {
-            const t = e.team;
-            const s = {};
-            (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? st.value ?? "—"; });
-            const team = {
-              id:      String(t.id),
-              name:    t.shortDisplayName || t.name,
-              abbr:    t.abbreviation,
-              logo:    t.logos?.[0]?.href || null,
-              color:   t.color ? `#${t.color}` : "#888",
-              conf:    confName,
-              div:     divName,
-              w:       parseFloat(s.wins   || s.w  || 0),
-              l:       parseFloat(s.losses || s.l  || 0),
-              pct:     s.winPercent || "—",
-              gb:      s.gamesBehind ?? s.gb ?? "—",
-              pts:     parseFloat(s.points || 0),
-              strk:    s.streak || "—",
-              l10:     s.last10  || "—",
-              isNY:    (NY_TEAM_IDS[sport]||[]).includes(String(t.id)),
-              // position labels assigned later
-              pos: "", label: "", inPlayoffs: false, isDivLeader: false, isWC: false,
-            };
-            if (!parsed[confName]) parsed[confName] = { name: confName, divs: {} };
-            if (!parsed[confName].divs[divName]) parsed[confName].divs[divName] = [];
-            // Dedupe
-            if (!parsed[confName].divs[divName].find(x => x.id === team.id)) {
-              parsed[confName].divs[divName].push(team);
+          // Walk tree keeping conference context
+          const conferences = [];
+          function walkConf(node, confName) {
+            if (node?.standings?.entries) {
+              const teams = node.standings.entries.map(e => {
+                const t = e.team;
+                const stats = {};
+                (e.stats||[]).forEach(s => { stats[s.name] = s.displayValue ?? s.value; });
+                return {
+                  id:       String(t.id),
+                  name:     t.shortDisplayName || t.displayName || t.name,
+                  abbr:     t.abbreviation,
+                  logo:     t.logos?.[0]?.href || null,
+                  color:    t.color ? `#${t.color}` : "#888",
+                  wins:     parseFloat(stats.wins   || stats.w  || 0),
+                  losses:   parseFloat(stats.losses || stats.l  || 0),
+                  pct:      parseFloat(stats.winPercent || 0),
+                  gb:       stats.gamesBehind ?? stats.gb ?? null,
+                  pts:      parseFloat(stats.points || 0),
+                  clinched: stats.clinched || null,
+                  conf:     confName,
+                };
+              });
+              if (teams.length) conferences.push({ name: confName, teams });
             }
+            // recurse — divisions live inside conferences
+            (node?.children || []).forEach(child => {
+              const childName = child.name || confName;
+              walkConf(child, childName);
+            });
+          }
+
+          // Top-level children are conferences (AL/NL, East/West, etc.)
+          (data.children || []).forEach(conf => {
+            walkConf(conf, conf.name || conf.abbreviation || "Conf");
           });
-        }
 
-        (json.children||[]).forEach(conf => {
-          const confName = conf.name || conf.abbreviation || "League";
-          if (conf.standings?.entries) parseEntries(conf.standings.entries, confName, confName);
-          (conf.children||[]).forEach(div => {
-            const divName = div.name || div.abbreviation || confName;
-            if (div.standings?.entries) parseEntries(div.standings.entries, confName, divName);
+          if (!conferences.length) return;
+
+          // Flatten all teams (for total count) and build per-conf sorted lists
+          const allTeams = conferences.flatMap(c => c.teams);
+
+          // Group by top-level conference (AL/NL for MLB, East/West for NBA etc.)
+          // ESPN nests: Conference > Division > Teams
+          // We need to aggregate divisions back into their parent conference
+          const confMap = {};
+          conferences.forEach(c => {
+            // Use parent conf name (AL, NL, Eastern, Western)
+            // Heuristic: shorter/higher-level names are the conf
+            const parentKey = c.name;
+            if (!confMap[parentKey]) confMap[parentKey] = [];
+            confMap[parentKey].push(...c.teams);
           });
-        });
 
-        // ── Assign positions properly ──
-        Object.values(parsed).forEach(conf => {
-          const { divs } = conf;
-          const divNames = Object.keys(divs);
-
-          // 1. Sort each division, identify div leaders
-          const divLeaderIds = new Set();
-          divNames.forEach(dn => {
-            divs[dn] = sortTeams(divs[dn]);
-            divs[dn].forEach((t, i) => {
-              t.divRank = i + 1;
-              t.divSize = divs[dn].length;
-              if (i === 0) {
-                t.isDivLeader = true;
-                divLeaderIds.add(t.id);
-              }
+          // Dedupe teams per conf (they may appear in division AND conf nodes)
+          const confTeams = {};
+          Object.entries(confMap).forEach(([conf, teams]) => {
+            const seen = new Set();
+            confTeams[conf] = teams.filter(t => {
+              if (seen.has(t.id)) return false;
+              seen.add(t.id);
+              return true;
             });
           });
 
-          // 2. All conf teams sorted by pct
-          const allTeams = sortTeams(
-            divNames.flatMap(dn => divs[dn])
-              .filter((t, i, a) => a.findIndex(x=>x.id===t.id)===i)
-          );
-          conf.allTeams = allTeams;
-
-          // 3. Division leaders get DIV 1/2/3 spots
-          //    Wild card = best non-div-leaders
-          const divLeaders = allTeams.filter(t => divLeaderIds.has(t.id));
-          const nonDivLeaders = allTeams.filter(t => !divLeaderIds.has(t.id));
-
-          // Sort div leaders by record for seeding
-          const sortedDivLeaders = sortTeams(divLeaders);
-          sortedDivLeaders.forEach((t, i) => {
-            t.inPlayoffs = true;
-            t.isDivLeader = true;
-            t.pos   = i === 0 ? "DIV 1" : i === 1 ? "DIV 2" : "DIV 3";
-            t.label = t.pos;
-            t.seed  = i + 1;
+          // For each conf, sort and assign playoff rank
+          const teamPlayoffStatus = {};
+          Object.entries(confTeams).forEach(([conf, teams]) => {
+            if (teams.length < 3) return; // skip division sub-nodes, only process full confs
+            const sorted = [...teams].sort((a,b) =>
+              key==="NHL" ? b.pts-a.pts : b.wins-a.losses-(a.wins-b.losses) || b.pct-a.pct
+            );
+            sorted.forEach((t, idx) => {
+              const rank = idx + 1;
+              const inPlayoffs = rank <= spotsPerConf;
+              let position = "";
+              if (rank === 1) position = "DIV LEAD";
+              else if (rank <= 3) position = `DIV ${rank}`;
+              else if (rank <= spotsPerConf) position = `WC${rank-3}`;
+              else position = `#${rank}`;
+              teamPlayoffStatus[t.id] = {
+                ...t, rank, inPlayoffs,
+                confRank: rank, confSize: sorted.length,
+                position, conf,
+                totalTeams: allTeams.length,
+              };
+            });
           });
 
-          // Wild card spots
-          const wcSpots = cfg.wcPerConf;
-          nonDivLeaders.forEach((t, i) => {
-            if (i < wcSpots) {
-              t.inPlayoffs = true;
-              t.isWC = true;
-              t.pos   = `WC${i+1}`;
-              t.label = `WC${i+1}`;
-              t.seed  = sortedDivLeaders.length + i + 1;
-            } else {
-              t.inPlayoffs = false;
-              const behind = i - wcSpots + 1;
-              t.pos   = `${behind} back`;
-              t.label = `${behind} back`;
-            }
-          });
-        });
+          // Also do a full-league sort as fallback for single-conf leagues (WNBA)
+          if (Object.keys(teamPlayoffStatus).length === 0) {
+            const sorted = [...allTeams].sort((a,b) =>
+              key==="NHL" ? b.pts-a.pts : b.wins-a.losses-(a.wins-b.losses) || b.pct-a.pct
+            );
+            sorted.forEach((t, idx) => {
+              const rank = idx + 1;
+              teamPlayoffStatus[t.id] = {
+                ...t, rank, inPlayoffs: rank <= spots,
+                confRank: rank, confSize: sorted.length,
+                position: rank <= spots ? `#${rank}` : `#${rank}`,
+                conf: "League", totalTeams: allTeams.length,
+              };
+            });
+          }
 
-        setData(parsed);
-      } catch(err) {
-        console.error("Standings error:", err);
-      }
-      setFetching(false);
+          const nyConfig = NY_IDS[key];
+          if (!nyConfig) return;
+          const nyTeams = nyConfig.teams
+            .map(id => teamPlayoffStatus[id])
+            .filter(Boolean);
+
+          if (nyTeams.length) {
+            out[key] = {
+              nyTeams,
+              label: LEAGUE_CONFIGS.find(l=>l.key===key)?.label,
+              emoji: LEAGUE_CONFIGS.find(l=>l.key===key)?.emoji,
+              spots, spotsPerConf,
+            };
+          }
+        } catch(e) { console.error(key, e); }
+      }));
+      setPlayoffData(out);
+      setLoadingPlayoffs(false);
     }
-    fetchStandings();
-  }, [sport]);
+    load();
+  }, []);
 
-  // ── NY teams summary ──
-  const nyTeams = Object.values(data)
-    .flatMap(c => c.allTeams || [])
-    .filter(t => t.isNY)
-    .filter((t,i,a) => a.findIndex(x=>x.id===t.id)===i);
-
-  // ── Sub-components ──
-  function PosTag({ team }) {
-    const bg   = team.isDivLeader ? "#0038A822" : team.isWC ? "#22c55e22" : "#c8201c22";
-    const clr  = team.isDivLeader ? "#60a5fa"   : team.isWC ? "#22c55e"   : "#c8201c";
-    return (
-      <span style={{fontSize:9, padding:"2px 6px", borderRadius:2,
-        fontWeight:900, letterSpacing:"0.06em", background:bg, color:clr,
-        whiteSpace:"nowrap", flexShrink:0}}>
-        {team.label || team.pos}
-      </span>
-    );
-  }
-
-  function GBTag({ gb }) {
-    if (!gb || gb === "—" || gb === "0" || gb === 0) return <span style={{fontSize:10,color:"#555",minWidth:40,textAlign:"right"}}>—</span>;
-    const n = parseFloat(String(gb).replace("+",""));
-    const ahead = parseFloat(gb) < 0 || String(gb).startsWith("+");
-    return (
-      <span style={{fontSize:10, fontWeight:700, color: ahead?"#22c55e":"#888",
-        minWidth:40, textAlign:"right", whiteSpace:"nowrap"}}>
-        {ahead ? `+${Math.abs(n)}` : `${gb}`}
-      </span>
-    );
-  }
-
-  function TeamRow({ team, rank }) {
-    const pctNum = parseFloat(team.pct) || (team.w+team.l>0 ? team.w/(team.w+team.l) : 0);
-    const bar = Math.min(100, Math.round(pctNum*100));
-    const rec = sport==="NHL" ? `${team.w}W · ${team.pts}PTS` : `${team.w}–${team.l}`;
-    return (
-      <div style={{
-        display:"flex", alignItems:"center", gap:8,
-        padding:"9px 14px",
-        background: team.isNY ? "#0c180c" : rank%2===0 ? "#111" : "#0e0e0e",
-        borderLeft: `4px solid ${team.isDivLeader ? "#60a5fa" : team.isWC ? "#22c55e" : team.isNY ? "#c8201c" : "transparent"}`,
-        borderBottom:"1px solid #1a1a1a",
-      }}>
-        <span style={{fontSize:10,color:"#555",minWidth:18,textAlign:"right",flexShrink:0}}>{rank}</span>
-        {team.logo
-          ? <img src={team.logo} alt="" style={{width:22,height:22,objectFit:"contain",flexShrink:0}} onError={e=>e.target.style.display="none"}/>
-          : <span style={{width:22,flexShrink:0}}/>
-        }
-        <span style={{flex:1,fontSize:13,fontWeight:team.isNY?900:500,
-          color:team.isNY?"#fff":"#ccc",fontFamily:"'Georgia',serif",
-          overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",minWidth:0}}>
-          {team.name}
-          {team.isNY && <span style={{fontSize:8,color:"#c8201c",marginLeft:5,fontWeight:900}}>NY</span>}
-        </span>
-        {/* mini win bar */}
-        <div style={{width:44,height:4,background:"#222",borderRadius:2,overflow:"hidden",flexShrink:0}}>
-          <div style={{height:"100%",width:`${bar}%`,
-            background:team.isDivLeader?"#60a5fa":team.isWC?"#22c55e":"#555",borderRadius:2}}/>
-        </div>
-        <span style={{fontSize:12,fontWeight:700,color:"#e8e8e8",minWidth:64,textAlign:"right",fontFamily:"'Georgia',serif",whiteSpace:"nowrap"}}>
-          {rec}
-        </span>
-        <GBTag gb={team.gb} />
-        <PosTag team={team} />
-      </div>
-    );
-  }
-
-  // ── Playoff cutoff line ──
-  function CutLine({ label }) {
-    return (
-      <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",background:"#0a0a0a"}}>
-        <div style={{flex:1,height:1,background:"#c8201c22"}}/>
-        <span style={{fontSize:9,color:"#c8201c",fontWeight:900,letterSpacing:"0.1em",whiteSpace:"nowrap"}}>
-          {label || "── PLAYOFF CUTOFF ──"}
-        </span>
-        <div style={{flex:1,height:1,background:"#c8201c22"}}/>
-      </div>
-    );
-  }
-
-  const views = sport === "WNBA" ? ["WILDCARD","FULL"] : ["WILDCARD","DIVISION","FULL"];
+  const filtered = standings.filter(s => s.league === activeLeague);
 
   return (
     <div style={styles.stdRoot}>
       <div style={styles.stdHeader}>
         <h2 style={styles.stdTitle}>📊 NY TEAMS STANDINGS & PLAYOFF TRACKER</h2>
-        <p style={styles.stdSub}>LIVE STANDINGS · WILD CARD RACE · PLAYOFF PICTURE</p>
+        <p style={styles.stdSub}>WHERE YOUR TEAMS STAND RIGHT NOW</p>
       </div>
 
-      {/* NY at a glance */}
-      {nyTeams.length > 0 && !fetching && (
-        <div style={{marginBottom:16}}>
-          <div style={{fontSize:9,color:"#555",letterSpacing:"0.12em",fontWeight:900,marginBottom:8}}>
-            🗽 NY TEAMS AT A GLANCE
-          </div>
-          <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-            {nyTeams.map(t => (
-              <div key={t.id} style={{
-                display:"flex",alignItems:"center",gap:8,padding:"8px 12px",
-                background:"#141414",
-                border:`1px solid ${t.isDivLeader?"#60a5fa44":t.isWC?"#22c55e44":"#c8201c33"}`,
-                borderLeft:`3px solid ${t.isDivLeader?"#60a5fa":t.isWC?"#22c55e":"#c8201c"}`,
-                borderRadius:3,flexShrink:0,
-              }}>
-                {t.logo && <img src={t.logo} alt="" style={{width:28,height:28,objectFit:"contain"}} onError={e=>e.target.style.display="none"}/>}
-                <div>
-                  <div style={{fontSize:13,fontWeight:900,color:"#fff",fontFamily:"'Georgia',serif"}}>{t.name}</div>
-                  <div style={{fontSize:10,color:"#666"}}>{sport==="NHL"?`${t.w}W · ${t.pts}PTS`:`${t.w}–${t.l}`} · {t.div}</div>
-                </div>
-                <div style={{textAlign:"right",marginLeft:4}}>
-                  <div style={{fontSize:11,fontWeight:900,
-                    color:t.isDivLeader?"#60a5fa":t.isWC?"#22c55e":"#c8201c"}}>
-                    {t.isDivLeader?"🏆":t.isWC?"✅":"❌"} {t.label}
-                  </div>
-                  <div style={{fontSize:9,color:"#555"}}>{t.conf}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Sport tabs */}
-      <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:10}}>
-        {Object.entries(SPORT_CONFIGS).map(([key,sc]) => (
-          <button key={key} onClick={()=>{setSport(key);setView("WILDCARD");}}
-            style={{...styles.filterBtn,...(sport===key?styles.filterBtnActive:{}),fontSize:11,padding:"5px 14px"}}>
-            {sc.emoji} {key}
+      {/* View toggle */}
+      <div style={{display:"flex", gap:6, marginBottom:16}}>
+        {["PLAYOFF PICTURE","FULL STANDINGS"].map(v => (
+          <button key={v} onClick={() => setActiveView(v==="PLAYOFF PICTURE" ? "PLAYOFF" : "STANDINGS")}
+            style={{...styles.filterBtn, ...(activeView===(v==="PLAYOFF PICTURE"?"PLAYOFF":"STANDINGS") ? styles.filterBtnActive : {}), fontSize:10, padding:"6px 14px"}}>
+            {v}
           </button>
         ))}
       </div>
 
-      {/* View tabs */}
-      <div style={{display:"flex",gap:4,marginBottom:14}}>
-        {views.map(v => (
-          <button key={v} onClick={()=>setView(v)}
-            style={{...styles.filterBtn,...(view===v?styles.filterBtnActive:{}),fontSize:10,padding:"4px 12px"}}>
-            {v==="WILDCARD"?"🃏 Wild Card":v==="DIVISION"?"📐 Division":"📋 Full"}
-          </button>
-        ))}
-      </div>
-
-      {/* Legend */}
-      <div style={{display:"flex",gap:12,padding:"6px 14px",background:"#0a0a0a",
-        marginBottom:8,borderRadius:2,flexWrap:"wrap"}}>
-        {[
-          {color:"#60a5fa", label:"Division leader"},
-          {color:"#22c55e", label:"Wild card"},
-          {color:"#c8201c", label:"Out of playoffs"},
-        ].map((l,i) => (
-          <div key={i} style={{display:"flex",alignItems:"center",gap:5}}>
-            <div style={{width:10,height:10,borderRadius:1,background:l.color,flexShrink:0}}/>
-            <span style={{fontSize:10,color:"#666"}}>{l.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Column header */}
-      <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",
-        borderBottom:"1px solid #2a2a2a",marginBottom:2}}>
-        <span style={{fontSize:9,color:"#444",minWidth:18}}>#</span>
-        <span style={{width:22,flexShrink:0}}/>
-        <span style={{flex:1,fontSize:9,color:"#444",letterSpacing:"0.1em"}}>TEAM</span>
-        <span style={{width:44,flexShrink:0}}/>
-        <span style={{fontSize:9,color:"#444",minWidth:64,textAlign:"right"}}>
-          {sport==="NHL"?"W · PTS":"W – L"}
-        </span>
-        <span style={{fontSize:9,color:"#444",minWidth:40,textAlign:"right"}}>GB</span>
-        <span style={{fontSize:9,color:"#444",minWidth:42,textAlign:"center"}}>POS</span>
-      </div>
-
-      {fetching ? (
-        <div style={styles.loading}>
-          <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
-          <p style={styles.loadingText}>LOADING {sport} STANDINGS...</p>
-        </div>
-      ) : Object.keys(data).length === 0 ? (
-        <div style={{padding:"24px 0",color:"#555",fontSize:12,textAlign:"center"}}>
-          No standings data — {sport} may be in offseason.
-          <br/>
-          <a href={`https://www.espn.com/${sport.toLowerCase()}/standings`}
-            target="_blank" rel="noopener noreferrer"
-            style={{...styles.histLink,marginTop:8,display:"inline-block"}}>
-            View on ESPN →
-          </a>
-        </div>
-      ) : view === "WILDCARD" ? (
-        // ── WILD CARD VIEW ──
-        // Show all teams per conf sorted by position
-        // Div leaders first (sorted by record), then wild card, then out
-        Object.values(data).map((conf, ci) => {
-          const divLeaders  = sortTeams((conf.allTeams||[]).filter(t=>t.isDivLeader));
-          const wcIn        = sortTeams((conf.allTeams||[]).filter(t=>t.isWC));
-          const wcOut       = sortTeams((conf.allTeams||[]).filter(t=>!t.inPlayoffs));
-          const allSorted   = [...divLeaders, ...wcIn, ...wcOut];
-          return (
-            <div key={ci} style={{marginBottom:24}}>
-              <div style={{...styles.stdDivisionHeader,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <span>{cfg.emoji} {conf.name}</span>
-                <span style={{fontSize:9,color:"#555"}}>
-                  {divLeaders.length} DIV + {cfg.wcPerConf} WC = {divLeaders.length + cfg.wcPerConf} playoff spots
-                </span>
-              </div>
-              {allSorted.map((team, i) => {
-                const showDivCut  = i === divLeaders.length && divLeaders.length > 0;
-                const showWCCut   = i === divLeaders.length + wcIn.length;
-                return (
-                  <div key={team.id}>
-                    {showDivCut && (
-                      <div style={{display:"flex",alignItems:"center",gap:8,padding:"4px 14px",background:"#0a0a0a"}}>
-                        <div style={{flex:1,height:1,background:"#60a5fa22"}}/>
-                        <span style={{fontSize:9,color:"#60a5fa",fontWeight:900,letterSpacing:"0.08em",whiteSpace:"nowrap"}}>── WILD CARD RACE ──</span>
-                        <div style={{flex:1,height:1,background:"#60a5fa22"}}/>
+      {/* ── PLAYOFF PICTURE ── */}
+      {activeView === "PLAYOFF" && (
+        <div>
+          {loadingPlayoffs ? (
+            <div style={styles.loading}>
+              <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
+              <p style={styles.loadingText}>LOADING PLAYOFF PICTURE...</p>
+            </div>
+          ) : Object.keys(playoffData).length === 0 ? (
+            <div style={{padding:"20px 0", color:"#666", fontSize:12}}>
+              Standings data unavailable — some leagues may be in offseason. Check back when the season starts.
+            </div>
+          ) : (
+            <div style={{display:"flex", flexDirection:"column", gap:10}}>
+              {LEAGUE_CONFIGS.map(({ key, emoji }) => {
+                const ld = playoffData[key];
+                if (!ld?.nyTeams?.length) return null;
+                return ld.nyTeams.map(team => {
+                  const inPlay = team.inPlayoffs;
+                  const record = key==="NHL"
+                    ? `${team.wins}W · ${team.pts}PTS`
+                    : `${team.wins}–${team.losses}`;
+                  const pctVal = team.pct > 0 ? team.pct : (team.wins+team.losses > 0 ? team.wins/(team.wins+team.losses) : 0);
+                  const barW = Math.min(100, Math.round(pctVal * 100));
+                  const gbText = team.gb && team.gb !== "0" && team.gb !== 0 ? `${team.gb} GB` : null;
+                  const posColor = inPlay ? "#22c55e" : "#c8201c";
+                  return (
+                    <div key={team.id} style={{
+                      display:"flex", alignItems:"center", gap:12,
+                      padding:"12px 16px", marginBottom:6,
+                      background:"#141414",
+                      border:`1px solid ${inPlay?"#22c55e33":"#c8201c22"}`,
+                      borderLeft:`4px solid ${inPlay?"#22c55e":"#c8201c"}`,
+                      borderRadius:3, flexWrap:"wrap",
+                    }}>
+                      {team.logo && <img src={team.logo} alt="" style={{width:36,height:36,objectFit:"contain",flexShrink:0}} onError={e=>e.target.style.display="none"} />}
+                      <div style={{flex:1, minWidth:120}}>
+                        <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:5, flexWrap:"wrap"}}>
+                          <span style={{fontSize:15, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{team.name}</span>
+                          <span style={{fontSize:9, color:"#555", letterSpacing:"0.1em"}}>{emoji} {key}</span>
+                          {team.conf && <span style={{fontSize:9, color:"#555"}}>{team.conf}</span>}
+                        </div>
+                        <div style={{display:"flex", alignItems:"center", gap:10}}>
+                          <div style={{flex:1, height:5, background:"#222", borderRadius:3, overflow:"hidden", minWidth:60}}>
+                            <div style={{height:"100%", width:`${barW}%`, background:inPlay?"#22c55e":"#c8201c", borderRadius:3}} />
+                          </div>
+                          <span style={{fontSize:12, fontWeight:700, color:"#aaa", whiteSpace:"nowrap"}}>{record}</span>
+                        </div>
                       </div>
-                    )}
-                    {showWCCut && (
-                      <CutLine label="── PLAYOFF CUTOFF ──" />
-                    )}
-                    <TeamRow team={team} rank={i+1} />
-                  </div>
-                );
+                      <div style={{textAlign:"right", flexShrink:0}}>
+                        <div style={{fontSize:12, fontWeight:900, letterSpacing:"0.08em", color:posColor, marginBottom:2}}>
+                          {inPlay ? "✅" : "❌"} {team.position || (inPlay?"IN":"OUT")}
+                        </div>
+                        <div style={{fontSize:10, color:"#555"}}>
+                          #{team.confRank} of {team.confSize} in conf
+                        </div>
+                        {gbText && <div style={{fontSize:10, color:"#666"}}>{gbText} back</div>}
+                        {team.clinched && <div style={{fontSize:9, color:"#22c55e", marginTop:2, fontWeight:900}}>{team.clinched}</div>}
+                      </div>
+                    </div>
+                  );
+                });
               })}
-            </div>
-          );
-        })
-      ) : view === "DIVISION" ? (
-        // ── DIVISION VIEW ──
-        Object.values(data).map((conf, ci) => (
-          <div key={ci} style={{marginBottom:24}}>
-            <div style={{fontSize:10,color:"#c8201c",fontWeight:900,letterSpacing:"0.15em",
-              padding:"6px 14px",background:"#0a0a0a",marginBottom:4}}>
-              {cfg.emoji} {conf.name}
-            </div>
-            {Object.entries(conf.divs).map(([divName, teams], di) => (
-              <div key={di} style={{marginBottom:12}}>
-                <div style={styles.stdDivisionHeader}>{divName}</div>
-                {sortTeams(teams).map((team, i) => <TeamRow key={team.id} team={team} rank={i+1}/>)}
+              <div style={{fontSize:9, color:"#555", padding:"8px 0", fontStyle:"italic"}}>
+                Live from ESPN · Updates with each game · {new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}
               </div>
-            ))}
-          </div>
-        ))
-      ) : (
-        // ── FULL STANDINGS ──
-        Object.values(data).map((conf, ci) => (
-          <div key={ci} style={{marginBottom:24}}>
-            <div style={styles.stdDivisionHeader}>{cfg.emoji} {conf.name}</div>
-            {(conf.allTeams||[]).map((team, i) => <TeamRow key={team.id} team={team} rank={i+1}/>)}
-          </div>
-        ))
+            </div>
+          )}
+        </div>
       )}
 
-      <div style={{marginTop:12,fontSize:9,color:"#444",fontStyle:"italic"}}>
-        Live from ESPN · Updated each page load ·
-        <a href={`https://www.espn.com/${cfg.league}/standings`}
-          target="_blank" rel="noopener noreferrer"
-          style={{...styles.histLink,marginLeft:4}}>Full ESPN standings →</a>
-      </div>
+      {/* ── FULL STANDINGS ── */}
+      {activeView === "STANDINGS" && (
+        <>
+          <div style={styles.filterGroup}>
+            {leagues.map(l => (
+              <button key={l} onClick={() => setActiveLeague(l)}
+                style={{...styles.filterBtn, ...(activeLeague===l ? styles.filterBtnActive : {})}}>
+                {l}
+              </button>
+            ))}
+          </div>
+          {loading ? (
+            <div style={styles.loading}>
+              <div style={styles.loadingDots}>{[0,1,2].map(i=><span key={i} style={{...styles.dot,animationDelay:`${i*0.2}s`}}/>)}</div>
+              <p style={styles.loadingText}>LOADING STANDINGS...</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={styles.empty}>
+              <span style={styles.emptyIcon}>📊</span>
+              <p style={styles.emptyText}>NO STANDINGS AVAILABLE</p>
+            </div>
+          ) : (
+            <div style={styles.stdGroups}>
+              {filtered.map((group, gi) => (
+                <div key={gi} style={styles.stdGroup}>
+                  <div style={styles.stdDivisionHeader}>{group.division}</div>
+                  <div style={styles.stdTable}>
+                    <div style={styles.stdRowHeader}>
+                      <span style={styles.stdColTeam}>TEAM</span>
+                      <span style={styles.stdColStat}>W</span>
+                      <span style={styles.stdColStat}>L</span>
+                      <span style={styles.stdColStat}>PCT</span>
+                      <span style={styles.stdColStat}>GB</span>
+                    </div>
+                    {group.rows.map((row, i) => (
+                      <div key={i} style={{...styles.stdRow, ...(row.isNY ? styles.stdRowNY : {}), ...(i%2===0?{}:styles.stdRowAlt)}}>
+                        <span style={styles.stdColTeam}>
+                          {row.logo && <img src={row.logo} alt="" style={styles.stdLogo} onError={e=>e.target.style.display="none"} />}
+                          <span style={{...styles.stdTeamName, ...(row.isNY?{color:"#e8e0d0",fontWeight:900}:{})}}>{row.team}</span>
+                          {row.isNY && <span style={styles.stdNYBadge}>NY</span>}
+                        </span>
+                        <span style={styles.stdColStat}>{row.w}</span>
+                        <span style={styles.stdColStat}>{row.l}</span>
+                        <span style={styles.stdColStat}>{row.pct}</span>
+                        <span style={styles.stdColStat}>{row.gb}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
