@@ -6403,37 +6403,6 @@ function StandingsTab({ standings, loading }) {
         if (!r.ok) throw new Error("ESPN standings failed");
         const json = await r.json();
 
-        // ESPN structure:
-        // json.children = conferences (AL, NL / East, West / AFC, NFC)
-        //   .children = divisions (AL East, AL Central, AL West)
-        //     .standings.entries = teams IN that division
-
-        const result = {}; // confName -> { name, divs: { divName -> [teams] }, allTeams: [] }
-
-        function teamFromEntry(e, confName, divName) {
-          const t = e.team;
-          const s = {};
-          (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? st.value ?? "—"; });
-          return {
-            id:     String(t.id),
-            name:   t.shortDisplayName || t.name,
-            abbr:   t.abbreviation,
-            logo:   t.logos?.[0]?.href || null,
-            color:  t.color ? `#${t.color}` : "#888",
-            conf:   confName,
-            div:    divName,
-            w:      parseFloat(s.wins   || s.w  || 0),
-            l:      parseFloat(s.losses || s.l  || 0),
-            pct:    s.winPercent || "—",
-            gb:     s.gamesBehind ?? s.gb ?? "—",
-            pts:    parseFloat(s.points || 0),
-            strk:   s.streak || "—",
-            l10:    s.last10  || "—",
-            isNY:   (NY_IDS[sport]||[]).includes(String(t.id)),
-            // computed below
-            divRank:0, divLeader:false, inPlayoffs:false, pos:"", wcLabel:"",
-          };
-        }
 
         // Walk the tree — ESPN structure is:
         // json.children = conferences (AL, NL / Eastern, Western / AFC, NFC)
