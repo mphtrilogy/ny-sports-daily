@@ -6399,17 +6399,22 @@ function StandingsTab({ standings, loading }) {
       setFetching(true);
       setConfData({});
       try {
-        const r = await fetch(`https://site.api.espn.com/apis/v2/sports/${cfg.sport}/${cfg.league}/standings`);
+        const r = await fetch(`https://site.api.espn.com/apis/v2/sports/${cfg.sport}/${cfg.league}/standings?level=3`);
         if (!r.ok) throw new Error("ESPN standings failed");
         const json = await r.json();
 
-
-        // Walk the tree — ESPN structure is:
-        // json.children = conferences (AL, NL / Eastern, Western / AFC, NFC)
-        //   .children = divisions (AL East, AL Central, AL West)
-        //     .standings.entries = teams IN that division
-
         const result = {}; // confName -> { name, divs: { divName -> [teams] }, allTeams: [] }
+
+        // Map division names to their parent conference
+        const CONF_MAP = {
+          "AL East":"American League","AL Central":"American League","AL West":"American League",
+          "NL East":"National League","NL Central":"National League","NL West":"National League",
+          "Atlantic":"Eastern Conference","Central":"Eastern Conference","Southeast":"Eastern Conference",
+          "Northwest":"Western Conference","Pacific":"Western Conference","Southwest":"Western Conference",
+          "Metropolitan":"Eastern Conference",
+          "AFC East":"AFC","AFC North":"AFC","AFC South":"AFC","AFC West":"AFC",
+          "NFC East":"NFC","NFC North":"NFC","NFC South":"NFC","NFC West":"NFC",
+        };
 
         function teamFromEntry(e, confName, divName) {
           const t = e.team;
@@ -6435,33 +6440,30 @@ function StandingsTab({ standings, loading }) {
           };
         }
 
-        // ESPN returns: top-level children = conferences (American League, National League, etc.)
-        // Each conference has children = divisions
-        // Each division has standings.entries = teams
-        (json.children||[]).forEach(conf => {
-          const confName = conf.name || conf.abbreviation || "League";
-          if (!result[confName]) result[confName] = { name:confName, divs:{}, allTeams:[] };
+        // Recursive walker — handles any nesting depth
+        // level=3 makes ESPN return divisions as the top-level children
+        function walkNode(node, parentConf) {
+          const name = node.name || node.abbreviation || "";
+          const confName = CONF_MAP[name] || parentConf || name;
 
-          if (conf.children?.length) {
-            // Has divisions — normal structure
-            conf.children.forEach(div => {
-              const divName = div.name || div.abbreviation || confName;
-              if (!div.standings?.entries?.length) return;
-              const teams = div.standings.entries.map(e => teamFromEntry(e, confName, divName));
-              if (!result[confName].divs[divName]) result[confName].divs[divName] = [];
-              teams.forEach(t => {
-                // Dedupe within division
-                if (!result[confName].divs[divName].find(x => x.id === t.id)) {
-                  result[confName].divs[divName].push(t);
-                }
-              });
+          if (node.standings?.entries?.length) {
+            // This node IS a division (has teams directly)
+            const divName = name || confName;
+            if (!result[confName]) result[confName] = { name:confName, divs:{}, allTeams:[] };
+            if (!result[confName].divs[divName]) result[confName].divs[divName] = [];
+            node.standings.entries.forEach(e => {
+              const team = teamFromEntry(e, confName, divName);
+              if (!result[confName].divs[divName].find(x => x.id === team.id)) {
+                result[confName].divs[divName].push(team);
+              }
             });
-          } else if (conf.standings?.entries?.length) {
-            // No divisions (WNBA etc.) — flat list
-            const teams = conf.standings.entries.map(e => teamFromEntry(e, confName, confName));
-            result[confName].divs[confName] = teams;
           }
-        });
+          // Always recurse
+          (node.children||[]).forEach(child => walkNode(child, confName));
+        }
+
+        (json.children||[]).forEach(node => walkNode(node, ""));
+
 
         // Now assign positions per conference
         Object.values(result).forEach(conf => {
