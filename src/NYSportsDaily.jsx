@@ -8550,12 +8550,18 @@ function CrosswordTab() {
     const startOfYear = new Date(now.getFullYear(), 0, 1);
     const weekNum = Math.ceil((((now - startOfYear) / 86400000) + startOfYear.getDay() + 1) / 7);
     const clampedWeek = ((weekNum - 1) % 52) + 1;
-    sbFetch("ny_crossword", `?week_num=eq.${clampedWeek}&select=puzzle_json&limit=1`)
-      .then(rows => {
-        if (rows && rows[0]?.puzzle_json) {
-          try { setPuzzle(JSON.parse(rows[0].puzzle_json)); } catch(e) {}
-        }
-      })
+
+    // Try current week, then fall back to week 1
+    async function loadPuzzle(weekToTry) {
+      const rows = await sbFetch("ny_crossword", `?week_num=eq.${weekToTry}&select=puzzle_json&limit=1`);
+      if (rows && rows[0]?.puzzle_json) {
+        try { setPuzzle(JSON.parse(rows[0].puzzle_json)); return true; } catch(e) {}
+      }
+      return false;
+    }
+
+    loadPuzzle(clampedWeek)
+      .then(found => { if (!found) return loadPuzzle(1); })
       .catch(() => {})
       .finally(() => setLoadingPuzzle(false));
   }, []);
