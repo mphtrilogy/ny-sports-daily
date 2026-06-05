@@ -5,7 +5,28 @@ const SUPABASE_URL = "https://fnxoucliekhotvartyfu.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZueG91Y2xpZWtob3R2YXJ0eWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTI3MzEsImV4cCI6MjA4OTUyODczMX0.V4A75JO9s-7MbDRY7VMydwydOvdkU4SNSz_BRoVAoqA";
 
 // Dark mode context — must be declared before any component that uses it
-const DarkModeCtx = createContext(true);
+const DarkModeCtx  = createContext(true);
+const MyTeamsCtx   = createContext(new Set());
+
+// Maps full team names (as they appear in game/news data) -> My Teams ID
+const MY_TEAMS_NAME_MAP = {
+  "new york yankees":"Yankees","new york mets":"Mets",
+  "new york knicks":"Knicks","brooklyn nets":"Nets",
+  "new york rangers":"Rangers","new york islanders":"Islanders","new jersey devils":"Devils",
+  "new york jets":"Jets","new york giants":"Giants",
+  "new york liberty":"Liberty","nycfc":"NYCFC",
+  "new york red bulls":"RedBulls","gotham fc":"Gotham",
+  // Short names
+  "yankees":"Yankees","mets":"Mets","knicks":"Knicks","nets":"Nets",
+  "rangers":"Rangers","islanders":"Islanders","devils":"Devils",
+  "jets":"Jets","giants":"Giants","liberty":"Liberty",
+};
+function teamInMyTeams(myTeams, ...names) {
+  return names.some(n => {
+    const id = MY_TEAMS_NAME_MAP[(n||"").toLowerCase()];
+    return id && myTeams.has(id);
+  });
+}
 
 async function sbFetch(table, params = "") {
   try {
@@ -955,6 +976,12 @@ export default function NYSportsDaily() {
   const [loadingSchedule, setLoadingSchedule]   = useState(false);
   const [activeLeague, setActiveLeague]   = useState("ALL");
   const [nyOnly, setNyOnly]               = useState(false);
+  const [myTeams, setMyTeams]             = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("nysportsdaily_myteams") || "[]")); }
+    catch(e) { return new Set(); }
+  });
+  const [myTeamsModal, setMyTeamsModal]   = useState(false);
+  const [myTeamsPending, setMyTeamsPending] = useState(new Set());
   const [activeTab, setActiveTab]         = useState("SCORES");
   const [darkMode, setDarkMode]           = useState(true);
   const [searchOpen, setSearchOpen]       = useState(false);
@@ -1020,6 +1047,7 @@ export default function NYSportsDaily() {
   const allLeagues = ["ALL", ...SPORT_ENDPOINTS.map(e => e.label)];
 
   return (
+    <MyTeamsCtx.Provider value={myTeams}>
     <DarkModeCtx.Provider value={darkMode}>
     <div style={{
       ...styles.root,
@@ -1240,6 +1268,10 @@ export default function NYSportsDaily() {
                 style={{...styles.nyToggle, ...(nyOnly ? styles.nyToggleActive : {})}}>
                 {nyOnly ? "★ NY ONLY" : "☆ NY ONLY"}
               </button>
+              <button type="button" onClick={() => { setMyTeamsPending(new Set(myTeams)); setMyTeamsModal(true); }}
+                style={{...styles.nyToggle, ...(myTeams.size > 0 ? styles.myTeamsActive : {})}}>
+                {myTeams.size > 0 ? `⭐ MY TEAMS (${myTeams.size})` : "☆ MY TEAMS"}
+              </button>
             </div>
 
             <div style={styles.scoresNewsLayout}>
@@ -1362,6 +1394,21 @@ export default function NYSportsDaily() {
       </footer>
     </div>
     </DarkModeCtx.Provider>
+
+    {/* ── MY TEAMS MODAL ── */}
+    {myTeamsModal && (
+      <MyTeamsModal
+        pending={myTeamsPending}
+        setPending={setMyTeamsPending}
+        onSave={(teams) => {
+          try { localStorage.setItem("nysportsdaily_myteams", JSON.stringify([...teams])); } catch(e) {}
+          setMyTeams(new Set(teams));
+          setMyTeamsModal(false);
+        }}
+        onClose={() => setMyTeamsModal(false)}
+      />
+    )}
+    </MyTeamsCtx.Provider>
   );
 }
 
@@ -1489,7 +1536,91 @@ const SPORT_LEAGUE_MAP = {
   NWSL: { sport:"soccer",     league:"nwsl"  },
 };
 
+// ─── MY TEAMS MODAL ─────────────────────────────────────────────────────────
+const MY_TEAMS_SPORTS = [
+  { label:"⚾ Baseball · MLB",   teams:[{id:"Yankees",name:"Yankees"},{id:"Mets",name:"Mets"}] },
+  { label:"🏀 Basketball · NBA", teams:[{id:"Knicks",name:"Knicks"},{id:"Nets",name:"Nets"}] },
+  { label:"🏒 Hockey · NHL",     teams:[{id:"Rangers",name:"Rangers"},{id:"Islanders",name:"Islanders"},{id:"Devils",name:"Devils"}] },
+  { label:"🏈 Football · NFL",   teams:[{id:"Giants",name:"Giants"},{id:"Jets",name:"Jets"}] },
+  { label:"🏀 WNBA",             teams:[{id:"Liberty",name:"Liberty"}] },
+  { label:"⚽ Soccer",           teams:[{id:"NYCFC",name:"NYCFC"},{id:"RedBulls",name:"Red Bulls"},{id:"Gotham",name:"Gotham FC"}] },
+];
+
+function MyTeamsModal({ pending, setPending, onSave, onClose }) {
+  const toggle = (id) => {
+    const next = new Set(pending);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setPending(next);
+  };
+  return (
+    <div onClick={e => e.target === e.currentTarget && onClose()}
+      style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.82)", zIndex:9999,
+        display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div style={{ background:"#111", border:"1px solid #2a2a2a", borderTop:"3px solid #f0b429",
+        borderRadius:4, width:"100%", maxWidth:500, maxHeight:"88vh", overflowY:"auto" }}>
+        {/* Header */}
+        <div style={{ padding:"16px 20px 12px", borderBottom:"1px solid #2a2a2a",
+          display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
+          <div>
+            <div style={{ fontSize:13, letterSpacing:".12em", color:"#f0b429", fontWeight:700,
+              fontFamily:"Georgia,serif", textTransform:"uppercase" }}>⭐ Pick Your Favorite Teams</div>
+            <div style={{ fontSize:11, color:"#666", marginTop:4, lineHeight:1.4 }}>
+              Your teams float to the top of scores and news. Saved to your browser.
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background:"none", border:"none", color:"#666",
+            fontSize:20, cursor:"pointer", lineHeight:1, padding:0, marginTop:2 }}>✕</button>
+        </div>
+        {/* Body */}
+        <div style={{ padding:"14px 20px" }}>
+          {MY_TEAMS_SPORTS.map(sport => (
+            <div key={sport.label} style={{ marginBottom:14 }}>
+              <div style={{ fontSize:9, letterSpacing:".15em", color:"#c8201c", textTransform:"uppercase",
+                marginBottom:8, paddingBottom:4, borderBottom:"1px solid #1a1a1a" }}>{sport.label}</div>
+              <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                {sport.teams.map(t => {
+                  const on = pending.has(t.id);
+                  return (
+                    <button key={t.id} onClick={() => toggle(t.id)}
+                      style={{ fontFamily:"Georgia,serif", fontSize:11, padding:"6px 14px",
+                        border:`1px solid ${on ? "#f0b429" : "#2a2a2a"}`,
+                        background: on ? "#1a1600" : "#161616",
+                        color: on ? "#f0b429" : "#888",
+                        borderRadius:3, cursor:"pointer", fontWeight: on ? 700 : 400,
+                        transition:"all .15s", letterSpacing:".04em" }}>
+                      {on ? "✓ " : ""}{t.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Footer */}
+        <div style={{ padding:"12px 20px", borderTop:"1px solid #2a2a2a",
+          display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8 }}>
+          <span style={{ fontSize:10, color:"#555" }}>
+            <span style={{ color:"#f0b429", fontWeight:700 }}>{pending.size}</span> team{pending.size !== 1 ? "s" : ""} selected
+          </span>
+          <div style={{ display:"flex", gap:8 }}>
+            <button onClick={() => setPending(new Set())}
+              style={{ fontFamily:"Georgia,serif", fontSize:10, letterSpacing:".1em", textTransform:"uppercase",
+                padding:"7px 14px", border:"1px solid #333", background:"transparent",
+                color:"#666", cursor:"pointer", borderRadius:2 }}>Clear All</button>
+            <button onClick={() => onSave(pending)}
+              style={{ fontFamily:"Georgia,serif", fontSize:10, letterSpacing:".1em", textTransform:"uppercase",
+                padding:"7px 20px", border:"1px solid #f0b429", background:"#f0b429",
+                color:"#000", cursor:"pointer", fontWeight:700, borderRadius:2 }}>Save My Teams</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ScoreCard({ game }) {
+  const myTeams = useContext(MyTeamsCtx);
+  const isFav = teamInMyTeams(myTeams, game.homeTeam, game.awayTeam);
   const NY_CHECK = [
     "new york yankees","new york mets","new york jets","new york giants",
     "new york knicks","brooklyn nets","new york rangers","new york islanders",
@@ -1538,8 +1669,10 @@ function ScoreCard({ game }) {
   }
 
   return (
-    <div style={{...styles.scoreCard, ...(isNY ? styles.scoreCardNY : {})}}>
-      {isNY && <div style={styles.nyBadge}>NY</div>}
+    <div style={{...styles.scoreCard, ...(isNY ? styles.scoreCardNY : {}),
+      ...(isFav ? {borderColor:"#f0b429", boxShadow:"inset 3px 0 0 #f0b429, 0 0 0 1px #f0b42944", background:"#1a160033"} : {})}}>
+      {isFav && <div style={{position:"absolute",top:6,right:8,fontSize:11}}>⭐</div>}
+      {isNY && !isFav && <div style={styles.nyBadge}>NY</div>}
       <div style={styles.scoreCardSport}>{game.sport}</div>
       <div style={styles.scoreTeams}>
         <TeamRow logo={game.awayLogo} name={game.awayTeam} score={game.awayScore} color={game.awayColor} />
@@ -1752,7 +1885,9 @@ function isValidLink(link) {
 // Detect dark mode from root element — passed via context
 function NewsCardFeatured({ item }) {
   const dark = useContext(DarkModeCtx);
-  const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c";
+  const myTeams = useContext(MyTeamsCtx);
+  const isFav = teamInMyTeams(myTeams, item.team);
+  const teamColor = isFav ? "#f0b429" : (item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c");
   const sportEmoji = { MLB:"⚾", NFL:"🏈", NBA:"🏀", NHL:"🏒", WNBA:"🏀", MLS:"⚽", NWSL:"⚽" }[item.sport] || "📰";
   const domain = getSourceDomain(item);
   const hasLink = isValidLink(item.link);
@@ -1762,8 +1897,10 @@ function NewsCardFeatured({ item }) {
   const borderClr= dark ? "#2e2e2e"  : "#e0e0e0";
   return (
     <a href={hasLink ? item.link : "#"} target={hasLink ? "_blank" : "_self"} rel="noopener noreferrer"
-      style={{...styles.newsFeatured, background:cardBg, border:`1px solid ${borderClr}`,
-        cursor: hasLink ? "pointer" : "default", boxShadow: dark ? "0 2px 8px rgba(0,0,0,0.6)" : "0 1px 4px rgba(0,0,0,0.1)"}}>
+      style={{...styles.newsFeatured, background: isFav ? (dark?"#1a1600":"#fffbef") : cardBg,
+        border:`1px solid ${isFav ? "#f0b429" : borderClr}`,
+        boxShadow: isFav ? "inset 3px 0 0 #f0b429" : (dark ? "0 2px 8px rgba(0,0,0,0.6)" : "0 1px 4px rgba(0,0,0,0.1)"),
+        cursor: hasLink ? "pointer" : "default"}}>
       {item.image && (
         <div style={{ margin:"-20px -20px 0", height:180, overflow:"hidden", borderRadius:"3px 3px 0 0" }}>
           <img src={item.image} alt="" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} loading="lazy"
@@ -8546,12 +8683,9 @@ function CrosswordTab() {
 
   // Load weekly puzzle from Supabase — falls back to SAMPLE_PUZZLE
   useEffect(() => {
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const weekNum = Math.ceil((((now - startOfYear) / 86400000) + startOfYear.getDay() + 1) / 7);
-    const clampedWeek = ((weekNum - 1) % 52) + 1;
+    // Load by month (1-12) — puzzle 1=Jan, 2=Feb, etc.
+    const monthNum = new Date().getMonth() + 1;
 
-    // Try current week, then fall back to week 1
     async function loadPuzzle(weekToTry) {
       const rows = await sbFetch("ny_crossword", `?week_num=eq.${weekToTry}&select=puzzle_json&limit=1`);
       if (rows && rows[0]?.puzzle_json) {
@@ -8560,7 +8694,8 @@ function CrosswordTab() {
       return false;
     }
 
-    loadPuzzle(clampedWeek)
+    // Try current month, fall back to month 1
+    loadPuzzle(monthNum)
       .then(found => { if (!found) return loadPuzzle(1); })
       .catch(() => {})
       .finally(() => setLoadingPuzzle(false));
@@ -9144,6 +9279,7 @@ const styles = {
     fontFamily: "'Georgia', serif", fontWeight: 700, transition: "all 0.15s",
   },
   nyToggleActive: { background: "#1a3a2a", border: "1px solid #2d8a50", color: "#4ade80" },
+  myTeamsActive:  { background: "#1a1600", border: "1px solid #f0b429", color: "#f0b429" },
 
   // SCORES GRID
   scoresGrid: {
