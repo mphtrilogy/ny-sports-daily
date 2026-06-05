@@ -1136,7 +1136,7 @@ export default function NYSportsDaily() {
         </div>
         {/* TAB NAV — Secondary */}
         <div style={{...styles.tabNav, marginTop:-16, borderBottom:"1px solid #1a1a1a", marginBottom:20}}>
-          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","TRIVIA","XWORD","SONGS","SPIN","BIRTHDAYS"].map(tab => (
+          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","TRIVIA","XWORD","WORDSEARCH","SONGS","SPIN","BIRTHDAYS"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}), fontSize:9, padding:"7px 10px"}}>
               {tab}
@@ -1339,6 +1339,7 @@ export default function NYSportsDaily() {
         {activeTab === "XWORD" && (
           <CrosswordTab />
         )}
+        {activeTab === "WORDSEARCH" && <WordSearchTab />}
         {/* ──── SPIN TAB ──── */}
         {activeTab === "SONGS" && <SongsTab />}
         {activeTab === "SPIN" && <SpinWheelTab />}
@@ -7296,6 +7297,291 @@ function SpinTab() {
 
 
 // ─── SONGS TAB (walk-up songs only, extracted from SpinTab) ────────────────
+// ─── WORD SEARCH TAB ──────────────────────────────────────────────────────
+function WordSearchTab() {
+  const PUZZLES = [
+    {
+      title: "NY YANKEES LEGENDS",
+      words: ["JETER","MANTLE","DIMAGGIO","RUTH","GEHRIG","FORD","BERRA","RIVERA","MATTINGLY","REGGIE","MUNSON","WINFIELD"],
+      size: 15,
+    },
+    {
+      title: "NY METS HEROES",
+      words: ["SEAVER","PIAZZA","GOODEN","STRAWBERRY","HERNANDEZ","CARTER","MOOKIE","WRIGHT","LINDOR","SOTO","REYES","DEGROM"],
+      size: 15,
+    },
+    {
+      title: "NY RANGERS LEGENDS",
+      words: ["MESSIER","LEETCH","GILBERT","GIACOMIN","ESPOSITO","GRETZKY","LUNDQVIST","KREIDER","LAFRENIERE","POTVIN","DIONNE","RICHTER"],
+      size: 15,
+    },
+    {
+      title: "NY KNICKS ALL-TIME",
+      words: ["EWING","FRAZIER","REED","DEBUSSCHERE","BARNETT","MONROE","SPREWELL","STARKS","HOUSTON","BRUNSON","BRIDGES","TOWNS"],
+      size: 15,
+    },
+    {
+      title: "NY ISLANDERS DYNASTY",
+      words: ["BOSSY","TROTTIER","POTVIN","GILLIES","TONELLI","SMITH","NYSTROM","LAFONTAINE","TAVARES","DIPIETRO","WEIGHT","PARISE"],
+      size: 15,
+    },
+    {
+      title: "NY GIANTS LEGENDS",
+      words: ["TAYLOR","SIMMS","STRAHAN","MANNING","GIFFORD","TISCH","PARCELLS","BARBER","BECKHAM","NABERS","CARTER","BARKLEY"],
+      size: 15,
+    },
+  ];
+
+  const [puzzleIdx, setPuzzleIdx] = useState(0);
+  const [grid, setGrid]           = useState([]);
+  const [wordData, setWordData]   = useState([]);
+  const [selected, setSelected]   = useState(new Set());
+  const [found, setFound]         = useState(new Set());
+  const [selecting, setSelecting] = useState(false);
+  const [startCell, setStartCell] = useState(null);
+  const [currentSel, setCurrentSel] = useState([]);
+  const [solved, setSolved]       = useState(false);
+
+  const puzzle = PUZZLES[puzzleIdx];
+  const { words, size } = puzzle;
+
+  // Generate the grid
+  useEffect(() => {
+    const { newGrid, placed } = buildWordSearch(words, size);
+    setGrid(newGrid);
+    setWordData(placed);
+    setSelected(new Set());
+    setFound(new Set());
+    setCurrentSel([]);
+    setStartCell(null);
+    setSelecting(false);
+    setSolved(false);
+  }, [puzzleIdx]);
+
+  function buildWordSearch(wordList, sz) {
+    const dirs = [
+      [0,1],[1,0],[1,1],[0,-1],[-1,0],[-1,-1],[1,-1],[-1,1]
+    ];
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const g = Array.from({length:sz}, () => Array(sz).fill(""));
+    const placed = [];
+
+    // Sort by length descending for better placement
+    const sorted = [...wordList].sort((a,b) => b.length - a.length);
+
+    for (const word of sorted) {
+      let success = false;
+      const attempts = 300;
+      for (let att = 0; att < attempts && !success; att++) {
+        const [dr, dc] = dirs[Math.floor(Math.random() * dirs.length)];
+        const r0 = Math.floor(Math.random() * sz);
+        const c0 = Math.floor(Math.random() * sz);
+        // Check if fits
+        const cells = [];
+        let fits = true;
+        for (let i = 0; i < word.length; i++) {
+          const r = r0 + dr*i, c = c0 + dc*i;
+          if (r < 0 || r >= sz || c < 0 || c >= sz) { fits = false; break; }
+          if (g[r][c] !== "" && g[r][c] !== word[i]) { fits = false; break; }
+          cells.push([r, c]);
+        }
+        if (fits) {
+          cells.forEach(([r,c], i) => { g[r][c] = word[i]; });
+          placed.push({ word, cells });
+          success = true;
+        }
+      }
+    }
+
+    // Fill remaining with random letters
+    for (let r = 0; r < sz; r++)
+      for (let c = 0; c < sz; c++)
+        if (!g[r][c]) g[r][c] = letters[Math.floor(Math.random()*26)];
+
+    return { newGrid: g, placed };
+  }
+
+  function cellKey(r, c) { return `${r},${c}`; }
+
+  function getCellsBetween(r1, c1, r2, c2) {
+    const dr = Math.sign(r2-r1), dc = Math.sign(c2-c1);
+    const cells = [];
+    let r = r1, c = c1;
+    while (r !== r2+dr || c !== c2+dc) {
+      cells.push([r,c]);
+      if (r === r2 && c === c2) break;
+      r += dr; c += dc;
+      if (cells.length > 20) break;
+    }
+    return cells;
+  }
+
+  function onMouseDown(r, c) {
+    setSelecting(true);
+    setStartCell([r,c]);
+    setCurrentSel([[r,c]]);
+  }
+
+  function onMouseEnter(r, c) {
+    if (!selecting || !startCell) return;
+    const [r0, c0] = startCell;
+    const dr = r - r0, dc = c - c0;
+    // Only allow 8 directions
+    if (dr === 0 || dc === 0 || Math.abs(dr) === Math.abs(dc)) {
+      setCurrentSel(getCellsBetween(r0, c0, r, c));
+    }
+  }
+
+  function onMouseUp() {
+    if (!selecting) return;
+    setSelecting(false);
+    checkSelection(currentSel);
+    setCurrentSel([]);
+    setStartCell(null);
+  }
+
+  function checkSelection(cells) {
+    if (!cells.length) return;
+    const word = cells.map(([r,c]) => grid[r]?.[c] || "").join("");
+    const revWord = word.split("").reverse().join("");
+
+    const match = wordData.find(wd =>
+      (wd.word === word || wd.word === revWord) && !found.has(wd.word)
+    );
+
+    if (match) {
+      const newFound = new Set(found);
+      newFound.add(match.word);
+      setFound(newFound);
+
+      const newSel = new Set(selected);
+      cells.forEach(([r,c]) => newSel.add(cellKey(r,c)));
+      setSelected(newSel);
+
+      if (newFound.size === wordData.length) setSolved(true);
+    }
+  }
+
+  const WORD_COLORS = [
+    "#22c55e","#3b82f6","#f59e0b","#ec4899","#8b5cf6","#14b8a6",
+    "#f97316","#06b6d4","#84cc16","#ef4444","#a855f7","#eab308",
+  ];
+
+  function cellColor(r, c) {
+    const key = cellKey(r,c);
+    if (currentSel.find(([cr,cc]) => cr===r && cc===c)) return "#c8201c";
+    if (selected.has(key)) {
+      // Find which word owns this cell and give it that word's color
+      for (let i = 0; i < wordData.length; i++) {
+        if (wordData[i].cells.find(([wr,wc]) => wr===r && wc===c)) {
+          return WORD_COLORS[i % WORD_COLORS.length];
+        }
+      }
+      return "#22c55e";
+    }
+    return "transparent";
+  }
+
+  return (
+    <div style={styles.statsRoot}>
+      <div style={styles.stdHeader}>
+        <h2 style={styles.stdTitle}>🔍 NY SPORTS WORD SEARCH</h2>
+        <p style={styles.stdSub}>FIND ALL THE HIDDEN NY SPORTS LEGENDS</p>
+      </div>
+
+      {/* Puzzle selector */}
+      <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:16}}>
+        {PUZZLES.map((p, i) => (
+          <button key={i} onClick={() => setPuzzleIdx(i)}
+            style={{...styles.filterBtn, ...(puzzleIdx===i ? styles.filterBtnActive : {}), fontSize:9, padding:"3px 10px"}}>
+            {p.title}
+          </button>
+        ))}
+      </div>
+
+      <div style={{display:"flex", gap:24, flexWrap:"wrap", alignItems:"flex-start"}}>
+        {/* Grid */}
+        <div style={{flexShrink:0}}>
+          <div style={{marginBottom:8, fontSize:12, fontWeight:900, color:"#e8e8e8", fontFamily:"'Georgia',serif"}}>
+            {puzzle.title}
+            {solved && <span style={{marginLeft:12, color:"#22c55e"}}>✅ SOLVED!</span>}
+          </div>
+          <div
+            onMouseLeave={onMouseUp}
+            style={{
+              display:"grid",
+              gridTemplateColumns:`repeat(${size}, 1fr)`,
+              gap:1, userSelect:"none", cursor:"crosshair",
+              background:"#222", padding:2, borderRadius:3,
+            }}>
+            {grid.map((row, r) =>
+              row.map((letter, c) => {
+                const bg = cellColor(r, c);
+                return (
+                  <div key={`${r}-${c}`}
+                    onMouseDown={() => onMouseDown(r,c)}
+                    onMouseEnter={() => onMouseEnter(r,c)}
+                    onMouseUp={onMouseUp}
+                    style={{
+                      width:28, height:28,
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      fontSize:12, fontWeight:900, fontFamily:"monospace",
+                      background: bg,
+                      color: bg !== "transparent" ? "#fff" : "#e8e8e8",
+                      borderRadius:2, cursor:"crosshair",
+                      transition:"background 0.1s",
+                    }}>
+                    {letter}
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <div style={{fontSize:9, color:"#555", marginTop:6}}>
+            Click and drag to select letters · Works in any direction
+          </div>
+        </div>
+
+        {/* Word list */}
+        <div style={{flex:1, minWidth:160}}>
+          <div style={{fontSize:10, fontWeight:900, color:"#c8201c", letterSpacing:"0.12em", marginBottom:12}}>
+            FIND THESE WORDS ({found.size}/{words.length})
+          </div>
+          <div style={{display:"flex", flexDirection:"column", gap:5}}>
+            {words.map((w, i) => {
+              const isFound = found.has(w);
+              const color = WORD_COLORS[i % WORD_COLORS.length];
+              return (
+                <div key={w} style={{
+                  display:"flex", alignItems:"center", gap:8,
+                  padding:"5px 10px",
+                  background: isFound ? `${color}22` : "#111",
+                  borderLeft:`3px solid ${isFound ? color : "#333"}`,
+                  borderRadius:2,
+                }}>
+                  <span style={{fontSize:12, fontWeight:700,
+                    color: isFound ? color : "#888",
+                    textDecoration: isFound ? "line-through" : "none",
+                    fontFamily:"monospace", letterSpacing:"0.05em"}}>
+                    {w}
+                  </span>
+                  {isFound && <span style={{fontSize:10}}>✓</span>}
+                </div>
+              );
+            })}
+          </div>
+
+          <button onClick={() => setPuzzleIdx(puzzleIdx)}
+            style={{...styles.filterBtn, marginTop:16, width:"100%", padding:"8px",
+              fontSize:10, letterSpacing:"0.1em"}}>
+            🔄 NEW GRID (SAME WORDS)
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SongsTab() {
   const [activeTeam, setActiveTeam] = useState("Yankees");
 
@@ -8134,9 +8420,72 @@ function AILoadingBlock({ text }) {
 // ─── SAMPLE PUZZLE DATA (in production: fetched from Supabase by day-of-year) ──
 // Grid: '.' = black cell, letter = solution, ' ' = empty white cell
 const SAMPLE_PUZZLE = {
-  title: "NY SPORTS DAILY · SUNDAY CHALLENGE",
-  date:  new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}),
+  title: "NY SPORTS LEGENDS · PUZZLE #1",
+  subtitle: "\"THE DYNASTY GRID\" — Hard",
+  date:  "Week 1 of 52",
   size:  15,
+  solution: [
+    ["J","E","T","E","R",".","M","E","T","S",".","A","R","G","O"],
+    ["O",".","O",".","I",".",".",".",".","H",".","L",".",".","D"],
+    ["Y","A","N","K","E","E","S",".","P","E","A","L","S",".","E"],
+    ["C",".","Y",".",".",".","E",".","O",".",".",".","E",".","N"],
+    ["E","W","I","N","G",".","S","S","L","O",".","S","A","V","E"],
+    [".","R",".",".",".","F","S",".",".",".",".","T",".",".","R"],
+    ["P","I","A","Z","Z","A",".","N","A","M","A","T","H",".","S"],
+    [".",".",".",".",".",".","R",".",".",".",".",".",".",".","."],
+    ["M","E","S","S","I","E","R",".","P","O","T","V","I","N","."],
+    [".",".",".",".",".",".","A",".",".",".",".",".",".",".","R"],
+    ["B","R","O","D","E","U","R",".","L","E","E","T","C","H","."],
+    [".",".",".",".",".",".",".",".",".",".",".",".",".",".","S"],
+    ["G","E","H","R","I","G",".","T","R","O","T","T","I","E","R"],
+    [".",".",".",".",".",".","R",".",".",".",".",".",".",".","."],
+    ["N","A","S","S","A","U",".","S","E","A","V","E","R",".","Y"],
+  ],
+  across: [
+    { number:1,  row:0,  col:0,  len:5,  clue:"The Captain — 3,465 hits, all in pinstripes" },
+    { number:6,  row:0,  col:6,  len:4,  clue:"Flushing's team, simply put" },
+    { number:10, row:0,  col:11, len:4,  clue:"Jason ___, Yankees slugger who hit .342 in 2000" },
+    { number:13, row:2,  col:0,  len:7,  clue:"The Bronx Bombers, for short" },
+    { number:16, row:2,  col:8,  len:5,  clue:"Jewelry pieces, like Yankee rings" },
+    { number:18, row:4,  col:0,  len:5,  clue:"Georgetown center, '85 lottery pick, 1st Knick" },
+    { number:21, row:4,  col:11, len:4,  clue:"To ___ the day — what Mets fans hope to do" },
+    { number:22, row:6,  col:0,  len:6,  clue:"Home run on 9/11 — catcher hero Mike" },
+    { number:24, row:6,  col:7,  len:6,  clue:"Broadway Joe's real surname" },
+    { number:27, row:8,  col:0,  len:7,  clue:"Cup captain, '94 guarantee" },
+    { number:29, row:8,  col:8,  len:6,  clue:"Islanders dynasty captain Denis" },
+    { number:31, row:10, col:0,  len:7,  clue:"Devils Hall of Fame goalie, Martin" },
+    { number:33, row:10, col:8,  len:6,  clue:"Rangers Conn Smythe winner 1994, Brian" },
+    { number:35, row:12, col:0,  len:6,  clue:"Iron Horse, Lou" },
+    { number:37, row:12, col:7,  len:8,  clue:"Islanders dynasty center, Bryan" },
+    { number:38, row:14, col:0,  len:6,  clue:"Islanders old arena county" },
+    { number:40, row:14, col:7,  len:6,  clue:"Tom Terrific, the greatest Met" },
+  ],
+  down: [
+    { number:1,  row:0,  col:0,  len:4,  clue:"___ Coughlin, Giants Super Bowl coach" },
+    { number:2,  row:0,  col:1,  len:4,  clue:"___ Winfield, Yankees DH, Mr. May" },
+    { number:3,  row:0,  col:2,  len:4,  clue:"Tokyo, NY, LA — all have one: a ___" },
+    { number:4,  row:0,  col:3,  len:4,  clue:"Riker's Island neighbor, abbrev" },
+    { number:5,  row:0,  col:4,  len:7,  clue:"Bronx Bomber slugging % leader stat" },
+    { number:7,  row:0,  col:7,  len:6,  clue:"Ewing's alma mater, in DC (abbrev)" },
+    { number:8,  row:0,  col:8,  len:4,  clue:"Shea Stadium neighbors: ___ Grounds, Flushing" },
+    { number:9,  row:0,  col:9,  len:4,  clue:"Hit .388 — Ted Williams' record stat abbrev" },
+    { number:11, row:0,  col:11, len:4,  clue:"Al ___, Yankee catcher who replaced Munson" },
+    { number:12, row:0,  col:14, len:7,  clue:"Darryl Strawberry did this at Shea — past tense" },
+    { number:14, row:2,  col:6,  len:13, clue:"Mets' Roger ___ threw consecutive no-hitters in 1969 — wait, that's the other guy" },
+    { number:15, row:2,  col:11, len:3,  clue:"Mookie Wilson + Len Dykstra: left side" },
+    { number:17, row:4,  col:7,  len:4,  clue:"Knicks coach Pat Riley's nickname: Prince of ___ " },
+    { number:19, row:4,  col:11, len:4,  clue:"___ Fisk, Red Sox catcher who waved it fair" },
+    { number:20, row:4,  col:13, len:4,  clue:"Mets pitcher Ron ___, 1986 champ" },
+    { number:23, row:6,  col:6,  len:9,  clue:"Home run — going ___ (slang)" },
+    { number:25, row:8,  col:6,  len:7,  clue:"Ranger, Islanders, Devil — their type (abbrev)" },
+    { number:26, row:8,  col:14, len:4,  clue:"Dwight Gooden's '85 stat: 268 ___s" },
+    { number:28, row:10, col:14, len:4,  clue:"Kevin ___, Knicks guard from 2022 trade" },
+    { number:30, row:12, col:6,  len:3,  clue:"Bill ___, former Rangers coach" },
+    { number:34, row:12, col:14, len:3,  clue:"Jeter's batting stance? Pure ___" },
+    { number:36, row:14, col:6,  len:1,  clue:"\"2001\" director Kubrick's first initial" },
+    { number:39, row:14, col:13, len:1,  clue:"Fenway abbreviation" },
+  ],
+};
   solution: [
     ["N","A","M","A","T","H",".","B","O","S","S","Y",".","L","T"],
     ["E",".","E",".",".","O","M","A","R",".","H",".",".","E","."],
