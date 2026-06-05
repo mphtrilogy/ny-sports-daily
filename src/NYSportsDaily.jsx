@@ -7301,6 +7301,11 @@ function SpinTab() {
 function WordSearchTab() {
   const PUZZLES = [
     {
+      title: "NY JETS LEGENDS",
+      words: ["NAMATH","MAYNARD","KLECKO","MARTIN","GASTINEAU","PENNINGTON","SANCHEZ","GARDNER","DARNOLD","WILSON","BAILEY","MCNEIL","MANGOLD","FERGUSON","PARCELLS"],
+      size: 15,
+    },
+    {
       title: "NY YANKEES LEGENDS",
       words: ["JETER","MANTLE","DIMAGGIO","RUTH","GEHRIG","FORD","BERRA","RIVERA","MATTINGLY","REGGIE","MUNSON","WINFIELD"],
       size: 15,
@@ -7312,7 +7317,7 @@ function WordSearchTab() {
     },
     {
       title: "NY RANGERS LEGENDS",
-      words: ["MESSIER","LEETCH","GILBERT","GIACOMIN","ESPOSITO","GRETZKY","LUNDQVIST","KREIDER","LAFRENIERE","POTVIN","DIONNE","RICHTER"],
+      words: ["MESSIER","LEETCH","GILBERT","GIACOMIN","ESPOSITO","LUNDQVIST","KREIDER","LAFRENIERE","RICHTER","DIONNE"],
       size: 15,
     },
     {
@@ -7326,8 +7331,13 @@ function WordSearchTab() {
       size: 15,
     },
     {
+      title: "NJ DEVILS LEGENDS",
+      words: ["BRODEUR","NIEDERMAYER","STEVENS","LEMAIRE","ELIAS","HISCHIER","HUGHES","PARISE","SYKORA","MADANO","ROLSTON","GIONTA"],
+      size: 15,
+    },
+    {
       title: "NY GIANTS LEGENDS",
-      words: ["TAYLOR","SIMMS","STRAHAN","MANNING","GIFFORD","TISCH","PARCELLS","BARBER","BECKHAM","NABERS","CARTER","BARKLEY"],
+      words: ["TAYLOR","SIMMS","STRAHAN","MANNING","GIFFORD","PARCELLS","BARBER","BECKHAM","NABERS","BARKLEY","CARTER","BANKS"],
       size: 15,
     },
   ];
@@ -7482,6 +7492,68 @@ function WordSearchTab() {
     return "transparent";
   }
 
+  function handlePrint() {
+    const CS = 32;
+    let gridHtml = "";
+    for (let r = 0; r < size; r++) {
+      let row = "<tr>";
+      for (let c = 0; c < size; c++) {
+        const letter = grid[r]?.[c] || "";
+        const isHighlighted = selected.has(cellKey(r,c));
+        let bg = "#fff";
+        if (isHighlighted) {
+          const colors = ["#bbf7d0","#bfdbfe","#fde68a","#fbcfe8","#ddd6fe","#99f6e4","#fed7aa","#a5f3fc","#d9f99d","#fecaca","#e9d5ff","#fef08a"];
+          for (let i = 0; i < wordData.length; i++) {
+            if (wordData[i].cells.find(([wr,wc]) => wr===r && wc===c)) { bg = colors[i % colors.length]; break; }
+          }
+        }
+        row += `<td style="width:${CS}px;height:${CS}px;border:1px solid #ccc;text-align:center;vertical-align:middle;font-size:14px;font-weight:700;font-family:monospace;background:${bg} !important;box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;">${letter}</td>`;
+      }
+      gridHtml += row + "</tr>";
+    }
+    const colors = ["#bbf7d0","#bfdbfe","#fde68a","#fbcfe8","#ddd6fe","#99f6e4","#fed7aa","#a5f3fc","#d9f99d","#fecaca","#e9d5ff","#fef08a"];
+    const wordListHtml = words.map((w,i) => {
+      const isFoundW = found.has(w);
+      const bg = isFoundW ? colors[i % colors.length] : "#fff";
+      return `<span style="display:inline-block;margin:3px 4px 3px 0;padding:3px 8px;border:1.5px solid #ccc;border-radius:3px;font-size:11px;font-weight:700;font-family:monospace;background:${bg} !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;text-decoration:${isFoundW?"line-through":"none"}">${w}</span>`;
+    }).join("");
+    const answerKey = wordData.map(wd => {
+      const r1=wd.cells[0][0],c1=wd.cells[0][1],r2=wd.cells[wd.cells.length-1][0],c2=wd.cells[wd.cells.length-1][1];
+      return `${wd.word}: (${r1+1},${c1+1})→(${r2+1},${c2+1})`;
+    }).join(" &nbsp;·&nbsp; ");
+    const html = `<!DOCTYPE html><html><head><title>${puzzle.title} Word Search</title><style>
+      *{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+      body{font-family:Georgia,serif;margin:20px;color:#000;}
+      h2{text-align:center;font-size:20px;margin:0 0 2px;}
+      .sub{text-align:center;font-size:11px;color:#555;margin:0 0 3px;}
+      .site{text-align:center;font-size:10px;color:#aaa;margin:0 0 14px;letter-spacing:0.15em;}
+      .layout{display:flex;gap:24px;align-items:flex-start;}
+      table{border-collapse:collapse;flex-shrink:0;}
+      .words-title{font-size:12px;font-weight:bold;border-bottom:2px solid #000;margin:0 0 10px;padding-bottom:4px;}
+      .hint{font-size:9px;color:#888;margin-top:12px;font-style:italic;line-height:1.5;}
+      .key{font-size:9px;color:#666;margin-top:14px;border-top:1px solid #ccc;padding-top:10px;line-height:1.9;}
+      .key-title{font-size:10px;font-weight:bold;margin-bottom:4px;}
+      @media print{body{margin:6px;}@page{margin:0.4in;size:landscape;}}
+    </style></head><body>
+    <h2>🔍 ${puzzle.title}</h2>
+    <p class="sub">NY Sports Daily · Word Search · ${size}&times;${size} Grid</p>
+    <p class="site">NYSPORTSDAILY.COM</p>
+    <div class="layout">
+      <table>${gridHtml}</table>
+      <div style="flex:1;min-width:180px;">
+        <div class="words-title">FIND THESE ${words.length} WORDS</div>
+        <div>${wordListHtml}</div>
+        <div class="hint">Words are hidden horizontally, vertically, and diagonally — forwards and backwards. Circle or highlight each word as you find it.</div>
+        <div class="key"><div class="key-title">ANSWER KEY (row,col)</div>${answerKey}</div>
+      </div>
+    </div>
+    <script>setTimeout(()=>window.print(),400);</script>
+    </body></html>`;
+    const w = window.open("","_blank","width=1050,height=750");
+    if (w) { w.document.write(html); w.document.close(); }
+    else alert("Please allow popups to print.");
+  }
+
   return (
     <div style={styles.statsRoot}>
       <div style={styles.stdHeader}>
@@ -7575,6 +7647,11 @@ function WordSearchTab() {
             style={{...styles.filterBtn, marginTop:16, width:"100%", padding:"8px",
               fontSize:10, letterSpacing:"0.1em"}}>
             🔄 NEW GRID (SAME WORDS)
+          </button>
+          <button onClick={handlePrint}
+            style={{...styles.filterBtn, marginTop:6, width:"100%", padding:"8px",
+              fontSize:10, letterSpacing:"0.1em", color:"#aaa"}}>
+            🖨 PRINT / SAVE PDF
           </button>
         </div>
       </div>
@@ -8494,8 +8571,11 @@ function CrosswordTab() {
 
   // Load weekly puzzle from Supabase — falls back to SAMPLE_PUZZLE
   useEffect(() => {
-    const weekNum = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / (86400000*7));
-    sbFetch("ny_crossword", `?week_num=eq.${weekNum}&select=puzzle_json&limit=1`)
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const weekNum = Math.ceil((((now - startOfYear) / 86400000) + startOfYear.getDay() + 1) / 7);
+    const clampedWeek = ((weekNum - 1) % 52) + 1;
+    sbFetch("ny_crossword", `?week_num=eq.${clampedWeek}&select=puzzle_json&limit=1`)
       .then(rows => {
         if (rows && rows[0]?.puzzle_json) {
           try { setPuzzle(JSON.parse(rows[0].puzzle_json)); } catch(e) {}
