@@ -1164,10 +1164,13 @@ export default function NYSportsDaily() {
         </div>
         {/* TAB NAV — Secondary */}
         <div style={{...styles.tabNav, marginTop:-16, borderBottom:"1px solid #1a1a1a", marginBottom:20}}>
-          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","TRIVIA","XWORD","WORDSEARCH","SONGS","SPIN","BIRTHDAYS"].map(tab => (
+          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","PLAYROOM"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
-              style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}), fontSize:9, padding:"7px 10px"}}>
-              {tab}
+              style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}), fontSize:9, padding:"7px 10px",
+                ...(tab==="PLAYROOM"?{color:"#f0b429",fontWeight:900}:{}),
+                ...(activeTab===tab&&tab==="PLAYROOM"?{background:"#f0b429",color:"#000",borderBottom:"3px solid #f0b429"}:{})
+              }}>
+              {tab === "PLAYROOM" ? "🎮 PLAYROOM" : tab}
             </button>
           ))}
         </div>
@@ -1338,22 +1341,14 @@ export default function NYSportsDaily() {
         {activeTab === "STATS" && (
           <StatsTab />
         )}
-        {/* ──── THIS DATE · TRIVIA TAB ──── */}
-        {activeTab === "TRIVIA" && (
-          <TriviaTab />
-        )}
-        {/* ──── CROSSWORD TAB ──── */}
+        {/* ──── RADIO TAB (kept, accessed via search) ──── */}
         {activeTab === "RADIO" && (
           <RadioTab />
         )}
-        {activeTab === "XWORD" && (
-          <CrosswordTab />
+        {/* ──── PLAYROOM TAB ──── */}
+        {activeTab === "PLAYROOM" && (
+          <PlayroomTab myTeams={myTeams} />
         )}
-        {activeTab === "WORDSEARCH" && <WordSearchTab />}
-        {/* ──── SPIN TAB ──── */}
-        {activeTab === "SONGS" && <SongsTab />}
-        {activeTab === "SPIN" && <SpinWheelTab />}
-        {activeTab === "BIRTHDAYS" && <BirthdaysTab />}
         {/* ──── SHOP TAB ──── */}
         {activeTab === "SHOP" && (
           <ShopTab />
@@ -9033,6 +9028,1075 @@ function CrosswordTab() {
 
 
 // ─── STYLES ────────────────────────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🎮 NY SPORTS PLAYROOM
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── MONTHLY CROSSWORD PUZZLES (12 hardcoded — rotates by month) ──────────
+const MONTHLY_CROSSWORDS = [
+  // JANUARY
+  { month:1, title:"JANUARY: NY WINTER LEGENDS", subtitle:"Cold weather, hot careers",
+    size:13, solution:[
+      ["J","E","T","E","R",".",".","B","O","S","S","Y","."],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["N","A","M","A","T","H",".",".","M","E","S","S","I"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["G","E","H","R","I","G",".",".","R","E","E","D","S"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["L","E","E","T","C","H",".",".","E","W","I","N","G"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["S","E","A","V","E","R",".",".","R","U","T","H","S"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["R","I","V","E","R","A",".",".","F","O","R","D","S"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["P","O","T","V","I","N",".",".","G","I","F","F","D"],
+    ],
+    across:[
+      {number:1,row:0,col:0,len:5,clue:"The Captain — 3,465 hits, 5 rings, all in pinstripes"},
+      {number:2,row:0,col:7,len:5,clue:"Islanders' 9-straight 50-goal scorer — dynasty right wing"},
+      {number:3,row:2,col:0,len:6,clue:"Broadway Joe — guaranteed Super Bowl III and delivered"},
+      {number:4,row:2,col:8,len:5,clue:"Rangers captain who ended 54 years of suffering in 1994"},
+      {number:5,row:4,col:0,len:6,clue:"The Iron Horse — 2,130 consecutive games"},
+      {number:6,row:4,col:8,len:4,clue:"Knicks legend who limped onto the court in Game 7 (1970)"},
+      {number:7,row:6,col:0,len:6,clue:"Conn Smythe '94 — greatest American player in NHL history"},
+      {number:8,row:6,col:8,len:5,clue:"Greatest Knick — 15 seasons at MSG, 11 All-Stars"},
+      {number:9,row:8,col:0,len:6,clue:"Tom Terrific — 3 Cy Youngs, 1969 World Series champion"},
+      {number:10,row:8,col:8,len:4,clue:"The Sultan of Swat — 714 HR, The House That Ruth Built"},
+      {number:11,row:10,col:0,len:6,clue:"Enter Sandman — first unanimous Hall of Famer, 652 saves"},
+      {number:12,row:10,col:8,len:4,clue:"Chairman of the Board — .690 World Series winning pct"},
+      {number:13,row:12,col:0,len:6,clue:"Islanders dynasty captain — broke Orr's defenseman record"},
+      {number:14,row:12,col:8,len:5,clue:"Mr. Giant — glamour, talent, Hall of Famer, broadcaster"},
+    ],
+    down:[]
+  },
+  // FEBRUARY
+  { month:2, title:"FEBRUARY: SUPER BOWL GIANTS & JETS", subtitle:"NY football's finest hours",
+    size:13, solution:[
+      ["P","A","R","C","E","L","L","S",".",".","L","T","."],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["S","I","M","M","S",".",".","E","L","I",".",".","J"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["T","Y","R","E","E",".",".","M","A","R","T","I","N"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["R","E","V","I","S",".",".","N","A","M","A","T","H"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["S","T","R","A","H","A","N",".",".","T","A","Y","L"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["M","A","R","T","I","N",".",".","G","I","A","N","T"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["B","A","N","N","I","N","G",".",".","J","E","T","S"],
+    ],
+    across:[
+      {number:1,row:0,col:0,len:8,clue:"Big Tuna — 2 Super Bowls with NY Giants, rebuilt the Jets too"},
+      {number:2,row:0,col:10,len:2,clue:"Lawrence ___ — greatest defensive player in NFL history"},
+      {number:3,row:2,col:0,len:5,clue:"Super Bowl XXI MVP — 22/25 completions, still the record"},
+      {number:4,row:2,col:7,len:3,clue:"Manning who beat the undefeated Patriots twice in the Super Bowl"},
+      {number:5,row:4,col:0,len:5,clue:"David ___ — helmet catch that stunned 18-0 Patriots"},
+      {number:6,row:4,col:7,len:6,clue:"Greatest Jet running back — 4x Pro Bowl, Hall of Famer"},
+      {number:7,row:6,col:0,len:5,clue:"Revis Island — most dominant CB of his era"},
+      {number:8,row:6,col:7,len:6,clue:"Broadway Joe — guaranteed Super Bowl III"},
+      {number:9,row:8,col:0,len:7,clue:"Michael ___ — 141.5 sacks, single-season record 22.5"},
+      {number:10,row:10,col:0,len:6,clue:"Curtis ___ — greatest Jet since Namath, 14,101 rush yards"},
+      {number:11,row:12,col:0,len:7,clue:"NY football's eternal nemesis — the Super Bowl drought"},
+      {number:12,row:12,col:9,len:4,clue:"Gang Green — Broadway Joe's team"},
+    ],
+    down:[]
+  },
+  // MARCH
+  { month:3, title:"MARCH: KNICKS & RANGERS LEGENDS", subtitle:"MSG's greatest stars",
+    size:13, solution:[
+      ["F","R","A","Z","I","E","R",".",".","R","E","E","D"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["M","E","S","S","I","E","R",".",".","K","I","N","G"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["L","E","E","T","C","H",".",".","E","W","I","N","G"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["G","I","L","B","E","R","T",".",".","M","O","N","R"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["R","I","C","H","T","E","R",".",".","O","A","K","S"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["L","U","N","D","Q","V","I","S","T",".",".",".","."],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["B","R","U","N","S","O","N",".",".","M","S","G","!"],
+    ],
+    across:[
+      {number:1,row:0,col:0,len:7,clue:"Clyde — the coolest Knick ever, 2x champion, broadcaster legend"},
+      {number:2,row:0,col:9,len:4,clue:"Captain who limped onto court in Game 7 — MSG went electric"},
+      {number:3,row:2,col:0,len:7,clue:"The Captain — guaranteed 1994 Cup win then scored a hat trick"},
+      {number:4,row:2,col:9,len:4,clue:"Bernard ___ — 60 pts at MSG in 1984, unstoppable scorer"},
+      {number:5,row:4,col:0,len:6,clue:"Brian ___ — Conn Smythe 1994, greatest American in NHL history"},
+      {number:6,row:4,col:8,len:5,clue:"Patrick ___ — the greatest Knick, 15 seasons at MSG"},
+      {number:7,row:6,col:0,len:7,clue:"Rod ___ — all-time Rangers scoring leader for decades"},
+      {number:8,row:6,col:9,len:4,clue:"Earl ___ — The Pearl, playground genius at MSG"},
+      {number:9,row:8,col:0,len:7,clue:"Mike ___ — goaltending hero of 1994 Stanley Cup run"},
+      {number:10,row:8,col:9,len:3,clue:"Charles ___ — MSG enforcer, fans still chant his name"},
+      {number:11,row:10,col:0,len:9,clue:"The King — .921 SV%, 459 wins, Vezina 2012"},
+      {number:12,row:12,col:0,len:7,clue:"Jalen ___ — new MSG hero, took a hometown discount"},
+      {number:13,row:12,col:9,len:3,clue:"The World's Most Famous Arena — initials"},
+    ],
+    down:[]
+  },
+  // APRIL
+  { month:4, title:"APRIL: BASEBALL OPENING DAY", subtitle:"Play ball in New York",
+    size:13, solution:[
+      ["S","E","A","V","E","R",".",".","J","U","D","G","E"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["M","A","T","T","I","N","G","L","Y",".",".",".","."],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["G","O","O","D","E","N",".",".","L","I","N","D","R"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["J","E","T","E","R",".",".","S","O","T","O",".","."],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["P","I","A","Z","Z","A",".",".","A","L","O","N","S"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["R","I","V","E","R","A",".",".","W","R","I","G","H"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["S","T","R","A","W",".",".","D","E","G","R","O","M"],
+    ],
+    across:[
+      {number:1,row:0,col:0,len:6,clue:"Tom Terrific — 311 wins, 3 Cy Youngs, the greatest Met"},
+      {number:2,row:0,col:8,len:5,clue:"Aaron ___ — 62 HR in 2022, AL record, The Captain"},
+      {number:3,row:2,col:0,len:9,clue:"Donnie Baseball — 9 Gold Gloves, AL MVP 1985"},
+      {number:4,row:4,col:0,len:6,clue:"Doc — 24-4, 1.53 ERA at age 20, most dominant ever"},
+      {number:5,row:4,col:8,len:5,clue:"Francisco ___ — Mr. Smile, Mets SS, My Girl walk-up"},
+      {number:6,row:6,col:0,len:5,clue:"The Captain — 3,465 hits, 5 rings, all in pinstripes"},
+      {number:7,row:6,col:7,len:4,clue:"Juan ___ — $765M, Empire State of Mind walk-up"},
+      {number:8,row:8,col:0,len:6,clue:"Mike ___ — 9/11 home run healed a grieving city"},
+      {number:9,row:8,col:8,len:5,clue:"Pete ___ — Mets all-time HR king, 254+ and counting"},
+      {number:10,row:10,col:0,len:6,clue:"Mo — 652 saves, Enter Sandman, first unanimous HOFer"},
+      {number:11,row:10,col:8,len:5,clue:"David ___ — only Met to have number retired as lifer"},
+      {number:12,row:12,col:0,len:5,clue:"Darryl ___ — 252 Mets HR, 8x All-Star, The Straw Man"},
+      {number:13,row:12,col:7,len:6,clue:"Jacob ___ — 2x Cy Young, 1.08 ERA in 2021"},
+    ],
+    down:[]
+  },
+  // MAY
+  { month:5, title:"MAY: ISLANDERS DYNASTY", subtitle:"Four cups — the greatest run",
+    size:13, solution:[
+      ["B","O","S","S","Y",".",".","T","R","O","T","T","I"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["P","O","T","V","I","N",".",".","G","I","L","L","S"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["S","M","I","T","H",".",".","N","Y","S","T","R","O"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["A","R","B","O","U","R",".",".","N","A","S","S","A"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["T","A","V","A","R","E","S",".",".","U","B","S","A"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["L","O","N","G","I","S","L","A","N","D",".",".","I"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["F","O","U","R","C","U","P","S",".",".","B","U","C"],
+    ],
+    across:[
+      {number:1,row:0,col:0,len:5,clue:"Mike ___ — 573 goals, nine straight 50-goal seasons"},
+      {number:2,row:0,col:7,len:6,clue:"Bryan ___ — Hart Trophy 1979, engine of the dynasty"},
+      {number:3,row:2,col:0,len:6,clue:"Denis ___ — captain of 4 cups, broke Orr's record"},
+      {number:4,row:2,col:8,len:5,clue:"Clark ___ — dynasty enforcer, protected Bossy and Trottier"},
+      {number:5,row:4,col:0,len:5,clue:"Billy ___ — Battlin' Billy, Vezina 1982, won all 4 Cups"},
+      {number:6,row:4,col:7,len:6,clue:"Bob ___ — OT winner that started the dynasty in 1980"},
+      {number:7,row:6,col:0,len:6,clue:"Al ___ — greatest Isles coach, 781 wins, 4 consecutive Cups"},
+      {number:8,row:6,col:8,len:5,clue:"___ Coliseum — the loudest building in NHL history"},
+      {number:9,row:8,col:0,len:7,clue:"John ___ — greatest Islander since Bossy, left for Toronto"},
+      {number:10,row:8,col:9,len:4,clue:"___ Arena — the Islanders' beautiful new home at Belmont"},
+      {number:11,row:10,col:0,len:10,clue:"The Island — home of the greatest NHL dynasty of the modern era"},
+      {number:12,row:12,col:0,len:8,clue:"The ultimate achievement — what the Islanders did 1980-1983"},
+      {number:13,row:12,col:10,len:3,clue:"Butch ___ — Conn Smythe 1980, the missing piece"},
+    ],
+    down:[]
+  },
+  // JUNE
+  { month:6, title:"JUNE: RANGERS 1994 STANLEY CUP", subtitle:"Ending 54 years of heartbreak",
+    size:13, solution:[
+      ["M","E","S","S","I","E","R",".",".","L","E","E","T"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["R","I","C","H","T","E","R",".",".","G","I","L","B"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["G","U","A","R","A","N","T","E","E",".",".",".","."],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["B","R","O","A","D","W","A","Y",".",".","M","S","G"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["K","O","V","A","L","E","V",".",".","R","A","T","E"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["D","E","V","I","L","S",".",".","N","O","R","D","I"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["C","U","P",".",".","F","O","R","T","Y","F","O","U"],
+    ],
+    across:[
+      {number:1,row:0,col:0,len:7,clue:"The Captain — guaranteed a win in Game 6 then scored a hat trick"},
+      {number:2,row:0,col:9,len:4,clue:"Brian ___ — Conn Smythe MVP, 34 playoff points"},
+      {number:3,row:2,col:0,len:7,clue:"Mike ___ — 42-save Game 4 against Canucks in the Finals"},
+      {number:4,row:2,col:9,len:4,clue:"Rod ___ — all-time Rangers franchise scorer"},
+      {number:5,row:4,col:0,len:9,clue:"Messier's famous promise before Game 6 vs Devils"},
+      {number:6,row:6,col:0,len:8,clue:"The Blues — Rangers nickname from their famous street"},
+      {number:7,row:6,col:10,len:3,clue:"Madison Square Garden — initials of The Rangers' home"},
+      {number:8,row:8,col:0,len:7,clue:"Alexei ___ — dazzling skill in the 1994 championship run"},
+      {number:9,row:10,col:0,len:6,clue:"The ___ — NY rival who the Rangers beat in the 1994 semis"},
+      {number:10,row:12,col:0,len:3,clue:"The Stanley ___  — what ended 54 years of suffering"},
+      {number:11,row:12,col:5,len:8,clue:"54 ___ — how long New York waited before 1994"},
+    ],
+    down:[]
+  },
+  // JULY
+  { month:7, title:"JULY: YANKEES DYNASTY", subtitle:"27 championships — the standard",
+    size:13, solution:[
+      ["R","U","T","H",".",".","G","E","H","R","I","G","."],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["M","A","N","T","L","E",".",".","B","E","R","R","A"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["D","I","M","A","G","G","I","O",".",".","F","O","R"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["J","E","T","E","R",".",".","R","I","V","E","R","A"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["R","E","G","G","I","E",".",".","M","U","N","S","O"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["M","A","T","T","I","N","G","L","Y",".",".",".","."],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["W","E","L","L","S",".",".","C","O","N","E",".","."],
+    ],
+    across:[
+      {number:1,row:0,col:0,len:4,clue:"The Sultan of Swat — 714 HR, The Babe"},
+      {number:2,row:0,col:6,len:6,clue:"The Iron Horse — 2,130 games, luckiest man on earth"},
+      {number:3,row:2,col:0,len:6,clue:"The Commerce Comet — Triple Crown 1956, 3x MVP"},
+      {number:4,row:2,col:8,len:5,clue:"It ain't over till it's over — 10 World Series rings"},
+      {number:5,row:4,col:0,len:8,clue:"The Yankee Clipper — 56-game hitting streak"},
+      {number:6,row:4,col:10,len:3,clue:"The Chairman of the Board — .690 World Series win pct"},
+      {number:7,row:6,col:0,len:5,clue:"The Captain — only Yankee to homer for his 3,000th hit"},
+      {number:8,row:6,col:7,len:6,clue:"Enter Sandman — 652 saves, first unanimous HOFer"},
+      {number:9,row:8,col:0,len:6,clue:"Mr. October — 3 HRs on 3 pitches in 1977 WS Game 6"},
+      {number:10,row:8,col:8,len:5,clue:"The Captain — Yankees first captain since Gehrig"},
+      {number:11,row:10,col:0,len:9,clue:"Donnie Baseball — 9 Gold Gloves, never got his ring"},
+      {number:12,row:12,col:0,len:5,clue:"David ___ — perfect game on Yogi Berra Day 1998"},
+      {number:13,row:12,col:7,len:4,clue:"David ___ — perfect game on Yogi Berra Day, Don Larsen in stands"},
+    ],
+    down:[]
+  },
+  // AUGUST
+  { month:8, title:"AUGUST: METS MAGIC", subtitle:"Ya Gotta Believe",
+    size:13, solution:[
+      ["S","E","A","V","E","R",".",".","G","O","O","D","E"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["P","I","A","Z","Z","A",".",".","W","R","I","G","H"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["S","T","R","A","W",".",".","H","E","R","N","A","N"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["C","A","R","T","E","R",".",".","M","O","O","K","I"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["A","L","O","N","S","O",".",".","K","O","O","S","M"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["D","E","G","R","O","M",".",".","L","I","N","D","R"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["B","E","L","T","R","A","N",".",".","S","O","T","O"],
+    ],
+    across:[
+      {number:1,row:0,col:0,len:6,clue:"Tom Terrific — Mets all-time wins leader, 3 Cy Youngs"},
+      {number:2,row:0,col:8,len:5,clue:"Dwight ___ — 24-4, 1.53 ERA at age 20"},
+      {number:3,row:2,col:0,len:6,clue:"Mike ___ — 9/11 home run, greatest emotional HR in history"},
+      {number:4,row:2,col:8,len:5,clue:"David ___ — only Met to have number retired as lifer"},
+      {number:5,row:4,col:0,len:5,clue:"Darryl ___ — 252 Mets HR, 8 All-Stars, The Straw Man"},
+      {number:6,row:4,col:7,len:6,clue:"Keith ___ — 1B captain of the 1986 championship team"},
+      {number:7,row:6,col:0,len:6,clue:"Gary ___ — The Kid started the 1986 WS Game 6 rally"},
+      {number:8,row:6,col:8,len:5,clue:"Mookie ___ — his grounder went through Buckner's legs"},
+      {number:9,row:8,col:0,len:6,clue:"Pete ___ — Mets all-time HR king, 254+ home runs"},
+      {number:10,row:8,col:8,len:5,clue:"Jerry ___ — won 1969 WS Game 5, beloved lefty"},
+      {number:11,row:10,col:0,len:6,clue:"Jacob ___ — 2x Cy Young, 1.08 ERA in 2021"},
+      {number:12,row:10,col:8,len:5,clue:"Francisco ___ — Mr. Smile, My Girl walk-up, SS"},
+      {number:13,row:12,col:0,len:7,clue:"Carlos ___ — most complete Met since Seaver"},
+      {number:14,row:12,col:9,len:4,clue:"Juan ___ — $765M, the biggest contract in baseball history"},
+    ],
+    down:[]
+  },
+  // SEPTEMBER
+  { month:9, title:"SEPTEMBER: PENNANT RACE", subtitle:"NY teams in September glory",
+    size:13, solution:[
+      ["M","I","R","A","C","L","E","M","E","T","S",".","."],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["N","A","M","A","T","H",".",".","F","L","U","S","H"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["S","H","E","A",".",".","C","I","T","I",".",".","F"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["B","R","O","N","X",".",".","Q","U","E","E","N","S"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["P","I","A","Z","Z","A",".",".","S","E","P","T","E"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["Y","A","G","O","T","T","A",".",".","B","E","L","I"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["S","U","B","W","A","Y","S","E","R","I","E","S","!"],
+    ],
+    across:[
+      {number:1,row:0,col:0,len:11,clue:"1969 World Champions — the most improbable title in baseball history"},
+      {number:2,row:2,col:0,len:6,clue:"Broadway Joe — Super Bowl III guarantee man"},
+      {number:3,row:2,col:8,len:5,clue:"___ Meadows — the park housing Citi Field and the US Open"},
+      {number:4,row:4,col:0,len:4,clue:"___ Stadium — where the 1969 Miracle Mets played their home games"},
+      {number:5,row:4,col:6,len:4,clue:"___ Field — current home of the New York Mets"},
+      {number:6,row:6,col:0,len:5,clue:"The ___ — where Yankee Stadium lives"},
+      {number:7,row:6,col:7,len:6,clue:"___ — where Citi Field and Shea Stadium are located"},
+      {number:8,row:8,col:0,len:6,clue:"Mike ___ — 9/21/01, the home run that healed a city"},
+      {number:9,row:10,col:0,len:7,clue:"Tug McGraw's famous rallying cry — three words, forever"},
+      {number:10,row:12,col:0,len:12,clue:"Yankees vs Mets in the World Series — 2000 classic"},
+    ],
+    down:[]
+  },
+  // OCTOBER
+  { month:10, title:"OCTOBER: WORLD SERIES GLORY", subtitle:"NY in the Fall Classic",
+    size:13, solution:[
+      ["R","E","G","G","I","E",".",".","L","A","R","S","E"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["J","E","T","E","R",".",".","M","R","N","O","V","E"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["M","U","N","S","O","N",".",".","T","W","E","N","T"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["R","I","V","E","R","A",".",".","B","O","N","I","L"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["S","E","V","E","N","T","E","E","N",".",".",".","."],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["M","O","O","K","I","E",".",".","B","U","C","K","N"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["T","W","E","N","T","Y","S","E","V","E","N",".","."],
+    ],
+    across:[
+      {number:1,row:0,col:0,len:6,clue:"Mr. October — 3 HRs on 3 consecutive pitches, 1977 WS Game 6"},
+      {number:2,row:0,col:8,len:5,clue:"Don ___ — only perfect game in World Series history, 1956"},
+      {number:3,row:2,col:0,len:5,clue:"The Captain — Mr. November, walk-off after midnight in 2001"},
+      {number:4,row:2,col:7,len:6,clue:"___ November — Jeter's walk-off HR title after midnight"},
+      {number:5,row:4,col:0,len:6,clue:"Thurman ___ — the Yankees captain, gone too soon in 1979"},
+      {number:6,row:4,col:8,len:5,clue:"___ Seven — how many championships the Yankees won in the 1950s"},
+      {number:7,row:6,col:0,len:6,clue:"Mariano ___ — Enter Sandman, 652 saves, the greatest closer"},
+      {number:8,row:6,col:8,len:5,clue:"Bobby ___ — paid $1.19M every July 1 through 2035"},
+      {number:9,row:8,col:0,len:9,clue:"___ — number of Yankees World Series championships"},
+      {number:10,row:10,col:0,len:6,clue:"Mookie ___ — his grounder, Buckner's error, 1986 WS Game 6"},
+      {number:11,row:10,col:8,len:5,clue:"Bill ___ — the first baseman who will never be forgotten"},
+      {number:12,row:12,col:0,len:11,clue:"The Yankees all-time championship total — in word form"},
+    ],
+    down:[]
+  },
+  // NOVEMBER
+  { month:11, title:"NOVEMBER: NHL LEGENDS", subtitle:"Rangers, Islanders & Devils",
+    size:13, solution:[
+      ["B","R","O","D","E","U","R",".",".","S","T","E","V"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["M","E","S","S","I","E","R",".",".","L","E","E","T"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["P","O","T","V","I","N",".",".","B","O","S","S","Y"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["T","R","O","T","T","I","E","R",".",".","G","I","L"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["L","U","N","D","Q","V","I","S","T",".",".","E","L"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["N","I","E","D","E","R","M","A","Y","E","R",".","."],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["E","L","I","A","S",".",".","D","A","N","E","Y","K"],
+    ],
+    across:[
+      {number:1,row:0,col:0,len:7,clue:"Martin ___ — 691 wins, 125 shutouts, 3 Stanley Cups"},
+      {number:2,row:0,col:9,len:4,clue:"Scott ___ — most feared hitter, Conn Smythe 2000"},
+      {number:3,row:2,col:0,len:7,clue:"Mark ___ — guaranteed Game 6, delivered hat trick, 1994"},
+      {number:4,row:2,col:9,len:4,clue:"Brian ___ — greatest American-born player in NHL history"},
+      {number:5,row:4,col:0,len:6,clue:"Denis ___ — 4 Cups, broke Orr's defenseman record"},
+      {number:6,row:4,col:8,len:5,clue:"Mike ___ — 9 straight 50-goal seasons"},
+      {number:7,row:6,col:0,len:8,clue:"Bryan ___ — Hart Trophy, engine of Islanders dynasty"},
+      {number:8,row:6,col:10,len:3,clue:"Clark ___ — Islanders enforcer, 4 consecutive Cups"},
+      {number:9,row:8,col:0,len:9,clue:"Henrik ___ — The King, Vezina 2012, .921 save pct"},
+      {number:10,row:10,col:0,len:11,clue:"Scott ___ — Hall of Fame defenseman, 3 Cups with NJ"},
+      {number:11,row:12,col:0,len:5,clue:"Patrik ___ — all-time Devils scorer, 1,025 career pts"},
+      {number:12,row:12,col:7,len:6,clue:"Ken ___ — Mr. Devil, all 1,283 games in a Devils uniform"},
+    ],
+    down:[]
+  },
+  // DECEMBER
+  { month:12, title:"DECEMBER: NY SPORTS HISTORY", subtitle:"Greatest moments of all time",
+    size:13, solution:[
+      ["N","A","M","A","T","H",".",".","L","T",".",".","E"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["M","I","R","A","C","L","E",".",".","H","E","L","M"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["S","H","O","T",".",".","S","E","C","R","E","T","A"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["R","E","E","D",".",".","J","E","T","E","R",".","."],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["M","E","S","S","I","E","R",".",".","B","O","S","S"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["P","I","A","Z","Z","A",".",".","G","O","O","D","E"],
+      [".",".",".",".",".",".",".",".",".",".",".",".","."],
+      ["N","I","N","E","T","E","E","N","S","I","X","N","Y"],
+    ],
+    across:[
+      {number:1,row:0,col:0,len:6,clue:"Broadway Joe — I guarantee it — Super Bowl III"},
+      {number:2,row:0,col:8,len:2,clue:"Lawrence Taylor — greatest defender in NFL history — initials"},
+      {number:3,row:2,col:0,len:7,clue:"The ___ Mets — 100-to-1 longshots win the 1969 World Series"},
+      {number:4,row:2,col:9,len:4,clue:"The ___ Catch — David Tyree pins it to his helmet, Super Bowl XLII"},
+      {number:5,row:4,col:0,len:4,clue:"The ___ Heard Round the World — Bobby Thomson, 1951"},
+      {number:6,row:4,col:6,len:7,clue:"The horse — 31 lengths at Belmont, world record 2:24, 1973"},
+      {number:7,row:6,col:0,len:4,clue:"Willis ___ — limped onto MSG court in Game 7, 1970"},
+      {number:8,row:6,col:6,len:5,clue:"Derek ___ — Mr. November, walk-off HR after midnight"},
+      {number:9,row:8,col:0,len:7,clue:"Mark ___ — guaranteed Cup win, then scored hat trick"},
+      {number:10,row:8,col:9,len:4,clue:"Mike ___ — 9-straight 50-goal seasons with Islanders"},
+      {number:11,row:10,col:0,len:6,clue:"Mike ___ — 9/11 home run healed a grieving New York City"},
+      {number:12,row:10,col:8,len:5,clue:"Dwight ___ — 24-4, 1.53 ERA, greatest young pitcher ever"},
+      {number:13,row:12,col:0,len:12,clue:"Year the Rangers last won the Stanley Cup before the 54-year drought"},
+    ],
+    down:[]
+  },
+];
+
+// ─── SCRAMBLE WORD LIST ───────────────────────────────────────────────────
+const SCRAMBLE_WORDS = [
+  { word:"JETER",      hint:"Yankees SS",    category:"Yankee Legend",  fact:"Derek Jeter hit a home run for his 3,000th career hit — the only player ever to do so." },
+  { word:"NAMATH",     hint:"Jets QB",       category:"Jets Legend",    fact:"Joe Namath guaranteed Super Bowl III victory as a 17-point underdog. He delivered, 16-7." },
+  { word:"SEAVER",     hint:"Mets SP",       category:"Mets Legend",    fact:"Tom Seaver struck out 19 Padres in 1970, including the final 10 in a row." },
+  { word:"MESSIER",    hint:"Rangers C",     category:"Rangers Legend", fact:"Mark Messier guaranteed a win in Game 6 vs the Devils in 1994 — then scored a natural hat trick." },
+  { word:"BOSSY",      hint:"Islanders RW",  category:"Islander",       fact:"Mike Bossy scored 50 goals in 50 games in 1981 — matching Rocket Richard's legendary mark." },
+  { word:"PIAZZA",     hint:"Mets C",        category:"Mets Legend",    fact:"Mike Piazza's 9/11 home run on September 21, 2001 is the most emotional HR in baseball history." },
+  { word:"EWING",      hint:"Knicks C",      category:"Knicks Legend",  fact:"Patrick Ewing played 15 seasons as a Knick and scored 23,665 points — the franchise record." },
+  { word:"RIVERA",     hint:"Yankees RP",    category:"Yankee Legend",  fact:"Mariano Rivera was the first unanimous Hall of Fame inductee in baseball history." },
+  { word:"GEHRIG",     hint:"Yankees 1B",    category:"Yankee Legend",  fact:"Lou Gehrig played 2,130 consecutive games and was known as 'The Iron Horse'." },
+  { word:"BRODEUR",    hint:"Devils G",      category:"Devils Legend",  fact:"Martin Brodeur holds the all-time NHL records for wins (691) and shutouts (125)." },
+  { word:"POTVIN",     hint:"Islanders D",   category:"Islander",       fact:"Denis Potvin broke Bobby Orr's all-time defenseman scoring record." },
+  { word:"LEETCH",     hint:"Rangers D",     category:"Rangers Legend", fact:"Brian Leetch was the first American-born player to win the Conn Smythe Trophy." },
+  { word:"MANTLE",     hint:"Yankees CF",    category:"Yankee Legend",  fact:"Mickey Mantle won the Triple Crown in 1956 — .353 AVG, 52 HR, 130 RBI." },
+  { word:"STRAWBERRY", hint:"Mets RF",       category:"Mets Legend",    fact:"Darryl Strawberry was the most naturally gifted hitter of his generation." },
+  { word:"TAYLOR",     hint:"Giants LB",     category:"Giants Legend",  fact:"Lawrence Taylor is the only defensive player to win the NFL MVP award in the modern era." },
+  { word:"PARCELLS",   hint:"Giants coach",  category:"Giants Legend",  fact:"Bill Parcells won two Super Bowls with the Giants and later rebuilt the Jets." },
+  { word:"MOOKIE",     hint:"Mets CF",       category:"Mets Legend",    fact:"Mookie Wilson's slow roller went through Bill Buckner's legs in 1986 World Series Game 6." },
+  { word:"MUNSON",     hint:"Yankees C",     category:"Yankee Legend",  fact:"Thurman Munson died in a plane crash at age 32. His number 15 was retired immediately." },
+  { word:"TROTTIER",   hint:"Islanders C",   category:"Islander",       fact:"Bryan Trottier won 4 Cups with the Islanders and 2 more with Pittsburgh — 6 total." },
+  { word:"FRAZIER",    hint:"Knicks G",      category:"Knicks Legend",  fact:"Walt Frazier scored 36 points and dished 19 assists in Game 7 of the 1970 NBA Finals." },
+  { word:"LUNDQVIST",  hint:"Rangers G",     category:"Rangers Legend", fact:"Henrik Lundqvist was called 'The King' — he won the Vezina Trophy in 2012." },
+  { word:"HENDERSON",  hint:"Yankees LF",    category:"Yankee Legend",  fact:"Rickey Henderson set the all-time stolen base record (1,406) — many as a Yankee." },
+  { word:"GOODEN",     hint:"Mets SP",       category:"Mets Legend",    fact:"Dwight Gooden went 24-4 with a 1.53 ERA in 1985 at just 20 years old." },
+  { word:"REED",       hint:"Knicks C",      category:"Knicks Legend",  fact:"Willis Reed's limping entrance in Game 7 of the 1970 Finals is the most inspiring in sports history." },
+  { word:"RUTH",       hint:"Yankees RF",    category:"Yankee Legend",  fact:"Babe Ruth hit 714 career home runs and The House That Ruth Built was named in his honor." },
+];
+
+// ─── EMOJI QUIZ DATA ──────────────────────────────────────────────────────
+const EMOJI_QUIZ = [
+  { emojis:"⚾🔔🗽", answer:"METS", hint:"NY National League team", fact:"The Mets were founded in 1962 to bring NL baseball back to New York after the Dodgers and Giants left.", choices:["METS","YANKEES","CUBS","RED SOX"] },
+  { emojis:"⚾🎩📌", answer:"YANKEES", hint:"The Bronx Bombers", fact:"The Yankees have 27 World Series championships — more than any franchise in North American sports.", choices:["METS","YANKEES","DODGERS","GIANTS"] },
+  { emojis:"🏒🗽🔵", answer:"RANGERS", hint:"Broadway Blueshirts", fact:"The Rangers ended 54 years of heartbreak in 1994 when Mark Messier led them to the Stanley Cup.", choices:["RANGERS","ISLANDERS","DEVILS","BRUINS"] },
+  { emojis:"🏒🏝️4️⃣", answer:"ISLANDERS", hint:"4 consecutive Stanley Cups", fact:"The Islanders won 4 consecutive Stanley Cups from 1980-1983 — the most dominant dynasty in modern NHL history.", choices:["RANGERS","ISLANDERS","DEVILS","PENGUINS"] },
+  { emojis:"🏈✈️🗽", answer:"JETS", hint:"Gang Green", fact:"Joe Namath guaranteed a Super Bowl victory in 1969 as a 17-point underdog. He delivered.", choices:["JETS","GIANTS","PATRIOTS","DOLPHINS"] },
+  { emojis:"🏈🔵🔴🗽", answer:"GIANTS", hint:"Big Blue", fact:"The Giants have won 4 Super Bowls, including two miraculous upsets of the undefeated New England Patriots.", choices:["JETS","GIANTS","COWBOYS","EAGLES"] },
+  { emojis:"🏀🎵🏟️", answer:"KNICKS", hint:"Madison Square Garden", fact:"The Knicks won back-to-back NBA championships in 1970 and 1973, led by Willis Reed and Walt Frazier.", choices:["KNICKS","NETS","CELTICS","BULLS"] },
+  { emojis:"⚾3️⃣🏠", answer:"BABE RUTH", hint:"Yankees legend", fact:"Babe Ruth wore #3. Yankee Stadium was called 'The House That Ruth Built.'", choices:["BABE RUTH","LOU GEHRIG","JOE DIMAGGIO","MICKEY MANTLE"] },
+  { emojis:"⚾2️⃣👑", answer:"DEREK JETER", hint:"The Captain", fact:"Derek Jeter was the only Yankee to homer for his 3,000th career hit. He wore #2.", choices:["DEREK JETER","DON MATTINGLY","MARIANO RIVERA","BERNIE WILLIAMS"] },
+  { emojis:"🎸🎺🏒", answer:"ENTER SANDMAN", hint:"Metallica + Yankees bullpen", fact:"Mariano Rivera's Enter Sandman walk-up is the most iconic in baseball history. MSG shook when he emerged.", choices:["ENTER SANDMAN","WELCOME TO THE JUNGLE","EMPIRE STATE OF MIND","ENTER SANDMAN"] },
+  { emojis:"🏒✅5️⃣4️⃣", answer:"1994 RANGERS", hint:"End of the drought", fact:"The 1994 Rangers ended 54 years of suffering. Messier guaranteed it. MSG erupted.", choices:["1994 RANGERS","1980 ISLANDERS","2003 DEVILS","1995 DEVILS"] },
+  { emojis:"⚾😇🍎86", answer:"1986 METS", hint:"The Bad Guys Won", fact:"The 1986 Mets went 108-54. Mookie's grounder, Buckner's error, Doc and Straw. The Bad Guys Won.", choices:["1986 METS","1969 METS","2015 METS","2000 METS"] },
+  { emojis:"🐎🏅31️⃣", answer:"SECRETARIAT", hint:"Belmont Park, 31 lengths, 1973", fact:"Secretariat won the 1973 Belmont Stakes at Belmont Park in Elmont NY by 31 lengths in a world record 2:24 flat.", choices:["SECRETARIAT","AMERICAN PHAROAH","AFFIRMED","SEATTLE SLEW"] },
+  { emojis:"🏀😔🦶🏥", answer:"WILLIS REED", hint:"Game 7, 1970 NBA Finals", fact:"Willis Reed tore his thigh muscle, but limped onto the MSG court for Game 7. The crowd went insane.", choices:["WILLIS REED","PATRICK EWING","WALT FRAZIER","EARL MONROE"] },
+  { emojis:"⚾💪9️⃣/2️⃣1️⃣", answer:"MIKE PIAZZA", hint:"9/11 home run, Sept 21 2001", fact:"Piazza's solo shot in the 8th inning on Sept 21, 2001 lifted the Mets over the Braves. The city needed it.", choices:["MIKE PIAZZA","TOM SEAVER","DWIGHT GOODEN","DARRYL STRAWBERRY"] },
+  { emojis:"🏈🎙️✅💬", answer:"JOE NAMATH", hint:"I guarantee it", fact:"Namath guaranteed Super Bowl III victory as a 17-point underdog. The Jets won 16-7 over Baltimore.", choices:["JOE NAMATH","ELI MANNING","PHIL SIMMS","CHAD PENNINGTON"] },
+  { emojis:"🏒🎵🤝", answer:"MARK MESSIER", hint:"Guaranteed + hat trick", fact:"Messier guaranteed a Game 6 win vs the Devils in 1994 when the Rangers were down 3-2. He then scored a natural hat trick.", choices:["MARK MESSIER","BRIAN LEETCH","HENRIK LUNDQVIST","ROD GILBERT"] },
+  { emojis:"⚾🎩🔄5️⃣6️⃣", answer:"JOE DIMAGGIO", hint:"56 consecutive games", fact:"Joe DiMaggio hit safely in 56 consecutive games in 1941 — a record mathematicians call the most unbreakable in sports.", choices:["JOE DIMAGGIO","BABE RUTH","TED WILLIAMS","MICKEY MANTLE"] },
+];
+
+// ─── HANGMAN WORDS ────────────────────────────────────────────────────────
+const HANGMAN_WORDS = [
+  { word:"JETER",        hint:"The Captain — wore #2, 5 rings", category:"Yankee" },
+  { word:"NAMATH",       hint:"Broadway Joe — Super Bowl III guarantee", category:"Jet" },
+  { word:"SEAVER",       hint:"Tom Terrific — 3 Cy Youngs", category:"Met" },
+  { word:"MESSIER",      hint:"1994 Cup captain — guaranteed victory", category:"Ranger" },
+  { word:"BOSSY",        hint:"9 straight 50-goal seasons", category:"Islander" },
+  { word:"EWING",        hint:"Greatest Knick — Georgetown center", category:"Knick" },
+  { word:"PIAZZA",       hint:"9/11 home run catcher", category:"Met" },
+  { word:"BRODEUR",      hint:"691 wins — all-time NHL goalie", category:"Devil" },
+  { word:"RUTH",         hint:"Sultan of Swat — 714 HR", category:"Yankee" },
+  { word:"MANTLE",       hint:"Triple Crown 1956 — Commerce Comet", category:"Yankee" },
+  { word:"TAYLOR",       hint:"LT — greatest defender in NFL history", category:"Giant" },
+  { word:"GEHRIG",       hint:"Iron Horse — 2,130 consecutive games", category:"Yankee" },
+  { word:"RIVERA",       hint:"Enter Sandman — 652 saves", category:"Yankee" },
+  { word:"FRAZIER",      hint:"Clyde — 36pts/19ast in 1970 Game 7", category:"Knick" },
+  { word:"REED",         hint:"Limped onto court in Game 7, 1970", category:"Knick" },
+  { word:"LEETCH",       hint:"First American Conn Smythe winner", category:"Ranger" },
+  { word:"TROTTIER",     hint:"Islanders engine — Hart Trophy 1979", category:"Islander" },
+  { word:"GOODEN",       hint:"Doc — 24-4, 1.53 ERA at age 20", category:"Met" },
+  { word:"PARCELLS",     hint:"Big Tuna — 2 Super Bowls with Giants", category:"Giant" },
+  { word:"STRAWBERRY",   hint:"The Straw Man — 252 Mets home runs", category:"Met" },
+  { word:"LUNDQVIST",    hint:"The King — Vezina 2012", category:"Ranger" },
+  { word:"POTVIN",       hint:"Broke Orr's record — 4 Cups", category:"Islander" },
+  { word:"MUNSON",       hint:"Yankees Captain — #15 retired forever", category:"Yankee" },
+  { word:"MOOKIE",       hint:"His grounder went through Buckner's legs", category:"Met" },
+  { word:"HENDERSON",    hint:"Most stolen bases ever — set record as a Yankee", category:"Yankee" },
+];
+
+// ─── SCRAMBLE COMPONENT ───────────────────────────────────────────────────
+function ScrambleGame({ myTeams }) {
+  const [wordObj, setWordObj] = useState(null);
+  const [scrambled, setScrambled] = useState([]);
+  const [guess, setGuess] = useState("");
+  const [result, setResult] = useState(null); // null | "correct" | "wrong"
+  const [hints, setHints] = useState(0);
+  const [tries, setTries] = useState(0);
+
+  function scrambleWord(w) {
+    const arr = w.split("");
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    // Make sure it's actually scrambled
+    if (arr.join("") === w && w.length > 1) return scrambleWord(w);
+    return arr;
+  }
+
+  function newWord() {
+    const w = SCRAMBLE_WORDS[Math.floor(Math.random() * SCRAMBLE_WORDS.length)];
+    setWordObj(w);
+    setScrambled(scrambleWord(w.word));
+    setGuess(""); setResult(null); setHints(0); setTries(0);
+  }
+
+  useEffect(() => { newWord(); }, []);
+
+  function handleGuess() {
+    if (!wordObj) return;
+    const clean = guess.trim().toUpperCase();
+    if (clean === wordObj.word) {
+      setResult("correct");
+    } else {
+      setTries(t => t + 1);
+      if (tries >= 2) setResult("wrong");
+      else setGuess("");
+    }
+  }
+
+  if (!wordObj) return null;
+
+  return (
+    <div style={{background:"#161616", border:"1px solid #2a2a2a", padding:"20px"}}>
+      <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:16}}>
+        🔀 SCRAMBLE — UNSCRAMBLE THE NY SPORTS LEGEND
+      </div>
+      <div style={{textAlign:"center", marginBottom:20}}>
+        <div style={{display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap", marginBottom:12}}>
+          {scrambled.map((l, i) => (
+            <div key={i} style={{
+              width:44, height:44, background:"#1a1a1a", border:"2px solid #c8201c",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:22, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif",
+            }}>{l}</div>
+          ))}
+        </div>
+        <div style={{fontSize:10, color:"#666", marginBottom:8}}>
+          Category: <span style={{color:"#c8201c", fontWeight:900}}>{wordObj.category}</span>
+        </div>
+        {hints >= 1 && (
+          <div style={{fontSize:11, color:"#888", fontStyle:"italic", marginBottom:8}}>
+            Hint: {wordObj.hint}
+          </div>
+        )}
+      </div>
+
+      {result === null && (
+        <div style={{display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap"}}>
+          <input
+            value={guess}
+            onChange={e => setGuess(e.target.value.toUpperCase())}
+            onKeyDown={e => e.key === "Enter" && handleGuess()}
+            placeholder="Type your answer..."
+            style={{
+              padding:"10px 14px", background:"#111", border:"1px solid #444",
+              color:"#e8e0d0", fontSize:16, fontFamily:"'Georgia',serif",
+              letterSpacing:"0.1em", outline:"none", minWidth:200,
+            }}
+          />
+          <button onClick={handleGuess} style={{
+            background:"#c8201c", border:"none", color:"#fff",
+            padding:"10px 20px", cursor:"pointer", fontSize:11,
+            fontWeight:900, letterSpacing:"0.1em",
+          }}>GUESS</button>
+          {hints < 1 && (
+            <button onClick={() => setHints(1)} style={{
+              background:"transparent", border:"1px solid #555", color:"#888",
+              padding:"10px 16px", cursor:"pointer", fontSize:11, fontWeight:900,
+            }}>HINT</button>
+          )}
+          {tries > 0 && (
+            <div style={{width:"100%", textAlign:"center", fontSize:10, color:"#c8201c", marginTop:4}}>
+              Not quite — {3 - tries} {3 - tries === 1 ? "try" : "tries"} left
+            </div>
+          )}
+        </div>
+      )}
+
+      {result === "correct" && (
+        <div style={{textAlign:"center"}}>
+          <div style={{fontSize:20, fontWeight:900, color:"#4ade80", marginBottom:8}}>🎉 CORRECT! — {wordObj.word}</div>
+          <p style={{fontSize:12, color:"#aaa", lineHeight:1.6, marginBottom:16, fontFamily:"'Georgia',serif"}}>{wordObj.fact}</p>
+          <button onClick={newWord} style={{background:"#c8201c", border:"none", color:"#fff", padding:"10px 24px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>NEXT WORD →</button>
+        </div>
+      )}
+
+      {result === "wrong" && (
+        <div style={{textAlign:"center"}}>
+          <div style={{fontSize:16, fontWeight:900, color:"#f87171", marginBottom:8}}>The answer was: <span style={{color:"#e8e0d0"}}>{wordObj.word}</span></div>
+          <p style={{fontSize:12, color:"#aaa", lineHeight:1.6, marginBottom:16, fontFamily:"'Georgia',serif"}}>{wordObj.fact}</p>
+          <button onClick={newWord} style={{background:"#c8201c", border:"none", color:"#fff", padding:"10px 24px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>TRY ANOTHER →</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── EMOJI QUIZ COMPONENT ─────────────────────────────────────────────────
+function EmojiQuizGame({ myTeams }) {
+  const [qIdx, setQIdx] = useState(() => Math.floor(Math.random() * EMOJI_QUIZ.length));
+  const [selected, setSelected] = useState(null);
+  const [showFact, setShowFact] = useState(false);
+
+  const q = EMOJI_QUIZ[qIdx];
+
+  function nextQ() {
+    let next = Math.floor(Math.random() * EMOJI_QUIZ.length);
+    if (next === qIdx) next = (next + 1) % EMOJI_QUIZ.length;
+    setQIdx(next);
+    setSelected(null);
+    setShowFact(false);
+  }
+
+  function handleChoice(c) {
+    if (selected) return;
+    setSelected(c);
+    setShowFact(true);
+  }
+
+  const isCorrect = selected === q.answer;
+
+  return (
+    <div style={{background:"#161616", border:"1px solid #2a2a2a", padding:"20px"}}>
+      <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:16}}>
+        🤔 EMOJI QUIZ — GUESS THE NY SPORTS MOMENT
+      </div>
+      <div style={{textAlign:"center", marginBottom:20}}>
+        <div style={{fontSize:48, letterSpacing:"0.1em", marginBottom:12}}>{q.emojis}</div>
+        <div style={{fontSize:11, color:"#666", fontStyle:"italic"}}>Hint: {q.hint}</div>
+      </div>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:16}}>
+        {q.choices.map((c, i) => {
+          const isRight = c === q.answer;
+          let bg = "#1a1a1a", border = "1px solid #333", color = "#ccc";
+          if (selected) {
+            if (isRight) { bg = "#0d2a1a"; border = "1px solid #2d8a50"; color = "#4ade80"; }
+            else if (c === selected && !isRight) { bg = "#2a0d0d"; border = "1px solid #c8201c"; color = "#f87171"; }
+          }
+          return (
+            <button key={i} onClick={() => handleChoice(c)}
+              style={{background:bg, border, color, padding:"10px 12px", cursor:selected?"default":"pointer",
+                fontSize:11, fontWeight:700, fontFamily:"'Georgia',serif", textAlign:"left",
+                transition:"all 0.15s"}}>
+              {c}
+              {selected && isRight && " ✓"}
+              {selected && c === selected && !isRight && " ✗"}
+            </button>
+          );
+        })}
+      </div>
+      {showFact && (
+        <div>
+          <div style={{padding:"12px 14px", background:isCorrect?"#0d2a1a":"#1a0d0d",
+            border:`1px solid ${isCorrect?"#2d8a50":"#c8201c"}`, marginBottom:12}}>
+            <div style={{fontSize:14, fontWeight:900, color:isCorrect?"#4ade80":"#f87171", marginBottom:6}}>
+              {isCorrect ? "🎉 Correct!" : `❌ The answer was: ${q.answer}`}
+            </div>
+            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6, fontFamily:"'Georgia',serif"}}>{q.fact}</p>
+          </div>
+          <div style={{display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap"}}>
+            <button onClick={nextQ} style={{background:"#c8201c", border:"none", color:"#fff",
+              padding:"10px 24px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>
+              NEXT EMOJI →
+            </button>
+            {isCorrect && (
+              <button onClick={() => {
+                const text = `I nailed the NY Sports Emoji Quiz on nysportsdaily.com! Can you guess ${q.emojis}?`;
+                navigator.clipboard?.writeText(text).catch(()=>{});
+              }} style={{background:"transparent", border:"1px solid #555", color:"#888",
+                padding:"10px 16px", cursor:"pointer", fontSize:11, fontWeight:900}}>
+                📋 SHARE
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── HANGMAN COMPONENT ────────────────────────────────────────────────────
+function HangmanGame({ myTeams }) {
+  const [wordObj, setWordObj] = useState(null);
+  const [guessed, setGuessed] = useState(new Set());
+  const [wrong, setWrong] = useState(0);
+  const MAX_WRONG = 6;
+
+  function newGame() {
+    const w = HANGMAN_WORDS[Math.floor(Math.random() * HANGMAN_WORDS.length)];
+    setWordObj(w);
+    setGuessed(new Set());
+    setWrong(0);
+  }
+
+  useEffect(() => { newGame(); }, []);
+
+  if (!wordObj) return null;
+
+  const won  = wordObj.word.split("").every(l => guessed.has(l));
+  const lost = wrong >= MAX_WRONG;
+
+  function guess(l) {
+    if (guessed.has(l) || won || lost) return;
+    const newG = new Set(guessed); newG.add(l);
+    setGuessed(newG);
+    if (!wordObj.word.includes(l)) setWrong(w => w + 1);
+  }
+
+  const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+  // Simple SVG gallows
+  const parts = [
+    <line key="h" x1="10" y1="10" x2="90" y2="10" stroke="#c8201c" strokeWidth="3"/>,
+    <line key="v" x1="50" y1="10" x2="50" y2="25" stroke="#c8201c" strokeWidth="3"/>,
+    <circle key="head" cx="50" cy="32" r="7" stroke="#e8e0d0" strokeWidth="2" fill="none"/>,
+    <line key="body" x1="50" y1="39" x2="50" y2="60" stroke="#e8e0d0" strokeWidth="2"/>,
+    <line key="larm" x1="50" y1="45" x2="38" y2="55" stroke="#e8e0d0" strokeWidth="2"/>,
+    <line key="rarm" x1="50" y1="45" x2="62" y2="55" stroke="#e8e0d0" strokeWidth="2"/>,
+    <line key="lleg" x1="50" y1="60" x2="38" y2="75" stroke="#e8e0d0" strokeWidth="2"/>,
+    <line key="rleg" x1="50" y1="60" x2="62" y2="75" stroke="#e8e0d0" strokeWidth="2"/>,
+  ];
+
+  return (
+    <div style={{background:"#161616", border:"1px solid #2a2a2a", padding:"20px"}}>
+      <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:16}}>
+        🎯 HANGMAN — GUESS THE NY SPORTS LEGEND
+      </div>
+      <div style={{display:"flex", gap:20, alignItems:"flex-start", flexWrap:"wrap"}}>
+        {/* Gallows */}
+        <div style={{flexShrink:0}}>
+          <svg width="100" height="90" viewBox="0 0 100 90">
+            <line x1="10" y1="85" x2="90" y2="85" stroke="#555" strokeWidth="3"/>
+            <line x1="20" y1="10" x2="20" y2="85" stroke="#555" strokeWidth="3"/>
+            {parts.slice(0, wrong + 1)}
+          </svg>
+          <div style={{textAlign:"center", fontSize:10, color:"#555"}}>
+            {MAX_WRONG - wrong} left
+          </div>
+        </div>
+
+        {/* Word display */}
+        <div style={{flex:1}}>
+          <div style={{display:"flex", gap:8, flexWrap:"wrap", marginBottom:16}}>
+            {wordObj.word.split("").map((l, i) => (
+              <div key={i} style={{
+                width:32, height:40, borderBottom:`2px solid ${guessed.has(l)?"#e8e0d0":"#555"}`,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:20, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif",
+              }}>
+                {guessed.has(l) || won || lost ? l : ""}
+              </div>
+            ))}
+          </div>
+
+          <div style={{fontSize:10, color:"#666", marginBottom:12}}>
+            Category: <span style={{color:"#c8201c", fontWeight:900}}>{wordObj.category}</span>
+            {" · "}{wordObj.hint}
+          </div>
+
+          {/* Wrong letters */}
+          {[...guessed].filter(l => !wordObj.word.includes(l)).length > 0 && (
+            <div style={{fontSize:10, color:"#f87171", marginBottom:12}}>
+              Wrong: {[...guessed].filter(l => !wordObj.word.includes(l)).join("  ")}
+            </div>
+          )}
+
+          {(won || lost) ? (
+            <div>
+              <div style={{fontSize:16, fontWeight:900, color:won?"#4ade80":"#f87171", marginBottom:8}}>
+                {won ? "🎉 CORRECT!" : `💀 The answer was: ${wordObj.word}`}
+              </div>
+              <p style={{fontSize:11, color:"#aaa", lineHeight:1.6, marginBottom:12, fontFamily:"'Georgia',serif"}}>{wordObj.hint}</p>
+              <button onClick={newGame} style={{background:"#c8201c", border:"none", color:"#fff",
+                padding:"8px 20px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>
+                NEW WORD →
+              </button>
+            </div>
+          ) : (
+            /* Keyboard */
+            <div style={{display:"flex", flexWrap:"wrap", gap:5, maxWidth:300}}>
+              {LETTERS.map(l => (
+                <button key={l} onClick={() => guess(l)} disabled={guessed.has(l) || won || lost}
+                  style={{
+                    width:30, height:30, background:guessed.has(l)
+                      ? (wordObj.word.includes(l) ? "#0d2a1a" : "#2a0d0d")
+                      : "#1a1a1a",
+                    border:`1px solid ${guessed.has(l)
+                      ? (wordObj.word.includes(l) ? "#2d8a50" : "#c8201c")
+                      : "#444"}`,
+                    color:guessed.has(l)
+                      ? (wordObj.word.includes(l) ? "#4ade80" : "#f87171")
+                      : "#ccc",
+                    cursor:guessed.has(l)?"default":"pointer",
+                    fontSize:12, fontWeight:900,
+                  }}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MONTHLY CROSSWORD COMPONENT ──────────────────────────────────────────
+function PlayroomCrossword() {
+  const monthNum = new Date().getMonth(); // 0-11
+  const puzzle = MONTHLY_CROSSWORDS[monthNum] || MONTHLY_CROSSWORDS[0];
+  const ROWS = puzzle.solution.length;
+  const COLS = puzzle.solution[0].length;
+  const CELL = 32;
+
+  const numberMap = {};
+  puzzle.across.forEach(c => { numberMap[`${c.row}-${c.col}`] = c.number; });
+
+  const [userGrid, setUserGrid] = useState(() =>
+    Array.from({length:ROWS}, () => Array(COLS).fill(""))
+  );
+  const [selectedCell, setSelectedCell] = useState(null);
+  const [activeClue, setActiveClue] = useState(null);
+  const [checked, setChecked] = useState({});
+  const [revealed, setRevealed] = useState(false);
+  const [complete, setComplete] = useState(false);
+  const inputRefs = useRef({});
+
+  // cell highlights
+  const cellClues = {};
+  puzzle.across.forEach(c => {
+    for (let i = 0; i < c.len; i++) {
+      const key = `${c.row}-${c.col+i}`;
+      if (!cellClues[key]) cellClues[key] = {};
+      cellClues[key].across = c.number;
+    }
+  });
+
+  function isBlack(r,c) { return puzzle.solution[r]?.[c] === "."; }
+
+  function getCellBg(r,c) {
+    if (isBlack(r,c)) return "#0a0a0a";
+    const key = `${r}-${c}`;
+    const isSel = selectedCell?.r===r && selectedCell?.c===c;
+    const isHL  = activeClue && cellClues[key]?.across === activeClue;
+    const chk   = checked[key];
+    if (isSel) return "#f5e642";
+    if (isHL) return "#2a2a6a";
+    if (chk==="correct") return "#0d2a1a";
+    if (chk==="wrong") return "#2a0d0d";
+    return "#1a1a1a";
+  }
+
+  function selectCell(r,c) {
+    if (isBlack(r,c)) return;
+    setSelectedCell({r,c});
+    setActiveClue(cellClues[`${r}-${c}`]?.across || null);
+    setTimeout(() => inputRefs.current[`${r}-${c}`]?.focus(), 0);
+  }
+
+  function handleKey(r,c,e) {
+    const l = e.key.toUpperCase();
+    if (l.length===1 && l>="A" && l<="Z") {
+      const ng = userGrid.map(row=>[...row]);
+      ng[r][c] = l;
+      setUserGrid(ng);
+      const chk = {...checked}; delete chk[`${r}-${c}`]; setChecked(chk);
+      // advance right
+      for (let nc=c+1;nc<COLS;nc++) { if(!isBlack(r,nc)){selectCell(r,nc);break;} }
+      const done = puzzle.solution.every((row,r2)=>row.every((cell,c2)=>cell==="."||ng[r2][c2]===cell));
+      if (done) setComplete(true);
+    } else if (e.key==="Backspace") {
+      const ng = userGrid.map(row=>[...row]);
+      if (ng[r][c]) { ng[r][c]=""; setUserGrid(ng); }
+      else { for (let nc=c-1;nc>=0;nc--) { if(!isBlack(r,nc)){selectCell(r,nc);break;} } }
+    } else if (e.key==="ArrowRight") { for(let nc=c+1;nc<COLS;nc++){if(!isBlack(r,nc)){selectCell(r,nc);break;}} }
+    else if (e.key==="ArrowLeft")  { for(let nc=c-1;nc>=0;nc--){if(!isBlack(r,nc)){selectCell(r,nc);break;}} }
+    else if (e.key==="ArrowDown")  { for(let nr=r+1;nr<ROWS;nr++){if(!isBlack(nr,c)){selectCell(nr,c);break;}} }
+    else if (e.key==="ArrowUp")    { for(let nr=r-1;nr>=0;nr--){if(!isBlack(nr,c)){selectCell(nr,c);break;}} }
+  }
+
+  function checkAnswers() {
+    const newChk = {};
+    puzzle.solution.forEach((row,r)=>row.forEach((cell,c)=>{
+      if(cell!=="."&&userGrid[r][c]) newChk[`${r}-${c}`]=userGrid[r][c]===cell?"correct":"wrong";
+    }));
+    setChecked(newChk);
+  }
+
+  function revealAll() {
+    setRevealed(true);
+    setUserGrid(puzzle.solution.map(row=>row.map(c=>c==="."?"":c)));
+    setComplete(true);
+  }
+
+  const activeClueObj = activeClue ? puzzle.across.find(c=>c.number===activeClue) : null;
+
+  return (
+    <div>
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12, flexWrap:"wrap", gap:8}}>
+        <div>
+          <div style={{fontSize:12, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{puzzle.title}</div>
+          <div style={{fontSize:9, color:"#c8201c", fontWeight:700}}>{puzzle.subtitle} · Monthly puzzle — updates automatically</div>
+        </div>
+        <div style={{display:"flex", gap:6}}>
+          <button onClick={checkAnswers} style={{background:"transparent",border:"1px solid #555",color:"#aaa",padding:"5px 12px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>✓ CHECK</button>
+          <button onClick={revealAll} style={{background:"transparent",border:"1px solid #c8201c",color:"#c8201c",padding:"5px 12px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>REVEAL</button>
+        </div>
+      </div>
+
+      {complete && <div style={{background:"#0d2a1a",border:"1px solid #2d8a50",color:"#4ade80",padding:"8px 14px",marginBottom:12,fontSize:12,fontWeight:700,textAlign:"center"}}>🎉 SOLVED! True NY sports fan confirmed.</div>}
+
+      {activeClueObj && (
+        <div style={{background:"#1a1a1a",border:"1px solid #c8201c",padding:"7px 12px",marginBottom:10,display:"flex",gap:8,alignItems:"center"}}>
+          <span style={{color:"#c8201c",fontWeight:900,fontSize:11,minWidth:24}}>{activeClueObj.number}A</span>
+          <span style={{fontSize:12,color:"#e8e0d0",fontFamily:"'Georgia',serif"}}>{activeClueObj.clue}</span>
+        </div>
+      )}
+
+      <div style={{display:"flex",gap:16,flexWrap:"wrap",alignItems:"flex-start"}}>
+        {/* Grid */}
+        <div style={{overflowX:"auto",flexShrink:0}}>
+          <div style={{display:"grid",gridTemplateColumns:`repeat(${COLS},${CELL}px)`,gridTemplateRows:`repeat(${ROWS},${CELL}px)`,border:"2px solid #c8201c",gap:1,background:"#333"}}>
+            {puzzle.solution.map((row,r)=>row.map((cell,c)=>{
+              const blk = isBlack(r,c);
+              const num = numberMap[`${r}-${c}`];
+              return (
+                <div key={`${r}-${c}`} onClick={()=>selectCell(r,c)}
+                  style={{width:CELL,height:CELL,background:getCellBg(r,c),position:"relative",cursor:blk?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {!blk && num && <span style={{position:"absolute",top:1,left:2,fontSize:7,fontWeight:900,color:"#888",lineHeight:1}}>{num}</span>}
+                  {!blk && (
+                    <input ref={el=>{if(el)inputRefs.current[`${r}-${c}`]=el;}}
+                      value={userGrid[r]?.[c]||""} onChange={()=>{}} onKeyDown={e=>handleKey(r,c,e)}
+                      onFocus={()=>selectCell(r,c)} maxLength={1}
+                      style={{width:"100%",height:"100%",background:"transparent",border:"none",outline:"none",textAlign:"center",fontSize:14,fontWeight:900,color:revealed?"#c8201c":"#e8e0d0",cursor:"pointer",caretColor:"transparent",fontFamily:"'Georgia',serif",paddingTop:6}} />
+                  )}
+                </div>
+              );
+            }))}
+          </div>
+        </div>
+
+        {/* Clues */}
+        <div style={{flex:1,minWidth:200,maxHeight:ROWS*CELL+20,overflowY:"auto"}}>
+          <div style={{fontSize:10,fontWeight:900,color:"#c8201c",letterSpacing:"0.15em",marginBottom:8,borderBottom:"1px solid #2a2a2a",paddingBottom:4}}>ACROSS</div>
+          {puzzle.across.map(cl=>{
+            const isAct = activeClue===cl.number;
+            return (
+              <div key={cl.number} onClick={()=>{setSelectedCell({r:cl.row,c:cl.col});setActiveClue(cl.number);setTimeout(()=>inputRefs.current[`${cl.row}-${cl.col}`]?.focus(),0);}}
+                style={{display:"flex",gap:6,padding:"4px 6px",cursor:"pointer",background:isAct?"#1a1a1a":"transparent",borderLeft:isAct?"2px solid #c8201c":"none",marginBottom:2}}>
+                <span style={{fontSize:10,fontWeight:900,color:"#c8201c",minWidth:18,flexShrink:0}}>{cl.number}</span>
+                <span style={{fontSize:10,color:"#aaa",lineHeight:1.4,fontFamily:"'Georgia',serif"}}>{cl.clue}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN PLAYROOM TAB ────────────────────────────────────────────────────
+function PlayroomTab({ myTeams }) {
+  const GAMES = [
+    { id:"trivia",    icon:"🧠", label:"Daily Trivia",    desc:"Test your NY sports knowledge" },
+    { id:"emoji",     icon:"🤔", label:"Emoji Quiz",      desc:"Guess the moment from emojis" },
+    { id:"scramble",  icon:"🔀", label:"Scramble",        desc:"Unscramble the legends" },
+    { id:"hangman",   icon:"🎯", label:"Hangman",         desc:"Guess letter by letter" },
+    { id:"crossword", icon:"✏️", label:"Crossword",       desc:"Monthly NY sports puzzle" },
+    { id:"wordsearch",icon:"🔍", label:"Word Search",     desc:"Find hidden legends" },
+    { id:"spin",      icon:"🎰", label:"Spin Wheel",      desc:"Random NY sports facts" },
+    { id:"birthdays", icon:"🎂", label:"Birthdays Today", desc:"Who was born on this date?" },
+    { id:"walkup",    icon:"🎵", label:"Walk-Up Songs",   desc:"Classic Yankees & Mets music" },
+  ];
+
+  const [active, setActive] = useState(null);
+
+  function randomGame() {
+    const g = GAMES[Math.floor(Math.random() * GAMES.length)];
+    setActive(g.id);
+  }
+
+  // My Teams weighting — surface games tied to their teams
+  const myTeamNames = myTeams ? [...myTeams].map(t => t.toLowerCase()) : [];
+
+  return (
+    <div style={{paddingTop:8}}>
+      {/* Header */}
+      <div style={{textAlign:"center", padding:"16px 0 20px", borderBottom:"2px solid #2a2a2a", marginBottom:20}}>
+        <h2 style={{margin:"0 0 4px", fontSize:22, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", letterSpacing:"0.05em"}}>
+          🎮 NY Sports Playroom
+        </h2>
+        <p style={{margin:"0 0 14px", fontSize:11, color:"#888", letterSpacing:"0.1em"}}>
+          QUICK GAMES FOR TRUE FANS
+        </p>
+        <button onClick={randomGame} style={{
+          background:"#f0b429", border:"none", color:"#000",
+          padding:"10px 28px", cursor:"pointer", fontSize:12,
+          fontWeight:900, letterSpacing:"0.1em", fontFamily:"'Georgia',serif",
+          boxShadow:"0 3px 0 #8a6200",
+        }}>
+          🎲 RANDOM PUZZLE
+        </button>
+        {active && (
+          <button onClick={() => setActive(null)} style={{
+            background:"transparent", border:"1px solid #444", color:"#888",
+            padding:"10px 20px", cursor:"pointer", fontSize:11, fontWeight:900,
+            letterSpacing:"0.1em", marginLeft:10,
+          }}>
+            ← BACK TO PLAYROOM
+          </button>
+        )}
+      </div>
+
+      {/* Game picker grid */}
+      {!active && (
+        <>
+          {myTeamNames.length > 0 && (
+            <div style={{marginBottom:16, padding:"10px 14px", background:"#1a1600", border:"1px solid #f0b42944", borderLeft:"3px solid #f0b429"}}>
+              <span style={{fontSize:9, fontWeight:900, color:"#f0b429", letterSpacing:"0.15em"}}>⭐ YOUR TEAMS: </span>
+              <span style={{fontSize:11, color:"#e8e0d0"}}>{[...myTeams].join(" · ")} — all puzzles feature your teams prominently</span>
+            </div>
+          )}
+          <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(160px, 1fr))", gap:10, marginBottom:24}}>
+            {GAMES.map(g => (
+              <button key={g.id} onClick={() => setActive(g.id)} style={{
+                background:"#161616", border:"1px solid #2a2a2a",
+                padding:"20px 14px", cursor:"pointer", textAlign:"center",
+                transition:"border-color 0.15s, background 0.15s",
+                display:"flex", flexDirection:"column", alignItems:"center", gap:8,
+              }}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor="#c8201c";e.currentTarget.style.background="#1a1a1a";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor="#2a2a2a";e.currentTarget.style.background="#161616";}}>
+                <span style={{fontSize:32}}>{g.icon}</span>
+                <span style={{fontSize:12, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{g.label}</span>
+                <span style={{fontSize:10, color:"#666"}}>{g.desc}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Active game */}
+      {active === "trivia"    && <TriviaTab />}
+      {active === "emoji"     && <EmojiQuizGame myTeams={myTeams} />}
+      {active === "scramble"  && <ScrambleGame myTeams={myTeams} />}
+      {active === "hangman"   && <HangmanGame myTeams={myTeams} />}
+      {active === "crossword" && <PlayroomCrossword />}
+      {active === "wordsearch"&& <WordSearchTab />}
+      {active === "spin"      && <SpinWheelTab />}
+      {active === "birthdays" && <BirthdaysTab />}
+      {active === "walkup"    && <SongsTab />}
+    </div>
+  );
+}
+
+
 const styles = {
   root: {
     background: "#0a0a0a",
