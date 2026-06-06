@@ -7439,7 +7439,7 @@ function WordSearchTab() {
   const PUZZLES = [
     {
       title: "NY JETS LEGENDS",
-      words: ["NAMATH","MAYNARD","KLECKO","MARTIN","GASTINEAU","PENNINGTON","REVIS","LYONS","BYRD","WILSON","BAILEY","MCNEIL","MANGOLD","FERGUSON","PARCELLS"],
+      words: ["NAMATH","MAYNARD","KLECKO","MARTIN","GASTINEAU","PENNINGTON","SANCHEZ","GARDNER","DARNOLD","WILSON","BAILEY","MCNEIL","MANGOLD","FERGUSON","PARCELLS"],
       size: 15,
     },
     {
@@ -7480,7 +7480,6 @@ function WordSearchTab() {
   ];
 
   const [puzzleIdx, setPuzzleIdx] = useState(0);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [grid, setGrid]           = useState([]);
   const [wordData, setWordData]   = useState([]);
   const [selected, setSelected]   = useState(new Set());
@@ -7493,7 +7492,7 @@ function WordSearchTab() {
   const puzzle = PUZZLES[puzzleIdx];
   const { words, size } = puzzle;
 
-  // Generate the grid — refreshKey forces a new grid without changing puzzleIdx
+  // Generate the grid
   useEffect(() => {
     const { newGrid, placed } = buildWordSearch(words, size);
     setGrid(newGrid);
@@ -7504,7 +7503,7 @@ function WordSearchTab() {
     setStartCell(null);
     setSelecting(false);
     setSolved(false);
-  }, [puzzleIdx, refreshKey]);
+  }, [puzzleIdx]);
 
   function buildWordSearch(wordList, sz) {
     const dirs = [
@@ -7781,7 +7780,7 @@ function WordSearchTab() {
             })}
           </div>
 
-          <button onClick={() => setRefreshKey(k => k + 1)}
+          <button onClick={() => setPuzzleIdx(puzzleIdx)}
             style={{...styles.filterBtn, marginTop:16, width:"100%", padding:"8px",
               fontSize:10, letterSpacing:"0.1em"}}>
             🔄 NEW GRID (SAME WORDS)
@@ -9522,12 +9521,16 @@ const HANGMAN_WORDS = [
 
 // ─── SCRAMBLE COMPONENT ───────────────────────────────────────────────────
 function ScrambleGame({ myTeams }) {
-  const [wordObj, setWordObj] = useState(null);
-  const [scrambled, setScrambled] = useState([]);
-  const [guess, setGuess] = useState("");
-  const [result, setResult] = useState(null); // null | "correct" | "wrong"
-  const [hints, setHints] = useState(0);
-  const [tries, setTries] = useState(0);
+  const [wordObj, setWordObj]     = useState(null);
+  const [scrambled, setScrambled] = useState([]);   // array of letters (tiles)
+  const [answer, setAnswer]       = useState([]);   // letters user has placed
+  const [available, setAvailable] = useState([]);   // which tile indices still in pool
+  const [result, setResult]       = useState(null); // null | "correct" | "wrong"
+  const [hints, setHints]         = useState(0);
+  const [tries, setTries]         = useState(0);
+  const [mode, setMode]           = useState("click"); // "click" | "type"
+  const [typed, setTyped]         = useState("");
+  const inputRef = useRef(null);
 
   function scrambleWord(w) {
     const arr = w.split("");
@@ -9535,109 +9538,261 @@ function ScrambleGame({ myTeams }) {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    // Make sure it's actually scrambled
     if (arr.join("") === w && w.length > 1) return scrambleWord(w);
     return arr;
   }
 
   function newWord() {
     const w = SCRAMBLE_WORDS[Math.floor(Math.random() * SCRAMBLE_WORDS.length)];
+    const sc = scrambleWord(w.word);
     setWordObj(w);
-    setScrambled(scrambleWord(w.word));
-    setGuess(""); setResult(null); setHints(0); setTries(0);
+    setScrambled(sc);
+    setAnswer(Array(w.word.length).fill(null));   // null = empty slot
+    setAvailable(sc.map((_, i) => i));            // all tile indices available
+    setResult(null); setHints(0); setTries(0); setTyped("");
   }
 
   useEffect(() => { newWord(); }, []);
 
-  function handleGuess() {
+  // ── CLICK MODE: tap a tile to place it, tap an answer slot to remove it ──
+  function clickTile(tileIdx) {
+    if (result) return;
+    // Find first empty slot in answer
+    const firstEmpty = answer.indexOf(null);
+    if (firstEmpty === -1) return;
+    const newAnswer = [...answer];
+    newAnswer[firstEmpty] = tileIdx;
+    const newAvail = available.filter(i => i !== tileIdx);
+    setAnswer(newAnswer);
+    setAvailable(newAvail);
+    // Auto-check when all slots filled
+    if (newAvail.length === 0) {
+      const word = newAnswer.map(idx => scrambled[idx]).join("");
+      checkWord(word, newAnswer, newAvail);
+    }
+  }
+
+  function clickAnswerSlot(slotIdx) {
+    if (result) return;
+    const tileIdx = answer[slotIdx];
+    if (tileIdx === null) return;
+    // Return tile to pool
+    const newAnswer = [...answer];
+    newAnswer[slotIdx] = null;
+    setAnswer(newAnswer);
+    setAvailable(prev => [...prev, tileIdx].sort((a,b)=>a-b));
+  }
+
+  function checkWord(word, ans, avail) {
     if (!wordObj) return;
-    const clean = guess.trim().toUpperCase();
+    if (word === wordObj.word) {
+      setResult("correct");
+    } else {
+      const newTries = tries + 1;
+      setTries(newTries);
+      if (newTries >= 3) {
+        setResult("wrong");
+      } else {
+        // Shake and reset after short delay
+        setTimeout(() => {
+          setAnswer(Array(wordObj.word.length).fill(null));
+          setAvailable(scrambled.map((_, i) => i));
+        }, 600);
+      }
+    }
+  }
+
+  // ── TYPE MODE ──
+  function handleTypedGuess() {
+    if (!wordObj) return;
+    const clean = typed.trim().toUpperCase();
     if (clean === wordObj.word) {
       setResult("correct");
     } else {
-      setTries(t => t + 1);
-      if (tries >= 2) setResult("wrong");
-      else setGuess("");
+      const newTries = tries + 1;
+      setTries(newTries);
+      if (newTries >= 3) setResult("wrong");
+      else setTyped("");
     }
   }
 
   if (!wordObj) return null;
 
+  const answerWord = answer.map(idx => (idx !== null ? scrambled[idx] : null));
+  const allPlaced  = answer.every(s => s !== null);
+
   return (
-    <div style={{background:"#161616", border:"1px solid #2a2a2a", padding:"20px"}}>
-      <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:16}}>
-        🔀 SCRAMBLE — UNSCRAMBLE THE NY SPORTS LEGEND
-      </div>
-      <div style={{textAlign:"center", marginBottom:20}}>
-        <div style={{display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap", marginBottom:12}}>
-          {scrambled.map((l, i) => (
-            <div key={i} style={{
-              width:44, height:44, background:"#1a1a1a", border:"2px solid #c8201c",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:22, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif",
-            }}>{l}</div>
-          ))}
+    <div style={{background:"#161616", border:"1px solid #2a2a2a", padding:"20px", maxWidth:520}}>
+      {/* Header */}
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:8}}>
+        <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em"}}>
+          🔀 SCRAMBLE — NY SPORTS LEGEND
         </div>
-        <div style={{fontSize:10, color:"#666", marginBottom:8}}>
+        <div style={{display:"flex", gap:6}}>
+          <button onClick={() => setMode(m => m==="click"?"type":"click")}
+            style={{fontSize:9, padding:"3px 10px", background:"transparent", border:"1px solid #444",
+              color:"#888", cursor:"pointer", fontWeight:700, letterSpacing:"0.08em"}}>
+            {mode==="click" ? "⌨️ TYPE MODE" : "🖱️ CLICK MODE"}
+          </button>
+          <button onClick={newWord}
+            style={{fontSize:9, padding:"3px 10px", background:"transparent", border:"1px solid #444",
+              color:"#888", cursor:"pointer", fontWeight:700, letterSpacing:"0.08em"}}>
+            ↺ NEW WORD
+          </button>
+        </div>
+      </div>
+
+      {/* Category + hint */}
+      <div style={{textAlign:"center", marginBottom:16}}>
+        <div style={{fontSize:10, color:"#666", marginBottom:6}}>
           Category: <span style={{color:"#c8201c", fontWeight:900}}>{wordObj.category}</span>
+          {tries > 0 && <span style={{color:"#f87171", marginLeft:12}}>
+            {3 - tries} {3-tries===1?"try":"tries"} left
+          </span>}
         </div>
         {hints >= 1 && (
-          <div style={{fontSize:11, color:"#888", fontStyle:"italic", marginBottom:8}}>
-            Hint: {wordObj.hint}
+          <div style={{fontSize:11, color:"#f0b429", fontStyle:"italic", background:"#1a1600",
+            border:"1px solid #f0b42944", padding:"6px 12px", display:"inline-block"}}>
+            💡 {wordObj.hint}
           </div>
         )}
       </div>
 
+      {/* Answer slots */}
+      <div style={{display:"flex", gap:6, justifyContent:"center", flexWrap:"wrap", marginBottom:20}}>
+        {answerWord.map((letter, i) => (
+          <div key={i}
+            onClick={() => mode==="click" && clickAnswerSlot(i)}
+            style={{
+              width:42, height:48,
+              border:`2px solid ${letter ? (result==="correct"?"#22c55e":result==="wrong"?"#c8201c":"#888") : "#333"}`,
+              background: letter ? (result==="correct"?"#0d2a1a":result==="wrong"?"#2a0d0d":"#2a2a2a") : "#111",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:20, fontWeight:900, color: result==="correct"?"#4ade80":result==="wrong"?"#f87171":"#e8e0d0",
+              fontFamily:"'Georgia',serif",
+              cursor: mode==="click" && letter ? "pointer" : "default",
+              transition:"all 0.15s",
+              borderBottom: letter ? "3px solid #444" : "3px solid #222",
+            }}>
+            {letter || ""}
+          </div>
+        ))}
+      </div>
+
+      {/* Scrambled tile pool (click mode) */}
+      {mode === "click" && result === null && (
+        <div style={{display:"flex", gap:6, justifyContent:"center", flexWrap:"wrap", marginBottom:16,
+          padding:"12px", background:"#111", border:"1px solid #1a1a1a", minHeight:64}}>
+          {scrambled.map((letter, i) => {
+            const isUsed = !available.includes(i);
+            return (
+              <div key={i}
+                onClick={() => !isUsed && clickTile(i)}
+                style={{
+                  width:42, height:48,
+                  border:`2px solid ${isUsed?"#222":"#c8201c"}`,
+                  background: isUsed ? "#0a0a0a" : "#1a1a1a",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:20, fontWeight:900,
+                  color: isUsed ? "#222" : "#e8e0d0",
+                  fontFamily:"'Georgia',serif",
+                  cursor: isUsed ? "default" : "pointer",
+                  transition:"all 0.15s",
+                  transform: isUsed ? "none" : "translateY(-1px)",
+                  boxShadow: isUsed ? "none" : "0 2px 0 #8a0000",
+                  userSelect:"none",
+                }}>
+                {isUsed ? "" : letter}
+              </div>
+            );
+          })}
+          <div style={{width:"100%", textAlign:"center", fontSize:9, color:"#444", marginTop:6}}>
+            Click tiles to build your answer · Click an answer letter to return it
+          </div>
+        </div>
+      )}
+
+      {/* Type mode input */}
+      {mode === "type" && result === null && (
+        <div style={{display:"flex", gap:8, justifyContent:"center", marginBottom:16, flexWrap:"wrap"}}>
+          <input
+            ref={inputRef}
+            value={typed}
+            onChange={e => setTyped(e.target.value.toUpperCase().replace(/[^A-Z]/g,""))}
+            onKeyDown={e => e.key==="Enter" && handleTypedGuess()}
+            placeholder="Type your answer..."
+            autoFocus
+            style={{padding:"10px 14px", background:"#111", border:"1px solid #444",
+              color:"#e8e0d0", fontSize:16, fontFamily:"'Georgia',serif",
+              letterSpacing:"0.15em", outline:"none", minWidth:180}}
+          />
+          <button onClick={handleTypedGuess}
+            style={{background:"#c8201c", border:"none", color:"#fff",
+              padding:"10px 20px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>
+            GUESS
+          </button>
+        </div>
+      )}
+
+      {/* Hint + manual check for click mode */}
       {result === null && (
         <div style={{display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap"}}>
-          <input
-            value={guess}
-            onChange={e => setGuess(e.target.value.toUpperCase())}
-            onKeyDown={e => e.key === "Enter" && handleGuess()}
-            placeholder="Type your answer..."
-            style={{
-              padding:"10px 14px", background:"#111", border:"1px solid #444",
-              color:"#e8e0d0", fontSize:16, fontFamily:"'Georgia',serif",
-              letterSpacing:"0.1em", outline:"none", minWidth:200,
-            }}
-          />
-          <button onClick={handleGuess} style={{
-            background:"#c8201c", border:"none", color:"#fff",
-            padding:"10px 20px", cursor:"pointer", fontSize:11,
-            fontWeight:900, letterSpacing:"0.1em",
-          }}>GUESS</button>
           {hints < 1 && (
-            <button onClick={() => setHints(1)} style={{
-              background:"transparent", border:"1px solid #555", color:"#888",
-              padding:"10px 16px", cursor:"pointer", fontSize:11, fontWeight:900,
-            }}>HINT</button>
+            <button onClick={() => setHints(1)}
+              style={{background:"transparent", border:"1px solid #f0b42966", color:"#f0b429",
+                padding:"7px 16px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.08em"}}>
+              💡 HINT
+            </button>
           )}
-          {tries > 0 && (
-            <div style={{width:"100%", textAlign:"center", fontSize:10, color:"#c8201c", marginTop:4}}>
-              Not quite — {3 - tries} {3 - tries === 1 ? "try" : "tries"} left
-            </div>
+          {mode === "click" && allPlaced && (
+            <button onClick={() => checkWord(answerWord.join(""), answer, available)}
+              style={{background:"#c8201c", border:"none", color:"#fff",
+                padding:"7px 20px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>
+              ✓ CHECK
+            </button>
+          )}
+          {mode === "click" && !allPlaced && available.length < scrambled.length && (
+            <button onClick={() => { setAnswer(Array(wordObj.word.length).fill(null)); setAvailable(scrambled.map((_,i)=>i)); }}
+              style={{background:"transparent", border:"1px solid #444", color:"#666",
+                padding:"7px 14px", cursor:"pointer", fontSize:11, fontWeight:700}}>
+              CLEAR
+            </button>
           )}
         </div>
       )}
 
+      {/* Result */}
       {result === "correct" && (
-        <div style={{textAlign:"center"}}>
-          <div style={{fontSize:20, fontWeight:900, color:"#4ade80", marginBottom:8}}>🎉 CORRECT! — {wordObj.word}</div>
-          <p style={{fontSize:12, color:"#aaa", lineHeight:1.6, marginBottom:16, fontFamily:"'Georgia',serif"}}>{wordObj.fact}</p>
-          <button onClick={newWord} style={{background:"#c8201c", border:"none", color:"#fff", padding:"10px 24px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>NEXT WORD →</button>
+        <div style={{textAlign:"center", marginTop:12}}>
+          <div style={{fontSize:18, fontWeight:900, color:"#4ade80", marginBottom:8}}>🎉 CORRECT!</div>
+          <p style={{fontSize:12, color:"#aaa", lineHeight:1.6, marginBottom:16,
+            fontFamily:"'Georgia',serif", textAlign:"left"}}>{wordObj.fact}</p>
+          <button onClick={newWord}
+            style={{background:"#c8201c", border:"none", color:"#fff",
+              padding:"10px 24px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>
+            NEXT WORD →
+          </button>
         </div>
       )}
 
       {result === "wrong" && (
-        <div style={{textAlign:"center"}}>
-          <div style={{fontSize:16, fontWeight:900, color:"#f87171", marginBottom:8}}>The answer was: <span style={{color:"#e8e0d0"}}>{wordObj.word}</span></div>
-          <p style={{fontSize:12, color:"#aaa", lineHeight:1.6, marginBottom:16, fontFamily:"'Georgia',serif"}}>{wordObj.fact}</p>
-          <button onClick={newWord} style={{background:"#c8201c", border:"none", color:"#fff", padding:"10px 24px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>TRY ANOTHER →</button>
+        <div style={{textAlign:"center", marginTop:12}}>
+          <div style={{fontSize:14, fontWeight:900, color:"#f87171", marginBottom:6}}>
+            The answer was: <span style={{color:"#e8e0d0", letterSpacing:"0.15em"}}>{wordObj.word}</span>
+          </div>
+          <p style={{fontSize:12, color:"#aaa", lineHeight:1.6, marginBottom:16,
+            fontFamily:"'Georgia',serif", textAlign:"left"}}>{wordObj.fact}</p>
+          <button onClick={newWord}
+            style={{background:"#c8201c", border:"none", color:"#fff",
+              padding:"10px 24px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>
+            TRY ANOTHER →
+          </button>
         </div>
       )}
     </div>
   );
 }
+
 
 // ─── EMOJI QUIZ COMPONENT ─────────────────────────────────────────────────
 function EmojiQuizGame({ myTeams }) {
@@ -9850,353 +10005,675 @@ function HangmanGame({ myTeams }) {
 
 // ─── MONTHLY CROSSWORD COMPONENT ──────────────────────────────────────────
 function PlayroomCrossword() {
-  const monthNum = new Date().getMonth(); // 0-indexed
-  const MONTH_NAMES = ["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE",
-                       "JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
+  const monthNum = new Date().getMonth(); // 0-11
+  const puzzle = MONTHLY_CROSSWORDS[monthNum] || MONTHLY_CROSSWORDS[0];
+  const ROWS = puzzle.solution.length;
+  const COLS = puzzle.solution[0].length;
+  const CELL = 32;
 
-  // 12 monthly Fill-In puzzles — one answer per row, clue on the left
-  // Format: { answer, clue, category }
-  const MONTHLY_FILLIN = [
-    { month:"JANUARY",   theme:"NY WINTER LEGENDS", entries:[
-      { answer:"JETER",       clue:"The Captain — 3,465 hits, 5 rings, wore #2" },
-      { answer:"MESSIER",     clue:"Guaranteed Game 6 win in 1994 — then scored a hat trick" },
-      { answer:"NAMATH",      clue:"Broadway Joe — I guarantee it" },
-      { answer:"EWING",       clue:"Georgetown center — greatest Knick of all time" },
-      { answer:"BOSSY",       clue:"9 straight 50-goal seasons with the Islanders" },
-      { answer:"BRODEUR",     clue:"691 wins, 125 shutouts — all-time NHL goalie records" },
-      { answer:"GEHRIG",      clue:"The Iron Horse — 2,130 consecutive games" },
-      { answer:"RIVERA",      clue:"Enter Sandman — first unanimous Hall of Famer" },
-      { answer:"REED",        clue:"Limped onto MSG court in Game 7, 1970" },
-      { answer:"LEETCH",      clue:"First American to win the Conn Smythe Trophy" },
-    ]},
-    { month:"FEBRUARY",  theme:"SUPER BOWL NY", entries:[
-      { answer:"PARCELLS",    clue:"Big Tuna — 2 Super Bowl titles with the Giants" },
-      { answer:"TAYLOR",      clue:"LT — only defensive player to win NFL MVP" },
-      { answer:"SIMMS",       clue:"22 of 25 in Super Bowl XXI — still the completion record" },
-      { answer:"MANNING",     clue:"Beat the undefeated Patriots twice in the Super Bowl" },
-      { answer:"NAMATH",      clue:"Super Bowl III MVP — guaranteed the win" },
-      { answer:"STRAHAN",     clue:"141.5 career sacks — single-season record 22.5" },
-      { answer:"ANDERSON",    clue:"Super Bowl XXV MVP at age 34 — Ottis ___ " },
-      { answer:"TYREE",       clue:"David ___ — the helmet catch that stunned 18-0 Patriots" },
-      { answer:"MARTIN",      clue:"Curtis ___ — greatest Jet since Namath, 14,101 rush yards" },
-      { answer:"REVIS",       clue:"Revis Island — most dominant CB of his era" },
-    ]},
-    { month:"MARCH",     theme:"KNICKS & RANGERS", entries:[
-      { answer:"FRAZIER",     clue:"Clyde — 36 pts, 19 ast in Game 7 of the 1970 Finals" },
-      { answer:"REED",        clue:"The Captain — limped onto MSG court in the 1970 Finals" },
-      { answer:"MESSIER",     clue:"Rangers captain who ended 54 years of drought" },
-      { answer:"LEETCH",      clue:"Conn Smythe 1994 — greatest American in NHL history" },
-      { answer:"GILBERT",     clue:"Rod ___ — all-time Rangers scoring leader for decades" },
-      { answer:"RICHTER",     clue:"Mike ___ — 42-save game in the 1994 Finals" },
-      { answer:"BRUNSON",     clue:"Jalen ___ — MSG's new hero, took a hometown discount" },
-      { answer:"LUNDQVIST",   clue:"The King — Vezina Trophy 2012, .921 save percentage" },
-      { answer:"MONROE",      clue:"The Pearl — Earl ___ , pure playground genius at MSG" },
-      { answer:"DEBUSSCHERE",  clue:"Dave ___ — power forward on both championship Knicks" },
-    ]},
-    { month:"APRIL",     theme:"BASEBALL OPENING DAY", entries:[
-      { answer:"SEAVER",      clue:"Tom Terrific — 3 Cy Youngs, greatest Met ever" },
-      { answer:"JUDGE",       clue:"Aaron ___ — 62 HR in 2022, the American League record" },
-      { answer:"MATTINGLY",   clue:"Donnie Baseball — 9 Gold Gloves, AL MVP 1985" },
-      { answer:"GOODEN",      clue:"Doc — 24-4, 1.53 ERA at just 20 years old" },
-      { answer:"PIAZZA",      clue:"9/11 home run — most emotional HR in baseball history" },
-      { answer:"RIVERA",      clue:"Mariano ___ — 652 saves, Enter Sandman" },
-      { answer:"LINDOR",      clue:"Francisco ___ — Mr. Smile, My Girl walk-up song" },
-      { answer:"JETER",       clue:"Hit a homer for his 3,000th career hit — only player ever" },
-      { answer:"SOTO",        clue:"Juan ___ — $765M contract, the biggest in baseball history" },
-      { answer:"STRAWBERRY",  clue:"Darryl ___ — 252 Mets home runs, 8 All-Star selections" },
-    ]},
-    { month:"MAY",       theme:"ISLANDERS DYNASTY", entries:[
-      { answer:"BOSSY",       clue:"Mike ___ — 573 goals, 9 straight 50-goal seasons" },
-      { answer:"TROTTIER",    clue:"Bryan ___ — Hart Trophy 1979, dynasty engine" },
-      { answer:"POTVIN",      clue:"Denis ___ — captain of 4 Cups, broke Orr's record" },
-      { answer:"GILLIES",     clue:"Clark ___ — the enforcer who protected Bossy" },
-      { answer:"SMITH",       clue:"Billy ___ — Battlin' Billy, Vezina 1982" },
-      { answer:"NYSTROM",     clue:"Bob ___ — OT goal that started the dynasty in 1980" },
-      { answer:"ARBOUR",      clue:"Al ___ — greatest Islanders coach, 4 consecutive Cups" },
-      { answer:"TAVARES",     clue:"John ___ — greatest Islander since Bossy, left for Toronto" },
-      { answer:"GORING",      clue:"Butch ___ — Conn Smythe 1980, the missing piece" },
-      { answer:"LAFONTAINE",  clue:"Pat ___ — gifted center traded too soon from Long Island" },
-    ]},
-    { month:"JUNE",      theme:"RANGERS 1994", entries:[
-      { answer:"MESSIER",     clue:"Guaranteed Game 6, scored hat trick, raised the Cup" },
-      { answer:"LEETCH",      clue:"34 playoff points — Conn Smythe MVP in 1994" },
-      { answer:"RICHTER",     clue:"Mike ___ — the goaltending backbone of the 1994 run" },
-      { answer:"GILBERT",     clue:"Rod ___ — franchise icon, all-time Rangers scorer" },
-      { answer:"KOVALEV",     clue:"Alexei ___ — dazzling skill in the 1994 championship run" },
-      { answer:"ANDERSON",    clue:"Glenn ___ — former Oiler who brought Cup experience" },
-      { answer:"GRAVES",      clue:"Adam ___ — scored 52 goals in the championship season" },
-      { answer:"RATELLE",     clue:"Jean ___ — GAG Line center, Lady Byng 4 times" },
-      { answer:"TIKKANEN",    clue:"Esa ___ — the most annoying pest in playoff hockey" },
-      { answer:"BROADWAY",    clue:"The ___ Blues — Rangers nickname from their famous street" },
-    ]},
-    { month:"JULY",      theme:"YANKEES DYNASTY", entries:[
-      { answer:"RUTH",        clue:"The Sultan of Swat — 714 career home runs" },
-      { answer:"GEHRIG",      clue:"The Iron Horse — 2,130 consecutive games played" },
-      { answer:"DIMAGGIO",    clue:"The Yankee Clipper — 56-game hitting streak" },
-      { answer:"MANTLE",      clue:"Triple Crown 1956 — .353 AVG, 52 HR, 130 RBI" },
-      { answer:"BERRA",       clue:"It ain't over till it's over — 10 World Series rings" },
-      { answer:"FORD",        clue:"The Chairman of the Board — .690 World Series win pct" },
-      { answer:"JETER",       clue:"The Captain — 5 rings, 3,465 hits, all in pinstripes" },
-      { answer:"RIVERA",      clue:"Enter Sandman — the greatest closer in baseball history" },
-      { answer:"JACKSON",     clue:"Reggie ___ — 3 HRs on 3 consecutive pitches, 1977 WS" },
-      { answer:"MUNSON",      clue:"Thurman ___ — the Yankees Captain, gone too soon" },
-    ]},
-    { month:"AUGUST",    theme:"METS MAGIC", entries:[
-      { answer:"SEAVER",      clue:"Tom Terrific — 3 Cy Youngs, led the Miracle Mets" },
-      { answer:"PIAZZA",      clue:"9/11 home run on September 21, 2001 healed a city" },
-      { answer:"GOODEN",      clue:"Doc — most dominant young pitcher in baseball history" },
-      { answer:"WRIGHT",      clue:"David ___ — only Met to have his number retired as a lifer" },
-      { answer:"CARTER",      clue:"Gary ___ — The Kid started the 1986 WS Game 6 rally" },
-      { answer:"MOOKIE",      clue:"___ Wilson — his grounder went through Buckner's legs" },
-      { answer:"ALONSO",      clue:"Pete ___ — Mets all-time HR king, 254+ home runs" },
-      { answer:"HERNANDEZ",   clue:"Keith ___ — captain of the 1986 championship Mets" },
-      { answer:"DEGROM",      clue:"Jacob ___ — 2x Cy Young, 1.08 ERA in 2021" },
-      { answer:"STRAWBERRY",  clue:"Darryl ___ — 252 Mets HR, The Straw Man" },
-    ]},
-    { month:"SEPTEMBER", theme:"PENNANT RACE", entries:[
-      { answer:"SEAVER",      clue:"Tom Terrific — won 25 games for the 1969 Miracle Mets" },
-      { answer:"MCGRAW",      clue:"Tug ___ — Ya Gotta Believe! The 1973 rallying cry" },
-      { answer:"JETER",       clue:"Mr. November — walk-off HR after midnight in the 2001 WS" },
-      { answer:"MESSIER",     clue:"Mark ___ — guaranteed the win and delivered" },
-      { answer:"RUTH",        clue:"Babe ___ — 61 HR record stood for 34 years" },
-      { answer:"PIAZZA",      clue:"Mike ___ — his 9/11 shot is the most emotional in history" },
-      { answer:"NAMATH",      clue:"Joe ___ — I guarantee it. And he was right." },
-      { answer:"TAYLOR",      clue:"Lawrence ___ — greatest defender in NFL history" },
-      { answer:"BOSSY",       clue:"Mike ___ — scored 50 goals in 50 games in 1981" },
-      { answer:"FRAZIER",     clue:"Walt ___ — Clyde, the coolest Knick who ever played" },
-    ]},
-    { month:"OCTOBER",   theme:"WORLD SERIES", entries:[
-      { answer:"JACKSON",     clue:"Mr. October — 3 HRs on 3 consecutive pitches in 1977" },
-      { answer:"LARSEN",      clue:"Don ___ — perfect game in 1956 World Series vs Dodgers" },
-      { answer:"JETER",       clue:"Derek ___ — Mr. November, walk-off after midnight" },
-      { answer:"MOOKIE",      clue:"___ Wilson — Game 6, 1986 — Buckner's error" },
-      { answer:"RIVERA",      clue:"Mariano ___ — the greatest postseason closer ever" },
-      { answer:"MUNSON",      clue:"Thurman ___ — Yankees captain, 1976 AL MVP" },
-      { answer:"GOODEN",      clue:"Dwight ___ — ace of the 1986 World Champions" },
-      { answer:"ALONSO",      clue:"Pete ___ — Mets all-time home run king since August 2025" },
-      { answer:"HENDERSON",   clue:"Rickey ___ — all-time stolen base record set as a Yankee" },
-      { answer:"MATTINGLY",   clue:"Don ___ — Donnie Baseball never got his World Series ring" },
-    ]},
-    { month:"NOVEMBER",  theme:"NHL LEGENDS", entries:[
-      { answer:"BRODEUR",     clue:"Martin ___ — 691 wins, 125 shutouts, 3 Stanley Cups" },
-      { answer:"MESSIER",     clue:"Mark ___ — the greatest captain in hockey history" },
-      { answer:"POTVIN",      clue:"Denis ___ — broke Orr's record, captained 4 Cups" },
-      { answer:"BOSSY",       clue:"Mike ___ — 9 straight 50-goal seasons, dynasty RW" },
-      { answer:"LEETCH",      clue:"Brian ___ — greatest American-born player in NHL history" },
-      { answer:"TROTTIER",    clue:"Bryan ___ — Hart Trophy, 4 consecutive Stanley Cups" },
-      { answer:"LUNDQVIST",   clue:"Henrik ___ — The King, Vezina 2012" },
-      { answer:"STEVENS",     clue:"Scott ___ — most feared hitter, Conn Smythe 2000" },
-      { answer:"ELIAS",       clue:"Patrik ___ — all-time Devils scorer, 1,025 career points" },
-      { answer:"GILBERT",     clue:"Rod ___ — all-time Rangers franchise scoring leader" },
-    ]},
-    { month:"DECEMBER",  theme:"GREATEST MOMENTS", entries:[
-      { answer:"NAMATH",      clue:"I guarantee it — Super Bowl III, January 1969" },
-      { answer:"SEAVER",      clue:"Led the 100-to-1 Miracle Mets to the 1969 World Series" },
-      { answer:"MESSIER",     clue:"Guaranteed Game 6 in 1994 — ended 54 years of drought" },
-      { answer:"REED",        clue:"Limped onto the court in Game 7 — MSG went electric" },
-      { answer:"JACKSON",     clue:"Three home runs on three pitches — 1977 WS Game 6" },
-      { answer:"PIAZZA",      clue:"September 21, 2001 — the home run that healed New York" },
-      { answer:"NYSTROM",     clue:"Bob ___ — OT goal that launched the Islanders dynasty" },
-      { answer:"PARCELLS",    clue:"Bill ___ — Big Tuna, 2 Super Bowls with the Giants" },
-      { answer:"LARSEN",      clue:"Don ___ — only perfect game in World Series history" },
-      { answer:"TAYLOR",      clue:"LT — the greatest defensive player in NFL history" },
-    ]},
-  ];
+  const numberMap = {};
+  puzzle.across.forEach(c => { numberMap[`${c.row}-${c.col}`] = c.number; });
 
-  const fillin = MONTHLY_FILLIN[monthNum] || MONTHLY_FILLIN[0];
-  const [guesses, setGuesses] = useState(() => fillin.entries.map(() => ""));
-  const [checked, setChecked] = useState(null); // null | array of booleans
+  const [userGrid, setUserGrid] = useState(() =>
+    Array.from({length:ROWS}, () => Array(COLS).fill(""))
+  );
+  const [selectedCell, setSelectedCell] = useState(null);
+  const [activeClue, setActiveClue] = useState(null);
+  const [checked, setChecked] = useState({});
   const [revealed, setRevealed] = useState(false);
-  const [activeRow, setActiveRow] = useState(0);
+  const [complete, setComplete] = useState(false);
   const inputRefs = useRef({});
 
-  // Reset when month changes (shouldn't happen mid-session but just in case)
-  useEffect(() => {
-    setGuesses(fillin.entries.map(() => ""));
-    setChecked(null);
-    setRevealed(false);
-    setActiveRow(0);
-  }, [monthNum]);
-
-  const solved = checked && checked.every(Boolean);
-
-  function handleInput(i, val) {
-    const cleaned = val.toUpperCase().replace(/[^A-Z]/g, "");
-    const ng = [...guesses];
-    ng[i] = cleaned;
-    setGuesses(ng);
-    setChecked(null);
-  }
-
-  function handleKeyDown(i, e) {
-    if (e.key === "Enter") {
-      // Move to next row
-      const next = i + 1;
-      if (next < fillin.entries.length) {
-        setActiveRow(next);
-        setTimeout(() => inputRefs.current[next]?.focus(), 0);
-      } else {
-        checkAll();
-      }
+  // cell highlights
+  const cellClues = {};
+  puzzle.across.forEach(c => {
+    for (let i = 0; i < c.len; i++) {
+      const key = `${c.row}-${c.col+i}`;
+      if (!cellClues[key]) cellClues[key] = {};
+      cellClues[key].across = c.number;
     }
+  });
+
+  function isBlack(r,c) { return puzzle.solution[r]?.[c] === "."; }
+
+  function getCellBg(r,c) {
+    if (isBlack(r,c)) return "#0a0a0a";
+    const key = `${r}-${c}`;
+    const isSel = selectedCell?.r===r && selectedCell?.c===c;
+    const isHL  = activeClue && cellClues[key]?.across === activeClue;
+    const chk   = checked[key];
+    if (isSel) return "#f5e642";
+    if (isHL) return "#2a2a6a";
+    if (chk==="correct") return "#0d2a1a";
+    if (chk==="wrong") return "#2a0d0d";
+    return "#1a1a1a";
   }
 
-  function checkAll() {
-    setChecked(fillin.entries.map((entry, i) => guesses[i].trim() === entry.answer));
+  function selectCell(r,c) {
+    if (isBlack(r,c)) return;
+    setSelectedCell({r,c});
+    setActiveClue(cellClues[`${r}-${c}`]?.across || null);
+    setTimeout(() => inputRefs.current[`${r}-${c}`]?.focus(), 0);
+  }
+
+  function handleKey(r,c,e) {
+    const l = e.key.toUpperCase();
+    if (l.length===1 && l>="A" && l<="Z") {
+      const ng = userGrid.map(row=>[...row]);
+      ng[r][c] = l;
+      setUserGrid(ng);
+      const chk = {...checked}; delete chk[`${r}-${c}`]; setChecked(chk);
+      // advance right
+      for (let nc=c+1;nc<COLS;nc++) { if(!isBlack(r,nc)){selectCell(r,nc);break;} }
+      const done = puzzle.solution.every((row,r2)=>row.every((cell,c2)=>cell==="."||ng[r2][c2]===cell));
+      if (done) setComplete(true);
+    } else if (e.key==="Backspace") {
+      const ng = userGrid.map(row=>[...row]);
+      if (ng[r][c]) { ng[r][c]=""; setUserGrid(ng); }
+      else { for (let nc=c-1;nc>=0;nc--) { if(!isBlack(r,nc)){selectCell(r,nc);break;} } }
+    } else if (e.key==="ArrowRight") { for(let nc=c+1;nc<COLS;nc++){if(!isBlack(r,nc)){selectCell(r,nc);break;}} }
+    else if (e.key==="ArrowLeft")  { for(let nc=c-1;nc>=0;nc--){if(!isBlack(r,nc)){selectCell(r,nc);break;}} }
+    else if (e.key==="ArrowDown")  { for(let nr=r+1;nr<ROWS;nr++){if(!isBlack(nr,c)){selectCell(nr,c);break;}} }
+    else if (e.key==="ArrowUp")    { for(let nr=r-1;nr>=0;nr--){if(!isBlack(nr,c)){selectCell(nr,c);break;}} }
+  }
+
+  function checkAnswers() {
+    const newChk = {};
+    puzzle.solution.forEach((row,r)=>row.forEach((cell,c)=>{
+      if(cell!=="."&&userGrid[r][c]) newChk[`${r}-${c}`]=userGrid[r][c]===cell?"correct":"wrong";
+    }));
+    setChecked(newChk);
   }
 
   function revealAll() {
-    setGuesses(fillin.entries.map(e => e.answer));
-    setChecked(fillin.entries.map(() => true));
     setRevealed(true);
+    setUserGrid(puzzle.solution.map(row=>row.map(c=>c==="."?"":c)));
+    setComplete(true);
   }
 
-  function reset() {
-    setGuesses(fillin.entries.map(() => ""));
-    setChecked(null);
-    setRevealed(false);
-    setActiveRow(0);
-  }
-
-  const maxLen = Math.max(...fillin.entries.map(e => e.answer.length));
+  const activeClueObj = activeClue ? puzzle.across.find(c=>c.number===activeClue) : null;
 
   return (
-    <div style={{maxWidth:680}}>
-      {/* Header */}
-      <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16, flexWrap:"wrap", gap:8}}>
+    <div>
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12, flexWrap:"wrap", gap:8}}>
         <div>
-          <div style={{fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", marginBottom:2}}>
-            {MONTH_NAMES[monthNum]}: {fillin.theme}
-          </div>
-          <div style={{fontSize:9, color:"#c8201c", fontWeight:700, letterSpacing:"0.1em"}}>
-            FILL-IN PUZZLE · 10 NY SPORTS LEGENDS · UPDATES MONTHLY
-          </div>
+          <div style={{fontSize:12, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{puzzle.title}</div>
+          <div style={{fontSize:9, color:"#c8201c", fontWeight:700}}>{puzzle.subtitle} · Monthly puzzle — updates automatically</div>
         </div>
         <div style={{display:"flex", gap:6}}>
-          <button onClick={checkAll} style={{background:"transparent",border:"1px solid #555",color:"#aaa",padding:"5px 14px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>✓ CHECK</button>
-          <button onClick={reset} style={{background:"transparent",border:"1px solid #444",color:"#666",padding:"5px 14px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>↺ RESET</button>
-          <button onClick={revealAll} style={{background:"transparent",border:"1px solid #c8201c",color:"#c8201c",padding:"5px 14px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>REVEAL</button>
+          <button onClick={checkAnswers} style={{background:"transparent",border:"1px solid #555",color:"#aaa",padding:"5px 12px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>✓ CHECK</button>
+          <button onClick={revealAll} style={{background:"transparent",border:"1px solid #c8201c",color:"#c8201c",padding:"5px 12px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>REVEAL</button>
         </div>
       </div>
 
-      {solved && !revealed && (
-        <div style={{background:"#0d2a1a",border:"1px solid #2d8a50",color:"#4ade80",padding:"10px 16px",marginBottom:14,fontSize:13,fontWeight:700,textAlign:"center"}}>
-          🎉 PERFECT SCORE! True NY sports fan confirmed.
+      {complete && <div style={{background:"#0d2a1a",border:"1px solid #2d8a50",color:"#4ade80",padding:"8px 14px",marginBottom:12,fontSize:12,fontWeight:700,textAlign:"center"}}>🎉 SOLVED! True NY sports fan confirmed.</div>}
+
+      {activeClueObj && (
+        <div style={{background:"#1a1a1a",border:"1px solid #c8201c",padding:"7px 12px",marginBottom:10,display:"flex",gap:8,alignItems:"center"}}>
+          <span style={{color:"#c8201c",fontWeight:900,fontSize:11,minWidth:24}}>{activeClueObj.number}A</span>
+          <span style={{fontSize:12,color:"#e8e0d0",fontFamily:"'Georgia',serif"}}>{activeClueObj.clue}</span>
         </div>
       )}
 
-      {/* Instructions */}
-      <div style={{fontSize:10, color:"#555", marginBottom:14, fontStyle:"italic"}}>
-        Type the answer to each clue · Press Enter to move to the next · Hit CHECK when done
-      </div>
-
-      {/* Puzzle rows */}
-      <div style={{display:"flex", flexDirection:"column", gap:4}}>
-        {/* Letter count header */}
-        <div style={{display:"flex", gap:8, alignItems:"center", paddingLeft:28, paddingBottom:4, borderBottom:"1px solid #1a1a1a", marginBottom:4}}>
-          <div style={{width:32, flexShrink:0}}/>
-          <div style={{flex:1, fontSize:9, color:"#444", letterSpacing:"0.12em"}}>CLUE</div>
-          <div style={{fontSize:9, color:"#444", letterSpacing:"0.12em", minWidth:140}}>YOUR ANSWER</div>
+      <div style={{display:"flex",gap:16,flexWrap:"wrap",alignItems:"flex-start"}}>
+        {/* Grid */}
+        <div style={{overflowX:"auto",flexShrink:0}}>
+          <div style={{display:"grid",gridTemplateColumns:`repeat(${COLS},${CELL}px)`,gridTemplateRows:`repeat(${ROWS},${CELL}px)`,border:"2px solid #c8201c",gap:1,background:"#333"}}>
+            {puzzle.solution.map((row,r)=>row.map((cell,c)=>{
+              const blk = isBlack(r,c);
+              const num = numberMap[`${r}-${c}`];
+              return (
+                <div key={`${r}-${c}`} onClick={()=>selectCell(r,c)}
+                  style={{width:CELL,height:CELL,background:getCellBg(r,c),position:"relative",cursor:blk?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {!blk && num && <span style={{position:"absolute",top:1,left:2,fontSize:7,fontWeight:900,color:"#888",lineHeight:1}}>{num}</span>}
+                  {!blk && (
+                    <input ref={el=>{if(el)inputRefs.current[`${r}-${c}`]=el;}}
+                      value={userGrid[r]?.[c]||""} onChange={()=>{}} onKeyDown={e=>handleKey(r,c,e)}
+                      onFocus={()=>selectCell(r,c)} maxLength={1}
+                      style={{width:"100%",height:"100%",background:"transparent",border:"none",outline:"none",textAlign:"center",fontSize:14,fontWeight:900,color:revealed?"#c8201c":"#e8e0d0",cursor:"pointer",caretColor:"transparent",fontFamily:"'Georgia',serif",paddingTop:6}} />
+                  )}
+                </div>
+              );
+            }))}
+          </div>
         </div>
 
-        {fillin.entries.map((entry, i) => {
-          const isCorrect = checked?.[i] === true;
-          const isWrong   = checked?.[i] === false && guesses[i].length > 0;
-          const isActive  = activeRow === i;
-          const letterCount = entry.answer.length;
-
-          return (
-            <div key={i}
-              onClick={() => { setActiveRow(i); setTimeout(() => inputRefs.current[i]?.focus(), 0); }}
-              style={{
-                display:"flex", gap:8, alignItems:"center",
-                padding:"7px 10px",
-                background: isCorrect ? "#0d2a1a" : isWrong ? "#1a0d0d" : isActive ? "#1a1a1a" : i%2===0?"#111":"#0e0e0e",
-                border: isActive ? "1px solid #c8201c" : "1px solid transparent",
-                borderLeft: isCorrect ? "3px solid #22c55e" : isWrong ? "3px solid #c8201c" : isActive ? "3px solid #c8201c" : "3px solid #333",
-                cursor:"pointer", transition:"background 0.1s",
-              }}>
-
-              {/* Number */}
-              <span style={{fontSize:10, fontWeight:900, color:"#c8201c", minWidth:20, flexShrink:0}}>
-                {i+1}.
-              </span>
-
-              {/* Clue */}
-              <span style={{flex:1, fontSize:12, color: isCorrect?"#4ade80" : isWrong?"#888":"#ccc",
-                fontFamily:"'Georgia',serif", lineHeight:1.4}}>
-                {entry.clue}
-                <span style={{fontSize:9, color:"#444", marginLeft:8}}>({letterCount} letters)</span>
-              </span>
-
-              {/* Answer boxes */}
-              <div style={{display:"flex", gap:3, alignItems:"center", flexShrink:0}}>
-                {Array.from({length: letterCount}).map((_, ci) => {
-                  const letter = guesses[i]?.[ci] || "";
-                  const correct = revealed || (checked && entry.answer[ci] === letter);
-                  return (
-                    <div key={ci} style={{
-                      width:22, height:26,
-                      border: `1px solid ${correct && letter ? "#22c55e" : isWrong && letter && letter !== entry.answer[ci] ? "#c8201c" : isActive ? "#555" : "#333"}`,
-                      background: correct && letter ? "#0d2a1a" : "#111",
-                      display:"flex", alignItems:"center", justifyContent:"center",
-                      fontSize:13, fontWeight:900, color: correct && letter ? "#4ade80" : "#e8e0d0",
-                      fontFamily:"'Georgia',serif",
-                    }}>
-                      {letter}
-                    </div>
-                  );
-                })}
-
-                {/* Hidden input captures typing */}
-                <input
-                  ref={el => { if(el) inputRefs.current[i] = el; }}
-                  value={guesses[i]}
-                  onChange={e => handleInput(i, e.target.value)}
-                  onKeyDown={e => handleKeyDown(i, e)}
-                  onFocus={() => setActiveRow(i)}
-                  maxLength={letterCount}
-                  style={{
-                    position:"absolute", opacity:0, width:1, height:1,
-                    pointerEvents:"none",
-                  }}
-                />
-
-                {/* Status icon */}
-                {isCorrect && <span style={{fontSize:14, marginLeft:4}}>✓</span>}
-                {isWrong   && <span style={{fontSize:12, color:"#c8201c", marginLeft:4}}>✗</span>}
+        {/* Clues */}
+        <div style={{flex:1,minWidth:200,maxHeight:ROWS*CELL+20,overflowY:"auto"}}>
+          <div style={{fontSize:10,fontWeight:900,color:"#c8201c",letterSpacing:"0.15em",marginBottom:8,borderBottom:"1px solid #2a2a2a",paddingBottom:4}}>ACROSS</div>
+          {puzzle.across.map(cl=>{
+            const isAct = activeClue===cl.number;
+            return (
+              <div key={cl.number} onClick={()=>{setSelectedCell({r:cl.row,c:cl.col});setActiveClue(cl.number);setTimeout(()=>inputRefs.current[`${cl.row}-${cl.col}`]?.focus(),0);}}
+                style={{display:"flex",gap:6,padding:"4px 6px",cursor:"pointer",background:isAct?"#1a1a1a":"transparent",borderLeft:isAct?"2px solid #c8201c":"none",marginBottom:2}}>
+                <span style={{fontSize:10,fontWeight:900,color:"#c8201c",minWidth:18,flexShrink:0}}>{cl.number}</span>
+                <span style={{fontSize:10,color:"#aaa",lineHeight:1.4,fontFamily:"'Georgia',serif"}}>{cl.clue}</span>
               </div>
-            </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── GUESS THE PLAYER ────────────────────────────────────────────────────
+// Shows a clue from DAILY_PLAYERS, user picks from 4 choices
+function GuessThePlayer() {
+  const [round, setRound]       = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [score, setScore]       = useState(0);
+  const [total, setTotal]       = useState(0);
+  const [streak, setStreak]     = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [showFact, setShowFact] = useState(false);
+  const usedIdxRef = useRef(new Set());
+
+  // Build a round: pick a player, generate 3 wrong choices, pick a clue
+  function buildRound() {
+    const pool = DAILY_PLAYERS;
+    // Pick a player we haven't used recently
+    let idx;
+    let attempts = 0;
+    do {
+      idx = Math.floor(Math.random() * pool.length);
+      attempts++;
+    } while (usedIdxRef.current.has(idx) && attempts < 50);
+    usedIdxRef.current.add(idx);
+    if (usedIdxRef.current.size > Math.floor(pool.length / 2)) {
+      usedIdxRef.current.clear();
+    }
+
+    const correct = pool[idx];
+
+    // Generate 3 wrong choices from same sport/era where possible
+    const others = pool
+      .filter((p, i) => i !== idx && p.sport === correct.sport)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 3);
+
+    // Pad with random if not enough same-sport
+    let wrong = [...others];
+    if (wrong.length < 3) {
+      const extras = pool
+        .filter((p, i) => i !== idx && !wrong.includes(p))
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3 - wrong.length);
+      wrong = [...wrong, ...extras];
+    }
+    wrong = wrong.slice(0, 3);
+
+    // Build clue options — cycle through different clue types
+    const clueTypes = [
+      { label: "STATS",    text: correct.stats },
+      { label: "ERA",      text: `Played ${correct.era} · ${correct.pos} · ${correct.team}` },
+      { label: "FACT",     text: correct.fact.slice(0, 120) + (correct.fact.length > 120 ? "…" : "") },
+      { label: "NUMBER",   text: `Wore #${correct.number} for the ${correct.team}` },
+    ].filter(c => c.text && c.text.length > 5);
+    const clue = clueTypes[Math.floor(Math.random() * clueTypes.length)];
+
+    // Shuffle choices
+    const choices = [correct, ...wrong].sort(() => Math.random() - 0.5);
+
+    return { correct, choices, clue };
+  }
+
+  useEffect(() => { setRound(buildRound()); }, []);
+
+  function handleChoice(player) {
+    if (selected || !round) return;
+    setSelected(player);
+    setShowFact(true);
+    setTotal(t => t + 1);
+    const isRight = player.name === round.correct.name;
+    if (isRight) {
+      setScore(s => s + 1);
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      if (newStreak > bestStreak) setBestStreak(newStreak);
+    } else {
+      setStreak(0);
+    }
+  }
+
+  function nextRound() {
+    setRound(buildRound());
+    setSelected(null);
+    setShowFact(false);
+  }
+
+  if (!round) return null;
+
+  const isCorrect = selected?.name === round.correct.name;
+
+  return (
+    <div style={{maxWidth:560}}>
+      {/* Score bar */}
+      <div style={{display:"flex", gap:16, marginBottom:16, padding:"8px 14px",
+        background:"#111", border:"1px solid #1a1a1a", flexWrap:"wrap"}}>
+        <span style={{fontSize:10, color:"#888"}}>Score: <strong style={{color:"#e8e0d0"}}>{score}/{total}</strong></span>
+        <span style={{fontSize:10, color:"#888"}}>Streak: <strong style={{color: streak>2?"#f0b429":"#e8e0d0"}}>{streak} 🔥</strong></span>
+        <span style={{fontSize:10, color:"#888"}}>Best: <strong style={{color:"#c8201c"}}>{bestStreak}</strong></span>
+        <button onClick={() => { usedIdxRef.current.clear(); setScore(0); setTotal(0); setStreak(0); setBestStreak(0); nextRound(); }}
+          style={{marginLeft:"auto", fontSize:9, color:"#555", background:"transparent",
+            border:"1px solid #333", padding:"2px 8px", cursor:"pointer", fontWeight:700}}>
+          RESET
+        </button>
+      </div>
+
+      {/* Clue */}
+      <div style={{background:"#161616", border:"1px solid #2a2a2a", borderLeft:"3px solid #c8201c",
+        padding:"16px 18px", marginBottom:14}}>
+        <div style={{fontSize:8, fontWeight:900, color:"#c8201c", letterSpacing:"0.2em", marginBottom:8}}>
+          🎤 {round.clue.label} CLUE — WHO IS THIS NY LEGEND?
+        </div>
+        <p style={{margin:0, fontSize:14, color:"#e8e0d0", lineHeight:1.6,
+          fontFamily:"'Georgia',serif", fontStyle:"italic"}}>
+          "{round.clue.text}"
+        </p>
+        <div style={{marginTop:8, fontSize:9, color:"#555"}}>
+          {round.correct.sport} · {round.correct.team}
+        </div>
+      </div>
+
+      {/* Choices */}
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14}}>
+        {round.choices.map((player, i) => {
+          const isRight = player.name === round.correct.name;
+          const isPicked = selected?.name === player.name;
+          let bg = "#1a1a1a", border = "1px solid #333", color = "#ccc";
+          if (selected) {
+            if (isRight)  { bg="#0d2a1a"; border="1px solid #22c55e"; color="#4ade80"; }
+            else if (isPicked) { bg="#2a0d0d"; border="1px solid #c8201c"; color="#f87171"; }
+            else { color="#444"; }
+          }
+          return (
+            <button key={i} onClick={() => handleChoice(player)}
+              style={{background:bg, border, color, padding:"12px 14px", cursor:selected?"default":"pointer",
+                fontSize:12, fontWeight:700, fontFamily:"'Georgia',serif", textAlign:"left",
+                display:"flex", alignItems:"center", gap:8, transition:"all 0.15s"}}>
+              {player.logo && !selected && (
+                <span style={{fontSize:9, color:"#555", flexShrink:0}}>{["A","B","C","D"][i]}</span>
+              )}
+              <span style={{flex:1}}>{player.name}</span>
+              {selected && isRight  && <span>✓</span>}
+              {selected && isPicked && !isRight && <span>✗</span>}
+            </button>
           );
         })}
       </div>
 
-      {/* Score */}
-      {checked && (
-        <div style={{marginTop:14, padding:"10px 14px", background:"#161616", border:"1px solid #2a2a2a",
-          display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8}}>
-          <span style={{fontSize:12, color:"#e8e0d0"}}>
-            Score: <strong style={{color: solved?"#4ade80":"#f0b429"}}>{checked.filter(Boolean).length}</strong>
-            <span style={{color:"#555"}}> / {fillin.entries.length}</span>
-          </span>
-          {!solved && (
-            <button onClick={revealAll} style={{fontSize:10, color:"#c8201c", background:"transparent",
-              border:"1px solid #c8201c", padding:"4px 12px", cursor:"pointer", fontWeight:700, letterSpacing:"0.08em"}}>
-              SHOW ANSWERS
-            </button>
-          )}
+      {/* Fact reveal */}
+      {showFact && (
+        <div style={{padding:"14px 16px", background:isCorrect?"#0d2a1a":"#161616",
+          border:`1px solid ${isCorrect?"#22c55e":"#2a2a2a"}`, marginBottom:12}}>
+          <div style={{fontSize:13, fontWeight:900,
+            color:isCorrect?"#4ade80":"#f87171", marginBottom:8}}>
+            {isCorrect ? "🎉 Correct!" : `The answer was ${round.correct.name}`}
+          </div>
+          <p style={{margin:"0 0 8px", fontSize:12, color:"#aaa", lineHeight:1.6,
+            fontFamily:"'Georgia',serif"}}>{round.correct.fact}</p>
+          <div style={{fontSize:10, color:"#666"}}>{round.correct.stats}</div>
         </div>
+      )}
+
+      {selected && (
+        <button onClick={nextRound}
+          style={{width:"100%", background:"#c8201c", border:"none", color:"#fff",
+            padding:"12px", cursor:"pointer", fontSize:12, fontWeight:900,
+            letterSpacing:"0.1em", fontFamily:"'Georgia',serif"}}>
+          NEXT PLAYER →
+        </button>
       )}
     </div>
   );
 }
 
+// ─── MATCHING PAIRS ───────────────────────────────────────────────────────
+// 8 pairs: player name ↔ achievement. Flip cards to match.
+function MatchingPairs() {
+  // Draw 8 players randomly each game
+  const PAIRS_POOL = DAILY_PLAYERS.map(p => ({
+    id:    p.name,
+    name:  p.name,
+    team:  p.team,
+    stat:  p.stats.split("·")[0].trim().slice(0, 40),
+    emoji: p.emoji,
+  }));
+
+  const [cards, setCards]       = useState([]);
+  const [flipped, setFlipped]   = useState(new Set());
+  const [matched, setMatched]   = useState(new Set());
+  const [selected, setSelected] = useState([]); // up to 2 card indices
+  const [moves, setMoves]       = useState(0);
+  const [won, setWon]           = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [best, setBest]         = useState(null);
+
+  function buildGame() {
+    // Pick 8 random players
+    const shuffled = [...PAIRS_POOL].sort(() => Math.random() - 0.5).slice(0, 8);
+    // Create 16 cards: 8 name cards + 8 stat cards, shuffled
+    const nameCards = shuffled.map((p, i) => ({ id:`n-${i}`, pairId:p.id, type:"name", text:p.name, emoji:p.emoji, team:p.team }));
+    const statCards = shuffled.map((p, i) => ({ id:`s-${i}`, pairId:p.id, type:"stat", text:p.stat, emoji:p.emoji, team:p.team }));
+    const all = [...nameCards, ...statCards].sort(() => Math.random() - 0.5);
+    setCards(all);
+    setFlipped(new Set());
+    setMatched(new Set());
+    setSelected([]);
+    setMoves(0);
+    setWon(false);
+    setChecking(false);
+  }
+
+  useEffect(() => { buildGame(); }, []);
+
+  function handleFlip(idx) {
+    if (checking) return;
+    if (matched.has(cards[idx].pairId)) return;
+    if (flipped.has(idx)) return;
+    if (selected.length === 2) return;
+
+    const newFlipped = new Set(flipped);
+    newFlipped.add(idx);
+    setFlipped(newFlipped);
+
+    const newSelected = [...selected, idx];
+    setSelected(newSelected);
+
+    if (newSelected.length === 2) {
+      setMoves(m => m + 1);
+      setChecking(true);
+      const [a, b] = newSelected;
+      if (cards[a].pairId === cards[b].pairId && cards[a].type !== cards[b].type) {
+        // Match!
+        setTimeout(() => {
+          const newMatched = new Set(matched);
+          newMatched.add(cards[a].pairId);
+          setMatched(newMatched);
+          setFlipped(new Set());
+          setSelected([]);
+          setChecking(false);
+          if (newMatched.size === 8) {
+            setWon(true);
+            const finalMoves = moves + 1;
+            if (!best || finalMoves < best) setBest(finalMoves);
+          }
+        }, 800);
+      } else {
+        // No match — flip back
+        setTimeout(() => {
+          const revert = new Set(flipped);
+          setFlipped(revert);
+          setSelected([]);
+          setChecking(false);
+        }, 900);
+      }
+    }
+  }
+
+  if (!cards.length) return null;
+
+  const TEAM_COLORS = {
+    Yankees:"#003087", Mets:"#FF5910", Jets:"#125740", Giants:"#0B2265",
+    Knicks:"#006BB6", Rangers:"#0038A8", Islanders:"#00539B", Devils:"#CE1126",
+    Nets:"#444", Liberty:"#007A5E",
+  };
+
+  return (
+    <div style={{maxWidth:600}}>
+      {/* Header */}
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center",
+        marginBottom:12, flexWrap:"wrap", gap:8}}>
+        <div>
+          <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:2}}>
+            🃏 MATCHING PAIRS — NY SPORTS LEGENDS
+          </div>
+          <div style={{fontSize:10, color:"#666"}}>
+            Match the player to their key stat · {matched.size}/8 matched · {moves} moves
+            {best && <span style={{color:"#f0b429", marginLeft:8}}>Best: {best} moves</span>}
+          </div>
+        </div>
+        <button onClick={buildGame}
+          style={{fontSize:10, background:"transparent", border:"1px solid #444",
+            color:"#888", padding:"5px 14px", cursor:"pointer", fontWeight:900, letterSpacing:"0.08em"}}>
+          ↺ NEW GAME
+        </button>
+      </div>
+
+      {won && (
+        <div style={{background:"#0d2a1a", border:"1px solid #22c55e", color:"#4ade80",
+          padding:"12px 16px", marginBottom:14, textAlign:"center", fontSize:13, fontWeight:700}}>
+          🎉 All matched in {moves} moves! {moves <= 12 ? "Excellent!" : moves <= 16 ? "Nice work!" : "Keep practicing!"}
+        </div>
+      )}
+
+      {/* Instructions */}
+      <div style={{fontSize:10, color:"#444", marginBottom:12, fontStyle:"italic"}}>
+        Click any card to flip it · Match each player name to their achievement
+      </div>
+
+      {/* 4×4 grid */}
+      <div style={{display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:8}}>
+        {cards.map((card, idx) => {
+          const isFlipped  = flipped.has(idx) || matched.has(card.pairId);
+          const isMatched  = matched.has(card.pairId);
+          const teamColor  = TEAM_COLORS[card.team] || "#c8201c";
+
+          return (
+            <div key={card.id} onClick={() => !isFlipped && handleFlip(idx)}
+              style={{
+                height:72, cursor:isFlipped?"default":"pointer",
+                perspective:"600px", position:"relative",
+              }}>
+              {/* Back (face-down) */}
+              {!isFlipped && (
+                <div style={{
+                  width:"100%", height:"100%",
+                  background:"linear-gradient(135deg, #1a1a1a 0%, #111 100%)",
+                  border:"1px solid #333",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:22, userSelect:"none",
+                  transition:"transform 0.2s",
+                }}>
+                  🗽
+                </div>
+              )}
+              {/* Front (face-up) */}
+              {isFlipped && (
+                <div style={{
+                  width:"100%", height:"100%",
+                  background: isMatched ? `${teamColor}22` : "#1a1a1a",
+                  border:`2px solid ${isMatched ? teamColor : "#555"}`,
+                  display:"flex", flexDirection:"column",
+                  alignItems:"center", justifyContent:"center",
+                  padding:"6px 4px", textAlign:"center",
+                  transition:"all 0.2s",
+                }}>
+                  {card.type === "name" ? (
+                    <>
+                      <span style={{fontSize:16, marginBottom:2}}>{card.emoji}</span>
+                      <span style={{fontSize:10, fontWeight:900, color: isMatched ? teamColor : "#e8e0d0",
+                        fontFamily:"'Georgia',serif", lineHeight:1.2}}>{card.name}</span>
+                    </>
+                  ) : (
+                    <span style={{fontSize:9, color: isMatched ? "#4ade80" : "#aaa",
+                      lineHeight:1.3, fontFamily:"'Georgia',serif"}}>{card.text}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{marginTop:12, fontSize:9, color:"#333", textAlign:"center"}}>
+        Name cards show the legend · Stat cards show their achievement · Find each pair
+      </div>
+    </div>
+  );
+}
+
+// ─── STAT GUESSER ─────────────────────────────────────────────────────────
+// Shows a stat line, user guesses the player from 4 choices
+function StatGuesser() {
+  const [round, setRound]       = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [score, setScore]       = useState(0);
+  const [total, setTotal]       = useState(0);
+  const [streak, setStreak]     = useState(0);
+  const usedRef = useRef(new Set());
+
+  // Stat templates — pull different parts of the stats string
+  function buildStatClue(player) {
+    const statParts = player.stats.split("·").map(s => s.trim()).filter(Boolean);
+    // Pick 1-2 stat parts, hide the name
+    const picked = statParts.sort(() => Math.random() - 0.5).slice(0, 2);
+    return picked.join(" · ");
+  }
+
+  function buildRound() {
+    const pool = DAILY_PLAYERS.filter(p => p.stats && p.stats.length > 10);
+    let idx;
+    let attempts = 0;
+    do {
+      idx = Math.floor(Math.random() * pool.length);
+      attempts++;
+    } while (usedRef.current.has(idx) && attempts < 50);
+    usedRef.current.add(idx);
+    if (usedRef.current.size > pool.length / 2) usedRef.current.clear();
+
+    const correct = pool[idx];
+    const statClue = buildStatClue(correct);
+
+    // Wrong choices — same sport first
+    const sameSport = pool.filter((p, i) => i !== idx && p.sport === correct.sport)
+      .sort(() => Math.random() - 0.5).slice(0, 3);
+    let wrong = [...sameSport];
+    if (wrong.length < 3) {
+      const extra = pool.filter((p, i) => i !== idx && !wrong.includes(p))
+        .sort(() => Math.random() - 0.5).slice(0, 3 - wrong.length);
+      wrong = [...wrong, ...extra];
+    }
+
+    const choices = [correct, ...wrong.slice(0,3)].sort(() => Math.random() - 0.5);
+    return { correct, choices, statClue };
+  }
+
+  useEffect(() => { setRound(buildRound()); }, []);
+
+  function handleChoice(player) {
+    if (selected || !round) return;
+    setSelected(player);
+    setTotal(t => t + 1);
+    const isRight = player.name === round.correct.name;
+    if (isRight) {
+      setScore(s => s + 1);
+      setStreak(s => s + 1);
+    } else {
+      setStreak(0);
+    }
+  }
+
+  function next() {
+    setRound(buildRound());
+    setSelected(null);
+  }
+
+  if (!round) return null;
+
+  const isCorrect = selected?.name === round.correct.name;
+
+  return (
+    <div style={{maxWidth:560}}>
+      {/* Score bar */}
+      <div style={{display:"flex", gap:16, marginBottom:16, padding:"8px 14px",
+        background:"#111", border:"1px solid #1a1a1a", flexWrap:"wrap", alignItems:"center"}}>
+        <span style={{fontSize:10, color:"#888"}}>Score: <strong style={{color:"#e8e0d0"}}>{score}/{total}</strong></span>
+        <span style={{fontSize:10, color:"#888"}}>Streak: <strong style={{color:streak>2?"#f0b429":"#e8e0d0"}}>{streak} 🔥</strong></span>
+        <button onClick={() => { usedRef.current.clear(); setScore(0); setTotal(0); setStreak(0); next(); }}
+          style={{marginLeft:"auto", fontSize:9, color:"#555", background:"transparent",
+            border:"1px solid #333", padding:"2px 8px", cursor:"pointer", fontWeight:700}}>
+          RESET
+        </button>
+      </div>
+
+      {/* Stat clue */}
+      <div style={{background:"#161616", border:"1px solid #2a2a2a", borderLeft:"3px solid #f0b429",
+        padding:"16px 18px", marginBottom:14}}>
+        <div style={{fontSize:8, fontWeight:900, color:"#f0b429", letterSpacing:"0.2em", marginBottom:10}}>
+          📊 WHOSE STAT IS THIS?
+        </div>
+        <div style={{fontSize:18, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif",
+          letterSpacing:"0.03em", lineHeight:1.4}}>
+          {round.statClue}
+        </div>
+        <div style={{marginTop:10, fontSize:9, color:"#555"}}>
+          {round.correct.sport} · {round.correct.team} · {round.correct.era}
+        </div>
+      </div>
+
+      {/* Choices */}
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14}}>
+        {round.choices.map((player, i) => {
+          const isRight  = player.name === round.correct.name;
+          const isPicked = selected?.name === player.name;
+          let bg="#1a1a1a", border="1px solid #333", color="#ccc";
+          if (selected) {
+            if (isRight)       { bg="#0d2a1a"; border="1px solid #22c55e"; color="#4ade80"; }
+            else if (isPicked) { bg="#2a0d0d"; border="1px solid #c8201c"; color="#f87171"; }
+            else               { color="#444"; }
+          }
+          return (
+            <button key={i} onClick={() => handleChoice(player)}
+              style={{background:bg, border, color, padding:"12px 14px",
+                cursor:selected?"default":"pointer", fontSize:12, fontWeight:700,
+                fontFamily:"'Georgia',serif", textAlign:"left",
+                display:"flex", justifyContent:"space-between", alignItems:"center",
+                transition:"all 0.15s"}}>
+              <span>{player.name}</span>
+              {selected && isRight  && <span>✓</span>}
+              {selected && isPicked && !isRight && <span>✗</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Reveal */}
+      {selected && (
+        <>
+          <div style={{padding:"12px 14px", background:isCorrect?"#0d2a1a":"#161616",
+            border:`1px solid ${isCorrect?"#22c55e":"#2a2a2a"}`, marginBottom:12}}>
+            <div style={{fontSize:13, fontWeight:900,
+              color:isCorrect?"#4ade80":"#f87171", marginBottom:6}}>
+              {isCorrect ? "🎉 Correct!" : `It was ${round.correct.name}`}
+            </div>
+            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6,
+              fontFamily:"'Georgia',serif"}}>{round.correct.fact}</p>
+          </div>
+          <button onClick={next}
+            style={{width:"100%", background:"#c8201c", border:"none", color:"#fff",
+              padding:"12px", cursor:"pointer", fontSize:12, fontWeight:900,
+              letterSpacing:"0.1em", fontFamily:"'Georgia',serif"}}>
+            NEXT STAT →
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+
 // ─── MAIN PLAYROOM TAB ────────────────────────────────────────────────────
 function PlayroomTab({ myTeams }) {
   const GAMES = [
     { id:"trivia",    icon:"🧠", label:"Daily Trivia",    desc:"Test your NY sports knowledge" },
+    { id:"guess",     icon:"🎤", label:"Guess the Player", desc:"Who is the NY legend?" },
+    { id:"matching",  icon:"🃏", label:"Matching Pairs",   desc:"Flip cards to match legends & stats" },
+    { id:"statguesser",icon:"📊",label:"Stat Guesser",     desc:"Whose stat is this?" },
     { id:"emoji",     icon:"🤔", label:"Emoji Quiz",      desc:"Guess the moment from emojis" },
-    { id:"scramble",  icon:"🔀", label:"Scramble",        desc:"Unscramble the legends" },
+    { id:"scramble",  icon:"🔀", label:"Anagram",         desc:"Click tiles to unscramble legends" },
     { id:"hangman",   icon:"🎯", label:"Hangman",         desc:"Guess letter by letter" },
     { id:"crossword", icon:"✏️", label:"Crossword",       desc:"Monthly NY sports puzzle" },
     { id:"wordsearch",icon:"🔍", label:"Word Search",     desc:"Find hidden legends" },
@@ -10274,6 +10751,9 @@ function PlayroomTab({ myTeams }) {
 
       {/* Active game */}
       {active === "trivia"    && <TriviaTab />}
+      {active === "guess"     && <GuessThePlayer />}
+      {active === "matching"  && <MatchingPairs />}
+      {active === "statguesser" && <StatGuesser />}
       {active === "emoji"     && <EmojiQuizGame myTeams={myTeams} />}
       {active === "scramble"  && <ScrambleGame myTeams={myTeams} />}
       {active === "hangman"   && <HangmanGame myTeams={myTeams} />}
