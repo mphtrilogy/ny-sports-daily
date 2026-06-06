@@ -975,7 +975,8 @@ export default function NYSportsDaily() {
   const [loadingStandings, setLoadingStandings] = useState(false);
   const [loadingSchedule, setLoadingSchedule]   = useState(false);
   const [activeLeague, setActiveLeague]   = useState("ALL");
-  const [nyOnly, setNyOnly]               = useState(false);
+  const [scoresCollapsed, setScoresCollapsed] = useState(false);
+  const [nyOnly, setNyOnly]               = useState(true); // Default: NY teams only
   const [myTeams, setMyTeams]             = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem("nysportsdaily_myteams") || "[]")); }
     catch(e) { return new Set(); }
@@ -1164,18 +1165,37 @@ export default function NYSportsDaily() {
           ))}
         </div>
         {/* TAB NAV — Secondary */}
-        <div style={{...styles.tabNav, marginTop:-16, borderBottom:"1px solid #1a1a1a", marginBottom:20}}>
-          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","GLORY","PLAYROOM"].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}), fontSize:9, padding:"7px 10px",
-                ...(tab==="PLAYROOM"?{color:"#f0b429",fontWeight:900}:{}),
-                ...(activeTab===tab&&tab==="PLAYROOM"?{background:"#f0b429",color:"#000",borderBottom:"3px solid #f0b429"}:{}),
-                ...(tab==="GLORY"?{color:"#f0b429",fontWeight:900}:{}),
-                ...(activeTab===tab&&tab==="GLORY"?{background:"linear-gradient(135deg,#c8201c,#f0b429)",color:"#fff",borderBottom:"3px solid #f0b429"}:{}),
-              }}>
-              {tab === "PLAYROOM" ? "🎮 PLAYROOM" : tab === "GLORY" ? "🏆 GLORY" : tab}
-            </button>
-          ))}
+        <div style={{...styles.tabNav, marginTop:0, borderBottom:"2px solid #1a1a1a", marginBottom:16, background:"#0a0a0a", padding:"0 0 0 0"}}>
+          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","GLORY","PLAYROOM"].map(tab => {
+            const isPlayroom = tab === "PLAYROOM";
+            const isGlory    = tab === "GLORY";
+            const isActive   = activeTab === tab;
+            const isSpecial  = isPlayroom || isGlory;
+            return (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                style={{
+                  ...styles.tabBtn,
+                  fontSize:9, padding:"7px 10px",
+                  // Active state
+                  ...(isActive && !isSpecial ? styles.tabBtnActive : {}),
+                  // Special pill treatment for GLORY + PLAYROOM
+                  ...(isSpecial && !isActive ? {
+                    color:"#f0b429", fontWeight:900,
+                    borderBottom:"2px solid transparent",
+                  } : {}),
+                  ...(isActive && isPlayroom ? {
+                    background:"#f0b429", color:"#000",
+                    borderBottom:"2px solid #f0b429",
+                  } : {}),
+                  ...(isActive && isGlory ? {
+                    background:"linear-gradient(135deg,#c8201c,#f0b429)",
+                    color:"#fff", borderBottom:"2px solid #f0b429",
+                  } : {}),
+                }}>
+                {isPlayroom ? "🎮 PLAYROOM" : isGlory ? "🏆 GLORY" : tab}
+              </button>
+            );
+          })}
         </div>
 
         {/* ──── SCORES TAB ──── */}
@@ -1185,37 +1205,47 @@ export default function NYSportsDaily() {
             {/* ── COLLAPSIBLE WIDGET ROW ── */}
             <HomepageWidgets myTeams={myTeams} setActiveTab={setActiveTab} />
             {/* ── TOP SECTION: Featured Stories + Quote + Player Card ── */}
-            <div style={{display:"flex", gap:12, marginBottom:14, alignItems:"stretch", flexWrap:"wrap"}}>
+            <div style={{display:"flex", gap:10, marginBottom:16, alignItems:"stretch", flexWrap:"wrap"}}>
 
               {/* Left — Top 2 Featured News Stories */}
-              <div style={{flex:3, minWidth:260, display:"flex", flexDirection:"column", gap:8}}>
+              <div style={{flex:"3 1 260px", display:"flex", flexDirection:"column", gap:8}}>
                 {(() => {
                 const nyTeams = ["Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty","NYCFC"];
                 const nyStories = news.filter(n => nyTeams.includes(n.team) && n.title);
-                // Prefer stories with images first, then fall back to any story
                 const withImages = nyStories.filter(n => n.image);
                 const featured = withImages.length >= 2 ? withImages.slice(0,2) : nyStories.slice(0,2);
                 return featured.map((story, i) => (
                   <a key={i} href={story.link} target="_blank" rel="noopener noreferrer"
-                    style={{textDecoration:"none", display:"flex", gap:10, padding:"10px 12px",
-                      background: darkMode ? "#161616" : "#fff",
-                      border: darkMode ? "1px solid #2a2a2a" : "1px solid #ddd",
-                      borderLeft:"3px solid #c8201c", flex:1}}>
+                    style={{textDecoration:"none", display:"flex", gap:10,
+                      padding:"10px 12px",
+                      background: darkMode ? "#111" : "#fff",
+                      border: darkMode ? "1px solid #1f1f1f" : "1px solid #e0e0e0",
+                      borderLeft:"3px solid #c8201c",
+                      flex:1, transition:"border-color 0.15s"
+                    }}
+                    onMouseEnter={e=>e.currentTarget.style.borderLeftColor="#f0b429"}
+                    onMouseLeave={e=>e.currentTarget.style.borderLeftColor="#c8201c"}>
                     {story.image && (
-                      <img src={story.image} alt="" style={{width:80, height:60, objectFit:"cover", flexShrink:0, borderRadius:2}} />
+                      <img src={story.image} alt=""
+                        style={{width:72, height:54, objectFit:"cover", flexShrink:0}} />
                     )}
                     <div style={{flex:1, minWidth:0}}>
-                      <div style={{fontSize:8, fontWeight:900, color:"#c8201c", letterSpacing:"0.1em", marginBottom:3}}>
+                      <div style={{fontSize:8, fontWeight:900, color:"#c8201c",
+                        letterSpacing:"0.12em", marginBottom:3, textTransform:"uppercase"}}>
                         {story.team?.toUpperCase()} · {story.source}
                       </div>
-                      <div style={{fontSize:12, fontWeight:700, color: darkMode ? "#e8e0d0" : "#111",
-                        lineHeight:1.3, fontFamily:"'Georgia',serif",
-                        overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>
+                      <div style={{fontSize:12, fontWeight:700,
+                        color: darkMode ? "#e8e0d0" : "#111",
+                        lineHeight:1.35, fontFamily:"'Georgia',serif",
+                        overflow:"hidden", display:"-webkit-box",
+                        WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>
                         {story.title}
                       </div>
                       {story.desc && (
-                        <div style={{fontSize:10, color: darkMode ? "#888" : "#666", marginTop:3, lineHeight:1.4,
-                          overflow:"hidden", display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>
+                        <div style={{fontSize:10, color: darkMode ? "#777" : "#666",
+                          marginTop:3, lineHeight:1.4,
+                          overflow:"hidden", display:"-webkit-box",
+                          WebkitLineClamp:1, WebkitBoxOrient:"vertical"}}>
                           {story.desc}
                         </div>
                       )}
@@ -1224,19 +1254,20 @@ export default function NYSportsDaily() {
                 ));
               })()}
               {news.filter(n => ["Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty"].includes(n.team)).length === 0 && (
-                <div style={{padding:"12px", background: darkMode?"#161616":"#fff", border:"1px solid #2a2a2a", fontSize:10, color:"#666"}}>
-                  Loading top NY sports stories...
+                <div style={{padding:"12px", background:"#111", border:"1px solid #1f1f1f",
+                  fontSize:10, color:"#555", fontStyle:"italic"}}>
+                  Loading top NY sports stories…
                 </div>
               )}
               </div>
 
               {/* Center — Quote */}
-              <div style={{flex:2, minWidth:180}}>
+              <div style={{flex:"2 1 180px"}}>
                 <QuoteOfDay />
               </div>
 
               {/* Right — Player Spotlight card */}
-              <div style={{flexShrink:0, width:190}}>
+              <div style={{flex:"0 0 180px"}}>
                 <PlayerSpotlight />
               </div>
             </div>
@@ -1264,24 +1295,45 @@ export default function NYSportsDaily() {
             <div style={styles.scoresNewsLayout}>
               {/* Scores column */}
               <div style={styles.scoresCol}>
-                {loadingScores ? (
-                  <div style={styles.loading}>
-                    <div style={styles.loadingDots}>
-                      {[0,1,2].map(i => <span key={i} style={{...styles.dot, animationDelay:`${i*0.2}s`}} />)}
+                {/* Scores header with collapse toggle */}
+                <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:8,
+                  paddingBottom:6, borderBottom:"1px solid #1a1a1a"}}>
+                  <span style={{fontSize:9, fontWeight:900, color:"#c8201c",
+                    letterSpacing:"0.22em", textTransform:"uppercase",
+                    fontFamily:"'Georgia',serif"}}>
+                    {nyOnly ? "🗽 NY SCORES" : "📅 TODAY'S SCORES"}
+                  </span>
+                  <button onClick={() => setScoresCollapsed(s => !s)}
+                    style={{marginLeft:"auto", fontSize:9, fontWeight:700,
+                      letterSpacing:"0.1em", padding:"2px 8px",
+                      background:"transparent", border:"1px solid #1f1f1f",
+                      color:"#555", cursor:"pointer", fontFamily:"'Georgia',serif",
+                      transition:"all 0.15s"}}
+                    onMouseEnter={e=>{e.currentTarget.style.color="#e8e0d0";}}
+                    onMouseLeave={e=>{e.currentTarget.style.color="#555";}}>
+                    {scoresCollapsed ? "▼ SHOW" : "▲ HIDE"}
+                  </button>
+                </div>
+                {!scoresCollapsed && (
+                  loadingScores ? (
+                    <div style={styles.loading}>
+                      <div style={styles.loadingDots}>
+                        {[0,1,2].map(i => <span key={i} style={{...styles.dot, animationDelay:`${i*0.2}s`}} />)}
+                      </div>
+                      <p style={styles.loadingText}>PULLING SCORES...</p>
                     </div>
-                    <p style={styles.loadingText}>PULLING SCORES...</p>
-                  </div>
-                ) : filteredScores.length === 0 ? (
-                  <div style={styles.empty}>
-                    <span style={styles.emptyIcon}>📋</span>
-                    <p style={styles.emptyText}>NO GAMES FOUND FOR THIS DATE</p>
-                  </div>
-                ) : (
-                  <div style={styles.scoresGrid}>
-                    {filteredScores.map(game => (
-                      <ScoreCard key={game.id} game={game} />
-                    ))}
-                  </div>
+                  ) : filteredScores.length === 0 ? (
+                    <div style={styles.empty}>
+                      <span style={styles.emptyIcon}>📋</span>
+                      <p style={styles.emptyText}>NO GAMES FOUND FOR THIS DATE</p>
+                    </div>
+                  ) : (
+                    <div style={styles.scoresGrid}>
+                      {filteredScores.map(game => (
+                        <ScoreCard key={game.id} game={game} />
+                      ))}
+                    </div>
+                  )
                 )}
               </div>
 
@@ -11286,63 +11338,78 @@ const styles = {
 
   // TABS
   tabNav: {
-    display: "flex", borderBottom: "2px solid #333",
-    marginBottom: 20, marginTop: 16,
+    display: "flex", borderBottom: "2px solid #1a1a1a",
+    marginBottom: 0, marginTop: 8,
     overflowX: "auto", scrollbarWidth: "none",
     WebkitOverflowScrolling: "touch",
+    msOverflowStyle: "none",
   },
   tabBtn: {
-    padding: "10px 14px", border: "none", background: "transparent",
-    color: "#666", cursor: "pointer", fontSize: 11,
-    fontWeight: 900, letterSpacing: "0.08em",
+    padding: "10px 16px", border: "none", background: "transparent",
+    color: "#555", cursor: "pointer", fontSize: 11,
+    fontWeight: 900, letterSpacing: "0.1em",
     fontFamily: "'Georgia', serif",
-    transition: "all 0.15s", whiteSpace: "nowrap", flexShrink: 0,
+    transition: "color 0.15s, border-color 0.15s",
+    whiteSpace: "nowrap", flexShrink: 0,
+    borderBottom: "2px solid transparent",
+    marginBottom: -2,
   },
   tabBtnActive: {
-    color: "#888", borderBottom: "3px solid #888",
+    color: "#e8e0d0", borderBottom: "2px solid #c8201c",
   },
 
   // FILTER BAR
   filterBar: {
     display: "flex", justifyContent: "space-between", alignItems: "center",
-    flexWrap: "wrap", gap: 8, marginBottom: 20,
+    flexWrap: "wrap", gap: 6, marginBottom: 16,
+    padding: "10px 14px",
+    background: "#0e0e0e",
+    border: "1px solid #1a1a1a",
+    borderTop: "none",
+    marginTop: 0,
   },
   filterGroup: { display: "flex", flexWrap: "wrap", gap: 4 },
   filterBtn: {
-    padding: "5px 12px", border: "1px solid #333", background: "transparent",
-    color: "#888", cursor: "pointer", fontSize: 10, letterSpacing: "0.1em",
-    fontFamily: "'Georgia', serif", fontWeight: 700, transition: "all 0.15s",
+    padding: "4px 12px", border: "1px solid #222", background: "transparent",
+    color: "#666", cursor: "pointer", fontSize: 10, letterSpacing: "0.1em",
+    fontFamily: "'Georgia', serif", fontWeight: 700, transition: "all 0.12s",
+    borderRadius: 0,
   },
   filterBtnActive: { background: "#c8201c", border: "1px solid #c8201c", color: "#fff" },
   nyToggle: {
-    padding: "5px 14px", border: "1px solid #555", background: "transparent",
-    color: "#888", cursor: "pointer", fontSize: 10, letterSpacing: "0.1em",
-    fontFamily: "'Georgia', serif", fontWeight: 700, transition: "all 0.15s",
+    padding: "4px 14px", border: "1px solid #2a2a2a", background: "transparent",
+    color: "#666", cursor: "pointer", fontSize: 10, letterSpacing: "0.1em",
+    fontFamily: "'Georgia', serif", fontWeight: 700, transition: "all 0.12s",
   },
-  nyToggleActive: { background: "#1a3a2a", border: "1px solid #2d8a50", color: "#4ade80" },
+  nyToggleActive: { background: "#0d2a1a", border: "1px solid #22c55e", color: "#22c55e" },
   myTeamsActive:  { background: "#1a1600", border: "1px solid #f0b429", color: "#f0b429" },
 
   // SCORES GRID
   scoresGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-    gap: 12,
+    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+    gap: 8,
   },
   scoreCard: {
-    background: "#161616", border: "1px solid #2a2a2a",
-    padding: "14px 16px", position: "relative",
-    transition: "border-color 0.2s",
+    background: "#111", border: "1px solid #1f1f1f",
+    padding: "12px 14px", position: "relative",
+    transition: "border-color 0.15s, box-shadow 0.15s",
   },
-  scoreCardNY: { border: "1px solid #c8201c" },
+  scoreCardNY: {
+    border: "1px solid #c8201c22",
+    borderLeft: "3px solid #c8201c",
+    background: "#130a0a",
+    boxShadow: "0 2px 8px rgba(200,32,28,0.08)",
+  },
   nyBadge: {
     position: "absolute", top: 0, right: 0,
     background: "#c8201c", color: "#fff",
-    fontSize: 9, fontWeight: 900, padding: "2px 6px",
+    fontSize: 8, fontWeight: 900, padding: "2px 5px",
     letterSpacing: "0.1em",
   },
   scoreCardSport: {
-    fontSize: 9, letterSpacing: "0.2em", color: "#999",
-    fontWeight: 900, marginBottom: 10,
+    fontSize: 8, letterSpacing: "0.22em", color: "#555",
+    fontWeight: 900, marginBottom: 8, textTransform: "uppercase",
   },
   scoreTeams: { display: "flex", flexDirection: "column", gap: 8 },
   teamRow: { display: "flex", alignItems: "center", gap: 8 },
