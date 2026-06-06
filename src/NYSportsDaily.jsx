@@ -7439,7 +7439,7 @@ function WordSearchTab() {
   const PUZZLES = [
     {
       title: "NY JETS LEGENDS",
-      words: ["NAMATH","MAYNARD","KLECKO","MARTIN","GASTINEAU","PENNINGTON","SANCHEZ","GARDNER","DARNOLD","WILSON","BAILEY","MCNEIL","MANGOLD","FERGUSON","PARCELLS"],
+      words: ["NAMATH","MAYNARD","KLECKO","MARTIN","GASTINEAU","PENNINGTON","REVIS","LYONS","BYRD","WILSON","BAILEY","MCNEIL","MANGOLD","FERGUSON","PARCELLS"],
       size: 15,
     },
     {
@@ -7480,6 +7480,7 @@ function WordSearchTab() {
   ];
 
   const [puzzleIdx, setPuzzleIdx] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [grid, setGrid]           = useState([]);
   const [wordData, setWordData]   = useState([]);
   const [selected, setSelected]   = useState(new Set());
@@ -7492,7 +7493,7 @@ function WordSearchTab() {
   const puzzle = PUZZLES[puzzleIdx];
   const { words, size } = puzzle;
 
-  // Generate the grid
+  // Generate the grid — refreshKey forces a new grid without changing puzzleIdx
   useEffect(() => {
     const { newGrid, placed } = buildWordSearch(words, size);
     setGrid(newGrid);
@@ -7503,7 +7504,7 @@ function WordSearchTab() {
     setStartCell(null);
     setSelecting(false);
     setSolved(false);
-  }, [puzzleIdx]);
+  }, [puzzleIdx, refreshKey]);
 
   function buildWordSearch(wordList, sz) {
     const dirs = [
@@ -7780,7 +7781,7 @@ function WordSearchTab() {
             })}
           </div>
 
-          <button onClick={() => setPuzzleIdx(puzzleIdx)}
+          <button onClick={() => setRefreshKey(k => k + 1)}
             style={{...styles.filterBtn, marginTop:16, width:"100%", padding:"8px",
               fontSize:10, letterSpacing:"0.1em"}}>
             🔄 NEW GRID (SAME WORDS)
@@ -9849,154 +9850,343 @@ function HangmanGame({ myTeams }) {
 
 // ─── MONTHLY CROSSWORD COMPONENT ──────────────────────────────────────────
 function PlayroomCrossword() {
-  const monthNum = new Date().getMonth(); // 0-11
-  const puzzle = MONTHLY_CROSSWORDS[monthNum] || MONTHLY_CROSSWORDS[0];
-  const ROWS = puzzle.solution.length;
-  const COLS = puzzle.solution[0].length;
-  const CELL = 32;
+  const monthNum = new Date().getMonth(); // 0-indexed
+  const MONTH_NAMES = ["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE",
+                       "JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
 
-  const numberMap = {};
-  puzzle.across.forEach(c => { numberMap[`${c.row}-${c.col}`] = c.number; });
+  // 12 monthly Fill-In puzzles — one answer per row, clue on the left
+  // Format: { answer, clue, category }
+  const MONTHLY_FILLIN = [
+    { month:"JANUARY",   theme:"NY WINTER LEGENDS", entries:[
+      { answer:"JETER",       clue:"The Captain — 3,465 hits, 5 rings, wore #2" },
+      { answer:"MESSIER",     clue:"Guaranteed Game 6 win in 1994 — then scored a hat trick" },
+      { answer:"NAMATH",      clue:"Broadway Joe — I guarantee it" },
+      { answer:"EWING",       clue:"Georgetown center — greatest Knick of all time" },
+      { answer:"BOSSY",       clue:"9 straight 50-goal seasons with the Islanders" },
+      { answer:"BRODEUR",     clue:"691 wins, 125 shutouts — all-time NHL goalie records" },
+      { answer:"GEHRIG",      clue:"The Iron Horse — 2,130 consecutive games" },
+      { answer:"RIVERA",      clue:"Enter Sandman — first unanimous Hall of Famer" },
+      { answer:"REED",        clue:"Limped onto MSG court in Game 7, 1970" },
+      { answer:"LEETCH",      clue:"First American to win the Conn Smythe Trophy" },
+    ]},
+    { month:"FEBRUARY",  theme:"SUPER BOWL NY", entries:[
+      { answer:"PARCELLS",    clue:"Big Tuna — 2 Super Bowl titles with the Giants" },
+      { answer:"TAYLOR",      clue:"LT — only defensive player to win NFL MVP" },
+      { answer:"SIMMS",       clue:"22 of 25 in Super Bowl XXI — still the completion record" },
+      { answer:"MANNING",     clue:"Beat the undefeated Patriots twice in the Super Bowl" },
+      { answer:"NAMATH",      clue:"Super Bowl III MVP — guaranteed the win" },
+      { answer:"STRAHAN",     clue:"141.5 career sacks — single-season record 22.5" },
+      { answer:"ANDERSON",    clue:"Super Bowl XXV MVP at age 34 — Ottis ___ " },
+      { answer:"TYREE",       clue:"David ___ — the helmet catch that stunned 18-0 Patriots" },
+      { answer:"MARTIN",      clue:"Curtis ___ — greatest Jet since Namath, 14,101 rush yards" },
+      { answer:"REVIS",       clue:"Revis Island — most dominant CB of his era" },
+    ]},
+    { month:"MARCH",     theme:"KNICKS & RANGERS", entries:[
+      { answer:"FRAZIER",     clue:"Clyde — 36 pts, 19 ast in Game 7 of the 1970 Finals" },
+      { answer:"REED",        clue:"The Captain — limped onto MSG court in the 1970 Finals" },
+      { answer:"MESSIER",     clue:"Rangers captain who ended 54 years of drought" },
+      { answer:"LEETCH",      clue:"Conn Smythe 1994 — greatest American in NHL history" },
+      { answer:"GILBERT",     clue:"Rod ___ — all-time Rangers scoring leader for decades" },
+      { answer:"RICHTER",     clue:"Mike ___ — 42-save game in the 1994 Finals" },
+      { answer:"BRUNSON",     clue:"Jalen ___ — MSG's new hero, took a hometown discount" },
+      { answer:"LUNDQVIST",   clue:"The King — Vezina Trophy 2012, .921 save percentage" },
+      { answer:"MONROE",      clue:"The Pearl — Earl ___ , pure playground genius at MSG" },
+      { answer:"DEBUSSCHERE",  clue:"Dave ___ — power forward on both championship Knicks" },
+    ]},
+    { month:"APRIL",     theme:"BASEBALL OPENING DAY", entries:[
+      { answer:"SEAVER",      clue:"Tom Terrific — 3 Cy Youngs, greatest Met ever" },
+      { answer:"JUDGE",       clue:"Aaron ___ — 62 HR in 2022, the American League record" },
+      { answer:"MATTINGLY",   clue:"Donnie Baseball — 9 Gold Gloves, AL MVP 1985" },
+      { answer:"GOODEN",      clue:"Doc — 24-4, 1.53 ERA at just 20 years old" },
+      { answer:"PIAZZA",      clue:"9/11 home run — most emotional HR in baseball history" },
+      { answer:"RIVERA",      clue:"Mariano ___ — 652 saves, Enter Sandman" },
+      { answer:"LINDOR",      clue:"Francisco ___ — Mr. Smile, My Girl walk-up song" },
+      { answer:"JETER",       clue:"Hit a homer for his 3,000th career hit — only player ever" },
+      { answer:"SOTO",        clue:"Juan ___ — $765M contract, the biggest in baseball history" },
+      { answer:"STRAWBERRY",  clue:"Darryl ___ — 252 Mets home runs, 8 All-Star selections" },
+    ]},
+    { month:"MAY",       theme:"ISLANDERS DYNASTY", entries:[
+      { answer:"BOSSY",       clue:"Mike ___ — 573 goals, 9 straight 50-goal seasons" },
+      { answer:"TROTTIER",    clue:"Bryan ___ — Hart Trophy 1979, dynasty engine" },
+      { answer:"POTVIN",      clue:"Denis ___ — captain of 4 Cups, broke Orr's record" },
+      { answer:"GILLIES",     clue:"Clark ___ — the enforcer who protected Bossy" },
+      { answer:"SMITH",       clue:"Billy ___ — Battlin' Billy, Vezina 1982" },
+      { answer:"NYSTROM",     clue:"Bob ___ — OT goal that started the dynasty in 1980" },
+      { answer:"ARBOUR",      clue:"Al ___ — greatest Islanders coach, 4 consecutive Cups" },
+      { answer:"TAVARES",     clue:"John ___ — greatest Islander since Bossy, left for Toronto" },
+      { answer:"GORING",      clue:"Butch ___ — Conn Smythe 1980, the missing piece" },
+      { answer:"LAFONTAINE",  clue:"Pat ___ — gifted center traded too soon from Long Island" },
+    ]},
+    { month:"JUNE",      theme:"RANGERS 1994", entries:[
+      { answer:"MESSIER",     clue:"Guaranteed Game 6, scored hat trick, raised the Cup" },
+      { answer:"LEETCH",      clue:"34 playoff points — Conn Smythe MVP in 1994" },
+      { answer:"RICHTER",     clue:"Mike ___ — the goaltending backbone of the 1994 run" },
+      { answer:"GILBERT",     clue:"Rod ___ — franchise icon, all-time Rangers scorer" },
+      { answer:"KOVALEV",     clue:"Alexei ___ — dazzling skill in the 1994 championship run" },
+      { answer:"ANDERSON",    clue:"Glenn ___ — former Oiler who brought Cup experience" },
+      { answer:"GRAVES",      clue:"Adam ___ — scored 52 goals in the championship season" },
+      { answer:"RATELLE",     clue:"Jean ___ — GAG Line center, Lady Byng 4 times" },
+      { answer:"TIKKANEN",    clue:"Esa ___ — the most annoying pest in playoff hockey" },
+      { answer:"BROADWAY",    clue:"The ___ Blues — Rangers nickname from their famous street" },
+    ]},
+    { month:"JULY",      theme:"YANKEES DYNASTY", entries:[
+      { answer:"RUTH",        clue:"The Sultan of Swat — 714 career home runs" },
+      { answer:"GEHRIG",      clue:"The Iron Horse — 2,130 consecutive games played" },
+      { answer:"DIMAGGIO",    clue:"The Yankee Clipper — 56-game hitting streak" },
+      { answer:"MANTLE",      clue:"Triple Crown 1956 — .353 AVG, 52 HR, 130 RBI" },
+      { answer:"BERRA",       clue:"It ain't over till it's over — 10 World Series rings" },
+      { answer:"FORD",        clue:"The Chairman of the Board — .690 World Series win pct" },
+      { answer:"JETER",       clue:"The Captain — 5 rings, 3,465 hits, all in pinstripes" },
+      { answer:"RIVERA",      clue:"Enter Sandman — the greatest closer in baseball history" },
+      { answer:"JACKSON",     clue:"Reggie ___ — 3 HRs on 3 consecutive pitches, 1977 WS" },
+      { answer:"MUNSON",      clue:"Thurman ___ — the Yankees Captain, gone too soon" },
+    ]},
+    { month:"AUGUST",    theme:"METS MAGIC", entries:[
+      { answer:"SEAVER",      clue:"Tom Terrific — 3 Cy Youngs, led the Miracle Mets" },
+      { answer:"PIAZZA",      clue:"9/11 home run on September 21, 2001 healed a city" },
+      { answer:"GOODEN",      clue:"Doc — most dominant young pitcher in baseball history" },
+      { answer:"WRIGHT",      clue:"David ___ — only Met to have his number retired as a lifer" },
+      { answer:"CARTER",      clue:"Gary ___ — The Kid started the 1986 WS Game 6 rally" },
+      { answer:"MOOKIE",      clue:"___ Wilson — his grounder went through Buckner's legs" },
+      { answer:"ALONSO",      clue:"Pete ___ — Mets all-time HR king, 254+ home runs" },
+      { answer:"HERNANDEZ",   clue:"Keith ___ — captain of the 1986 championship Mets" },
+      { answer:"DEGROM",      clue:"Jacob ___ — 2x Cy Young, 1.08 ERA in 2021" },
+      { answer:"STRAWBERRY",  clue:"Darryl ___ — 252 Mets HR, The Straw Man" },
+    ]},
+    { month:"SEPTEMBER", theme:"PENNANT RACE", entries:[
+      { answer:"SEAVER",      clue:"Tom Terrific — won 25 games for the 1969 Miracle Mets" },
+      { answer:"MCGRAW",      clue:"Tug ___ — Ya Gotta Believe! The 1973 rallying cry" },
+      { answer:"JETER",       clue:"Mr. November — walk-off HR after midnight in the 2001 WS" },
+      { answer:"MESSIER",     clue:"Mark ___ — guaranteed the win and delivered" },
+      { answer:"RUTH",        clue:"Babe ___ — 61 HR record stood for 34 years" },
+      { answer:"PIAZZA",      clue:"Mike ___ — his 9/11 shot is the most emotional in history" },
+      { answer:"NAMATH",      clue:"Joe ___ — I guarantee it. And he was right." },
+      { answer:"TAYLOR",      clue:"Lawrence ___ — greatest defender in NFL history" },
+      { answer:"BOSSY",       clue:"Mike ___ — scored 50 goals in 50 games in 1981" },
+      { answer:"FRAZIER",     clue:"Walt ___ — Clyde, the coolest Knick who ever played" },
+    ]},
+    { month:"OCTOBER",   theme:"WORLD SERIES", entries:[
+      { answer:"JACKSON",     clue:"Mr. October — 3 HRs on 3 consecutive pitches in 1977" },
+      { answer:"LARSEN",      clue:"Don ___ — perfect game in 1956 World Series vs Dodgers" },
+      { answer:"JETER",       clue:"Derek ___ — Mr. November, walk-off after midnight" },
+      { answer:"MOOKIE",      clue:"___ Wilson — Game 6, 1986 — Buckner's error" },
+      { answer:"RIVERA",      clue:"Mariano ___ — the greatest postseason closer ever" },
+      { answer:"MUNSON",      clue:"Thurman ___ — Yankees captain, 1976 AL MVP" },
+      { answer:"GOODEN",      clue:"Dwight ___ — ace of the 1986 World Champions" },
+      { answer:"ALONSO",      clue:"Pete ___ — Mets all-time home run king since August 2025" },
+      { answer:"HENDERSON",   clue:"Rickey ___ — all-time stolen base record set as a Yankee" },
+      { answer:"MATTINGLY",   clue:"Don ___ — Donnie Baseball never got his World Series ring" },
+    ]},
+    { month:"NOVEMBER",  theme:"NHL LEGENDS", entries:[
+      { answer:"BRODEUR",     clue:"Martin ___ — 691 wins, 125 shutouts, 3 Stanley Cups" },
+      { answer:"MESSIER",     clue:"Mark ___ — the greatest captain in hockey history" },
+      { answer:"POTVIN",      clue:"Denis ___ — broke Orr's record, captained 4 Cups" },
+      { answer:"BOSSY",       clue:"Mike ___ — 9 straight 50-goal seasons, dynasty RW" },
+      { answer:"LEETCH",      clue:"Brian ___ — greatest American-born player in NHL history" },
+      { answer:"TROTTIER",    clue:"Bryan ___ — Hart Trophy, 4 consecutive Stanley Cups" },
+      { answer:"LUNDQVIST",   clue:"Henrik ___ — The King, Vezina 2012" },
+      { answer:"STEVENS",     clue:"Scott ___ — most feared hitter, Conn Smythe 2000" },
+      { answer:"ELIAS",       clue:"Patrik ___ — all-time Devils scorer, 1,025 career points" },
+      { answer:"GILBERT",     clue:"Rod ___ — all-time Rangers franchise scoring leader" },
+    ]},
+    { month:"DECEMBER",  theme:"GREATEST MOMENTS", entries:[
+      { answer:"NAMATH",      clue:"I guarantee it — Super Bowl III, January 1969" },
+      { answer:"SEAVER",      clue:"Led the 100-to-1 Miracle Mets to the 1969 World Series" },
+      { answer:"MESSIER",     clue:"Guaranteed Game 6 in 1994 — ended 54 years of drought" },
+      { answer:"REED",        clue:"Limped onto the court in Game 7 — MSG went electric" },
+      { answer:"JACKSON",     clue:"Three home runs on three pitches — 1977 WS Game 6" },
+      { answer:"PIAZZA",      clue:"September 21, 2001 — the home run that healed New York" },
+      { answer:"NYSTROM",     clue:"Bob ___ — OT goal that launched the Islanders dynasty" },
+      { answer:"PARCELLS",    clue:"Bill ___ — Big Tuna, 2 Super Bowls with the Giants" },
+      { answer:"LARSEN",      clue:"Don ___ — only perfect game in World Series history" },
+      { answer:"TAYLOR",      clue:"LT — the greatest defensive player in NFL history" },
+    ]},
+  ];
 
-  const [userGrid, setUserGrid] = useState(() =>
-    Array.from({length:ROWS}, () => Array(COLS).fill(""))
-  );
-  const [selectedCell, setSelectedCell] = useState(null);
-  const [activeClue, setActiveClue] = useState(null);
-  const [checked, setChecked] = useState({});
+  const fillin = MONTHLY_FILLIN[monthNum] || MONTHLY_FILLIN[0];
+  const [guesses, setGuesses] = useState(() => fillin.entries.map(() => ""));
+  const [checked, setChecked] = useState(null); // null | array of booleans
   const [revealed, setRevealed] = useState(false);
-  const [complete, setComplete] = useState(false);
+  const [activeRow, setActiveRow] = useState(0);
   const inputRefs = useRef({});
 
-  // cell highlights
-  const cellClues = {};
-  puzzle.across.forEach(c => {
-    for (let i = 0; i < c.len; i++) {
-      const key = `${c.row}-${c.col+i}`;
-      if (!cellClues[key]) cellClues[key] = {};
-      cellClues[key].across = c.number;
+  // Reset when month changes (shouldn't happen mid-session but just in case)
+  useEffect(() => {
+    setGuesses(fillin.entries.map(() => ""));
+    setChecked(null);
+    setRevealed(false);
+    setActiveRow(0);
+  }, [monthNum]);
+
+  const solved = checked && checked.every(Boolean);
+
+  function handleInput(i, val) {
+    const cleaned = val.toUpperCase().replace(/[^A-Z]/g, "");
+    const ng = [...guesses];
+    ng[i] = cleaned;
+    setGuesses(ng);
+    setChecked(null);
+  }
+
+  function handleKeyDown(i, e) {
+    if (e.key === "Enter") {
+      // Move to next row
+      const next = i + 1;
+      if (next < fillin.entries.length) {
+        setActiveRow(next);
+        setTimeout(() => inputRefs.current[next]?.focus(), 0);
+      } else {
+        checkAll();
+      }
     }
-  });
-
-  function isBlack(r,c) { return puzzle.solution[r]?.[c] === "."; }
-
-  function getCellBg(r,c) {
-    if (isBlack(r,c)) return "#0a0a0a";
-    const key = `${r}-${c}`;
-    const isSel = selectedCell?.r===r && selectedCell?.c===c;
-    const isHL  = activeClue && cellClues[key]?.across === activeClue;
-    const chk   = checked[key];
-    if (isSel) return "#f5e642";
-    if (isHL) return "#2a2a6a";
-    if (chk==="correct") return "#0d2a1a";
-    if (chk==="wrong") return "#2a0d0d";
-    return "#1a1a1a";
   }
 
-  function selectCell(r,c) {
-    if (isBlack(r,c)) return;
-    setSelectedCell({r,c});
-    setActiveClue(cellClues[`${r}-${c}`]?.across || null);
-    setTimeout(() => inputRefs.current[`${r}-${c}`]?.focus(), 0);
-  }
-
-  function handleKey(r,c,e) {
-    const l = e.key.toUpperCase();
-    if (l.length===1 && l>="A" && l<="Z") {
-      const ng = userGrid.map(row=>[...row]);
-      ng[r][c] = l;
-      setUserGrid(ng);
-      const chk = {...checked}; delete chk[`${r}-${c}`]; setChecked(chk);
-      // advance right
-      for (let nc=c+1;nc<COLS;nc++) { if(!isBlack(r,nc)){selectCell(r,nc);break;} }
-      const done = puzzle.solution.every((row,r2)=>row.every((cell,c2)=>cell==="."||ng[r2][c2]===cell));
-      if (done) setComplete(true);
-    } else if (e.key==="Backspace") {
-      const ng = userGrid.map(row=>[...row]);
-      if (ng[r][c]) { ng[r][c]=""; setUserGrid(ng); }
-      else { for (let nc=c-1;nc>=0;nc--) { if(!isBlack(r,nc)){selectCell(r,nc);break;} } }
-    } else if (e.key==="ArrowRight") { for(let nc=c+1;nc<COLS;nc++){if(!isBlack(r,nc)){selectCell(r,nc);break;}} }
-    else if (e.key==="ArrowLeft")  { for(let nc=c-1;nc>=0;nc--){if(!isBlack(r,nc)){selectCell(r,nc);break;}} }
-    else if (e.key==="ArrowDown")  { for(let nr=r+1;nr<ROWS;nr++){if(!isBlack(nr,c)){selectCell(nr,c);break;}} }
-    else if (e.key==="ArrowUp")    { for(let nr=r-1;nr>=0;nr--){if(!isBlack(nr,c)){selectCell(nr,c);break;}} }
-  }
-
-  function checkAnswers() {
-    const newChk = {};
-    puzzle.solution.forEach((row,r)=>row.forEach((cell,c)=>{
-      if(cell!=="."&&userGrid[r][c]) newChk[`${r}-${c}`]=userGrid[r][c]===cell?"correct":"wrong";
-    }));
-    setChecked(newChk);
+  function checkAll() {
+    setChecked(fillin.entries.map((entry, i) => guesses[i].trim() === entry.answer));
   }
 
   function revealAll() {
+    setGuesses(fillin.entries.map(e => e.answer));
+    setChecked(fillin.entries.map(() => true));
     setRevealed(true);
-    setUserGrid(puzzle.solution.map(row=>row.map(c=>c==="."?"":c)));
-    setComplete(true);
   }
 
-  const activeClueObj = activeClue ? puzzle.across.find(c=>c.number===activeClue) : null;
+  function reset() {
+    setGuesses(fillin.entries.map(() => ""));
+    setChecked(null);
+    setRevealed(false);
+    setActiveRow(0);
+  }
+
+  const maxLen = Math.max(...fillin.entries.map(e => e.answer.length));
 
   return (
-    <div>
-      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12, flexWrap:"wrap", gap:8}}>
+    <div style={{maxWidth:680}}>
+      {/* Header */}
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:16, flexWrap:"wrap", gap:8}}>
         <div>
-          <div style={{fontSize:12, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{puzzle.title}</div>
-          <div style={{fontSize:9, color:"#c8201c", fontWeight:700}}>{puzzle.subtitle} · Monthly puzzle — updates automatically</div>
+          <div style={{fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", marginBottom:2}}>
+            {MONTH_NAMES[monthNum]}: {fillin.theme}
+          </div>
+          <div style={{fontSize:9, color:"#c8201c", fontWeight:700, letterSpacing:"0.1em"}}>
+            FILL-IN PUZZLE · 10 NY SPORTS LEGENDS · UPDATES MONTHLY
+          </div>
         </div>
         <div style={{display:"flex", gap:6}}>
-          <button onClick={checkAnswers} style={{background:"transparent",border:"1px solid #555",color:"#aaa",padding:"5px 12px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>✓ CHECK</button>
-          <button onClick={revealAll} style={{background:"transparent",border:"1px solid #c8201c",color:"#c8201c",padding:"5px 12px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>REVEAL</button>
+          <button onClick={checkAll} style={{background:"transparent",border:"1px solid #555",color:"#aaa",padding:"5px 14px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>✓ CHECK</button>
+          <button onClick={reset} style={{background:"transparent",border:"1px solid #444",color:"#666",padding:"5px 14px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>↺ RESET</button>
+          <button onClick={revealAll} style={{background:"transparent",border:"1px solid #c8201c",color:"#c8201c",padding:"5px 14px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>REVEAL</button>
         </div>
       </div>
 
-      {complete && <div style={{background:"#0d2a1a",border:"1px solid #2d8a50",color:"#4ade80",padding:"8px 14px",marginBottom:12,fontSize:12,fontWeight:700,textAlign:"center"}}>🎉 SOLVED! True NY sports fan confirmed.</div>}
-
-      {activeClueObj && (
-        <div style={{background:"#1a1a1a",border:"1px solid #c8201c",padding:"7px 12px",marginBottom:10,display:"flex",gap:8,alignItems:"center"}}>
-          <span style={{color:"#c8201c",fontWeight:900,fontSize:11,minWidth:24}}>{activeClueObj.number}A</span>
-          <span style={{fontSize:12,color:"#e8e0d0",fontFamily:"'Georgia',serif"}}>{activeClueObj.clue}</span>
+      {solved && !revealed && (
+        <div style={{background:"#0d2a1a",border:"1px solid #2d8a50",color:"#4ade80",padding:"10px 16px",marginBottom:14,fontSize:13,fontWeight:700,textAlign:"center"}}>
+          🎉 PERFECT SCORE! True NY sports fan confirmed.
         </div>
       )}
 
-      <div style={{display:"flex",gap:16,flexWrap:"wrap",alignItems:"flex-start"}}>
-        {/* Grid */}
-        <div style={{overflowX:"auto",flexShrink:0}}>
-          <div style={{display:"grid",gridTemplateColumns:`repeat(${COLS},${CELL}px)`,gridTemplateRows:`repeat(${ROWS},${CELL}px)`,border:"2px solid #c8201c",gap:1,background:"#333"}}>
-            {puzzle.solution.map((row,r)=>row.map((cell,c)=>{
-              const blk = isBlack(r,c);
-              const num = numberMap[`${r}-${c}`];
-              return (
-                <div key={`${r}-${c}`} onClick={()=>selectCell(r,c)}
-                  style={{width:CELL,height:CELL,background:getCellBg(r,c),position:"relative",cursor:blk?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  {!blk && num && <span style={{position:"absolute",top:1,left:2,fontSize:7,fontWeight:900,color:"#888",lineHeight:1}}>{num}</span>}
-                  {!blk && (
-                    <input ref={el=>{if(el)inputRefs.current[`${r}-${c}`]=el;}}
-                      value={userGrid[r]?.[c]||""} onChange={()=>{}} onKeyDown={e=>handleKey(r,c,e)}
-                      onFocus={()=>selectCell(r,c)} maxLength={1}
-                      style={{width:"100%",height:"100%",background:"transparent",border:"none",outline:"none",textAlign:"center",fontSize:14,fontWeight:900,color:revealed?"#c8201c":"#e8e0d0",cursor:"pointer",caretColor:"transparent",fontFamily:"'Georgia',serif",paddingTop:6}} />
-                  )}
-                </div>
-              );
-            }))}
-          </div>
+      {/* Instructions */}
+      <div style={{fontSize:10, color:"#555", marginBottom:14, fontStyle:"italic"}}>
+        Type the answer to each clue · Press Enter to move to the next · Hit CHECK when done
+      </div>
+
+      {/* Puzzle rows */}
+      <div style={{display:"flex", flexDirection:"column", gap:4}}>
+        {/* Letter count header */}
+        <div style={{display:"flex", gap:8, alignItems:"center", paddingLeft:28, paddingBottom:4, borderBottom:"1px solid #1a1a1a", marginBottom:4}}>
+          <div style={{width:32, flexShrink:0}}/>
+          <div style={{flex:1, fontSize:9, color:"#444", letterSpacing:"0.12em"}}>CLUE</div>
+          <div style={{fontSize:9, color:"#444", letterSpacing:"0.12em", minWidth:140}}>YOUR ANSWER</div>
         </div>
 
-        {/* Clues */}
-        <div style={{flex:1,minWidth:200,maxHeight:ROWS*CELL+20,overflowY:"auto"}}>
-          <div style={{fontSize:10,fontWeight:900,color:"#c8201c",letterSpacing:"0.15em",marginBottom:8,borderBottom:"1px solid #2a2a2a",paddingBottom:4}}>ACROSS</div>
-          {puzzle.across.map(cl=>{
-            const isAct = activeClue===cl.number;
-            return (
-              <div key={cl.number} onClick={()=>{setSelectedCell({r:cl.row,c:cl.col});setActiveClue(cl.number);setTimeout(()=>inputRefs.current[`${cl.row}-${cl.col}`]?.focus(),0);}}
-                style={{display:"flex",gap:6,padding:"4px 6px",cursor:"pointer",background:isAct?"#1a1a1a":"transparent",borderLeft:isAct?"2px solid #c8201c":"none",marginBottom:2}}>
-                <span style={{fontSize:10,fontWeight:900,color:"#c8201c",minWidth:18,flexShrink:0}}>{cl.number}</span>
-                <span style={{fontSize:10,color:"#aaa",lineHeight:1.4,fontFamily:"'Georgia',serif"}}>{cl.clue}</span>
+        {fillin.entries.map((entry, i) => {
+          const isCorrect = checked?.[i] === true;
+          const isWrong   = checked?.[i] === false && guesses[i].length > 0;
+          const isActive  = activeRow === i;
+          const letterCount = entry.answer.length;
+
+          return (
+            <div key={i}
+              onClick={() => { setActiveRow(i); setTimeout(() => inputRefs.current[i]?.focus(), 0); }}
+              style={{
+                display:"flex", gap:8, alignItems:"center",
+                padding:"7px 10px",
+                background: isCorrect ? "#0d2a1a" : isWrong ? "#1a0d0d" : isActive ? "#1a1a1a" : i%2===0?"#111":"#0e0e0e",
+                border: isActive ? "1px solid #c8201c" : "1px solid transparent",
+                borderLeft: isCorrect ? "3px solid #22c55e" : isWrong ? "3px solid #c8201c" : isActive ? "3px solid #c8201c" : "3px solid #333",
+                cursor:"pointer", transition:"background 0.1s",
+              }}>
+
+              {/* Number */}
+              <span style={{fontSize:10, fontWeight:900, color:"#c8201c", minWidth:20, flexShrink:0}}>
+                {i+1}.
+              </span>
+
+              {/* Clue */}
+              <span style={{flex:1, fontSize:12, color: isCorrect?"#4ade80" : isWrong?"#888":"#ccc",
+                fontFamily:"'Georgia',serif", lineHeight:1.4}}>
+                {entry.clue}
+                <span style={{fontSize:9, color:"#444", marginLeft:8}}>({letterCount} letters)</span>
+              </span>
+
+              {/* Answer boxes */}
+              <div style={{display:"flex", gap:3, alignItems:"center", flexShrink:0}}>
+                {Array.from({length: letterCount}).map((_, ci) => {
+                  const letter = guesses[i]?.[ci] || "";
+                  const correct = revealed || (checked && entry.answer[ci] === letter);
+                  return (
+                    <div key={ci} style={{
+                      width:22, height:26,
+                      border: `1px solid ${correct && letter ? "#22c55e" : isWrong && letter && letter !== entry.answer[ci] ? "#c8201c" : isActive ? "#555" : "#333"}`,
+                      background: correct && letter ? "#0d2a1a" : "#111",
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      fontSize:13, fontWeight:900, color: correct && letter ? "#4ade80" : "#e8e0d0",
+                      fontFamily:"'Georgia',serif",
+                    }}>
+                      {letter}
+                    </div>
+                  );
+                })}
+
+                {/* Hidden input captures typing */}
+                <input
+                  ref={el => { if(el) inputRefs.current[i] = el; }}
+                  value={guesses[i]}
+                  onChange={e => handleInput(i, e.target.value)}
+                  onKeyDown={e => handleKeyDown(i, e)}
+                  onFocus={() => setActiveRow(i)}
+                  maxLength={letterCount}
+                  style={{
+                    position:"absolute", opacity:0, width:1, height:1,
+                    pointerEvents:"none",
+                  }}
+                />
+
+                {/* Status icon */}
+                {isCorrect && <span style={{fontSize:14, marginLeft:4}}>✓</span>}
+                {isWrong   && <span style={{fontSize:12, color:"#c8201c", marginLeft:4}}>✗</span>}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
+
+      {/* Score */}
+      {checked && (
+        <div style={{marginTop:14, padding:"10px 14px", background:"#161616", border:"1px solid #2a2a2a",
+          display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8}}>
+          <span style={{fontSize:12, color:"#e8e0d0"}}>
+            Score: <strong style={{color: solved?"#4ade80":"#f0b429"}}>{checked.filter(Boolean).length}</strong>
+            <span style={{color:"#555"}}> / {fillin.entries.length}</span>
+          </span>
+          {!solved && (
+            <button onClick={revealAll} style={{fontSize:10, color:"#c8201c", background:"transparent",
+              border:"1px solid #c8201c", padding:"4px 12px", cursor:"pointer", fontWeight:700, letterSpacing:"0.08em"}}>
+              SHOW ANSWERS
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
