@@ -6536,6 +6536,11 @@ function StandingsTab({ standings, loading }) {
           const t = e.team;
           const s = {};
           (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? st.value ?? "—"; });
+          // DEBUG: log all stat fields for NY teams so we can see ESPN's exact field names
+          const dbgName = (e.team?.displayName || "").toLowerCase();
+          if (dbgName.includes("mets") || dbgName.includes("yankees")) {
+            console.log(`[NY Standings DEBUG] ${e.team?.displayName}:`, JSON.stringify(s, null, 2));
+          }
           return {
             id:     String(t.id),
             name:   t.shortDisplayName || t.name,
@@ -6548,7 +6553,8 @@ function StandingsTab({ standings, loading }) {
             l:      parseFloat(s.losses || s.l  || 0),
             pct:    s.winPercent || "—",
             gb:     s.gamesBehind ?? s.gb ?? "—",
-            wcGb:   s.wildCardGamesBehind ?? null,
+            // ESPN uses several different field names for WC GB — capture all variants
+            wcGb:   s.wildCardGamesBehind ?? s.Wild_Card_Games_Behind ?? s.playoffGamesBehind ?? s.wcGamesBehind ?? null,
             pts:    parseFloat(s.points || 0),
             strk:   s.streak || "—",
             l10:    s.last10  || "—",
@@ -6622,6 +6628,12 @@ function StandingsTab({ standings, loading }) {
             t.seed = i + 1;
           });
 
+          // The last wild card team is the cutoff — compute GB from that team's record
+          const lastWcTeam = nonLeaders[wcSpots - 1];
+          const lastWcPct  = lastWcTeam
+            ? (lastWcTeam.w + lastWcTeam.l > 0 ? lastWcTeam.w / (lastWcTeam.w + lastWcTeam.l) : 0)
+            : 0;
+
           nonLeaders.forEach((t, i) => {
             if (i < wcSpots) {
               t.inPlayoffs = true;
@@ -6630,11 +6642,20 @@ function StandingsTab({ standings, loading }) {
               t.seed = divWinners + i + 1;
             } else {
               t.inPlayoffs = false;
-              // Show actual Wild Card GB number, not just position count
+              // Compute WC GB mathematically: (lastWcTeam pct - this team pct) * games played / 2
+              // Simpler: use the ESPN wildCardGamesBehind if available, else calc from records
+              let gbDisplay;
               const wcGbNum = parseFloat(t.wcGb);
-              const gbDisplay = (!isNaN(wcGbNum) && wcGbNum > 0)
-                ? `${wcGbNum} out`
-                : `${i - wcSpots + 1} out`;
+              if (!isNaN(wcGbNum) && wcGbNum > 0) {
+                // ESPN provided it directly — use it
+                gbDisplay = `${wcGbNum} out`;
+              } else if (lastWcTeam && (t.w + t.l) > 0) {
+                // Calculate: GB = ((lastWcW - t.w) + (t.l - lastWcL)) / 2
+                const gb = ((lastWcTeam.w - t.w) + (t.l - lastWcTeam.l)) / 2;
+                gbDisplay = gb > 0 ? `${gb % 1 === 0 ? gb : gb.toFixed(1)} out` : `${i - wcSpots + 1} out`;
+              } else {
+                gbDisplay = `${i - wcSpots + 1} out`;
+              }
               t.pos = gbDisplay;
               t.wcLabel = gbDisplay;
             }
