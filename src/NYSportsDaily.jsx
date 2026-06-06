@@ -6647,17 +6647,18 @@ function StandingsTab({ standings, loading }) {
               t.seed = divWinners + i + 1;
             } else {
               t.inPlayoffs = false;
-              // Compute WC GB mathematically: (lastWcTeam pct - this team pct) * games played / 2
-              // Simpler: use the ESPN wildCardGamesBehind if available, else calc from records
               let gbDisplay;
-              const wcGbNum = parseFloat(t.wcGb);
-              if (!isNaN(wcGbNum) && wcGbNum > 0) {
-                // ESPN provided it directly — use it
-                gbDisplay = `${wcGbNum} out`;
-              } else if (lastWcTeam && (t.w + t.l) > 0) {
-                // Calculate: GB = ((lastWcW - t.w) + (t.l - lastWcL)) / 2
+              if (lastWcTeam && (t.w + t.l) > 0) {
+                // Standard GB formula vs last WC team
                 const gb = ((lastWcTeam.w - t.w) + (t.l - lastWcTeam.l)) / 2;
-                gbDisplay = gb > 0 ? `${gb % 1 === 0 ? gb : gb.toFixed(1)} out` : `${i - wcSpots + 1} out`;
+                const gbRounded = Math.round(gb * 2) / 2; // round to nearest .5
+                gbDisplay = gbRounded > 0
+                  ? `${Number.isInteger(gbRounded) ? gbRounded : gbRounded.toFixed(1)} out`
+                  : "—";
+                // Debug log for NY teams
+                if (t.name && (t.name.includes("Mets") || t.name.includes("Yankees") || t.name.includes("Jets") || t.name.includes("Giants"))) {
+                  console.log(`[WC GB DEBUG] ${t.name}: ${t.w}W-${t.l}L | cutoff: ${lastWcTeam.name} ${lastWcTeam.w}W-${lastWcTeam.l}L | GB=${gbRounded} | pos=${i} wcSpots=${wcSpots}`);
+                }
               } else {
                 gbDisplay = `${i - wcSpots + 1} out`;
               }
@@ -10855,52 +10856,64 @@ function NYPlayoffWidget({ myTeams }) {
       if (!r.ok) return [];
       const json = await r.json();
 
-      // First pass: collect ALL teams with W/L so we can compute WC GB mathematically
-      const allTeams = [];
+      // Collect every entry from the full tree
+      const allEntries = [];
       function walk(node) {
-        (node?.standings?.entries||[]).forEach(e => {
-          const name = e.team?.displayName || e.team?.name || "";
-          const s = {};
-          (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value??""); });
-          const seed = parseInt(s.playoffSeed || 99);
-          const w    = parseFloat(s.wins   || s.W  || 0);
-          const l    = parseFloat(s.losses || s.L  || 0);
-          const pts  = parseFloat(s.points || 0);  // NHL
-          // ESPN WC GB (unreliable field name — try several variants)
-          const wcGbEspn = parseFloat(
-            s.wildCardGamesBehind || s.Wild_Card_Games_Behind ||
-            s.playoffGamesBehind  || s.wcGamesBehind || "NaN"
-          );
-          allTeams.push({ name, w, l, pts, seed, wcGbEspn, isNY:isNY(name,cfg.key), isMy:isMyTeam(name) });
-        });
+        (node?.standings?.entries||[]).forEach(e => allEntries.push(e));
         (node.children||[]).forEach(walk);
       }
       walk(json);
 
-      // Dedupe
+      // Parse into team objects
+      const rawTeams = [];
+      allEntries.forEach(e => {
+        const name = e.team?.displayName || e.team?.name || "";
+        const s = {};
+        (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value ?? ""); });
+        rawTeams.push({
+          name,
+          w:    parseFloat(s.wins   || s.W  || 0),
+          l:    parseFloat(s.losses || s.L  || 0),
+          pts:  parseFloat(s.points || 0),
+          seed: parseInt(s.playoffSeed || 99),
+          pct:  parseFloat(s.winPercent || 0),
+          isNY: isNY(name, cfg.key),
+          isMy: isMyTeam(name),
+        });
+      });
+
+      // Dedupe — keep first occurrence (div leaders appear in both div + WC nodes)
       const seen = new Set();
-      const teams = allTeams.filter(t => { if(seen.has(t.name)) return false; seen.add(t.name); return true; });
+      const teams = rawTeams.filter(t => {
+        if (!t.name || seen.has(t.name)) return false;
+        seen.add(t.name); return true;
+      });
 
-      // Sort by seed to find the WC cutoff team
-      const sorted = [...teams].sort((a,b) => (a.seed||99)-(b.seed||99));
-      const wcCutoffTeam = sorted[cfg.poSlots - 1]; // last team "in"
+      // For MLB/NHL: split into conferences, find the true WC cutoff per conference.
+      // ESPN's playoffSeed is league-wide (1-12 for MLB), so:
+      //   seeds 1-3 = division winners in each league half
+      //   seeds 4-6 = wild card spots
+      // The 6th seed IS the last WC team. Anyone seeded 7+ is out.
+      // Their GB vs the 6th seed team = true WC GB.
 
-      // Compute WC GB mathematically for teams outside the playoff line
+      // Sort by seed (ties broken by win%)
+      const sorted = [...teams].sort((a,b) => {
+        if (a.seed !== b.seed) return a.seed - b.seed;
+        return b.pct - a.pct;
+      });
+
+      // The cutoff: last team "in"
+      const cutoffTeam = sorted[cfg.poSlots - 1];
+
       return teams.map(t => {
         const inPO = t.seed <= cfg.poSlots;
         let wcGb = null;
-
-        if (!inPO && wcCutoffTeam && (t.w + t.l) > 0) {
-          // Standard GB formula: ((cutoffW - teamW) + (teamL - cutoffL)) / 2
-          const mathGb = ((wcCutoffTeam.w - t.w) + (t.l - wcCutoffTeam.l)) / 2;
-          // Use ESPN value if it's plausible (within 2 games of math), else use math
-          if (!isNaN(t.wcGbEspn) && t.wcGbEspn > 0 && Math.abs(t.wcGbEspn - mathGb) < 2) {
-            wcGb = t.wcGbEspn;
-          } else {
-            wcGb = Math.max(0, mathGb);
-          }
+        if (!inPO && cutoffTeam && (t.w + t.l) > 0 && (cutoffTeam.w + cutoffTeam.l) > 0) {
+          // Standard baseball GB formula
+          wcGb = Math.max(0, ((cutoffTeam.w - t.w) + (t.l - cutoffTeam.l)) / 2);
+          // Round to nearest .5
+          wcGb = Math.round(wcGb * 2) / 2;
         }
-
         return { ...t, inPO, wcGb };
       });
     } catch(e) { return []; }
