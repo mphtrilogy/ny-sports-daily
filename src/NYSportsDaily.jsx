@@ -966,6 +966,16 @@ async function fetchNYNews() {
 // ─── MAIN COMPONENT ────────────────────────────────────────────────────────
 export default function NYSportsDaily() {
   const [selectedDate, setSelectedDate]   = useState(new Date());
+  // ── MOBILE DETECTION ──────────────────────────────────────────────────
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 680);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    function handleResize() { setIsMobile(window.innerWidth < 680); }
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const [scores, setScores]               = useState([]);
   const [news, setNews]                   = useState([]);
   const [standings, setStandings]         = useState([]);
@@ -1066,35 +1076,70 @@ export default function NYSportsDaily() {
 
       {/* ── MASTHEAD ── */}
       <header style={styles.masthead}>
-        <div style={styles.mastheadTop}>
-          <span style={styles.mastheadKicker}>EST. 2026 · ALL NEW YORK · ALL THE TIME</span>
-          <div style={{display:"flex", gap:12, alignItems:"center"}}>
-            <a href="https://www.amazon.com/s?k=new+york+sports&tag=nysportsdaily-20" target="_blank" rel="noopener noreferrer"
-              style={{fontSize:9, color:"#888", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
-              🛒 AMAZON
-            </a>
-            <a href="https://buymeacoffee.com/mhughes65v" target="_blank" rel="noopener noreferrer"
-              style={{fontSize:9, color:"#888", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
-              ☕ TIP JAR
-            </a>
-            <button onClick={() => setDarkMode(d => !d)}
-              style={{fontSize:9, color:"#888", background:"none", border:"none", cursor:"pointer", letterSpacing:"0.1em", fontWeight:700, padding:0}}>
-              {darkMode ? "☀ LIGHT" : "🌙 DARK"}
+        {/* ── Desktop top bar ── */}
+        {!isMobile && (
+          <div style={styles.mastheadTop}>
+            <span style={styles.mastheadKicker}>EST. 2026 · ALL NEW YORK · ALL THE TIME</span>
+            <div style={{display:"flex", gap:12, alignItems:"center"}}>
+              <a href="https://www.instagram.com/nysportsdaily_com/" target="_blank" rel="noopener noreferrer"
+                style={{fontSize:9, color:"#888", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
+                📸 INSTAGRAM
+              </a>
+              <a href="https://www.amazon.com/s?k=new+york+sports&tag=nysportsdaily-20" target="_blank" rel="noopener noreferrer"
+                style={{fontSize:9, color:"#888", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
+                🛒 AMAZON
+              </a>
+              <a href="https://buymeacoffee.com/mhughes65v" target="_blank" rel="noopener noreferrer"
+                style={{fontSize:9, color:"#888", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
+                ☕ TIP JAR
+              </a>
+              <button onClick={() => setDarkMode(d => !d)}
+                style={{fontSize:9, color:"#888", background:"none", border:"none", cursor:"pointer", letterSpacing:"0.1em", fontWeight:700, padding:0}}>
+                {darkMode ? "☀ LIGHT" : "🌙 DARK"}
+              </button>
+              <span style={styles.mastheadKicker}>{new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"}).toUpperCase()}</span>
+            </div>
+          </div>
+        )}
+        {/* ── Mobile top bar ── */}
+        {isMobile && (
+          <div style={{display:"flex", alignItems:"center", justifyContent:"space-between",
+            padding:"8px 12px 0", gap:8}}>
+            <button onClick={() => setDrawerOpen(true)}
+              style={{background:"none", border:"1px solid #2a2a2a", color:"#888",
+                padding:"6px 10px", cursor:"pointer", fontSize:14, lineHeight:1,
+                flexShrink:0}}>
+              ☰
             </button>
-            <span style={styles.mastheadKicker}>{new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"}).toUpperCase()}</span>
+            <h1 style={{...styles.mastheadTitle, fontSize:22, margin:0, flex:1,
+              textAlign:"center", textShadow:"1px 1px 0 #c8201c"}}>
+              NY<span style={styles.mastheadTitleRed}> SPORTS</span>
+              <span style={styles.mastheadTitleThin}> DAILY</span>
+            </h1>
+            <div style={{display:"flex", gap:8, alignItems:"center", flexShrink:0}}>
+              <a href="https://www.instagram.com/nysportsdaily_com/" target="_blank" rel="noopener noreferrer"
+                style={{fontSize:16, textDecoration:"none", opacity:0.7}}>📸</a>
+              <button onClick={() => setDarkMode(d => !d)}
+                style={{background:"none", border:"none", color:"#888", cursor:"pointer",
+                  fontSize:13, padding:0}}>
+                {darkMode ? "☀" : "🌙"}
+              </button>
+            </div>
           </div>
-        </div>
-        <div style={styles.mastheadMain}>
-          <div style={styles.mastheadLines}>
-            <div style={styles.mastheadLineBar} />
-            <div style={styles.mastheadLineBar} />
+        )}
+        {!isMobile && (
+          <div style={styles.mastheadMain}>
+            <div style={styles.mastheadLines}>
+              <div style={styles.mastheadLineBar} />
+              <div style={styles.mastheadLineBar} />
+            </div>
+            <h1 style={styles.mastheadTitle}>NEW YORK<br /><span style={styles.mastheadTitleRed}>SPORTS</span><span style={styles.mastheadTitleThin}> DAILY</span></h1>
+            <div style={styles.mastheadLines}>
+              <div style={styles.mastheadLineBar} />
+              <div style={styles.mastheadLineBar} />
+            </div>
           </div>
-          <h1 style={styles.mastheadTitle}>NEW YORK<br /><span style={styles.mastheadTitleRed}>SPORTS</span><span style={styles.mastheadTitleThin}> DAILY</span></h1>
-          <div style={styles.mastheadLines}>
-            <div style={styles.mastheadLineBar} />
-            <div style={styles.mastheadLineBar} />
-          </div>
-        </div>
+        )}
         {/* Search bar + dropdown — wrapped in relative container */}
         <div style={{position:"relative", zIndex:1000}}>
           <div style={styles.searchBar}>
@@ -1152,10 +1197,108 @@ export default function NYSportsDaily() {
       )}
 
       {/* ── MAIN CONTENT ── */}
-      <main style={styles.main}>
+      {/* ── MOBILE HAMBURGER DRAWER ── */}
+      {isMobile && drawerOpen && (
+        <div onClick={() => setDrawerOpen(false)}
+          style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.7)",
+            zIndex:2000, display:"flex"}}>
+          <div onClick={e => e.stopPropagation()}
+            style={{width:280, maxWidth:"82vw", background:"#0e0e0e",
+              borderRight:"2px solid #c8201c", height:"100%",
+              overflowY:"auto", display:"flex", flexDirection:"column"}}>
+            {/* Drawer header */}
+            <div style={{display:"flex", alignItems:"center", justifyContent:"space-between",
+              padding:"14px 16px", borderBottom:"1px solid #1a1a1a"}}>
+              <span style={{fontFamily:"'Georgia',serif", fontSize:14, fontWeight:900,
+                color:"#e8e0d0", letterSpacing:"0.04em"}}>
+                NY <span style={{color:"#c8201c"}}>SPORTS</span> DAILY
+              </span>
+              <button onClick={() => setDrawerOpen(false)}
+                style={{background:"none", border:"none", color:"#666",
+                  fontSize:20, cursor:"pointer", lineHeight:1, padding:"2px 6px"}}>✕</button>
+            </div>
 
-        {/* TAB NAV — Primary */}
-        <div style={styles.tabNav}>
+            {/* Primary nav items */}
+            <div style={{padding:"8px 0", borderBottom:"1px solid #1a1a1a"}}>
+              <div style={{padding:"6px 16px 4px", fontSize:8, fontWeight:900,
+                color:"#444", letterSpacing:"0.22em", textTransform:"uppercase"}}>MAIN</div>
+              {[
+                {tab:"SCORES",    icon:"📊"},
+                {tab:"TV",        icon:"📺"},
+                {tab:"STANDINGS", icon:"🏅"},
+                {tab:"SCHEDULE",  icon:"📅"},
+                {tab:"RECAP",     icon:"🎬"},
+                {tab:"NEWS",      icon:"📰"},
+                {tab:"RADIO",     icon:"📻"},
+              ].map(({tab, icon}) => (
+                <button key={tab} onClick={() => { setActiveTab(tab); setDrawerOpen(false); }}
+                  style={{display:"flex", alignItems:"center", gap:12, width:"100%",
+                    padding:"10px 16px", background:activeTab===tab?"#1a0a0a":"transparent",
+                    border:"none", borderLeft: activeTab===tab?"3px solid #c8201c":"3px solid transparent",
+                    color:activeTab===tab?"#e8e0d0":"#888",
+                    cursor:"pointer", fontSize:12, fontWeight:700,
+                    letterSpacing:"0.06em", textAlign:"left",
+                    fontFamily:"'Georgia',serif", transition:"all 0.12s"}}>
+                  <span style={{fontSize:16, width:22, textAlign:"center"}}>{icon}</span>
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Secondary nav items */}
+            <div style={{padding:"8px 0", borderBottom:"1px solid #1a1a1a"}}>
+              <div style={{padding:"6px 16px 4px", fontSize:8, fontWeight:900,
+                color:"#444", letterSpacing:"0.22em", textTransform:"uppercase"}}>EXPLORE</div>
+              {[
+                {tab:"GLORY",      icon:"🏆", special:true},
+                {tab:"PLAYROOM",   icon:"🎮", special:true},
+                {tab:"STATS",      icon:"📈"},
+                {tab:"HISTORY",    icon:"📚"},
+                {tab:"THIS DATE",  icon:"📆"},
+                {tab:"NY EVENTS",  icon:"🗽"},
+                {tab:"HOF",        icon:"⭐"},
+                {tab:"AWARDS",     icon:"🥇"},
+                {tab:"FORGOTTEN",  icon:"👻"},
+                {tab:"POLLS",      icon:"🗳️"},
+                {tab:"MISERY",     icon:"😩"},
+              ].map(({tab, icon, special}) => (
+                <button key={tab} onClick={() => { setActiveTab(tab); setDrawerOpen(false); }}
+                  style={{display:"flex", alignItems:"center", gap:12, width:"100%",
+                    padding:"9px 16px", background:activeTab===tab?"#1a0a0a":"transparent",
+                    border:"none", borderLeft: activeTab===tab?"3px solid #f0b429":"3px solid transparent",
+                    color: special ? "#f0b429" : activeTab===tab ? "#e8e0d0" : "#777",
+                    cursor:"pointer", fontSize:11, fontWeight:700,
+                    letterSpacing:"0.06em", textAlign:"left",
+                    fontFamily:"'Georgia',serif", transition:"all 0.12s"}}>
+                  <span style={{fontSize:15, width:22, textAlign:"center"}}>{icon}</span>
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Drawer footer */}
+            <div style={{padding:"14px 16px", marginTop:"auto",
+              borderTop:"1px solid #1a1a1a"}}>
+              <div style={{display:"flex", gap:12, marginBottom:10}}>
+                <a href="https://www.instagram.com/nysportsdaily_com/" target="_blank" rel="noopener noreferrer"
+                  style={{fontSize:10, color:"#888", textDecoration:"none",
+                    fontWeight:700, letterSpacing:"0.08em"}}>📸 Instagram</a>
+                <a href="https://buymeacoffee.com/mhughes65v" target="_blank" rel="noopener noreferrer"
+                  style={{fontSize:10, color:"#888", textDecoration:"none",
+                    fontWeight:700, letterSpacing:"0.08em"}}>☕ Tip Jar</a>
+              </div>
+              <div style={{fontSize:9, color:"#333", letterSpacing:"0.1em"}}>
+                EST. 2026 · ALL NEW YORK · ALL THE TIME
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main style={{...styles.main, paddingBottom: isMobile ? 80 : 40}}>
+
+        {/* TAB NAV — Primary (desktop only — mobile uses bottom nav) */}
+        {!isMobile && <div style={styles.tabNav}>
           {["SCORES","TV","STANDINGS","SCHEDULE","RECAP","NEWS","RADIO","SHOP"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}),
@@ -1163,9 +1306,9 @@ export default function NYSportsDaily() {
               {tab === "SHOP" ? "🛒 SHOP" : tab}
             </button>
           ))}
-        </div>
+        </div>}
         {/* TAB NAV — Secondary */}
-        <div style={{...styles.tabNav, marginTop:0, borderBottom:"2px solid #1a1a1a", marginBottom:16, background:"#0a0a0a", padding:"0 0 0 0"}}>
+        {!isMobile && <div style={{...styles.tabNav, marginTop:0, borderBottom:"2px solid #1a1a1a", marginBottom:16, background:"#0a0a0a", padding:"0 0 0 0"}}>
           {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","GLORY","PLAYROOM"].map(tab => {
             const isPlayroom = tab === "PLAYROOM";
             const isGlory    = tab === "GLORY";
@@ -1196,7 +1339,7 @@ export default function NYSportsDaily() {
               </button>
             );
           })}
-        </div>
+        </div>}
 
         {/* ──── SCORES TAB ──── */}
         {activeTab === "SCORES" && (
@@ -1205,7 +1348,7 @@ export default function NYSportsDaily() {
             {/* ── COLLAPSIBLE WIDGET ROW ── */}
             <HomepageWidgets myTeams={myTeams} setActiveTab={setActiveTab} />
             {/* ── TOP SECTION: Featured Stories + Quote + Player Card ── */}
-            <div style={{display:"flex", gap:10, marginBottom:16, alignItems:"stretch", flexWrap:"wrap"}}>
+            <div style={{display:"flex", gap:10, marginBottom:16, alignItems:"stretch", flexWrap:"wrap", flexDirection: isMobile ? "column" : "row"}}>
 
               {/* Left — Top 2 Featured News Stories */}
               <div style={{flex:"3 1 260px", display:"flex", flexDirection:"column", gap:8}}>
@@ -1261,15 +1404,15 @@ export default function NYSportsDaily() {
               )}
               </div>
 
-              {/* Center — Quote */}
-              <div style={{flex:"2 1 180px"}}>
+              {/* Center — Quote (desktop only) */}
+              {!isMobile && <div style={{flex:"2 1 180px"}}>
                 <QuoteOfDay />
-              </div>
+              </div>}
 
-              {/* Right — Player Spotlight card */}
-              <div style={{flex:"0 0 180px"}}>
+              {/* Right — Player Spotlight (desktop only) */}
+              {!isMobile && <div style={{flex:"0 0 180px"}}>
                 <PlayerSpotlight />
-              </div>
+              </div>}
             </div>
 
             {/* League filter */}
@@ -1337,8 +1480,8 @@ export default function NYSportsDaily() {
                 )}
               </div>
 
-              {/* News sidebar */}
-              <div style={styles.newsSidebar}>
+              {/* News sidebar — desktop only */}
+              {!isMobile && <div style={styles.newsSidebar}>
                 <div style={styles.newsSidebarHeader}>📰 NY SPORTS HEADLINES</div>
                 {loadingNews ? (
                   <p style={styles.newsSidebarLoading}>LOADING...</p>
@@ -1362,7 +1505,7 @@ export default function NYSportsDaily() {
                 <button onClick={() => setActiveTab("NEWS")} style={styles.newsSidebarMore}>
                   ALL STORIES →
                 </button>
-              </div>
+              </div>}
             </div>
           </div>
         )}
@@ -11116,6 +11259,56 @@ function NYPlayoffWidget({ myTeams }) {
             </div>
           ))}
       </div>
+    {/* ── MOBILE BOTTOM NAV ── */}
+    {isMobile && (
+      <nav style={{
+        position:"fixed", bottom:0, left:0, right:0, zIndex:1000,
+        background:"#0e0e0e", borderTop:"2px solid #1a1a1a",
+        display:"flex", alignItems:"stretch",
+        paddingBottom:"env(safe-area-inset-bottom, 0px)",
+      }}>
+        {[
+          {tab:"SCORES",    icon:"📊", label:"Scores"},
+          {tab:"STANDINGS", icon:"🏅", label:"Standings"},
+          {tab:"GLORY",     icon:"🏆", label:"Glory"},
+          {tab:"PLAYROOM",  icon:"🎮", label:"Playroom"},
+          {tab:"NEWS",      icon:"📰", label:"News"},
+        ].map(({tab, icon, label}) => {
+          const isActive = activeTab === tab;
+          const isSpecial = tab === "GLORY" || tab === "PLAYROOM";
+          return (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              style={{
+                flex:1, display:"flex", flexDirection:"column",
+                alignItems:"center", justifyContent:"center",
+                padding:"8px 4px 6px", gap:3,
+                background:"transparent", border:"none",
+                borderTop: isActive ? `2px solid ${isSpecial?"#f0b429":"#c8201c"}` : "2px solid transparent",
+                cursor:"pointer", transition:"all 0.12s",
+              }}>
+              <span style={{fontSize:18, lineHeight:1}}>{icon}</span>
+              <span style={{
+                fontSize:8, fontWeight:900, letterSpacing:"0.08em",
+                textTransform:"uppercase", fontFamily:"'Georgia',serif",
+                color: isActive ? (isSpecial ? "#f0b429" : "#e8e0d0") : "#555",
+              }}>{label}</span>
+            </button>
+          );
+        })}
+        {/* Hamburger button at end */}
+        <button onClick={() => setDrawerOpen(true)}
+          style={{flex:1, display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center",
+            padding:"8px 4px 6px", gap:3,
+            background:"transparent", border:"none",
+            borderTop:"2px solid transparent",
+            cursor:"pointer"}}>
+          <span style={{fontSize:18, lineHeight:1}}>☰</span>
+          <span style={{fontSize:8, fontWeight:900, letterSpacing:"0.08em",
+            textTransform:"uppercase", fontFamily:"'Georgia',serif", color:"#555"}}>MORE</span>
+        </button>
+      </nav>
+    )}
     </div>
   );
 }
@@ -11387,7 +11580,7 @@ const styles = {
   // SCORES GRID
   scoresGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
     gap: 8,
   },
   scoreCard: {
