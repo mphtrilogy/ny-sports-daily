@@ -6548,6 +6548,7 @@ function StandingsTab({ standings, loading }) {
             l:      parseFloat(s.losses || s.l  || 0),
             pct:    s.winPercent || "—",
             gb:     s.gamesBehind ?? s.gb ?? "—",
+            wcGb:   s.wildCardGamesBehind ?? null,
             pts:    parseFloat(s.points || 0),
             strk:   s.streak || "—",
             l10:    s.last10  || "—",
@@ -6629,8 +6630,13 @@ function StandingsTab({ standings, loading }) {
               t.seed = divWinners + i + 1;
             } else {
               t.inPlayoffs = false;
-              t.pos = `${i - wcSpots + 1} out`;
-              t.wcLabel = `${i - wcSpots + 1} out`;
+              // Show actual Wild Card GB number, not just position count
+              const wcGbNum = parseFloat(t.wcGb);
+              const gbDisplay = (!isNaN(wcGbNum) && wcGbNum > 0)
+                ? `${wcGbNum} out`
+                : `${i - wcSpots + 1} out`;
+              t.pos = gbDisplay;
+              t.wcLabel = gbDisplay;
             }
           });
         });
