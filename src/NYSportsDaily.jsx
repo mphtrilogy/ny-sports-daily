@@ -255,115 +255,6 @@ async function fetchESPNScores(date) {
   return results;
 }
 
-// ─── LIVE PLAYOFF STRIP COMPONENT ─────────────────────────────────────────
-// Self-fetching, auto-refreshes every 5 min. Uses Wild Card GB so numbers
-// match what ESPN shows (e.g. Mets 5.5 out, not 7).
-function LivePlayoffStrip({ myTeams }) {
-  const [data, setData] = useState([]);
-  const [lastUpdated, setLastUpdated] = useState(null);
-
-  useEffect(() => {
-    let live = true;
-    async function load() {
-      const results = [];
-      const ENDPOINTS = [
-        { sport:"baseball",   league:"mlb", label:"MLB", ny:["Yankees","Mets"]              },
-        { sport:"basketball", league:"nba", label:"NBA", ny:["Knicks","Nets"]               },
-        { sport:"hockey",     league:"nhl", label:"NHL", ny:["Rangers","Islanders","Devils"] },
-        { sport:"football",   league:"nfl", label:"NFL", ny:["Giants","Jets"]               },
-      ];
-      await Promise.all(ENDPOINTS.map(async ({ sport, league, label, ny }) => {
-        try {
-          const r = await fetch(
-            `https://site.api.espn.com/apis/v2/sports/${sport}/${league}/standings?level=3`,
-            { cache: "no-store" }
-          );
-          if (!r.ok) return;
-          const json = await r.json();
-          function walk(node) {
-            const entries = node?.standings?.entries;
-            if (entries?.length) {
-              entries.forEach(e => {
-                const dn = (e.team?.displayName || e.team?.name || "").toLowerCase();
-                const match = ny.find(t => dn.includes(t.toLowerCase()));
-                if (!match) return;
-                if (results.find(x => x.name === match && x.league === label)) return;
-                const stats = {};
-                (e.stats || []).forEach(s => { stats[s.name] = s.displayValue ?? s.value; });
-                const wcGbRaw = parseFloat(stats.wildCardGamesBehind);
-                const gbRaw   = parseFloat(stats.gamesBehind);
-                const seed    = parseInt(stats.playoffSeed || 99);
-                results.push({
-                  name:      match,
-                  league:    label,
-                  w:         stats.wins   ?? stats.W  ?? "-",
-                  l:         stats.losses ?? stats.L  ?? "-",
-                  pts:       stats.points ? parseInt(stats.points) : null,
-                  wcGb:      isNaN(wcGbRaw) ? null : wcGbRaw,
-                  gb:        isNaN(gbRaw)   ? null : gbRaw,
-                  seed,
-                  inPlayoffs: seed <= 8 || (!isNaN(wcGbRaw) && wcGbRaw <= 0),
-                });
-              });
-            }
-            (node.children || []).forEach(walk);
-          }
-          walk(json);
-        } catch(e) {}
-      }));
-      if (live && results.length) {
-        results.sort((a, b) => {
-          if (a.inPlayoffs && !b.inPlayoffs) return -1;
-          if (!a.inPlayoffs && b.inPlayoffs) return 1;
-          return a.seed - b.seed;
-        });
-        setData(results);
-        setLastUpdated(new Date());
-      }
-    }
-    load();
-    const interval = setInterval(load, 300000);
-    return () => { live = false; clearInterval(interval); };
-  }, []);
-
-  if (!data.length) return null;
-
-  return (
-    <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:12, padding:"8px 12px", background:"#111", border:"1px solid #1a1a1a", alignItems:"center"}}>
-      <span style={{fontSize:8, fontWeight:900, color:"#555", letterSpacing:"0.15em", flexShrink:0}}>
-        📊 NY STANDINGS:
-      </span>
-      {data.map((t, i) => {
-        const isFav = myTeams && [...myTeams].some(id => id.toLowerCase() === t.name.toLowerCase());
-        const gbVal = t.wcGb != null ? t.wcGb : t.gb;
-        const gbStr = (gbVal != null && gbVal > 0) ? `${gbVal}GB out` : null;
-        const rec   = t.pts != null ? `${t.w}W·${t.pts}pts` : `${t.w}-${t.l}`;
-        return (
-          <div key={i} style={{
-            display:"flex", gap:4, alignItems:"center", fontSize:10,
-            padding:"2px 7px", borderRadius:2,
-            background: isFav ? "#1a1600" : "transparent",
-            border: isFav ? "1px solid #f0b42944" : "none",
-          }}>
-            {isFav && <span style={{fontSize:9}}>⭐</span>}
-            <span style={{fontWeight:700, color: t.inPlayoffs ? "#4ade80" : "#e8e0d0"}}>{t.name}</span>
-            <span style={{color:"#666", fontSize:9}}>{t.league}</span>
-            <span style={{color:"#888"}}>{rec}</span>
-            {gbStr && <span style={{color:"#c8201c", fontSize:9}}>{gbStr}</span>}
-            {t.inPlayoffs && <span style={{fontSize:8, color:"#4ade80", fontWeight:900}}>✓IN</span>}
-            {i < data.length - 1 && <span style={{color:"#333", marginLeft:2}}>·</span>}
-          </div>
-        );
-      })}
-      {lastUpdated && (
-        <span style={{fontSize:8, color:"#333", marginLeft:"auto", flexShrink:0}}>
-          {lastUpdated.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}
-        </span>
-      )}
-    </div>
-  );
-}
-
 // ─── ESPN STANDINGS FETCH ──────────────────────────────────────────────────
 const STANDINGS_ENDPOINTS = [
   { sport:"baseball",    league:"mlb",  label:"MLB",  division:"AL East", teams:["Yankees","Mets"] },
@@ -1340,8 +1231,7 @@ export default function NYSportsDaily() {
                 <PlayerSpotlight />
               </div>
             </div>
-            {/* ── Playoff tracker strip — LIVE, self-fetching ── */}
-            <LivePlayoffStrip myTeams={myTeams} />
+
             {/* League filter */}
             <div style={styles.filterBar}>
               <div style={styles.filterGroup}>
