@@ -1164,13 +1164,15 @@ export default function NYSportsDaily() {
         </div>
         {/* TAB NAV — Secondary */}
         <div style={{...styles.tabNav, marginTop:-16, borderBottom:"1px solid #1a1a1a", marginBottom:20}}>
-          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","PLAYROOM"].map(tab => (
+          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","GLORY","PLAYROOM"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}), fontSize:9, padding:"7px 10px",
                 ...(tab==="PLAYROOM"?{color:"#f0b429",fontWeight:900}:{}),
-                ...(activeTab===tab&&tab==="PLAYROOM"?{background:"#f0b429",color:"#000",borderBottom:"3px solid #f0b429"}:{})
+                ...(activeTab===tab&&tab==="PLAYROOM"?{background:"#f0b429",color:"#000",borderBottom:"3px solid #f0b429"}:{}),
+                ...(tab==="GLORY"?{color:"#f0b429",fontWeight:900}:{}),
+                ...(activeTab===tab&&tab==="GLORY"?{background:"linear-gradient(135deg,#c8201c,#f0b429)",color:"#fff",borderBottom:"3px solid #f0b429"}:{}),
               }}>
-              {tab === "PLAYROOM" ? "🎮 PLAYROOM" : tab}
+              {tab === "PLAYROOM" ? "🎮 PLAYROOM" : tab === "GLORY" ? "🏆 GLORY" : tab}
             </button>
           ))}
         </div>
@@ -1344,6 +1346,10 @@ export default function NYSportsDaily() {
         {/* ──── RADIO TAB (kept, accessed via search) ──── */}
         {activeTab === "RADIO" && (
           <RadioTab />
+        )}
+        {/* ──── GLORY DAYS TAB ──── */}
+        {activeTab === "GLORY" && (
+          <GloryDaysTab myTeams={myTeams} />
         )}
         {/* ──── PLAYROOM TAB ──── */}
         {activeTab === "PLAYROOM" && (
@@ -9546,6 +9552,388 @@ function PlayroomCrossword() {
   );
 }
 
+
+// ─── GUESS THE PLAYER ────────────────────────────────────────────────────
+function GuessThePlayer() {
+  const [round, setRound]       = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [score, setScore]       = useState(0);
+  const [total, setTotal]       = useState(0);
+  const [streak, setStreak]     = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const usedIdxRef = useRef(new Set());
+
+  function buildRound() {
+    const pool = DAILY_PLAYERS;
+    let idx, attempts = 0;
+    do { idx = Math.floor(Math.random() * pool.length); attempts++; }
+    while (usedIdxRef.current.has(idx) && attempts < 50);
+    usedIdxRef.current.add(idx);
+    if (usedIdxRef.current.size > Math.floor(pool.length / 2)) usedIdxRef.current.clear();
+
+    const correct = pool[idx];
+    const others = pool
+      .filter((p, i) => i !== idx && p.sport === correct.sport)
+      .sort(() => Math.random() - 0.5).slice(0, 3);
+    let wrong = [...others];
+    if (wrong.length < 3) {
+      const extras = pool.filter((p, i) => i !== idx && !wrong.includes(p))
+        .sort(() => Math.random() - 0.5).slice(0, 3 - wrong.length);
+      wrong = [...wrong, ...extras];
+    }
+
+    const clueTypes = [
+      { label:"STATS",  text: correct.stats },
+      { label:"ERA",    text: `Played ${correct.era} · ${correct.pos} · ${correct.team}` },
+      { label:"FACT",   text: correct.fact.slice(0, 120) + (correct.fact.length > 120 ? "…" : "") },
+      { label:"NUMBER", text: `Wore #${correct.number} for the ${correct.team}` },
+    ].filter(c => c.text && c.text.length > 5);
+    const clue = clueTypes[Math.floor(Math.random() * clueTypes.length)];
+
+    const choices = [correct, ...wrong.slice(0,3)].sort(() => Math.random() - 0.5);
+    return { correct, choices, clue };
+  }
+
+  useEffect(() => { setRound(buildRound()); }, []);
+
+  function handleChoice(player) {
+    if (selected || !round) return;
+    setSelected(player);
+    setTotal(t => t + 1);
+    const isRight = player.name === round.correct.name;
+    if (isRight) {
+      setScore(s => s + 1);
+      const ns = streak + 1;
+      setStreak(ns);
+      if (ns > bestStreak) setBestStreak(ns);
+    } else { setStreak(0); }
+  }
+
+  function nextRound() { setRound(buildRound()); setSelected(null); }
+
+  if (!round) return <div style={{color:"#555", padding:20}}>Loading...</div>;
+  const isCorrect = selected?.name === round.correct.name;
+
+  return (
+    <div style={{maxWidth:560}}>
+      <div style={{display:"flex", gap:16, marginBottom:16, padding:"8px 14px",
+        background:"#111", border:"1px solid #1a1a1a", flexWrap:"wrap", alignItems:"center"}}>
+        <span style={{fontSize:10, color:"#888"}}>Score: <strong style={{color:"#e8e0d0"}}>{score}/{total}</strong></span>
+        <span style={{fontSize:10, color:"#888"}}>Streak: <strong style={{color:streak>2?"#f0b429":"#e8e0d0"}}>{streak} 🔥</strong></span>
+        <span style={{fontSize:10, color:"#888"}}>Best: <strong style={{color:"#c8201c"}}>{bestStreak}</strong></span>
+        <button onClick={() => { usedIdxRef.current.clear(); setScore(0); setTotal(0); setStreak(0); setBestStreak(0); nextRound(); }}
+          style={{marginLeft:"auto", fontSize:9, color:"#555", background:"transparent",
+            border:"1px solid #333", padding:"2px 8px", cursor:"pointer", fontWeight:700}}>RESET</button>
+      </div>
+
+      <div style={{background:"#161616", border:"1px solid #2a2a2a", borderLeft:"3px solid #c8201c",
+        padding:"16px 18px", marginBottom:14}}>
+        <div style={{fontSize:8, fontWeight:900, color:"#c8201c", letterSpacing:"0.2em", marginBottom:8}}>
+          🎤 {round.clue.label} CLUE — WHO IS THIS NY LEGEND?
+        </div>
+        <p style={{margin:0, fontSize:14, color:"#e8e0d0", lineHeight:1.6,
+          fontFamily:"'Georgia',serif", fontStyle:"italic"}}>"{round.clue.text}"</p>
+        <div style={{marginTop:8, fontSize:9, color:"#555"}}>{round.correct.sport} · {round.correct.team}</div>
+      </div>
+
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14}}>
+        {round.choices.map((player, i) => {
+          const isRight = player.name === round.correct.name;
+          const isPicked = selected?.name === player.name;
+          let bg="#1a1a1a", border="1px solid #333", color="#ccc";
+          if (selected) {
+            if (isRight)       { bg="#0d2a1a"; border="1px solid #22c55e"; color="#4ade80"; }
+            else if (isPicked) { bg="#2a0d0d"; border="1px solid #c8201c"; color="#f87171"; }
+            else               { color="#444"; }
+          }
+          return (
+            <button key={i} onClick={() => handleChoice(player)}
+              style={{background:bg, border, color, padding:"12px 14px",
+                cursor:selected?"default":"pointer", fontSize:12, fontWeight:700,
+                fontFamily:"'Georgia',serif", textAlign:"left",
+                display:"flex", justifyContent:"space-between", alignItems:"center",
+                transition:"all 0.15s"}}>
+              <span>{player.name}</span>
+              {selected && isRight  && <span>✓</span>}
+              {selected && isPicked && !isRight && <span>✗</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {selected && (
+        <>
+          <div style={{padding:"14px 16px", background:isCorrect?"#0d2a1a":"#161616",
+            border:`1px solid ${isCorrect?"#22c55e":"#2a2a2a"}`, marginBottom:12}}>
+            <div style={{fontSize:13, fontWeight:900, color:isCorrect?"#4ade80":"#f87171", marginBottom:8}}>
+              {isCorrect ? "🎉 Correct!" : `The answer was ${round.correct.name}`}
+            </div>
+            <p style={{margin:"0 0 6px", fontSize:12, color:"#aaa", lineHeight:1.6,
+              fontFamily:"'Georgia',serif"}}>{round.correct.fact}</p>
+            <div style={{fontSize:10, color:"#555"}}>{round.correct.stats}</div>
+          </div>
+          <button onClick={nextRound}
+            style={{width:"100%", background:"#c8201c", border:"none", color:"#fff",
+              padding:"12px", cursor:"pointer", fontSize:12, fontWeight:900, letterSpacing:"0.1em"}}>
+            NEXT PLAYER →
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── MATCHING PAIRS ───────────────────────────────────────────────────────
+function MatchingPairs() {
+  const [cards, setCards]       = useState([]);
+  const [flipped, setFlipped]   = useState(new Set());
+  const [matched, setMatched]   = useState(new Set());
+  const [selected, setSelected] = useState([]);
+  const [moves, setMoves]       = useState(0);
+  const [won, setWon]           = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [best, setBest]         = useState(null);
+
+  function buildGame() {
+    const pool = DAILY_PLAYERS.filter(p => p.stats && p.stats.length > 10);
+    const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 8);
+    const nameCards = shuffled.map((p, i) => ({
+      id:`n-${i}`, pairId:p.name, type:"name",
+      text:p.name, emoji:p.emoji, team:p.team
+    }));
+    const statCards = shuffled.map((p, i) => ({
+      id:`s-${i}`, pairId:p.name, type:"stat",
+      text:p.stats.split("·")[0].trim().slice(0, 36), emoji:p.emoji, team:p.team
+    }));
+    const all = [...nameCards, ...statCards].sort(() => Math.random() - 0.5);
+    setCards(all);
+    setFlipped(new Set()); setMatched(new Set());
+    setSelected([]); setMoves(0); setWon(false); setChecking(false);
+  }
+
+  useEffect(() => { buildGame(); }, []);
+
+  function handleFlip(idx) {
+    if (checking || matched.has(cards[idx].pairId) || flipped.has(idx) || selected.length === 2) return;
+    const newFlipped = new Set(flipped); newFlipped.add(idx);
+    setFlipped(newFlipped);
+    const newSelected = [...selected, idx];
+    setSelected(newSelected);
+
+    if (newSelected.length === 2) {
+      setMoves(m => m + 1);
+      setChecking(true);
+      const [a, b] = newSelected;
+      if (cards[a].pairId === cards[b].pairId && cards[a].type !== cards[b].type) {
+        setTimeout(() => {
+          const newMatched = new Set(matched); newMatched.add(cards[a].pairId);
+          setMatched(newMatched); setFlipped(new Set()); setSelected([]); setChecking(false);
+          if (newMatched.size === 8) {
+            setWon(true);
+            const m = moves + 1;
+            if (!best || m < best) setBest(m);
+          }
+        }, 700);
+      } else {
+        setTimeout(() => { setFlipped(new Set(flipped)); setSelected([]); setChecking(false); }, 900);
+      }
+    }
+  }
+
+  if (!cards.length) return <div style={{color:"#555", padding:20}}>Loading...</div>;
+
+  const TEAM_COLORS = {
+    Yankees:"#003087", Mets:"#002D72", Jets:"#125740", Giants:"#0B2265",
+    Knicks:"#006BB6", Rangers:"#0038A8", Islanders:"#00539B", Devils:"#CE1126",
+  };
+
+  return (
+    <div style={{maxWidth:600}}>
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center",
+        marginBottom:12, flexWrap:"wrap", gap:8}}>
+        <div>
+          <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:2}}>
+            🃏 MATCHING PAIRS — NY SPORTS LEGENDS
+          </div>
+          <div style={{fontSize:10, color:"#666"}}>
+            Match player to stat · {matched.size}/8 matched · {moves} moves
+            {best && <span style={{color:"#f0b429", marginLeft:8}}>Best: {best}</span>}
+          </div>
+        </div>
+        <button onClick={buildGame}
+          style={{fontSize:10, background:"transparent", border:"1px solid #444",
+            color:"#888", padding:"5px 14px", cursor:"pointer", fontWeight:900}}>↺ NEW GAME</button>
+      </div>
+
+      {won && (
+        <div style={{background:"#0d2a1a", border:"1px solid #22c55e", color:"#4ade80",
+          padding:"10px 16px", marginBottom:12, textAlign:"center", fontSize:13, fontWeight:700}}>
+          🎉 All matched in {moves} moves! {moves<=12?"Excellent!":moves<=16?"Nice work!":"Keep practicing!"}
+        </div>
+      )}
+
+      <div style={{fontSize:10, color:"#444", marginBottom:10, fontStyle:"italic"}}>
+        Click a card to flip · Match each player name to their achievement
+      </div>
+
+      <div style={{display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:6}}>
+        {cards.map((card, idx) => {
+          const isFlipped = flipped.has(idx) || matched.has(card.pairId);
+          const isMatched = matched.has(card.pairId);
+          const teamColor = TEAM_COLORS[card.team] || "#c8201c";
+          return (
+            <div key={card.id} onClick={() => !isFlipped && handleFlip(idx)}
+              style={{height:70, cursor:isFlipped?"default":"pointer", position:"relative"}}>
+              {!isFlipped ? (
+                <div style={{width:"100%", height:"100%", background:"#1a1a1a",
+                  border:"1px solid #2a2a2a", display:"flex", alignItems:"center",
+                  justifyContent:"center", fontSize:22, userSelect:"none"}}>🗽</div>
+              ) : (
+                <div style={{width:"100%", height:"100%",
+                  background: isMatched ? `${teamColor}22` : "#1a1a1a",
+                  border:`2px solid ${isMatched ? teamColor : "#555"}`,
+                  display:"flex", flexDirection:"column", alignItems:"center",
+                  justifyContent:"center", padding:"5px 4px", textAlign:"center"}}>
+                  {card.type === "name" ? (
+                    <>
+                      <span style={{fontSize:14, marginBottom:2}}>{card.emoji}</span>
+                      <span style={{fontSize:9, fontWeight:900, color:isMatched?teamColor:"#e8e0d0",
+                        lineHeight:1.2}}>{card.text}</span>
+                    </>
+                  ) : (
+                    <span style={{fontSize:8, color:isMatched?"#4ade80":"#aaa",
+                      lineHeight:1.3}}>{card.text}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── STAT GUESSER ─────────────────────────────────────────────────────────
+function StatGuesser() {
+  const [round, setRound]       = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [score, setScore]       = useState(0);
+  const [total, setTotal]       = useState(0);
+  const [streak, setStreak]     = useState(0);
+  const usedRef = useRef(new Set());
+
+  function buildRound() {
+    const pool = DAILY_PLAYERS.filter(p => p.stats && p.stats.length > 10);
+    let idx, attempts = 0;
+    do { idx = Math.floor(Math.random() * pool.length); attempts++; }
+    while (usedRef.current.has(idx) && attempts < 50);
+    usedRef.current.add(idx);
+    if (usedRef.current.size > pool.length / 2) usedRef.current.clear();
+
+    const correct = pool[idx];
+    const statParts = correct.stats.split("·").map(s => s.trim()).filter(Boolean);
+    const picked = statParts.sort(() => Math.random() - 0.5).slice(0, 2);
+    const statClue = picked.join(" · ");
+
+    const sameSport = pool.filter((p, i) => i !== idx && p.sport === correct.sport)
+      .sort(() => Math.random() - 0.5).slice(0, 3);
+    let wrong = [...sameSport];
+    if (wrong.length < 3) {
+      const extra = pool.filter((p, i) => i !== idx && !wrong.includes(p))
+        .sort(() => Math.random() - 0.5).slice(0, 3 - wrong.length);
+      wrong = [...wrong, ...extra];
+    }
+    const choices = [correct, ...wrong.slice(0,3)].sort(() => Math.random() - 0.5);
+    return { correct, choices, statClue };
+  }
+
+  useEffect(() => { setRound(buildRound()); }, []);
+
+  function handleChoice(player) {
+    if (selected || !round) return;
+    setSelected(player);
+    setTotal(t => t + 1);
+    if (player.name === round.correct.name) { setScore(s => s + 1); setStreak(s => s + 1); }
+    else setStreak(0);
+  }
+
+  function next() { setRound(buildRound()); setSelected(null); }
+
+  if (!round) return <div style={{color:"#555", padding:20}}>Loading...</div>;
+  const isCorrect = selected?.name === round.correct.name;
+
+  return (
+    <div style={{maxWidth:560}}>
+      <div style={{display:"flex", gap:16, marginBottom:16, padding:"8px 14px",
+        background:"#111", border:"1px solid #1a1a1a", flexWrap:"wrap", alignItems:"center"}}>
+        <span style={{fontSize:10, color:"#888"}}>Score: <strong style={{color:"#e8e0d0"}}>{score}/{total}</strong></span>
+        <span style={{fontSize:10, color:"#888"}}>Streak: <strong style={{color:streak>2?"#f0b429":"#e8e0d0"}}>{streak} 🔥</strong></span>
+        <button onClick={() => { usedRef.current.clear(); setScore(0); setTotal(0); setStreak(0); next(); }}
+          style={{marginLeft:"auto", fontSize:9, color:"#555", background:"transparent",
+            border:"1px solid #333", padding:"2px 8px", cursor:"pointer", fontWeight:700}}>RESET</button>
+      </div>
+
+      <div style={{background:"#161616", border:"1px solid #2a2a2a", borderLeft:"3px solid #f0b429",
+        padding:"16px 18px", marginBottom:14}}>
+        <div style={{fontSize:8, fontWeight:900, color:"#f0b429", letterSpacing:"0.2em", marginBottom:10}}>
+          📊 WHOSE STAT IS THIS?
+        </div>
+        <div style={{fontSize:18, fontWeight:900, color:"#e8e0d0",
+          fontFamily:"'Georgia',serif", lineHeight:1.4}}>{round.statClue}</div>
+        <div style={{marginTop:10, fontSize:9, color:"#555"}}>
+          {round.correct.sport} · {round.correct.team} · {round.correct.era}
+        </div>
+      </div>
+
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14}}>
+        {round.choices.map((player, i) => {
+          const isRight  = player.name === round.correct.name;
+          const isPicked = selected?.name === player.name;
+          let bg="#1a1a1a", border="1px solid #333", color="#ccc";
+          if (selected) {
+            if (isRight)       { bg="#0d2a1a"; border="1px solid #22c55e"; color="#4ade80"; }
+            else if (isPicked) { bg="#2a0d0d"; border="1px solid #c8201c"; color="#f87171"; }
+            else               { color="#444"; }
+          }
+          return (
+            <button key={i} onClick={() => handleChoice(player)}
+              style={{background:bg, border, color, padding:"12px 14px",
+                cursor:selected?"default":"pointer", fontSize:12, fontWeight:700,
+                fontFamily:"'Georgia',serif", textAlign:"left",
+                display:"flex", justifyContent:"space-between", alignItems:"center",
+                transition:"all 0.15s"}}>
+              <span>{player.name}</span>
+              {selected && isRight  && <span>✓</span>}
+              {selected && isPicked && !isRight && <span>✗</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {selected && (
+        <>
+          <div style={{padding:"12px 14px", background:isCorrect?"#0d2a1a":"#161616",
+            border:`1px solid ${isCorrect?"#22c55e":"#2a2a2a"}`, marginBottom:12}}>
+            <div style={{fontSize:13, fontWeight:900,
+              color:isCorrect?"#4ade80":"#f87171", marginBottom:6}}>
+              {isCorrect ? "🎉 Correct!" : `It was ${round.correct.name}`}
+            </div>
+            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6,
+              fontFamily:"'Georgia',serif"}}>{round.correct.fact}</p>
+          </div>
+          <button onClick={next}
+            style={{width:"100%", background:"#c8201c", border:"none", color:"#fff",
+              padding:"12px", cursor:"pointer", fontSize:12, fontWeight:900, letterSpacing:"0.1em"}}>
+            NEXT STAT →
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+
 // ─── MAIN PLAYROOM TAB ────────────────────────────────────────────────────
 function PlayroomTab({ myTeams }) {
   const GAMES = [
@@ -9646,6 +10034,440 @@ function PlayroomTab({ myTeams }) {
     </div>
   );
 }
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🏆 GLORY DAYS — NY SPORTS CHAMPIONSHIPS
+// ═══════════════════════════════════════════════════════════════════════════
+
+const NY_CHAMPIONSHIPS = [
+  // ── YANKEES (27) ──
+  { year:1923, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Giants", iconic:false, moment:"The first championship in The House That Ruth Built — Babe Ruth hit 3 HR in the Series.", fact:"The Yankees' first World Series came in the brand-new Yankee Stadium's first season.", wiki:"https://en.wikipedia.org/wiki/1923_World_Series" },
+  { year:1927, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Pirates", iconic:true, moment:"Murderers' Row swept the Pirates. Babe Ruth hit 60 home runs that season — the greatest team ever assembled.", fact:"The '27 Yankees are still considered by many the greatest baseball team in history.", wiki:"https://en.wikipedia.org/wiki/1927_World_Series" },
+  { year:1928, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Cardinals", iconic:false, moment:"Back-to-back! Ruth and Gehrig combined for 6 HR in the sweep.", fact:"Ruth batted .625 in the Series with three home runs. Gehrig batted .545.", wiki:"https://en.wikipedia.org/wiki/1928_World_Series" },
+  { year:1932, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Cubs", iconic:true, moment:"The Called Shot — Babe Ruth allegedly pointed to center field before homering off Charlie Root.", fact:"Whether Ruth really called it remains one of baseball's greatest mysteries. The legend is forever.", wiki:"https://en.wikipedia.org/wiki/1932_World_Series" },
+  { year:1936, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Giants", iconic:false, moment:"Joe DiMaggio's first championship. The Yankees won four in five years starting here.", fact:"This began one of the greatest dynasties in sports history.", wiki:"https://en.wikipedia.org/wiki/1936_World_Series" },
+  { year:1937, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Giants", iconic:false, moment:"Back-to-back again. DiMaggio and Gehrig were unstoppable.", fact:"Second straight — the dynasty was building.", wiki:"https://en.wikipedia.org/wiki/1937_World_Series" },
+  { year:1938, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Cubs", iconic:false, moment:"Three in a row. The Cubs were swept — again. Red Ruffing won two games.", fact:"Lou Gehrig's last full healthy season. The dynasty at its peak.", wiki:"https://en.wikipedia.org/wiki/1938_World_Series" },
+  { year:1939, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Reds", iconic:false, moment:"FOUR STRAIGHT! DiMaggio hit .381. The Reds were swept in four games.", fact:"Four consecutive championships — the standard no one has matched.", wiki:"https://en.wikipedia.org/wiki/1939_World_Series" },
+  { year:1941, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Dodgers", iconic:false, moment:"Mickey Owen's passed ball in Game 4 let the Yankees back in. DiMaggio's 56-game streak that season.", fact:"The famous Dropped Third Strike changed the Series entirely.", wiki:"https://en.wikipedia.org/wiki/1941_World_Series" },
+  { year:1943, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Cardinals", iconic:false, moment:"A wartime championship. Spud Chandler went 20-4 with a 1.64 ERA to win Cy Young and MVP.", fact:"One of the most dominant pitching seasons in baseball history.", wiki:"https://en.wikipedia.org/wiki/1943_World_Series" },
+  { year:1947, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Dodgers", iconic:false, moment:"Cookie Lavagetto's pinch hit double broke up Bill Bevens' near no-hitter in Game 4.", fact:"Jackie Robinson's first World Series. The Bronx Bombers prevailed in 7.", wiki:"https://en.wikipedia.org/wiki/1947_World_Series" },
+  { year:1949, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Dodgers", iconic:false, moment:"Casey Stengel's first title. This began another dynasty — five straight championships.", fact:"Joe Page was dominant out of the bullpen. A new era began.", wiki:"https://en.wikipedia.org/wiki/1949_World_Series" },
+  { year:1950, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Phillies", iconic:false, moment:"The Whiz Kids swept. Whitey Ford made his first World Series start.", fact:"Two straight — Stengel's machine was rolling.", wiki:"https://en.wikipedia.org/wiki/1950_World_Series" },
+  { year:1951, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Giants", iconic:false, moment:"Three straight! Mickey Mantle made his first Series appearance.", fact:"The Giants rode Bobby Thomson's Shot Heard Round the World to the Series — and still lost.", wiki:"https://en.wikipedia.org/wiki/1951_World_Series" },
+  { year:1952, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Dodgers", iconic:false, moment:"Four straight! Billy Martin made a game-saving bare-hand catch in the 7th inning of Game 7.", fact:"The Yankees beat the Dodgers for the fifth time in seven Series matchups.", wiki:"https://en.wikipedia.org/wiki/1952_World_Series" },
+  { year:1953, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Dodgers", iconic:true, moment:"FIVE STRAIGHT — the record that still stands. Billy Martin hit .500 and delivered the Series winner.", fact:"Five consecutive championships under Stengel — no team has ever come close.", wiki:"https://en.wikipedia.org/wiki/1953_World_Series" },
+  { year:1956, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Dodgers", iconic:true, moment:"Don Larsen's Perfect Game — the only perfect game in World Series history. Yogi Berra leaped into his arms.", fact:"The most iconic image in World Series history. 97 pitches. 27 up. 27 down. Perfect.", wiki:"https://en.wikipedia.org/wiki/Don_Larsen%27s_perfect_game" },
+  { year:1958, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Braves", iconic:false, moment:"Down 3-1 in the Series, the Yankees won three straight. The ultimate comeback.", fact:"One of only four teams in World Series history to come back from a 3-1 deficit.", wiki:"https://en.wikipedia.org/wiki/1958_World_Series" },
+  { year:1961, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Reds", iconic:false, moment:"Roger Maris hit his record 61st home run that season. Whitey Ford pitched 32 scoreless WS innings.", fact:"Ford broke Babe Ruth's World Series scoreless innings record.", wiki:"https://en.wikipedia.org/wiki/1961_World_Series" },
+  { year:1962, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Giants", iconic:false, moment:"Bobby Richardson caught Willie McCovey's screaming liner to end Game 7. Heart attacks all around.", fact:"McCovey hit it so hard that Yankees fans still have nightmares. Richardson was in exactly the right spot.", wiki:"https://en.wikipedia.org/wiki/1962_World_Series" },
+  { year:1977, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Dodgers", iconic:true, moment:"Reggie Jackson hit THREE home runs on THREE consecutive pitches in Game 6. Mr. October was born.", fact:"'I must be the straw that stirs the drink.' The greatest single-game offensive display in World Series history.", wiki:"https://en.wikipedia.org/wiki/1977_World_Series" },
+  { year:1978, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Dodgers", iconic:false, moment:"Bucky Dent's playoff homer at Fenway set it up. Back-to-back Dodgers victims.", fact:"Bucky (Bleeping) Dent. Red Sox fans know the rest.", wiki:"https://en.wikipedia.org/wiki/1978_World_Series" },
+  { year:1996, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Braves", iconic:true, moment:"Down 2-0, Yankees won 4 straight. Jim Leyritz's 3-run homer in Game 4 was the turning point.", fact:"This began the greatest dynasty of the modern era — 4 championships in 5 years.", wiki:"https://en.wikipedia.org/wiki/1996_World_Series" },
+  { year:1998, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Padres", iconic:true, moment:"125 wins total. The Padres were swept. The '98 Yankees are the greatest team of the modern era.", fact:"114-48 in the regular season. 11-2 in the playoffs. The standard of excellence.", wiki:"https://en.wikipedia.org/wiki/1998_World_Series" },
+  { year:1999, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Braves", iconic:false, moment:"Three straight. Mariano Rivera entered to Enter Sandman. The dynasty at its absolute peak.", fact:"Rivera had a 0.70 ERA in the postseason. Simply untouchable.", wiki:"https://en.wikipedia.org/wiki/1999_World_Series" },
+  { year:2000, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Mets", iconic:true, moment:"THE SUBWAY SERIES! Jeter led off Game 4 with a HR. Luis Sojo's single ended it in Game 5.", fact:"New York vs. New York for the first time since 1956. The city was electric for two straight weeks.", wiki:"https://en.wikipedia.org/wiki/2000_World_Series" },
+  { year:2009, team:"Yankees", sport:"MLB", title:"World Series", color:"#003087", emoji:"⚾", opponent:"vs Phillies", iconic:true, moment:"Hideki Matsui hit a grand slam in Game 6 to win Series MVP. The new Stadium's first title.", fact:"A-Rod finally got his ring. Matsui was Series MVP as a designated hitter.", wiki:"https://en.wikipedia.org/wiki/2009_World_Series" },
+
+  // ── METS (2) ──
+  { year:1969, team:"Mets", sport:"MLB", title:"World Series", color:"#002D72", emoji:"⚾", opponent:"vs Orioles", iconic:true, moment:"The Miracle Mets! 100-to-1 longshots beat the mighty Orioles. Tom Seaver, Jerry Koosman, and pure belief.", fact:"Manager Gil Hodges built something miraculous. The original 'Ya Gotta Believe' moment.", wiki:"https://en.wikipedia.org/wiki/1969_World_Series" },
+  { year:1986, team:"Mets", sport:"MLB", title:"World Series", color:"#002D72", emoji:"⚾", opponent:"vs Red Sox", iconic:true, moment:"Mookie Wilson's grounder rolled through Bill Buckner's legs. Back from the dead in Game 6, then won Game 7.", fact:"'The Bad Guys Won.' Doc, Straw, Keith, Gary, Mookie — the most colorful champion in baseball history.", wiki:"https://en.wikipedia.org/wiki/1986_World_Series" },
+
+  // ── NY GIANTS BASEBALL (5) ──
+  { year:1905, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"#333", emoji:"⚾", opponent:"vs Athletics", iconic:true, moment:"Christy Mathewson threw THREE complete-game shutouts in six days. The most dominant WS pitching ever.", fact:"Mathewson's performance remains the most remarkable individual pitching feat in World Series history.", wiki:"https://en.wikipedia.org/wiki/1905_World_Series" },
+  { year:1921, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"#333", emoji:"⚾", opponent:"vs Yankees", iconic:false, moment:"The first Subway Series — all games at the Polo Grounds. The Giants beat their cross-borough rivals.", fact:"The last World Series played entirely at one ballpark.", wiki:"https://en.wikipedia.org/wiki/1921_World_Series" },
+  { year:1922, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"#333", emoji:"⚾", opponent:"vs Yankees", iconic:false, moment:"Back-to-back Subway Series wins over the Yankees. John McGraw's Giants at their peak.", fact:"The Giants won 4-0-1 — the 'game' being a controversial tie called for darkness.", wiki:"https://en.wikipedia.org/wiki/1922_World_Series" },
+  { year:1933, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"#333", emoji:"⚾", opponent:"vs Senators", iconic:false, moment:"Bill Terry's Giants won in five. Carl Hubbell was the ace — his 1934 All-Star strikeout streak followed.", fact:"Hubbell struck out Ruth, Gehrig, Foxx, Simmons and Cronin consecutively in the 1934 All-Star Game.", wiki:"https://en.wikipedia.org/wiki/1933_World_Series" },
+  { year:1954, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"#333", emoji:"⚾", opponent:"vs Indians", iconic:true, moment:"Willie Mays' over-the-shoulder catch off Vic Wertz is THE greatest defensive play in baseball history.", fact:"The Indians won 111 games — a record. The Giants swept them in four. The Catch changed everything.", wiki:"https://en.wikipedia.org/wiki/1954_World_Series" },
+
+  // ── BROOKLYN DODGERS (1) ──
+  { year:1955, team:"Brooklyn Dodgers", sport:"MLB", title:"World Series", color:"#005A9C", emoji:"⚾", opponent:"vs Yankees", iconic:true, moment:"'Next year' FINALLY came. Sandy Amoros' miraculous Game 7 catch. Brooklyn exploded in joy.", fact:"The Dodgers had lost to the Yankees in 1941, 1947, 1949, 1952, and 1953. 1955 was their glorious year.", wiki:"https://en.wikipedia.org/wiki/1955_World_Series" },
+
+  // ── KNICKS (2) ──
+  { year:1970, team:"Knicks", sport:"NBA", title:"NBA Championship", color:"#006BB6", emoji:"🏀", opponent:"vs Lakers", iconic:true, moment:"Willis Reed limped onto the MSG court before Game 7. The crowd erupted. Frazier scored 36 with 19 assists.", fact:"Reed had torn his thigh muscle. His entrance is one of the most inspiring moments in sports history.", wiki:"https://en.wikipedia.org/wiki/1970_NBA_Finals" },
+  { year:1973, team:"Knicks", sport:"NBA", title:"NBA Championship", color:"#006BB6", emoji:"🏀", opponent:"vs Lakers", iconic:false, moment:"The rematch. DeBusschere, Bradley, Monroe, Frazier — a beautifully constructed championship team.", fact:"Dave DeBusschere's final season. The perfect team concept executed flawlessly.", wiki:"https://en.wikipedia.org/wiki/1973_NBA_Finals" },
+
+  // ── NY NETS ABA (2) ──
+  { year:1974, team:"NY Nets (ABA)", sport:"NBA", title:"ABA Championship", color:"#555", emoji:"🏀", opponent:"vs Utah Stars", iconic:false, moment:"Julius Erving's first championship. Dr. J was already redefining what a basketball player could be.", fact:"The Nets played in Uniondale, NY — same arena as the Islanders. Dr. J made them must-see.", wiki:"https://en.wikipedia.org/wiki/1974_ABA_Finals" },
+  { year:1976, team:"NY Nets (ABA)", sport:"NBA", title:"ABA Championship", color:"#555", emoji:"🏀", opponent:"vs Denver", iconic:true, moment:"Julius Erving averaged 37.7 points per game in the Finals. The last ABA championship before the merger.", fact:"Dr. J scored 45 in the clincher. The ABA merged with the NBA that fall — and the Nets had to sell his rights.", wiki:"https://en.wikipedia.org/wiki/1976_ABA_Finals" },
+
+  // ── RANGERS (4) ──
+  { year:1928, team:"Rangers", sport:"NHL", title:"Stanley Cup", color:"#0038A8", emoji:"🏒", opponent:"vs Maroons", iconic:false, moment:"Their 2nd season in existence! GM Lester Patrick, age 44, played goal when the regular goalie was hurt — and won.", fact:"Patrick held off the Maroons in overtime. One of the great stories in hockey history.", wiki:"https://en.wikipedia.org/wiki/1928_Stanley_Cup_Finals" },
+  { year:1933, team:"Rangers", sport:"NHL", title:"Stanley Cup", color:"#0038A8", emoji:"🏒", opponent:"vs Maple Leafs", iconic:false, moment:"Bill Cook scored the overtime winner in Game 4. The Rangers were the toast of Broadway.", fact:"The Cook brothers and Frank Boucher — the original Broadway Blueshirts dynasty.", wiki:"https://en.wikipedia.org/wiki/1933_Stanley_Cup_Finals" },
+  { year:1940, team:"Rangers", sport:"NHL", title:"Stanley Cup", color:"#0038A8", emoji:"🏒", opponent:"vs Maple Leafs", iconic:false, moment:"Bryan Hextall won it in OT in Game 6. The last Cup before the 54-year drought began.", fact:"The Rangers would not win again until 1994 — 54 agonizing years. The Garden faithful never forgot.", wiki:"https://en.wikipedia.org/wiki/1940_Stanley_Cup_Finals" },
+  { year:1994, team:"Rangers", sport:"NHL", title:"Stanley Cup", color:"#0038A8", emoji:"🏒", opponent:"vs Canucks", iconic:true, moment:"Messier GUARANTEED a win in Game 6 when down 3-2. He scored a hat trick. Then the Rangers beat Vancouver. 54 YEARS ENDED.", fact:"'Now I can die in peace.' Leetch won the Conn Smythe. MSG shook. New York wept. The wait was over.", wiki:"https://en.wikipedia.org/wiki/1994_Stanley_Cup_Finals" },
+
+  // ── ISLANDERS (4) ──
+  { year:1980, team:"Islanders", sport:"NHL", title:"Stanley Cup", color:"#00539B", emoji:"🏒", opponent:"vs Flyers", iconic:true, moment:"Bob Nystrom's OT goal in Game 6 launched the dynasty. The Islanders were the new kings of hockey.", fact:"Potvin, Bossy, Trottier, Smith, Nystrom — Long Island fell in love with hockey.", wiki:"https://en.wikipedia.org/wiki/1980_Stanley_Cup_Finals" },
+  { year:1981, team:"Islanders", sport:"NHL", title:"Stanley Cup", color:"#00539B", emoji:"🏒", opponent:"vs North Stars", iconic:false, moment:"Back-to-back! Bossy scored 50 goals in 50 games that season. The dynasty was unstoppable.", fact:"Butch Goring won the Conn Smythe. The Islanders were dominant from first shift to last.", wiki:"https://en.wikipedia.org/wiki/1981_Stanley_Cup_Finals" },
+  { year:1982, team:"Islanders", sport:"NHL", title:"Stanley Cup", color:"#00539B", emoji:"🏒", opponent:"vs Canucks", iconic:false, moment:"Three straight! Mike Bossy won the Conn Smythe. Comparisons to the Canadiens dynasties were made.", fact:"Billy Smith would do anything to win — and usually did.", wiki:"https://en.wikipedia.org/wiki/1982_Stanley_Cup_Finals" },
+  { year:1983, team:"Islanders", sport:"NHL", title:"Stanley Cup", color:"#00539B", emoji:"🏒", opponent:"vs Oilers", iconic:true, moment:"FOUR STRAIGHT! The Islanders SWEPT Gretzky's Oilers who had scored 424 goals. The dynasty's crowning achievement.", fact:"Potvin, Bossy, Trottier, Smith, Gillies — this team belongs with the greatest dynasties in all of sports.", wiki:"https://en.wikipedia.org/wiki/1983_Stanley_Cup_Finals" },
+
+  // ── NJ DEVILS (3) ──
+  { year:1995, team:"NJ Devils", sport:"NHL", title:"Stanley Cup", color:"#CE1126", emoji:"🏒", opponent:"vs Red Wings", iconic:false, moment:"The trap system suffocated Detroit's offense. Martin Brodeur was brilliant. Claude Lemieux won the Conn Smythe.", fact:"New Jersey proved that defense and goaltending wins championships. The blueprint still works.", wiki:"https://en.wikipedia.org/wiki/1995_Stanley_Cup_Finals" },
+  { year:2000, team:"NJ Devils", sport:"NHL", title:"Stanley Cup", color:"#CE1126", emoji:"🏒", opponent:"vs Stars", iconic:false, moment:"Scott Stevens was the most feared hitter in hockey. Brodeur was the best goalie on earth.", fact:"Stevens' hit on Lindros changed the series — and arguably Lindros's career.", wiki:"https://en.wikipedia.org/wiki/2000_Stanley_Cup_Finals" },
+  { year:2003, team:"NJ Devils", sport:"NHL", title:"Stanley Cup", color:"#CE1126", emoji:"🏒", opponent:"vs Ducks", iconic:false, moment:"Brodeur was magnificent against the Ducks. The Devils won in 7. Ken Daneyko's third ring.", fact:"Daneyko played all 1,283 games in a Devils uniform. The ultimate team-first player.", wiki:"https://en.wikipedia.org/wiki/2003_Stanley_Cup_Finals" },
+
+  // ── NY GIANTS NFL (4) ──
+  { year:1987, team:"Giants (NFL)", sport:"NFL", title:"Super Bowl XXI", color:"#0B2265", emoji:"🏈", opponent:"vs Broncos", iconic:true, moment:"Phil Simms completed 22 of 25 passes — still the highest completion % in Super Bowl history. LT was a force of nature.", fact:"Simms was nearly perfect. Parcells became the premier coach in the game. LT was the best player on earth.", wiki:"https://en.wikipedia.org/wiki/Super_Bowl_XXI" },
+  { year:1991, team:"Giants (NFL)", sport:"NFL", title:"Super Bowl XXV", color:"#0B2265", emoji:"🏈", opponent:"vs Bills", iconic:true, moment:"WIDE RIGHT! Scott Norwood's kick sailed wide as time expired. Giants win 20-19. Ottis Anderson MVP at age 34.", fact:"The most dramatic Super Bowl finish ever. Hostetler started for injured Simms and delivered.", wiki:"https://en.wikipedia.org/wiki/Super_Bowl_XXV" },
+  { year:2008, team:"Giants (NFL)", sport:"NFL", title:"Super Bowl XLII", color:"#0B2265", emoji:"🏈", opponent:"vs Patriots", iconic:true, moment:"David Tyree pinned it to his HELMET. Then Eli hit Burress in the end zone. The 18-0 Patriots became 18-1.", fact:"One of the greatest upsets in Super Bowl history. The helmet catch is the most improbable play ever.", wiki:"https://en.wikipedia.org/wiki/Super_Bowl_XLII" },
+  { year:2012, team:"Giants (NFL)", sport:"NFL", title:"Super Bowl XLVI", color:"#0B2265", emoji:"🏈", opponent:"vs Patriots", iconic:false, moment:"Eli did it AGAIN to the Patriots. Bradshaw accidentally scored the go-ahead TD. Two upsets in four years.", fact:"Two Super Bowl upsets over the 'unbeatable' Patriots. Eli Manning's legacy is cemented forever.", wiki:"https://en.wikipedia.org/wiki/Super_Bowl_XLVI" },
+
+  // ── JETS (1) ──
+  { year:1969, team:"Jets", sport:"NFL", title:"Super Bowl III", color:"#125740", emoji:"🏈", opponent:"vs Colts", iconic:true, moment:"Joe Namath GUARANTEED victory as a 17-point underdog. Broadway Joe delivered a 16-7 masterpiece.", fact:"The most famous guarantee in sports history. Namath's win legitimized the AFL and changed pro football forever.", wiki:"https://en.wikipedia.org/wiki/Super_Bowl_III" },
+
+  // ── LIBERTY (1) ──
+  { year:2024, team:"NY Liberty", sport:"WNBA", title:"WNBA Championship", color:"#000", emoji:"🏀", opponent:"vs Lynx", iconic:true, moment:"Breanna Stewart and Sabrina Ionescu led the Liberty to their FIRST championship in franchise history.", fact:"The Liberty were founded in 1997. 27 years of waiting ended. MSG erupted.", wiki:"https://en.wikipedia.org/wiki/2024_WNBA_Finals" },
+];
+
+// ─── GLORY DAYS TAB COMPONENT ─────────────────────────────────────────────
+function GloryDaysTab({ myTeams }) {
+  const [view, setView]         = useState("team");   // "team" | "decade"
+  const [sport, setSport]       = useState("ALL");
+  const [spotlight, setSpotlight] = useState(null);   // index into NY_CHAMPIONSHIPS
+
+  const myTeamNames = myTeams ? [...myTeams].map(t => t.toLowerCase()) : [];
+
+  function filtered() {
+    if (sport === "ALL") return NY_CHAMPIONSHIPS;
+    return NY_CHAMPIONSHIPS.filter(c => c.sport === sport);
+  }
+
+  function openRandom() {
+    const pool = filtered();
+    const c = pool[Math.floor(Math.random() * pool.length)];
+    setSpotlight(NY_CHAMPIONSHIPS.indexOf(c));
+  }
+
+  function navSpotlight(dir) {
+    const pool = filtered();
+    const cur  = pool.findIndex((_, i) => NY_CHAMPIONSHIPS.indexOf(pool[i]) === spotlight);
+    const next = (cur + dir + pool.length) % pool.length;
+    setSpotlight(NY_CHAMPIONSHIPS.indexOf(pool[next]));
+  }
+
+  const total = filtered().length;
+  const sp    = spotlight !== null ? NY_CHAMPIONSHIPS[spotlight] : null;
+
+  // ── TEAM VIEW ────────────────────────────────────────────────────────
+  const SPORT_ORDER = ["MLB","NBA","NHL","NFL","WNBA"];
+  const SPORT_META  = {
+    MLB:   { icon:"⚾", label:"Baseball" },
+    NBA:   { icon:"🏀", label:"Basketball" },
+    NHL:   { icon:"🏒", label:"Hockey" },
+    NFL:   { icon:"🏈", label:"Football" },
+    WNBA:  { icon:"🏀", label:"WNBA" },
+  };
+  const TEAM_ORDER = [
+    "Yankees","Mets","NY Giants (Baseball)","Brooklyn Dodgers",
+    "Knicks","NY Nets (ABA)",
+    "Rangers","Islanders","NJ Devils",
+    "Giants (NFL)","Jets","NY Liberty",
+  ];
+
+  function renderTeamView() {
+    const data = filtered();
+    const bySport = {};
+    data.forEach(c => {
+      if (!bySport[c.sport]) bySport[c.sport] = {};
+      if (!bySport[c.sport][c.team]) bySport[c.sport][c.team] = [];
+      bySport[c.sport][c.team].push(c);
+    });
+
+    return SPORT_ORDER.map(sp => {
+      if (!bySport[sp]) return null;
+      const teams = bySport[sp];
+      const spTotal = Object.values(teams).flat().length;
+      return (
+        <div key={sp} style={{marginBottom:32}}>
+          {/* Sport header */}
+          <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:14,
+            paddingBottom:8, borderBottom:"2px solid #1f1f1f"}}>
+            <span style={{fontSize:18}}>{SPORT_META[sp].icon}</span>
+            <span style={{fontFamily:"'Georgia',serif", fontSize:11, fontWeight:900,
+              letterSpacing:"0.2em", color:"#666", textTransform:"uppercase"}}>{SPORT_META[sp].label}</span>
+            <span style={{fontSize:10, fontWeight:700, color:"#f0b429",
+              background:"rgba(240,180,41,0.1)", border:"1px solid rgba(240,180,41,0.2)",
+              padding:"2px 8px"}}>{spTotal} title{spTotal!==1?"s":""}</span>
+          </div>
+
+          {/* Teams */}
+          {TEAM_ORDER.map(team => {
+            if (!teams[team]) return null;
+            const champs = [...teams[team]].sort((a,b) => a.year - b.year);
+            const isFav  = myTeamNames.some(t =>
+              team.toLowerCase().includes(t) || t.includes(team.toLowerCase().split(" ")[0])
+            );
+            return (
+              <div key={team} style={{marginBottom:16, paddingLeft:8,
+                borderLeft:`3px solid ${isFav?"#f0b429":"#1f1f1f"}`}}>
+                <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:8}}>
+                  <span style={{fontSize:14}}>{champs[0].emoji}</span>
+                  <span style={{fontFamily:"'Georgia',serif", fontSize:12, fontWeight:900,
+                    letterSpacing:"0.1em", color: isFav?"#f0b429":"#e8e0d0",
+                    textTransform:"uppercase"}}>{team}</span>
+                  {isFav && <span style={{fontSize:9, color:"#f0b429"}}>⭐</span>}
+                  <span style={{fontSize:10, color:"#555", marginLeft:2}}>
+                    {champs.length} title{champs.length!==1?"s":""}
+                  </span>
+                </div>
+                <div style={{display:"flex", flexWrap:"wrap", gap:5}}>
+                  {champs.map(c => {
+                    const idx = NY_CHAMPIONSHIPS.indexOf(c);
+                    return (
+                      <button key={c.year} onClick={() => setSpotlight(idx)}
+                        style={{
+                          display:"flex", alignItems:"center", gap:5,
+                          padding:"6px 10px",
+                          background: c.iconic ? "rgba(200,32,28,0.08)" : "#111",
+                          border: `1px solid ${c.iconic ? "#c8201c44" : "#222"}`,
+                          borderLeft: `3px solid ${c.color}`,
+                          color:"#ccc", cursor:"pointer", fontSize:12,
+                          fontFamily:"'Georgia',serif", fontWeight:700,
+                          transition:"all 0.12s",
+                          position:"relative",
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor="#f0b429"; e.currentTarget.style.color="#f0b429"; e.currentTarget.style.transform="translateY(-1px)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor=c.iconic?"#c8201c44":"#222"; e.currentTarget.style.color="#ccc"; e.currentTarget.style.transform="none"; }}>
+                        <span style={{fontWeight:900, fontSize:13}}>{c.year}</span>
+                        <span style={{fontSize:9, color:"#555"}}>{c.opponent}</span>
+                        {c.iconic && <span style={{fontSize:9, color:"#f0b429", position:"absolute", top:-5, right:-4, background:"#0a0a0a", padding:"0 2px"}}>★</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    });
+  }
+
+  // ── DECADE VIEW ──────────────────────────────────────────────────────
+  function renderDecadeView() {
+    const data = filtered();
+    const byDecade = {};
+    data.forEach(c => {
+      const dec = Math.floor(c.year / 10) * 10;
+      if (!byDecade[dec]) byDecade[dec] = [];
+      byDecade[dec].push(c);
+    });
+    return Object.keys(byDecade).sort((a,b) => a-b).map(dec => (
+      <div key={dec} style={{marginBottom:28}}>
+        <div style={{fontFamily:"'Georgia',serif", fontSize:24, fontWeight:900,
+          color:"#333", marginBottom:10}}>{dec}s</div>
+        <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(160px,1fr))", gap:8}}>
+          {byDecade[dec].sort((a,b) => a.year-b.year).map(c => {
+            const idx = NY_CHAMPIONSHIPS.indexOf(c);
+            return (
+              <div key={c.year} onClick={() => setSpotlight(idx)}
+                style={{
+                  background:"#111", border:"1px solid #1f1f1f",
+                  borderLeft:`3px solid ${c.color}`,
+                  padding:"12px 14px", cursor:"pointer",
+                  transition:"all 0.15s", position:"relative",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.borderTopColor="#f0b429"; e.currentTarget.style.borderRightColor="#f0b429"; e.currentTarget.style.borderBottomColor="#f0b429"; }}
+                onMouseLeave={e => { e.currentTarget.style.transform="none"; e.currentTarget.style.borderTopColor="#1f1f1f"; e.currentTarget.style.borderRightColor="#1f1f1f"; e.currentTarget.style.borderBottomColor="#1f1f1f"; }}>
+                {c.iconic && <span style={{position:"absolute", top:6, right:8, fontSize:10, color:"#f0b429"}}>★</span>}
+                <div style={{fontFamily:"'Georgia',serif", fontSize:26, fontWeight:900,
+                  color:"#f0b429", lineHeight:1, marginBottom:4}}>{c.year}</div>
+                <div style={{fontFamily:"'Georgia',serif", fontSize:11, fontWeight:700,
+                  textTransform:"uppercase", letterSpacing:"0.08em",
+                  color:"#e8e0d0", marginBottom:2}}>{c.team}</div>
+                <div style={{fontSize:10, color:"#555", letterSpacing:"0.08em"}}>{c.title}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    ));
+  }
+
+  // ── BANNER STRIP ─────────────────────────────────────────────────────
+  const bannerItems = [...NY_CHAMPIONSHIPS].sort((a,b) => a.year - b.year);
+
+  return (
+    <div>
+      {/* ── HERO ── */}
+      <div style={{textAlign:"center", padding:"24px 0 20px", borderBottom:"1px solid #1a1a1a",
+        marginBottom:0, background:"linear-gradient(180deg, rgba(200,32,28,0.06) 0%, transparent 100%)"}}>
+        <div style={{fontSize:9, fontWeight:900, color:"#f0b429", letterSpacing:"0.3em",
+          marginBottom:8, fontFamily:"'Georgia',serif"}}>🏆 NEW YORK · NEW YORK</div>
+        <h2 style={{fontFamily:"'Georgia',serif", fontSize:32, fontWeight:900,
+          color:"#e8e0d0", margin:"0 0 4px", letterSpacing:"0.02em"}}>
+          Glory <em style={{color:"#f0b429", fontStyle:"italic"}}>Days</em>
+        </h2>
+        <div style={{fontSize:10, color:"#666", letterSpacing:"0.18em",
+          textTransform:"uppercase", marginBottom:16}}>NY Sports Championships — The Complete Record</div>
+        <div style={{display:"inline-flex", alignItems:"center", gap:12,
+          background:"#111", border:"1px solid #1f1f1f", padding:"8px 20px"}}>
+          <span style={{fontFamily:"'Georgia',serif", fontSize:32, fontWeight:900,
+            color:"#f0b429", lineHeight:1}}>{NY_CHAMPIONSHIPS.length}</span>
+          <span style={{fontSize:9, fontWeight:700, letterSpacing:"0.15em",
+            color:"#555", textAlign:"left", lineHeight:1.5, textTransform:"uppercase"}}>
+            Major<br/>Championships
+          </span>
+        </div>
+      </div>
+
+      {/* ── BANNER STRIP ── */}
+      <div style={{display:"flex", overflowX:"auto", borderBottom:"1px solid #1a1a1a",
+        scrollbarWidth:"none", background:"#0a0a0a"}}>
+        {bannerItems.map((c, i) => (
+          <div key={i} onClick={() => setSpotlight(NY_CHAMPIONSHIPS.indexOf(c))}
+            style={{flexShrink:0, padding:"8px 14px", borderRight:"1px solid #1a1a1a",
+              cursor:"pointer", textAlign:"center", minWidth:64, transition:"background 0.1s"}}
+            onMouseEnter={e => e.currentTarget.style.background="#161616"}
+            onMouseLeave={e => e.currentTarget.style.background="transparent"}>
+            <span style={{display:"block", fontFamily:"'Georgia',serif", fontSize:14,
+              fontWeight:900, color:"#f0b429"}}>{c.year}</span>
+            <span style={{display:"block", fontSize:8, fontWeight:700,
+              letterSpacing:"0.08em", color:"#555", textTransform:"uppercase",
+              whiteSpace:"nowrap"}}>
+              {c.team.replace(" (Baseball)","").replace(" (NFL)","").replace(" (ABA)","")}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* ── CONTROLS ── */}
+      <div style={{display:"flex", gap:6, flexWrap:"wrap", padding:"12px 16px",
+        borderBottom:"1px solid #1a1a1a", alignItems:"center",
+        position:"sticky", top:0, zIndex:50, background:"#111"}}>
+
+        <span style={{fontSize:9, fontWeight:900, color:"#444", letterSpacing:"0.18em",
+          textTransform:"uppercase"}}>VIEW:</span>
+        {["team","decade"].map(v => (
+          <button key={v} onClick={() => setView(v)}
+            style={{...btnStyle, ...(view===v?activeBtnStyle:{})}}>
+            {v === "team" ? "BY TEAM" : "BY DECADE"}
+          </button>
+        ))}
+
+        <span style={{fontSize:9, fontWeight:900, color:"#444", letterSpacing:"0.18em",
+          textTransform:"uppercase", marginLeft:8}}>SPORT:</span>
+        {["ALL","MLB","NBA","NHL","NFL","WNBA"].map(s => (
+          <button key={s} onClick={() => setSport(s)}
+            style={{...btnStyle, ...(sport===s?activeBtnStyle:{})}}>
+            {s === "ALL" ? "ALL" : s === "WNBA" ? "🏀 WNBA" : {MLB:"⚾",NBA:"🏀",NHL:"🏒",NFL:"🏈"}[s]+" "+s}
+          </button>
+        ))}
+
+        <span style={{marginLeft:"auto", fontSize:10, color:"#444", fontWeight:700,
+          letterSpacing:"0.1em"}}>{total} title{total!==1?"s":""}</span>
+
+        <button onClick={openRandom}
+          style={{background:"#f0b429", border:"none", color:"#000",
+            padding:"7px 16px", cursor:"pointer", fontSize:10, fontWeight:900,
+            letterSpacing:"0.12em", fontFamily:"'Georgia',serif",
+            boxShadow:"0 2px 0 #8a6200"}}>
+          🎲 RANDOM GLORY
+        </button>
+      </div>
+
+      {/* ── CONTENT ── */}
+      <div style={{padding:"20px 16px"}}>
+        {view === "team" ? renderTeamView() : renderDecadeView()}
+      </div>
+
+      {/* ── SPOTLIGHT MODAL ── */}
+      {sp && (
+        <div onClick={e => e.target === e.currentTarget && setSpotlight(null)}
+          style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.88)",
+            zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center",
+            padding:"20px"}}>
+          <div style={{background:"#111", border:"1px solid #2a2a2a",
+            maxWidth:520, width:"100%", position:"relative",
+            animation:"none"}}
+            onClick={e => e.stopPropagation()}>
+
+            {/* Close */}
+            <button onClick={() => setSpotlight(null)}
+              style={{position:"absolute", top:10, right:10, background:"transparent",
+                border:"1px solid #2a2a2a", color:"#666", width:28, height:28,
+                cursor:"pointer", fontSize:12, display:"flex",
+                alignItems:"center", justifyContent:"center"}}>✕</button>
+
+            {/* Header */}
+            <div style={{padding:"18px 22px 14px", borderBottom:"1px solid #1a1a1a",
+              display:"flex", gap:14, alignItems:"flex-start"}}>
+              <span style={{fontSize:44, lineHeight:1, flexShrink:0}}>🏆</span>
+              <div>
+                <div style={{fontFamily:"'Georgia',serif", fontSize:52, fontWeight:900,
+                  color:"#f0b429", lineHeight:1}}>{sp.year}</div>
+                <div style={{fontFamily:"'Georgia',serif", fontSize:16, fontWeight:900,
+                  letterSpacing:"0.08em", textTransform:"uppercase",
+                  color:"#e8e0d0", marginBottom:2}}>{sp.team}</div>
+                <div style={{fontSize:10, fontWeight:700, letterSpacing:"0.15em",
+                  color:"#c8201c", textTransform:"uppercase"}}>
+                  {sp.title} · {sp.opponent}
+                </div>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div style={{padding:"16px 22px 18px"}}>
+              <p style={{fontFamily:"'Georgia',serif", fontSize:15, lineHeight:1.65,
+                color:"#e8e0d0", fontStyle:"italic", marginBottom:12}}>{sp.moment}</p>
+              <p style={{fontSize:12, lineHeight:1.65, color:"#777",
+                marginBottom:14}}>{sp.fact}</p>
+              <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+                <a href={sp.wiki} target="_blank" rel="noopener"
+                  style={{fontSize:10, fontWeight:700, letterSpacing:"0.12em",
+                    textTransform:"uppercase", padding:"5px 12px",
+                    border:"1px solid #2a2a2a", color:"#888",
+                    textDecoration:"none", transition:"all 0.15s"}}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor="#f0b429";e.currentTarget.style.color="#f0b429";}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor="#2a2a2a";e.currentTarget.style.color="#888";}}>
+                  📖 WIKIPEDIA
+                </a>
+                <a href={`https://www.google.com/search?q=${encodeURIComponent(sp.year+' '+sp.team+' '+sp.title)}`}
+                  target="_blank" rel="noopener"
+                  style={{fontSize:10, fontWeight:700, letterSpacing:"0.12em",
+                    textTransform:"uppercase", padding:"5px 12px",
+                    border:"1px solid #2a2a2a", color:"#888",
+                    textDecoration:"none", transition:"all 0.15s"}}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor="#f0b429";e.currentTarget.style.color="#f0b429";}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor="#2a2a2a";e.currentTarget.style.color="#888";}}>
+                  🔍 GOOGLE
+                </a>
+              </div>
+            </div>
+
+            {/* Nav */}
+            <div style={{display:"flex", justifyContent:"space-between", padding:"10px 22px",
+              borderTop:"1px solid #1a1a1a"}}>
+              <button onClick={() => navSpotlight(-1)}
+                style={{...btnStyle, fontSize:10}}>← PREV</button>
+              <button onClick={openRandom}
+                style={{...btnStyle, fontSize:10}}>🎲 RANDOM</button>
+              <button onClick={() => navSpotlight(1)}
+                style={{...btnStyle, fontSize:10}}>NEXT →</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Shared button styles for GloryDaysTab
+const btnStyle = {
+  fontFamily:"'Georgia',serif", fontSize:9, fontWeight:700,
+  letterSpacing:"0.12em", textTransform:"uppercase",
+  padding:"5px 10px", background:"transparent",
+  border:"1px solid #2a2a2a", color:"#777", cursor:"pointer",
+  transition:"all 0.12s",
+};
+
+const activeBtnStyle = {
+  background:"#c8201c", borderColor:"#c8201c", color:"#fff",
+};
 
 
 const styles = {
