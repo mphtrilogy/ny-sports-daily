@@ -986,9 +986,17 @@ export default function NYSportsDaily() {
   const [activeTab, setActiveTab]         = useState("SCORES");
   const [darkMode, setDarkMode]           = useState(true);
 
+  const [isMobile, setIsMobile]           = useState(() => typeof window !== "undefined" && window.innerWidth < 680);
+  const [drawerOpen, setDrawerOpen]       = useState(false);
   const [searchOpen, setSearchOpen]       = useState(false);
   const [searchQuery, setSearchQuery]     = useState("");
   const days = getLast7Days();
+
+  useEffect(() => {
+    function onResize() { setIsMobile(window.innerWidth < 680); }
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const loadScores = useCallback(async (date) => {
     setLoadingScores(true);
@@ -1069,6 +1077,10 @@ export default function NYSportsDaily() {
         <div style={styles.mastheadTop}>
           <span style={styles.mastheadKicker}>EST. 2026 · ALL NEW YORK · ALL THE TIME</span>
           <div style={{display:"flex", gap:12, alignItems:"center"}}>
+            <a href="https://www.instagram.com/nysportsdaily_com/" target="_blank" rel="noopener noreferrer"
+              style={{fontSize:9, color:"#888", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
+              📸 INSTAGRAM
+            </a>
             <a href="https://www.amazon.com/s?k=new+york+sports&tag=nysportsdaily-20" target="_blank" rel="noopener noreferrer"
               style={{fontSize:9, color:"#888", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
               🛒 AMAZON
@@ -1084,7 +1096,34 @@ export default function NYSportsDaily() {
             <span style={styles.mastheadKicker}>{new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"}).toUpperCase()}</span>
           </div>
         </div>
-        <div style={styles.mastheadMain}>
+        {/* ── Mobile compact header bar ── */}
+        {isMobile && (
+          <div style={{display:"flex", alignItems:"center", justifyContent:"space-between",
+            padding:"6px 10px 0", gap:8}}>
+            <button onClick={() => setDrawerOpen(true)}
+              style={{background:"none", border:"1px solid #2a2a2a", color:"#888",
+                padding:"5px 9px", cursor:"pointer", fontSize:16, lineHeight:1, flexShrink:0}}>
+              ☰
+            </button>
+            <h1 style={{fontFamily:"'Georgia','Times New Roman',serif", fontSize:20,
+              fontWeight:900, margin:0, flex:1, textAlign:"center",
+              textShadow:"1px 1px 0 #c8201c", color:"#e8e0d0", letterSpacing:"-0.01em"}}>
+              NY<span style={{color:"#c8201c"}}> SPORTS</span>
+              <span style={{fontWeight:300, color:"#aaa"}}> DAILY</span>
+            </h1>
+            <div style={{display:"flex", gap:10, alignItems:"center", flexShrink:0}}>
+              <a href="https://www.instagram.com/nysportsdaily_com/" target="_blank" rel="noopener noreferrer"
+                style={{fontSize:16, textDecoration:"none"}}>📸</a>
+              <button onClick={() => setDarkMode(d => !d)}
+                style={{background:"none", border:"none", color:"#888",
+                  cursor:"pointer", fontSize:14, padding:0}}>
+                {darkMode ? "☀" : "🌙"}
+              </button>
+            </div>
+          </div>
+        )}
+        {/* ── Desktop full masthead ── */}
+        {!isMobile && <div style={styles.mastheadMain}>
           <div style={styles.mastheadLines}>
             <div style={styles.mastheadLineBar} />
             <div style={styles.mastheadLineBar} />
@@ -1094,7 +1133,7 @@ export default function NYSportsDaily() {
             <div style={styles.mastheadLineBar} />
             <div style={styles.mastheadLineBar} />
           </div>
-        </div>
+        </div>}
         {/* Search bar + dropdown — wrapped in relative container */}
         <div style={{position:"relative", zIndex:1000}}>
           <div style={styles.searchBar}>
@@ -1152,10 +1191,10 @@ export default function NYSportsDaily() {
       )}
 
       {/* ── MAIN CONTENT ── */}
-      <main style={styles.main}>
+      <main style={{...styles.main, paddingBottom: isMobile ? 80 : 40}}>
 
-        {/* TAB NAV — Primary */}
-        <div style={styles.tabNav}>
+        {/* TAB NAV — Primary (desktop only) */}
+        {!isMobile && <div style={styles.tabNav}>
           {["SCORES","TV","STANDINGS","SCHEDULE","RECAP","NEWS","RADIO","SHOP"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}),
@@ -1163,9 +1202,9 @@ export default function NYSportsDaily() {
               {tab === "SHOP" ? "🛒 SHOP" : tab}
             </button>
           ))}
-        </div>
+        </div>}
         {/* TAB NAV — Secondary */}
-        <div style={{...styles.tabNav, marginTop:0, borderBottom:"2px solid #1a1a1a", marginBottom:16, background:"#0a0a0a", padding:"0 0 0 0"}}>
+        {!isMobile && <div style={{...styles.tabNav, marginTop:0, borderBottom:"2px solid #1a1a1a", marginBottom:16, background:"#0a0a0a", padding:"0 0 0 0"}}>
           {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","GLORY","PLAYROOM"].map(tab => {
             const isPlayroom = tab === "PLAYROOM";
             const isGlory    = tab === "GLORY";
@@ -1196,7 +1235,7 @@ export default function NYSportsDaily() {
               </button>
             );
           })}
-        </div>
+        </div>}
 
         {/* ──── SCORES TAB ──── */}
         {activeTab === "SCORES" && (
@@ -1443,6 +1482,171 @@ export default function NYSportsDaily() {
         onClose={() => setMyTeamsModal(false)}
       />
     )}
+    {/* ── MOBILE BOTTOM NAV ── */}
+    {isMobile && (
+      <nav style={{
+        position:"fixed", bottom:0, left:0, right:0, zIndex:900,
+        background:"#0e0e0e", borderTop:"2px solid #1a1a1a",
+        display:"flex", alignItems:"stretch",
+        paddingBottom:"env(safe-area-inset-bottom, 0px)",
+        boxShadow:"0 -4px 20px rgba(0,0,0,0.6)",
+      }}>
+        {[
+          {tab:"SCORES",    icon:"📊", label:"Scores"},
+          {tab:"STANDINGS", icon:"🏅", label:"Standings"},
+          {tab:"GLORY",     icon:"🏆", label:"Glory"},
+          {tab:"PLAYROOM",  icon:"🎮", label:"Playroom"},
+          {tab:"NEWS",      icon:"📰", label:"News"},
+        ].map(({tab, icon, label}) => {
+          const isActive  = activeTab === tab;
+          const isSpecial = tab === "GLORY" || tab === "PLAYROOM";
+          return (
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              style={{
+                flex:1, display:"flex", flexDirection:"column",
+                alignItems:"center", justifyContent:"center",
+                padding:"8px 2px 6px", gap:2,
+                background:"transparent", border:"none",
+                borderTop: isActive
+                  ? `2px solid ${isSpecial ? "#f0b429" : "#c8201c"}`
+                  : "2px solid transparent",
+                cursor:"pointer",
+              }}>
+              <span style={{fontSize:17, lineHeight:1}}>{icon}</span>
+              <span style={{
+                fontSize:8, fontWeight:900, letterSpacing:"0.06em",
+                textTransform:"uppercase", fontFamily:"'Georgia',serif",
+                color: isActive ? (isSpecial ? "#f0b429" : "#e8e0d0") : "#555",
+              }}>{label}</span>
+            </button>
+          );
+        })}
+        <button onClick={() => setDrawerOpen(true)}
+          style={{flex:1, display:"flex", flexDirection:"column",
+            alignItems:"center", justifyContent:"center",
+            padding:"8px 2px 6px", gap:2,
+            background:"transparent", border:"none",
+            borderTop:"2px solid transparent", cursor:"pointer"}}>
+          <span style={{fontSize:17, lineHeight:1}}>☰</span>
+          <span style={{fontSize:8, fontWeight:900, letterSpacing:"0.06em",
+            textTransform:"uppercase", fontFamily:"'Georgia',serif",
+            color:"#555"}}>More</span>
+        </button>
+      </nav>
+    )}
+
+    {/* ── MOBILE HAMBURGER DRAWER ── */}
+    {isMobile && drawerOpen && (
+      <div onClick={() => setDrawerOpen(false)}
+        style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.75)",
+          zIndex:2000, display:"flex"}}>
+        <div onClick={e => e.stopPropagation()}
+          style={{width:260, maxWidth:"80vw", background:"#0e0e0e",
+            borderRight:"2px solid #c8201c", height:"100%",
+            overflowY:"auto", display:"flex", flexDirection:"column",
+            WebkitOverflowScrolling:"touch"}}>
+
+          {/* Header */}
+          <div style={{display:"flex", alignItems:"center",
+            justifyContent:"space-between", padding:"14px 16px",
+            borderBottom:"1px solid #1a1a1a", flexShrink:0}}>
+            <span style={{fontFamily:"'Georgia',serif", fontSize:14,
+              fontWeight:900, color:"#e8e0d0"}}>
+              NY <span style={{color:"#c8201c"}}>SPORTS</span>
+              <span style={{fontWeight:300, color:"#aaa"}}> DAILY</span>
+            </span>
+            <button onClick={() => setDrawerOpen(false)}
+              style={{background:"none", border:"none", color:"#666",
+                fontSize:20, cursor:"pointer", padding:"2px 6px"}}>✕</button>
+          </div>
+
+          {/* Main nav */}
+          <div style={{borderBottom:"1px solid #1a1a1a"}}>
+            <div style={{padding:"8px 16px 4px", fontSize:8, fontWeight:900,
+              color:"#444", letterSpacing:"0.22em"}}>MAIN</div>
+            {[
+              {tab:"SCORES",    icon:"📊"},
+              {tab:"TV",        icon:"📺"},
+              {tab:"STANDINGS", icon:"🏅"},
+              {tab:"SCHEDULE",  icon:"📅"},
+              {tab:"RECAP",     icon:"🎬"},
+              {tab:"NEWS",      icon:"📰"},
+              {tab:"RADIO",     icon:"📻"},
+              {tab:"SHOP",      icon:"🛒"},
+            ].map(({tab, icon}) => (
+              <button key={tab}
+                onClick={() => { setActiveTab(tab); setDrawerOpen(false); }}
+                style={{display:"flex", alignItems:"center", gap:12, width:"100%",
+                  padding:"10px 16px",
+                  background: activeTab===tab ? "#1a0a0a" : "transparent",
+                  border:"none",
+                  borderLeft: activeTab===tab ? "3px solid #c8201c" : "3px solid transparent",
+                  color: activeTab===tab ? "#e8e0d0" : "#888",
+                  cursor:"pointer", fontSize:12, fontWeight:700,
+                  letterSpacing:"0.05em", textAlign:"left",
+                  fontFamily:"'Georgia',serif"}}>
+                <span style={{fontSize:16, width:22, textAlign:"center"}}>{icon}</span>
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Explore nav */}
+          <div style={{borderBottom:"1px solid #1a1a1a", flex:1}}>
+            <div style={{padding:"8px 16px 4px", fontSize:8, fontWeight:900,
+              color:"#444", letterSpacing:"0.22em"}}>EXPLORE</div>
+            {[
+              {tab:"GLORY",     icon:"🏆", gold:true},
+              {tab:"PLAYROOM",  icon:"🎮", gold:true},
+              {tab:"STATS",     icon:"📈"},
+              {tab:"HISTORY",   icon:"📚"},
+              {tab:"THIS DATE", icon:"📆"},
+              {tab:"NY EVENTS", icon:"🗽"},
+              {tab:"HOF",       icon:"⭐"},
+              {tab:"AWARDS",    icon:"🥇"},
+              {tab:"FORGOTTEN", icon:"👻"},
+              {tab:"POLLS",     icon:"🗳️"},
+              {tab:"MISERY",    icon:"😩"},
+            ].map(({tab, icon, gold}) => (
+              <button key={tab}
+                onClick={() => { setActiveTab(tab); setDrawerOpen(false); }}
+                style={{display:"flex", alignItems:"center", gap:12, width:"100%",
+                  padding:"9px 16px",
+                  background: activeTab===tab ? "#1a1600" : "transparent",
+                  border:"none",
+                  borderLeft: activeTab===tab
+                    ? `3px solid ${gold ? "#f0b429" : "#c8201c"}`
+                    : "3px solid transparent",
+                  color: gold ? "#f0b429" : activeTab===tab ? "#e8e0d0" : "#777",
+                  cursor:"pointer", fontSize:11, fontWeight:700,
+                  letterSpacing:"0.05em", textAlign:"left",
+                  fontFamily:"'Georgia',serif"}}>
+                <span style={{fontSize:14, width:22, textAlign:"center"}}>{icon}</span>
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Footer */}
+          <div style={{padding:"14px 16px", borderTop:"1px solid #1a1a1a", flexShrink:0}}>
+            <div style={{display:"flex", gap:14, marginBottom:8, flexWrap:"wrap"}}>
+              <a href="https://www.instagram.com/nysportsdaily_com/" target="_blank"
+                rel="noopener noreferrer"
+                style={{fontSize:10, color:"#888", textDecoration:"none",
+                  fontWeight:700, letterSpacing:"0.06em"}}>📸 @nysportsdaily_com</a>
+              <a href="https://buymeacoffee.com/mhughes65v" target="_blank"
+                rel="noopener noreferrer"
+                style={{fontSize:10, color:"#888", textDecoration:"none",
+                  fontWeight:700, letterSpacing:"0.06em"}}>☕ Tip Jar</a>
+            </div>
+            <div style={{fontSize:8, color:"#333", letterSpacing:"0.1em"}}>
+              EST. 2026 · ALL NEW YORK · ALL THE TIME
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
     </MyTeamsCtx.Provider>
   );
 }
@@ -10178,6 +10382,18 @@ const NY_CHAMPIONSHIPS = [
 
   // ── LIBERTY (1) ──
   { year:2024, team:"NY Liberty", sport:"WNBA", title:"WNBA Championship", color:"#000", emoji:"🏀", opponent:"vs Lynx", iconic:true, moment:"Breanna Stewart and Sabrina Ionescu led the Liberty to their FIRST championship in franchise history.", fact:"The Liberty were founded in 1997. 27 years of waiting ended. MSG erupted.", wiki:"https://en.wikipedia.org/wiki/2024_WNBA_Finals" },
+
+  // ── SOCCER ──
+  // NY Cosmos — 5 NASL titles (1972, 1977, 1978, 1980, 1982)
+  { year:1972, team:"NY Cosmos (NASL)", sport:"SOCCER", title:"NASL Championship", color:"#00843d", emoji:"⚽", opponent:"vs St. Louis Stars", iconic:false, moment:"The Cosmos win their first NASL title, planting the flag for soccer in New York.", fact:"The original Cosmos played at Hofstra and Randall's Island before Pelé arrived — this was their first great moment.", wiki:"https://en.wikipedia.org/wiki/1972_NASL_season" },
+  { year:1977, team:"NY Cosmos (NASL)", sport:"SOCCER", title:"NASL Championship", color:"#00843d", emoji:"⚽", opponent:"vs Seattle Sounders", iconic:true, moment:"Pelé, Beckenbauer, and Carlos Alberto on one team. The Cosmos beat Seattle before 77,000 fans at Giants Stadium. Soccer in America would never be the same.", fact:"Pelé came out of retirement to sign with the Cosmos in 1975 for $7M. This was his last championship. The signing legitimized soccer in the US.", wiki:"https://en.wikipedia.org/wiki/1977_NASL_season" },
+  { year:1978, team:"NY Cosmos (NASL)", sport:"SOCCER", title:"NASL Championship", color:"#00843d", emoji:"⚽", opponent:"vs Tampa Bay Rowdies", iconic:false, moment:"Back-to-back! Beckenbauer led the Cosmos to a second straight Soccer Bowl title.", fact:"Franz Beckenbauer — fresh off lifting the World Cup with Germany — was the captain of this dynasty.", wiki:"https://en.wikipedia.org/wiki/Soccer_Bowl_78" },
+  { year:1980, team:"NY Cosmos (NASL)", sport:"SOCCER", title:"NASL Championship", color:"#00843d", emoji:"⚽", opponent:"vs Fort Lauderdale Strikers", iconic:false, moment:"The Cosmos win their fourth title. Carlos Alberto lifts the trophy at Giants Stadium.", fact:"The Cosmos drew 70,000+ fans regularly at Giants Stadium. No American soccer club has matched that era.", wiki:"https://en.wikipedia.org/wiki/Soccer_Bowl_80" },
+  { year:1982, team:"NY Cosmos (NASL)", sport:"SOCCER", title:"NASL Championship", color:"#00843d", emoji:"⚽", opponent:"vs Seattle Sounders", iconic:false, moment:"The fifth and final NASL title — the dynasty's last stand before the league collapsed in 1984.", fact:"The Cosmos went 23-7 that season. Two years later the NASL was gone. No team has come close to what the Cosmos built in the 1970s.", wiki:"https://en.wikipedia.org/wiki/Soccer_Bowl_82" },
+  // NYCFC — 2021 MLS Cup
+  { year:2021, team:"NYCFC", sport:"SOCCER", title:"MLS Cup", color:"#6CACE4", emoji:"⚽", opponent:"vs Portland Timbers", iconic:true, moment:"NYCFC won their first MLS Cup on penalty kicks. New York finally had an MLS champion.", fact:"NYCFC was founded in 2013 and won it all in just their 7th season. Valentín Castellanos was the MVP.", wiki:"https://en.wikipedia.org/wiki/2021_MLS_Cup" },
+  // NJ/NY Gotham FC — 2023 NWSL Championship
+  { year:2023, team:"NJ/NY Gotham FC", sport:"SOCCER", title:"NWSL Championship", color:"#1a1a1a", emoji:"⚽", opponent:"vs Portland Thorns", iconic:true, moment:"Gotham FC won the NWSL Championship for the first time — NJ/NY's first major women's soccer title.", fact:"Marta, Rose Lavelle, and Lynn Williams led Gotham to the title. New Jersey and New York claimed their first NWSL crown.", wiki:"https://en.wikipedia.org/wiki/2023_NWSL_Championship" },
 ];
 
 // ─── GLORY DAYS TAB COMPONENT ─────────────────────────────────────────────
@@ -10210,19 +10426,21 @@ function GloryDaysTab({ myTeams }) {
   const sp    = spotlight !== null ? NY_CHAMPIONSHIPS[spotlight] : null;
 
   // ── TEAM VIEW ────────────────────────────────────────────────────────
-  const SPORT_ORDER = ["MLB","NBA","NHL","NFL","WNBA"];
+  const SPORT_ORDER = ["MLB","NBA","NHL","NFL","WNBA","SOCCER"];
   const SPORT_META  = {
-    MLB:   { icon:"⚾", label:"Baseball" },
-    NBA:   { icon:"🏀", label:"Basketball" },
-    NHL:   { icon:"🏒", label:"Hockey" },
-    NFL:   { icon:"🏈", label:"Football" },
-    WNBA:  { icon:"🏀", label:"WNBA" },
+    MLB:    { icon:"⚾", label:"Baseball" },
+    NBA:    { icon:"🏀", label:"Basketball" },
+    NHL:    { icon:"🏒", label:"Hockey" },
+    NFL:    { icon:"🏈", label:"Football" },
+    WNBA:   { icon:"🏀", label:"WNBA" },
+    SOCCER: { icon:"⚽", label:"Soccer" },
   };
   const TEAM_ORDER = [
     "Yankees","Mets","NY Giants (Baseball)","Brooklyn Dodgers",
     "Knicks","NY Nets (ABA)",
     "Rangers","Islanders","NJ Devils",
     "Giants (NFL)","Jets","NY Liberty",
+    "NY Cosmos (NASL)","NYCFC","NJ/NY Gotham FC",
   ];
 
   function renderTeamView() {
@@ -10408,10 +10626,10 @@ function GloryDaysTab({ myTeams }) {
 
         <span style={{fontSize:9, fontWeight:900, color:"#444", letterSpacing:"0.18em",
           textTransform:"uppercase", marginLeft:8}}>SPORT:</span>
-        {["ALL","MLB","NBA","NHL","NFL","WNBA"].map(s => (
+        {["ALL","MLB","NBA","NHL","NFL","WNBA","SOCCER"].map(s => (
           <button key={s} onClick={() => setSport(s)}
             style={{...btnStyle, ...(sport===s?activeBtnStyle:{})}}>
-            {s === "ALL" ? "ALL" : s === "WNBA" ? "🏀 WNBA" : {MLB:"⚾",NBA:"🏀",NHL:"🏒",NFL:"🏈"}[s]+" "+s}
+            {s === "ALL" ? "ALL" : s === "WNBA" ? "🏀 WNBA" : s === "SOCCER" ? "⚽ SOCCER" : {MLB:"⚾",NBA:"🏀",NHL:"🏒",NFL:"🏈"}[s]+" "+s}
           </button>
         ))}
 
@@ -10536,12 +10754,216 @@ const activeBtnStyle = {
 // ─── HOMEPAGE WIDGETS WRAPPER ─────────────────────────────────────────────
 // Manages collapse state for Playoff Widget + Legends/OTD panel.
 // State persisted in localStorage so preferences survive page reloads.
+// ─── LAST NIGHT'S NY SCORES ───────────────────────────────────────────────
+// Fetches yesterday's scores from ESPN and filters to NY teams.
+// Shows final scores with team names, sport badge, and box score link.
+function LastNightScores({ myTeams }) {
+  const [games, setGames]     = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [date, setDate]       = useState(null);
+
+  const NY_TEAMS = [
+    "Yankees","Mets","Jets","Giants","Knicks","Nets",
+    "Rangers","Islanders","Devils","Liberty","NYCFC",
+    "Red Bulls","Gotham",
+  ];
+
+  const SPORT_CONFIGS = [
+    { sport:"baseball",   league:"mlb",      label:"MLB",  emoji:"⚾" },
+    { sport:"basketball", league:"nba",       label:"NBA",  emoji:"🏀" },
+    { sport:"hockey",     league:"nhl",       label:"NHL",  emoji:"🏒" },
+    { sport:"football",   league:"nfl",       label:"NFL",  emoji:"🏈" },
+    { sport:"basketball", league:"wnba",      label:"WNBA", emoji:"🏀" },
+    { sport:"soccer",     league:"usa.nwsl",  label:"NWSL", emoji:"⚽" },
+    { sport:"soccer",     league:"usa.1",     label:"MLS",  emoji:"⚽" },
+  ];
+
+  function isNY(name) {
+    return NY_TEAMS.some(t => (name||"").toLowerCase().includes(t.toLowerCase()));
+  }
+
+  function getMyTeamName(home, away) {
+    if (!myTeams) return null;
+    const names = [...myTeams].map(t => t.toLowerCase());
+    if (names.some(t => (home||"").toLowerCase().includes(t))) return home;
+    if (names.some(t => (away||"").toLowerCase().includes(t))) return away;
+    return null;
+  }
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const y = yesterday.getFullYear();
+      const m = String(yesterday.getMonth()+1).padStart(2,"0");
+      const d = String(yesterday.getDate()).padStart(2,"0");
+      const dateStr = `${y}${m}${d}`;
+      setDate(yesterday.toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"}));
+
+      const allGames = [];
+      await Promise.all(SPORT_CONFIGS.map(async cfg => {
+        try {
+          const r = await fetch(
+            `https://site.api.espn.com/apis/site/v2/sports/${cfg.sport}/${cfg.league}/scoreboard?dates=${dateStr}`,
+            { cache:"no-store" }
+          );
+          if (!r.ok) return;
+          const json = await r.json();
+          (json.events||[]).forEach(ev => {
+            const comp = ev.competitions?.[0];
+            if (!comp) return;
+            const home = comp.competitors?.find(c => c.homeAway==="home");
+            const away = comp.competitors?.find(c => c.homeAway==="away");
+            if (!home || !away) return;
+            const homeName = home.team?.displayName || home.team?.name || "";
+            const awayName = away.team?.displayName || away.team?.name || "";
+            // Only include if NY team is involved
+            if (!isNY(homeName) && !isNY(awayName)) return;
+            const status = comp.status?.type;
+            // Only completed games
+            if (!status?.completed) return;
+            allGames.push({
+              id:       ev.id,
+              sport:    cfg.label,
+              emoji:    cfg.emoji,
+              homeName, homeScore: home.score || "—",
+              homeColor: home.team?.color ? `#${home.team.color}` : "#333",
+              awayName, awayScore: away.score || "—",
+              awayColor: away.team?.color ? `#${away.team.color}` : "#333",
+              homeWin: parseFloat(home.score||0) > parseFloat(away.score||0),
+              awayWin: parseFloat(away.score||0) > parseFloat(home.score||0),
+              link: `https://www.espn.com/${cfg.sport}/game/_/gameId/${ev.id}`,
+              myTeam: getMyTeamName(homeName, awayName),
+            });
+          });
+        } catch(e) {}
+      }));
+
+      // Sort: My Teams first, then by sport
+      allGames.sort((a,b) => {
+        if (a.myTeam && !b.myTeam) return -1;
+        if (!a.myTeam && b.myTeam) return 1;
+        return 0;
+      });
+
+      setGames(allGames);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  const SPORT_COLORS = {
+    MLB:"#003087", NBA:"#006BB6", NHL:"#0038A8",
+    NFL:"#0B2265", WNBA:"#FF6900", NWSL:"#00843d", MLS:"#000"
+  };
+
+  return (
+    <div style={{background:"#111", border:"1px solid #1a1a1a",
+      borderTop:"2px solid #333", marginBottom:8}}>
+      {/* Header */}
+      <div style={{display:"flex", alignItems:"center", gap:8,
+        padding:"8px 12px", borderBottom:"1px solid #1a1a1a",
+        background:"#0e0e0e"}}>
+        <span style={{fontSize:16}}>🌙</span>
+        <span style={{fontFamily:"'Georgia',serif", fontSize:9, fontWeight:900,
+          letterSpacing:"0.22em", color:"#888", textTransform:"uppercase"}}>
+          Last Night's NY Scores
+        </span>
+        {date && (
+          <span style={{fontSize:9, color:"#444", marginLeft:4}}>{date}</span>
+        )}
+        <span style={{marginLeft:"auto", fontSize:9, color:"#444"}}>
+          {loading ? "Loading…" : `${games.length} game${games.length!==1?"s":""}`}
+        </span>
+      </div>
+
+      {/* Games */}
+      <div style={{padding:"6px 0"}}>
+        {loading ? (
+          <div style={{padding:"16px", textAlign:"center", fontSize:10,
+            color:"#555", letterSpacing:"0.1em"}}>LOADING SCORES…</div>
+        ) : games.length === 0 ? (
+          <div style={{padding:"16px", textAlign:"center", fontSize:11,
+            color:"#555", fontStyle:"italic"}}>No NY games played yesterday.</div>
+        ) : (
+          games.map((g, i) => (
+            <a key={i} href={g.link} target="_blank" rel="noopener noreferrer"
+              style={{textDecoration:"none", display:"flex", alignItems:"center",
+                gap:8, padding:"8px 12px",
+                background: g.myTeam ? "rgba(240,180,41,0.05)" : i%2===0?"#111":"#0e0e0e",
+                borderLeft: g.myTeam ? "3px solid #f0b429" : "3px solid transparent",
+                borderBottom:"1px solid #1a1a1a",
+                transition:"background 0.1s"}}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.04)"}
+              onMouseLeave={e=>e.currentTarget.style.background=g.myTeam?"rgba(240,180,41,0.05)":i%2===0?"#111":"#0e0e0e"}>
+
+              {/* Sport badge */}
+              <span style={{
+                fontFamily:"'Georgia',serif", fontSize:8, fontWeight:900,
+                letterSpacing:"0.1em", padding:"2px 5px",
+                background: SPORT_COLORS[g.sport] || "#333",
+                color:"#fff", flexShrink:0, minWidth:32, textAlign:"center",
+              }}>{g.emoji}</span>
+
+              {/* Away team */}
+              <div style={{flex:1, minWidth:0}}>
+                <div style={{display:"flex", alignItems:"center", gap:6, marginBottom:2}}>
+                  <span style={{
+                    fontFamily:"'Georgia',serif", fontSize:12, fontWeight: g.awayWin ? 900 : 600,
+                    color: g.awayWin ? "#e8e0d0" : "#666",
+                    overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                  }}>
+                    {g.awayName.split(" ").slice(-1)[0]}
+                  </span>
+                  <span style={{
+                    fontFamily:"'Georgia',serif", fontSize:14, fontWeight:900,
+                    color: g.awayWin ? "#e8e0d0" : "#555",
+                    marginLeft:"auto", flexShrink:0,
+                  }}>{g.awayScore}</span>
+                </div>
+                <div style={{display:"flex", alignItems:"center", gap:6}}>
+                  <span style={{
+                    fontFamily:"'Georgia',serif", fontSize:12, fontWeight: g.homeWin ? 900 : 600,
+                    color: g.homeWin ? "#e8e0d0" : "#666",
+                    overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                  }}>
+                    {g.homeName.split(" ").slice(-1)[0]}
+                  </span>
+                  <span style={{
+                    fontFamily:"'Georgia',serif", fontSize:14, fontWeight:900,
+                    color: g.homeWin ? "#e8e0d0" : "#555",
+                    marginLeft:"auto", flexShrink:0,
+                  }}>{g.homeScore}</span>
+                </div>
+              </div>
+
+              {/* Final + my team star */}
+              <div style={{flexShrink:0, textAlign:"right"}}>
+                <div style={{fontSize:8, color:"#444", fontWeight:700,
+                  letterSpacing:"0.08em", marginBottom:2}}>FINAL</div>
+                {g.myTeam && (
+                  <div style={{fontSize:9, color:"#f0b429"}}>⭐</div>
+                )}
+              </div>
+            </a>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 function HomepageWidgets({ myTeams, setActiveTab }) {
   const [showPlayoff, setShowPlayoff] = useState(() => {
     try { return localStorage.getItem("nsd_show_playoff") !== "0"; } catch(e) { return true; }
   });
   const [showLegends, setShowLegends] = useState(() => {
     try { return localStorage.getItem("nsd_show_legends") !== "0"; } catch(e) { return false; }
+  });
+  const [showLastNight, setShowLastNight] = useState(() => {
+    try { return localStorage.getItem("nsd_show_lastnight") === "1"; } catch(e) { return false; }
   });
   const [onboardDone, setOnboardDone] = useState(() => {
     try { return !!localStorage.getItem("nsd_onboarded"); } catch(e) { return false; }
@@ -10556,6 +10978,11 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
     const next = !showLegends;
     setShowLegends(next);
     try { localStorage.setItem("nsd_show_legends", next ? "1" : "0"); } catch(e) {}
+  }
+  function toggleLastNight() {
+    const next = !showLastNight;
+    setShowLastNight(next);
+    try { localStorage.setItem("nsd_show_lastnight", next ? "1" : "0"); } catch(e) {}
   }
   function dismissOnboard() {
     setOnboardDone(true);
@@ -10577,8 +11004,9 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
         <span style={{fontSize:8, fontWeight:900, color:"#444", letterSpacing:"0.2em",
           textTransform:"uppercase", fontFamily:"'Georgia',serif"}}>SHOW:</span>
         {[
-          { label:"🗽 Playoff Picture", on:showPlayoff, toggle:togglePlayoff },
-          { label:"⚡ Legends + This Date", on:showLegends, toggle:toggleLegends },
+          { label:"🗽 Playoff Picture",      on:showPlayoff,   toggle:togglePlayoff   },
+          { label:"🌙 Last Night's Scores",  on:showLastNight, toggle:toggleLastNight },
+          { label:"⚡ Legends + This Date",  on:showLegends,   toggle:toggleLegends  },
         ].map(({label, on, toggle}) => (
           <button key={label} onClick={toggle} style={{
             fontFamily:"'Georgia',serif", fontSize:10, fontWeight:700,
@@ -10595,6 +11023,9 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
 
       {/* Playoff widget */}
       {showPlayoff && <NYPlayoffWidget myTeams={myTeams} />}
+
+      {/* Last Night's NY Scores */}
+      {showLastNight && <LastNightScores myTeams={myTeams} />}
 
       {/* Legends + OTD side by side */}
       {showLegends && (
