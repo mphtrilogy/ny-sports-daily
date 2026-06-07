@@ -10755,35 +10755,39 @@ const activeBtnStyle = {
 // Manages collapse state for Playoff Widget + Legends/OTD panel.
 // State persisted in localStorage so preferences survive page reloads.
 // ─── LAST NIGHT'S NY SCORES ───────────────────────────────────────────────
-// Fetches yesterday's scores from ESPN and filters to NY teams.
-// Shows final scores with team names, sport badge, and box score link.
 function LastNightScores({ myTeams }) {
-  const [games, setGames]     = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [date, setDate]       = useState(null);
+  const [games, setGames]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [date, setDate]         = useState(null);
+  const [expanded, setExpanded] = useState(null);
 
-  const NY_TEAMS = [
-    "Yankees","Mets","Jets","Giants","Knicks","Nets",
-    "Rangers","Islanders","Devils","Liberty","NYCFC",
-    "Red Bulls","Gotham",
+  // STRICT matching — full display names to avoid Texas Rangers / SF Giants
+  const NY_FULL_NAMES = [
+    "new york yankees", "new york mets",
+    "new york jets",    "new york giants",
+    "new york knicks",  "brooklyn nets",
+    "new york rangers", "new york islanders", "new jersey devils",
+    "new york liberty", "new york city fc",
+    "new york red bulls", "nj/ny gotham",
   ];
 
   const SPORT_CONFIGS = [
-    { sport:"baseball",   league:"mlb",      label:"MLB",  emoji:"⚾" },
-    { sport:"basketball", league:"nba",       label:"NBA",  emoji:"🏀" },
-    { sport:"hockey",     league:"nhl",       label:"NHL",  emoji:"🏒" },
-    { sport:"football",   league:"nfl",       label:"NFL",  emoji:"🏈" },
-    { sport:"basketball", league:"wnba",      label:"WNBA", emoji:"🏀" },
-    { sport:"soccer",     league:"usa.nwsl",  label:"NWSL", emoji:"⚽" },
-    { sport:"soccer",     league:"usa.1",     label:"MLS",  emoji:"⚽" },
+    { sport:"baseball",   league:"mlb",     label:"MLB",  emoji:"⚾" },
+    { sport:"basketball", league:"nba",      label:"NBA",  emoji:"🏀" },
+    { sport:"hockey",     league:"nhl",      label:"NHL",  emoji:"🏒" },
+    { sport:"football",   league:"nfl",      label:"NFL",  emoji:"🏈" },
+    { sport:"basketball", league:"wnba",     label:"WNBA", emoji:"🏀" },
+    { sport:"soccer",     league:"usa.nwsl", label:"NWSL", emoji:"⚽" },
+    { sport:"soccer",     league:"usa.1",    label:"MLS",  emoji:"⚽" },
   ];
 
-  function isNY(name) {
-    return NY_TEAMS.some(t => (name||"").toLowerCase().includes(t.toLowerCase()));
+  function isNY(displayName) {
+    const dn = (displayName||"").toLowerCase();
+    return NY_FULL_NAMES.some(ny => dn === ny || dn.startsWith(ny));
   }
 
-  function getMyTeamName(home, away) {
-    if (!myTeams) return null;
+  function getMyTeam(home, away) {
+    if (!myTeams || myTeams.size === 0) return null;
     const names = [...myTeams].map(t => t.toLowerCase());
     if (names.some(t => (home||"").toLowerCase().includes(t))) return home;
     if (names.some(t => (away||"").toLowerCase().includes(t))) return away;
@@ -10818,142 +10822,200 @@ function LastNightScores({ myTeams }) {
             if (!home || !away) return;
             const homeName = home.team?.displayName || home.team?.name || "";
             const awayName = away.team?.displayName || away.team?.name || "";
-            // Only include if NY team is involved
+            const homeShort = home.team?.shortDisplayName || homeName;
+            const awayShort = away.team?.shortDisplayName || awayName;
             if (!isNY(homeName) && !isNY(awayName)) return;
-            const status = comp.status?.type;
-            // Only completed games
-            if (!status?.completed) return;
+            if (!comp.status?.type?.completed) return;
+            const homeScore = parseInt(home.score || 0);
+            const awayScore = parseInt(away.score || 0);
             allGames.push({
-              id:       ev.id,
-              sport:    cfg.label,
-              emoji:    cfg.emoji,
-              homeName, homeScore: home.score || "—",
-              homeColor: home.team?.color ? `#${home.team.color}` : "#333",
-              awayName, awayScore: away.score || "—",
-              awayColor: away.team?.color ? `#${away.team.color}` : "#333",
-              homeWin: parseFloat(home.score||0) > parseFloat(away.score||0),
-              awayWin: parseFloat(away.score||0) > parseFloat(home.score||0),
-              link: `https://www.espn.com/${cfg.sport}/game/_/gameId/${ev.id}`,
-              myTeam: getMyTeamName(homeName, awayName),
+              id: ev.id,
+              sport: cfg.label,
+              espnSport: cfg.sport,
+              emoji: cfg.emoji,
+              homeName, homeShort, homeScore,
+              homeRecord: home.records?.[0]?.summary || "",
+              awayName, awayShort, awayScore,
+              awayRecord: away.records?.[0]?.summary || "",
+              homeWin: homeScore > awayScore,
+              awayWin: awayScore > homeScore,
+              // Correct ESPN box score URL format
+              boxUrl: `https://www.espn.com/${cfg.sport}/game?gameId=${ev.id}`,
+              myTeam: getMyTeam(homeName, awayName),
+              homeLinescores: (home.linescores||[]).map(l => l.value),
+              awayLinescores: (away.linescores||[]).map(l => l.value),
+              note: comp.notes?.[0]?.headline || "",
             });
           });
         } catch(e) {}
       }));
 
-      // Sort: My Teams first, then by sport
       allGames.sort((a,b) => {
         if (a.myTeam && !b.myTeam) return -1;
         if (!a.myTeam && b.myTeam) return 1;
         return 0;
       });
-
       setGames(allGames);
       setLoading(false);
     }
     load();
   }, []);
 
+  function periodLabel(sport, i) {
+    if (sport === "MLB")  return i < 9 ? String(i+1) : `E${i-8}`;
+    if (sport === "NBA" || sport === "WNBA") return i < 4 ? `Q${i+1}` : `OT${i-3}`;
+    if (sport === "NHL")  return i < 3 ? `P${i+1}` : `OT${i-2}`;
+    if (sport === "NFL")  return i < 4 ? `Q${i+1}` : `OT${i-3}`;
+    return String(i+1);
+  }
+
   const SPORT_COLORS = {
     MLB:"#003087", NBA:"#006BB6", NHL:"#0038A8",
-    NFL:"#0B2265", WNBA:"#FF6900", NWSL:"#00843d", MLS:"#000"
+    NFL:"#13274F", WNBA:"#FF6900", NWSL:"#00843d", MLS:"#000"
   };
 
   return (
     <div style={{background:"#111", border:"1px solid #1a1a1a",
-      borderTop:"2px solid #333", marginBottom:8}}>
-      {/* Header */}
+      borderTop:"2px solid #2a2a2a", marginBottom:8}}>
       <div style={{display:"flex", alignItems:"center", gap:8,
-        padding:"8px 12px", borderBottom:"1px solid #1a1a1a",
-        background:"#0e0e0e"}}>
-        <span style={{fontSize:16}}>🌙</span>
+        padding:"8px 12px", borderBottom:"1px solid #1a1a1a", background:"#0e0e0e"}}>
+        <span style={{fontSize:15}}>🌙</span>
         <span style={{fontFamily:"'Georgia',serif", fontSize:9, fontWeight:900,
           letterSpacing:"0.22em", color:"#888", textTransform:"uppercase"}}>
           Last Night's NY Scores
         </span>
-        {date && (
-          <span style={{fontSize:9, color:"#444", marginLeft:4}}>{date}</span>
-        )}
+        {date && <span style={{fontSize:9, color:"#444"}}>{date}</span>}
         <span style={{marginLeft:"auto", fontSize:9, color:"#444"}}>
           {loading ? "Loading…" : `${games.length} game${games.length!==1?"s":""}`}
         </span>
       </div>
 
-      {/* Games */}
-      <div style={{padding:"6px 0"}}>
+      <div>
         {loading ? (
-          <div style={{padding:"16px", textAlign:"center", fontSize:10,
-            color:"#555", letterSpacing:"0.1em"}}>LOADING SCORES…</div>
+          <div style={{padding:"16px", textAlign:"center", fontSize:10, color:"#555"}}>
+            LOADING SCORES…
+          </div>
         ) : games.length === 0 ? (
           <div style={{padding:"16px", textAlign:"center", fontSize:11,
             color:"#555", fontStyle:"italic"}}>No NY games played yesterday.</div>
-        ) : (
-          games.map((g, i) => (
-            <a key={i} href={g.link} target="_blank" rel="noopener noreferrer"
-              style={{textDecoration:"none", display:"flex", alignItems:"center",
-                gap:8, padding:"8px 12px",
-                background: g.myTeam ? "rgba(240,180,41,0.05)" : i%2===0?"#111":"#0e0e0e",
-                borderLeft: g.myTeam ? "3px solid #f0b429" : "3px solid transparent",
-                borderBottom:"1px solid #1a1a1a",
-                transition:"background 0.1s"}}
-              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.04)"}
-              onMouseLeave={e=>e.currentTarget.style.background=g.myTeam?"rgba(240,180,41,0.05)":i%2===0?"#111":"#0e0e0e"}>
+        ) : games.map((g, i) => {
+          const isOpen = expanded === g.id;
+          const cols   = g.homeLinescores.length;
+          return (
+            <div key={g.id} style={{
+              borderBottom:"1px solid #1a1a1a",
+              borderLeft: g.myTeam ? "3px solid #f0b429" : "3px solid transparent",
+              background: g.myTeam ? "rgba(240,180,41,0.04)" : i%2===0?"#111":"#0e0e0e",
+            }}>
+              {/* Score row */}
+              <div onClick={() => setExpanded(prev => prev===g.id ? null : g.id)}
+                style={{display:"flex", alignItems:"center", gap:8,
+                  padding:"9px 12px", cursor:"pointer"}}
+                onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.03)"}
+                onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
 
-              {/* Sport badge */}
-              <span style={{
-                fontFamily:"'Georgia',serif", fontSize:8, fontWeight:900,
-                letterSpacing:"0.1em", padding:"2px 5px",
-                background: SPORT_COLORS[g.sport] || "#333",
-                color:"#fff", flexShrink:0, minWidth:32, textAlign:"center",
-              }}>{g.emoji}</span>
+                <span style={{fontFamily:"'Georgia',serif", fontSize:9, fontWeight:900,
+                  padding:"2px 5px", flexShrink:0, minWidth:26, textAlign:"center",
+                  background: SPORT_COLORS[g.sport]||"#333", color:"#fff"}}>
+                  {g.emoji}
+                </span>
 
-              {/* Away team */}
-              <div style={{flex:1, minWidth:0}}>
-                <div style={{display:"flex", alignItems:"center", gap:6, marginBottom:2}}>
-                  <span style={{
-                    fontFamily:"'Georgia',serif", fontSize:12, fontWeight: g.awayWin ? 900 : 600,
-                    color: g.awayWin ? "#e8e0d0" : "#666",
-                    overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
-                  }}>
-                    {g.awayName.split(" ").slice(-1)[0]}
-                  </span>
-                  <span style={{
-                    fontFamily:"'Georgia',serif", fontSize:14, fontWeight:900,
-                    color: g.awayWin ? "#e8e0d0" : "#555",
-                    marginLeft:"auto", flexShrink:0,
-                  }}>{g.awayScore}</span>
+                <div style={{flex:1, minWidth:0}}>
+                  {[{name:g.awayShort, score:g.awayScore, win:g.awayWin},
+                    {name:g.homeShort, score:g.homeScore, win:g.homeWin}].map((row,ri) => (
+                    <div key={ri} style={{display:"flex", alignItems:"center",
+                      marginBottom: ri===0 ? 2 : 0}}>
+                      <span style={{fontFamily:"'Georgia',serif", fontSize:12,
+                        fontWeight: row.win?900:500,
+                        color: row.win?"#e8e0d0":"#666",
+                        flex:1, overflow:"hidden", textOverflow:"ellipsis",
+                        whiteSpace:"nowrap"}}>{row.name}</span>
+                      <span style={{fontFamily:"'Georgia',serif", fontSize:15,
+                        fontWeight:900, color: row.win?"#e8e0d0":"#555",
+                        minWidth:28, textAlign:"right", flexShrink:0}}>
+                        {row.score}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                <div style={{display:"flex", alignItems:"center", gap:6}}>
-                  <span style={{
-                    fontFamily:"'Georgia',serif", fontSize:12, fontWeight: g.homeWin ? 900 : 600,
-                    color: g.homeWin ? "#e8e0d0" : "#666",
-                    overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
-                  }}>
-                    {g.homeName.split(" ").slice(-1)[0]}
-                  </span>
-                  <span style={{
-                    fontFamily:"'Georgia',serif", fontSize:14, fontWeight:900,
-                    color: g.homeWin ? "#e8e0d0" : "#555",
-                    marginLeft:"auto", flexShrink:0,
-                  }}>{g.homeScore}</span>
+
+                <div style={{flexShrink:0, textAlign:"right", minWidth:36}}>
+                  <div style={{fontSize:8, color:"#555", fontWeight:700,
+                    letterSpacing:"0.06em"}}>FINAL</div>
+                  {g.myTeam && <div style={{fontSize:9, color:"#f0b429"}}>⭐</div>}
+                  <div style={{fontSize:10, color:"#444", marginTop:2}}>
+                    {isOpen ? "▲" : "▼"}
+                  </div>
                 </div>
               </div>
 
-              {/* Final + my team star */}
-              <div style={{flexShrink:0, textAlign:"right"}}>
-                <div style={{fontSize:8, color:"#444", fontWeight:700,
-                  letterSpacing:"0.08em", marginBottom:2}}>FINAL</div>
-                {g.myTeam && (
-                  <div style={{fontSize:9, color:"#f0b429"}}>⭐</div>
-                )}
-              </div>
-            </a>
-          ))
-        )}
+              {/* Inline linescore */}
+              {isOpen && (
+                <div style={{padding:"10px 12px 12px",
+                  borderTop:"1px solid #1a1a1a", background:"#0a0a0a"}}>
+                  {cols > 0 && (
+                    <div style={{overflowX:"auto", marginBottom:10}}>
+                      <table style={{borderCollapse:"collapse", fontSize:10,
+                        fontFamily:"'Georgia',serif", width:"100%"}}>
+                        <thead>
+                          <tr>
+                            <td style={{padding:"2px 8px 4px", color:"#555",
+                              fontWeight:700, minWidth:80}}>TEAM</td>
+                            {g.homeLinescores.map((_, ci) => (
+                              <td key={ci} style={{padding:"2px 4px 4px",
+                                textAlign:"center", color:"#555",
+                                fontWeight:700, minWidth:22}}>
+                                {periodLabel(g.sport, ci)}
+                              </td>
+                            ))}
+                            <td style={{padding:"2px 8px 4px", textAlign:"center",
+                              color:"#e8e0d0", fontWeight:900}}>F</td>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[
+                            {n:g.awayShort, ls:g.awayLinescores, t:g.awayScore, w:g.awayWin},
+                            {n:g.homeShort, ls:g.homeLinescores, t:g.homeScore, w:g.homeWin},
+                          ].map((row,ri) => (
+                            <tr key={ri} style={{background:ri%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
+                              <td style={{padding:"3px 8px", fontWeight:row.w?900:500,
+                                color:row.w?"#e8e0d0":"#777",
+                                overflow:"hidden", textOverflow:"ellipsis",
+                                whiteSpace:"nowrap", maxWidth:80}}>{row.n}</td>
+                              {row.ls.map((s,si) => (
+                                <td key={si} style={{padding:"3px 4px",
+                                  textAlign:"center", color:"#aaa"}}>{s??"-"}</td>
+                              ))}
+                              <td style={{padding:"3px 8px", textAlign:"center",
+                                fontWeight:900, fontSize:13,
+                                color:row.w?"#e8e0d0":"#555"}}>{row.t}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {g.note && (
+                    <div style={{fontSize:10, color:"#666", fontStyle:"italic",
+                      marginBottom:8}}>{g.note}</div>
+                  )}
+                  <a href={g.boxUrl} target="_blank" rel="noopener noreferrer"
+                    style={{fontSize:10, fontWeight:700, letterSpacing:"0.08em",
+                      padding:"4px 12px", border:"1px solid #2a2a2a",
+                      color:"#888", textDecoration:"none", display:"inline-block"}}
+                    onMouseEnter={e=>{e.currentTarget.style.color="#f0b429";e.currentTarget.style.borderColor="#f0b429";}}
+                    onMouseLeave={e=>{e.currentTarget.style.color="#888";e.currentTarget.style.borderColor="#2a2a2a";}}>
+                    📊 FULL BOX SCORE ON ESPN →
+                  </a>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
-
 
 function HomepageWidgets({ myTeams, setActiveTab }) {
   const [showPlayoff, setShowPlayoff] = useState(() => {
