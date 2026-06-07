@@ -10772,13 +10772,13 @@ function LastNightScores({ myTeams }) {
   ];
 
   const SPORT_CONFIGS = [
-    { sport:"baseball",   league:"mlb",     label:"MLB",  emoji:"⚾" },
-    { sport:"basketball", league:"nba",      label:"NBA",  emoji:"🏀" },
-    { sport:"hockey",     league:"nhl",      label:"NHL",  emoji:"🏒" },
-    { sport:"football",   league:"nfl",      label:"NFL",  emoji:"🏈" },
-    { sport:"basketball", league:"wnba",     label:"WNBA", emoji:"🏀" },
-    { sport:"soccer",     league:"usa.nwsl", label:"NWSL", emoji:"⚽" },
-    { sport:"soccer",     league:"usa.1",    label:"MLS",  emoji:"⚽" },
+    { sport:"baseball",   league:"mlb",     label:"MLB",  emoji:"⚾", recapPath:"mlb/recap/_/gameId"     },
+    { sport:"basketball", league:"nba",      label:"NBA",  emoji:"🏀", recapPath:"nba/recap/_/gameId"     },
+    { sport:"hockey",     league:"nhl",      label:"NHL",  emoji:"🏒", recapPath:"nhl/recap/_/gameId"     },
+    { sport:"football",   league:"nfl",      label:"NFL",  emoji:"🏈", recapPath:"nfl/recap/_/gameId"     },
+    { sport:"basketball", league:"wnba",     label:"WNBA", emoji:"🏀", recapPath:"wnba/recap/_/gameId"    },
+    { sport:"soccer",     league:"usa.nwsl", label:"NWSL", emoji:"⚽", recapPath:"soccer/recap/_/gameId"  },
+    { sport:"soccer",     league:"usa.1",    label:"MLS",  emoji:"⚽", recapPath:"soccer/recap/_/gameId"  },
   ];
 
   function isNY(displayName) {
@@ -10839,8 +10839,7 @@ function LastNightScores({ myTeams }) {
               awayRecord: away.records?.[0]?.summary || "",
               homeWin: homeScore > awayScore,
               awayWin: awayScore > homeScore,
-              // Correct ESPN box score URL format
-              boxUrl: `https://www.espn.com/${cfg.sport}/game?gameId=${ev.id}`,
+              boxUrl: `https://www.espn.com/${cfg.recapPath}/${ev.id}`,
               myTeam: getMyTeam(homeName, awayName),
               homeLinescores: (home.linescores||[]).map(l => l.value),
               awayLinescores: (away.linescores||[]).map(l => l.value),
