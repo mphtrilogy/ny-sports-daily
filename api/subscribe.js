@@ -5,7 +5,7 @@ const RESEND_KEY   = process.env.RESEND_API_KEY;
 const FROM_EMAIL   = 'digest@nysportsdaily.com';
 const SITE_URL     = 'https://nysportsdaily.com';
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -26,4 +26,22 @@ export default async function handler(req, res) {
         'Prefer':        'return=minimal',
       },
       body: JSON.stringify({
-        email:     email.toLowerCase
+        email:     email.toLowerCase().trim(),
+        name:      name || '',
+        teams:     teams || [],
+        active:    true,
+        confirmed: true,
+      }),
+    });
+
+    if (!sbRes.ok && sbRes.status !== 409) {
+      const err = await sbRes.text();
+      console.error('Supabase error:', err);
+      return res.status(500).json({ error: 'Could not save subscription' });
+    }
+
+    const teamList = teams?.length > 0 ? teams.join(', ') : 'all NY teams';
+
+    const welcomeHtml = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></h
