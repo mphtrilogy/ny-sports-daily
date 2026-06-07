@@ -1456,6 +1456,9 @@ export default function NYSportsDaily() {
         )}
       </main>
 
+      {/* ── MORNING DIGEST SIGNUP ── */}
+      <DigestSignup />
+
       {/* ── FOOTER ── */}
       <footer style={styles.footer}>
         <div style={styles.footerRule} />
@@ -11608,6 +11611,174 @@ function NYPlayoffWidget({ myTeams }) {
             </div>
           ))}
       </div>
+    </div>
+  );
+}
+
+
+// ─── MORNING DIGEST SIGNUP ────────────────────────────────────────────────
+function DigestSignup() {
+  const NY_TEAMS_LIST = [
+    "Yankees","Mets","Knicks","Nets","Rangers","Islanders",
+    "Devils","Giants","Jets","Liberty","NYCFC","Red Bulls",
+  ];
+
+  const [name, setName]         = useState("");
+  const [email, setEmail]       = useState("");
+  const [teams, setTeams]       = useState([]);
+  const [status, setStatus]     = useState("idle"); // idle | loading | success | error
+  const [message, setMessage]   = useState("");
+  const [expanded, setExpanded] = useState(false);
+
+  function toggleTeam(team) {
+    setTeams(prev =>
+      prev.includes(team) ? prev.filter(t => t !== team) : [...prev, team]
+    );
+  }
+
+  async function handleSubmit() {
+    if (!email || !email.includes("@")) {
+      setMessage("Please enter a valid email address.");
+      setStatus("error");
+      return;
+    }
+    setStatus("loading");
+    try {
+      const r = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, teams }),
+      });
+      const json = await r.json();
+      if (r.ok) {
+        setStatus("success");
+        setMessage("You're in! Check your email for a welcome message. 🗽");
+      } else {
+        setStatus("error");
+        setMessage(json.error || "Something went wrong. Try again.");
+      }
+    } catch(e) {
+      setStatus("error");
+      setMessage("Could not connect. Please try again.");
+    }
+  }
+
+  if (status === "success") {
+    return (
+      <div style={{background:"#0d2a1a", borderTop:"2px solid #22c55e",
+        borderBottom:"1px solid #1a3a1a", padding:"20px 24px", textAlign:"center"}}>
+        <div style={{fontSize:24, marginBottom:8}}>🗽</div>
+        <div style={{fontFamily:"'Georgia',serif", fontSize:16, fontWeight:900,
+          color:"#22c55e", marginBottom:6}}>{message}</div>
+        <div style={{fontSize:12, color:"#aaa"}}>
+          Your first digest arrives tomorrow at 7am ET.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{background:"#0e0e0e", borderTop:"2px solid #c8201c",
+      borderBottom:"1px solid #1a1a1a", padding:"20px 24px"}}>
+
+      {/* Header row — always visible */}
+      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between",
+        flexWrap:"wrap", gap:10, marginBottom: expanded ? 16 : 0}}>
+        <div>
+          <div style={{fontFamily:"'Georgia',serif", fontSize:13, fontWeight:900,
+            color:"#e8e0d0", marginBottom:2}}>
+            🗽 Get the NY Sports Daily Morning Digest
+          </div>
+          <div style={{fontSize:11, color:"#666"}}>
+            Last night's scores · Top headlines · Glory moment · 7am ET · Free always
+          </div>
+        </div>
+        <button onClick={() => setExpanded(e => !e)}
+          style={{fontFamily:"'Georgia',serif", fontSize:10, fontWeight:900,
+            letterSpacing:"0.1em", padding:"7px 18px",
+            background: expanded ? "transparent" : "#c8201c",
+            border: `1px solid ${expanded ? "#444" : "#c8201c"}`,
+            color: expanded ? "#666" : "#fff",
+            cursor:"pointer", transition:"all 0.15s", flexShrink:0}}>
+          {expanded ? "CANCEL" : "SUBSCRIBE FREE →"}
+        </button>
+      </div>
+
+      {/* Expanded form */}
+      {expanded && (
+        <div>
+          {/* Name + Email */}
+          <div style={{display:"flex", gap:8, marginBottom:12, flexWrap:"wrap"}}>
+            <input
+              type="text"
+              placeholder="First name (optional)"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              style={{flex:"1 1 160px", padding:"8px 12px",
+                background:"#111", border:"1px solid #2a2a2a",
+                color:"#e8e0d0", fontSize:12, fontFamily:"'Georgia',serif",
+                outline:"none"}}
+            />
+            <input
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSubmit()}
+              style={{flex:"2 1 200px", padding:"8px 12px",
+                background:"#111", border:"1px solid #2a2a2a",
+                color:"#e8e0d0", fontSize:12, fontFamily:"'Georgia',serif",
+                outline:"none"}}
+            />
+          </div>
+
+          {/* Team picker */}
+          <div style={{marginBottom:14}}>
+            <div style={{fontSize:9, fontWeight:900, color:"#555",
+              letterSpacing:"0.18em", textTransform:"uppercase",
+              marginBottom:8}}>
+              Pick your teams (optional — leave blank for all NY):
+            </div>
+            <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
+              {NY_TEAMS_LIST.map(team => {
+                const on = teams.includes(team);
+                return (
+                  <button key={team} onClick={() => toggleTeam(team)}
+                    style={{fontFamily:"'Georgia',serif", fontSize:10,
+                      fontWeight:700, letterSpacing:"0.06em",
+                      padding:"4px 10px",
+                      background: on ? "#c8201c" : "transparent",
+                      border: `1px solid ${on ? "#c8201c" : "#2a2a2a"}`,
+                      color: on ? "#fff" : "#666",
+                      cursor:"pointer", transition:"all 0.12s"}}>
+                    {team}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Error message */}
+          {status === "error" && (
+            <div style={{fontSize:11, color:"#f87171", marginBottom:10}}>{message}</div>
+          )}
+
+          {/* Submit */}
+          <div style={{display:"flex", alignItems:"center", gap:12, flexWrap:"wrap"}}>
+            <button onClick={handleSubmit} disabled={status === "loading"}
+              style={{fontFamily:"'Georgia',serif", fontSize:11, fontWeight:900,
+                letterSpacing:"0.1em", padding:"9px 24px",
+                background: status === "loading" ? "#555" : "#c8201c",
+                border:"none", color:"#fff", cursor:"pointer",
+                transition:"all 0.15s", boxShadow:"0 2px 0 #8a0000"}}>
+              {status === "loading" ? "SUBSCRIBING…" : "GET MY DIGEST →"}
+            </button>
+            <span style={{fontSize:10, color:"#444"}}>
+              No ads. No spam. Unsubscribe anytime.
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
