@@ -11397,14 +11397,21 @@ function NYPlayoffWidget({ myTeams }) {
 
   async function fetchSport(cfg) {
     try {
-      const r = await fetch(
+      // Try level=3 first, fall back to level=2 if 400
+      let r = await fetch(
         `https://site.api.espn.com/apis/v2/sports/${cfg.espnSport}/${cfg.league}/standings?level=3`,
         { cache:"no-store" }
       );
+      // If 400, try without level param
+      if (!r.ok) {
+        r = await fetch(
+          `https://site.api.espn.com/apis/v2/sports/${cfg.espnSport}/${cfg.league}/standings`,
+          { cache:"no-store" }
+        );
+      }
       if (!r.ok) return [];
       const json = await r.json();
 
-      // ── Mirrors StandingsTab logic exactly (uses t.id not t.tid) ─────────
       const CONF_MAP = {
         "AL East":"AL","AL Central":"AL","AL West":"AL",
         "NL East":"NL","NL Central":"NL","NL West":"NL",
@@ -11429,7 +11436,7 @@ function NYPlayoffWidget({ myTeams }) {
             (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value??""); });
             const w   = parseFloat(s.wins || s.W || 0);
             const l   = parseFloat(s.losses || s.L || 0);
-            const id  = String(e.team?.id || name); // use id like StandingsTab
+            const id  = String(e.team?.id || name);
             if (!confResult[confName].divs[divName].find(x => x.id === id)) {
               confResult[confName].divs[divName].push({
                 id, name, w, l,
@@ -11453,21 +11460,19 @@ function NYPlayoffWidget({ myTeams }) {
         const divNames = Object.keys(conf.divs);
         if (!divNames.length) return;
 
-        // Sort each division, mark div leaders — uses t.id like StandingsTab
         const divLeaderIds = new Set();
         divNames.forEach(dn => {
           const sorted = [...conf.divs[dn]].sort((a,b) => b.pct - a.pct);
-          if (sorted[0]) { divLeaderIds.add(sorted[0].id); } // t.id not t.tid
+          if (sorted[0]) divLeaderIds.add(sorted[0].id);
         });
 
-        // All teams deduped, sorted by pct
         const seen = new Set();
         const all = divNames.flatMap(dn => conf.divs[dn])
           .filter(t => { if(seen.has(t.id)) return false; seen.add(t.id); return true; });
         const allSorted = [...all].sort((a,b) => b.pct - a.pct);
 
-        const divLeaders = allSorted.filter(t =>  divLeaderIds.has(t.id)); // t.id
-        const nonLeaders = allSorted.filter(t => !divLeaderIds.has(t.id)); // t.id
+        const divLeaders = allSorted.filter(t =>  divLeaderIds.has(t.id));
+        const nonLeaders = allSorted.filter(t => !divLeaderIds.has(t.id));
         const lastWcTeam = nonLeaders[wcSpots - 1];
 
         divLeaders.forEach((t, i) => {
@@ -11483,6 +11488,46 @@ function NYPlayoffWidget({ myTeams }) {
           finalTeams.push({ ...t, inPO, wcGb, seed: divWinners + i + 1 });
         });
       });
+
+      // If conference walk gave no results, fall back to flat seed-based approach
+      if (finalTeams.length === 0) {
+        console.log("[PO WIDGET] Conference walk empty, using flat fallback");
+        const allEntries = [];
+        function walkFlat(node) {
+          (node?.standings?.entries||[]).forEach(e => allEntries.push(e));
+          (node.children||[]).forEach(walkFlat);
+        }
+        walkFlat(json);
+        const seen2 = new Set();
+        const flatTeams = allEntries
+          .map(e => {
+            const name = e.team?.displayName || e.team?.name || "";
+            const s = {};
+            (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value??""); });
+            const w = parseFloat(s.wins||s.W||0);
+            const l = parseFloat(s.losses||s.L||0);
+            const seed = parseInt(s.playoffSeed||99);
+            return { id:String(e.team?.id||name), name, w, l, seed,
+              pct:(w+l)>0?w/(w+l):0, pts:parseFloat(s.points||0),
+              isNY:isNY(name,cfg.key), isMy:isMyTeam(name) };
+          })
+          .filter(t => { if(!t.name||seen2.has(t.id)) return false; seen2.add(t.id); return true; })
+          .sort((a,b) => a.seed-b.seed || b.pct-a.pct);
+        // Split at midpoint for two conferences
+        const half = Math.ceil(flatTeams.length/2);
+        [flatTeams.slice(0,half), flatTeams.slice(half)].forEach(conf => {
+          const lastIn = conf[divWinners+wcSpots-1];
+          conf.forEach((t,i) => {
+            const inPO = i < divWinners+wcSpots;
+            let wcGb = null;
+            if (!inPO && lastIn && (t.w+t.l)>0 && (lastIn.w+lastIn.l)>0) {
+              const gb = ((lastIn.w-t.w)+(t.l-lastIn.l))/2;
+              wcGb = Math.max(0, Math.round(gb*2)/2);
+            }
+            finalTeams.push({...t, inPO, wcGb, seed:i+1});
+          });
+        });
+      }
 
       return finalTeams;
     } catch(e) { console.error("fetchSport:", e); return []; }
