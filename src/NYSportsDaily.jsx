@@ -5809,6 +5809,7 @@ function AwardsTab() {
     { award:"Hart Trophy",      year:1979, winner:"Bryan Trottier",     team:"Islanders",sport:"NHL",note:"NHL MVP the year before the first of four straight Cups" },
     { award:"Norris Trophy",    year:1992, winner:"Brian Leetch",       team:"Rangers", sport:"NHL", note:"Best defenseman in the NHL — set up the 1994 Cup run" },
     { award:"Norris Trophy",    year:1979, winner:"Denis Potvin",       team:"Islanders",sport:"NHL",note:"Third of four Norris Trophies as best defenseman" },
+    { award:"Calder Trophy",    year:2026, winner:"Matthew Schaefer",   team:"Islanders",sport:"NHL",note:"#1 overall pick wins NHL Rookie of the Year — the future of Long Island hockey is here" },
   ];
 
   const SPORTS = ["ALL","MLB","NFL","NBA","NHL","WNBA"];
@@ -11436,33 +11437,88 @@ function NYPlayoffWidget({ myTeams }) {
         seen.add(t.name); return true;
       });
 
-      // For MLB/NHL: split into conferences, find the true WC cutoff per conference.
-      // ESPN's playoffSeed is league-wide (1-12 for MLB), so:
-      //   seeds 1-3 = division winners in each league half
-      //   seeds 4-6 = wild card spots
-      // The 6th seed IS the last WC team. Anyone seeded 7+ is out.
-      // Their GB vs the 6th seed team = true WC GB.
+      // ── Conference-aware GB calculation ────────────────────────────────
+      // Same logic as StandingsTab which is confirmed accurate.
+      // Walk the ESPN tree preserving conference structure so Mets GB
+      // is calculated vs the last NL wild card team, not an AL team.
 
-      // Sort by seed (ties broken by win%)
-      const sorted = [...teams].sort((a,b) => {
-        if (a.seed !== b.seed) return a.seed - b.seed;
-        return b.pct - a.pct;
-      });
+      const CONF_MAP = {
+        "AL East":"AL","AL Central":"AL","AL West":"AL",
+        "NL East":"NL","NL Central":"NL","NL West":"NL",
+        "Atlantic":"East","Central":"East","Southeast":"East","Metropolitan":"East",
+        "Northwest":"West","Pacific":"West","Southwest":"West",
+        "AFC East":"AFC","AFC North":"AFC","AFC South":"AFC","AFC West":"AFC",
+        "NFC East":"NFC","NFC North":"NFC","NFC South":"NFC","NFC West":"NFC",
+      };
 
-      // The cutoff: last team "in"
-      const cutoffTeam = sorted[cfg.poSlots - 1];
+      const confGroups = {}; // confName → { all:[], divLeaderIds:Set }
 
-      return teams.map(t => {
-        const inPO = t.seed <= cfg.poSlots;
-        let wcGb = null;
-        if (!inPO && cutoffTeam && (t.w + t.l) > 0 && (cutoffTeam.w + cutoffTeam.l) > 0) {
-          // Standard baseball GB formula
-          wcGb = Math.max(0, ((cutoffTeam.w - t.w) + (t.l - cutoffTeam.l)) / 2);
-          // Round to nearest .5
-          wcGb = Math.round(wcGb * 2) / 2;
+      function walkConf(node, parentConf) {
+        const nodeName  = node.name || node.abbreviation || "";
+        const confName  = CONF_MAP[nodeName] || parentConf || nodeName || "unknown";
+        if (node.standings?.entries?.length) {
+          if (!confGroups[confName]) confGroups[confName] = { all:[], divLeaderIds:new Set() };
+          // Sort entries by win% to identify div leader
+          const sortedEntries = [...node.standings.entries].sort((a, b) => {
+            const sa = {}; (a.stats||[]).forEach(st => { sa[st.name] = st.value; });
+            const sb = {}; (b.stats||[]).forEach(st => { sb[st.name] = st.value; });
+            const wa = parseFloat(sa.wins||0), la = parseFloat(sa.losses||0);
+            const wb = parseFloat(sb.wins||0), lb = parseFloat(sb.losses||0);
+            return (wb+lb>0?wb/(wb+lb):0) - (wa+la>0?wa/(wa+la):0);
+          });
+          if (sortedEntries[0]?.team?.id) {
+            confGroups[confName].divLeaderIds.add(String(sortedEntries[0].team.id));
+          }
+          node.standings.entries.forEach(e => {
+            const nm = e.team?.displayName || e.team?.name || "";
+            const s  = {};
+            (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value??""); });
+            const tid = String(e.team?.id || nm);
+            if (!confGroups[confName].all.find(t => t.tid === tid)) {
+              const w = parseFloat(s.wins||s.W||0);
+              const l = parseFloat(s.losses||s.L||0);
+              confGroups[confName].all.push({
+                tid, name:nm, w, l,
+                pts:  parseFloat(s.points||0),
+                pct:  (w+l)>0 ? w/(w+l) : 0,
+                isNY: isNY(nm, cfg.key),
+                isMy: isMyTeam(nm),
+              });
+            }
+          });
         }
-        return { ...t, inPO, wcGb };
+        (node.children||[]).forEach(child => walkConf(child, confName));
+      }
+
+      (json.children||[]).forEach(node => walkConf(node, ""));
+      if (json.standings?.entries?.length) walkConf(json, "");
+
+      // Assign playoff status per conference using same formula as StandingsTab
+      const result = [];
+      const { divWinners, wcSpots } = cfg;
+
+      Object.entries(confGroups).forEach(([confName, conf]) => {
+        if (!conf.all.length) return;
+        const allSorted   = [...conf.all].sort((a,b) => b.pct - a.pct);
+        const divLeaders  = allSorted.filter(t => conf.divLeaderIds.has(t.tid));
+        const nonLeaders  = allSorted.filter(t => !conf.divLeaderIds.has(t.tid));
+        const lastWcTeam  = nonLeaders[wcSpots - 1];
+
+        divLeaders.forEach((t, i) => {
+          result.push({ ...t, inPO:true, wcGb:null, seed:i+1, conf:confName });
+        });
+        nonLeaders.forEach((t, i) => {
+          const inPO = i < wcSpots;
+          let wcGb = null;
+          if (!inPO && lastWcTeam && (t.w+t.l)>0 && (lastWcTeam.w+lastWcTeam.l)>0) {
+            wcGb = Math.max(0, ((lastWcTeam.w - t.w) + (t.l - lastWcTeam.l)) / 2);
+            wcGb = Math.round(wcGb * 2) / 2;
+          }
+          result.push({ ...t, inPO, wcGb, seed:divWinners+i+1, conf:confName });
+        });
       });
+
+      return result;
     } catch(e) { return []; }
   }
 
