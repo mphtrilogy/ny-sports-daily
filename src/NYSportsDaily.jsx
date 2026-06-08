@@ -11404,7 +11404,7 @@ function NYPlayoffWidget({ myTeams }) {
       if (!r.ok) return [];
       const json = await r.json();
 
-      // ── Exact same logic as StandingsTab (confirmed accurate) ────────────
+      // ── Mirrors StandingsTab logic exactly (uses t.id not t.tid) ─────────
       const CONF_MAP = {
         "AL East":"AL","AL Central":"AL","AL West":"AL",
         "NL East":"NL","NL Central":"NL","NL West":"NL",
@@ -11429,10 +11429,10 @@ function NYPlayoffWidget({ myTeams }) {
             (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value??""); });
             const w   = parseFloat(s.wins || s.W || 0);
             const l   = parseFloat(s.losses || s.L || 0);
-            const tid = String(e.team?.id || name);
-            if (!confResult[confName].divs[divName].find(x => x.tid === tid)) {
+            const id  = String(e.team?.id || name); // use id like StandingsTab
+            if (!confResult[confName].divs[divName].find(x => x.id === id)) {
               confResult[confName].divs[divName].push({
-                tid, name, w, l,
+                id, name, w, l,
                 pts: parseFloat(s.points || 0),
                 pct: (w+l)>0 ? w/(w+l) : 0,
                 isNY: isNY(name, cfg.key),
@@ -11453,19 +11453,21 @@ function NYPlayoffWidget({ myTeams }) {
         const divNames = Object.keys(conf.divs);
         if (!divNames.length) return;
 
+        // Sort each division, mark div leaders — uses t.id like StandingsTab
         const divLeaderIds = new Set();
         divNames.forEach(dn => {
           const sorted = [...conf.divs[dn]].sort((a,b) => b.pct - a.pct);
-          if (sorted[0]) divLeaderIds.add(sorted[0].tid);
+          if (sorted[0]) { divLeaderIds.add(sorted[0].id); } // t.id not t.tid
         });
 
+        // All teams deduped, sorted by pct
         const seen = new Set();
         const all = divNames.flatMap(dn => conf.divs[dn])
-          .filter(t => { if(seen.has(t.tid)) return false; seen.add(t.tid); return true; });
+          .filter(t => { if(seen.has(t.id)) return false; seen.add(t.id); return true; });
         const allSorted = [...all].sort((a,b) => b.pct - a.pct);
 
-        const divLeaders = allSorted.filter(t =>  divLeaderIds.has(t.tid));
-        const nonLeaders = allSorted.filter(t => !divLeaderIds.has(t.tid));
+        const divLeaders = allSorted.filter(t =>  divLeaderIds.has(t.id)); // t.id
+        const nonLeaders = allSorted.filter(t => !divLeaderIds.has(t.id)); // t.id
         const lastWcTeam = nonLeaders[wcSpots - 1];
 
         divLeaders.forEach((t, i) => {
