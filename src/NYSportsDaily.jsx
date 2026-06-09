@@ -11366,19 +11366,20 @@ function EnhancedOTD() {
 // ─── NY PLAYOFF WIDGET ────────────────────────────────────────────────────
 // Live ESPN fetch. Computes WC GB mathematically to avoid ESPN field name
 // inconsistencies. NY teams pinned to top. My Teams starred.
-function NYPlayoffWidget({ myTeams }) {
-  const [data, setData]           = useState({});
-  const [sport, setSport]         = useState("mlb");
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [loading, setLoading]     = useState(true);
+function NYPlayoffWidget({ myTeams, standings }) {
+  const [sport, setSport] = useState("mlb");
 
   const MY_TEAM_NAMES = myTeams ? [...myTeams].map(t => t.toLowerCase()) : [];
 
   const SPORTS = [
-    { key:"mlb", label:"⚾ MLB", espnSport:"baseball",   league:"mlb", poSlots:6, wcSlots:3 },
-    { key:"nba", label:"🏀 NBA", espnSport:"basketball", league:"nba", poSlots:8, wcSlots:0 },
-    { key:"nhl", label:"🏒 NHL", espnSport:"hockey",     league:"nhl", poSlots:8, wcSlots:2 },
-    { key:"nfl", label:"🏈 NFL", espnSport:"football",   league:"nfl", poSlots:7, wcSlots:0 },
+    { key:"mlb",  label:"⚾ MLB",  divWinners:3, wcSpots:3,
+      leagues:["American League","National League","AL","NL","mlb","MLB"] },
+    { key:"nba",  label:"🏀 NBA",  divWinners:3, wcSpots:5,
+      leagues:["Eastern Conference","Western Conference","East","West","nba","NBA"] },
+    { key:"nhl",  label:"🏒 NHL",  divWinners:3, wcSpots:5,
+      leagues:["Eastern Conference","Western Conference","East","West","nhl","NHL"] },
+    { key:"nfl",  label:"🏈 NFL",  divWinners:4, wcSpots:3,
+      leagues:["AFC","NFC","nfl","NFL"] },
   ];
 
   const NY_NAMES = {
@@ -11386,242 +11387,144 @@ function NYPlayoffWidget({ myTeams }) {
     nhl:["Rangers","Islanders","Devils"], nfl:["Giants","Jets"],
   };
 
+  const CONF_DIV_MAP = {
+    "AL East":"AL","AL Central":"AL","AL West":"AL",
+    "NL East":"NL","NL Central":"NL","NL West":"NL",
+    "Atlantic Division":"East","Metropolitan Division":"East","Central Division":"East","Southeast Division":"East",
+    "Pacific Division":"West","Northwest Division":"West","Southwest Division":"West",
+    "AFC East":"AFC","AFC North":"AFC","AFC South":"AFC","AFC West":"AFC",
+    "NFC East":"NFC","NFC North":"NFC","NFC South":"NFC","NFC West":"NFC",
+    "Atlantic":"East","Metropolitan":"East","Central":"East","Southeast":"East",
+    "Pacific":"West","Northwest":"West","Southwest":"West",
+  };
+
   function isNY(name, key) {
-    return (NY_NAMES[key]||[]).some(t => name.toLowerCase().includes(t.toLowerCase()));
+    return (NY_NAMES[key]||[]).some(t => (name||"").toLowerCase().includes(t.toLowerCase()));
   }
   function isMyTeam(name) {
     return MY_TEAM_NAMES.some(t =>
-      name.toLowerCase().includes(t) || t.includes(name.toLowerCase().split(" ").pop().toLowerCase())
+      (name||"").toLowerCase().includes(t) ||
+      t.includes((name||"").toLowerCase().split(" ").pop().toLowerCase())
     );
   }
 
-  async function fetchSport(cfg) {
-    try {
-      // Try level=3 first, fall back to level=2 if 400
-      let r = await fetch(
-        `https://site.api.espn.com/apis/v2/sports/${cfg.espnSport}/${cfg.league}/standings?level=3`,
-        { cache:"no-store" }
-      );
-      // If 400, try without level param
-      if (!r.ok) {
-        r = await fetch(
-          `https://site.api.espn.com/apis/v2/sports/${cfg.espnSport}/${cfg.league}/standings`,
-          { cache:"no-store" }
-        );
-      }
-      if (!r.ok) return [];
-      const json = await r.json();
+  function buildPlayoffData(sportKey) {
+    const cfg = SPORTS.find(s => s.key === sportKey);
+    if (!cfg || !standings?.length) return [];
 
-      const CONF_MAP = {
-        "AL East":"AL","AL Central":"AL","AL West":"AL",
-        "NL East":"NL","NL Central":"NL","NL West":"NL",
-        "Atlantic":"East","Metropolitan":"East","Central":"East","Southeast":"East",
-        "Pacific":"West","Northwest":"West","Southwest":"West",
-        "AFC East":"AFC","AFC North":"AFC","AFC South":"AFC","AFC West":"AFC",
-        "NFC East":"NFC","NFC North":"NFC","NFC South":"NFC","NFC West":"NFC",
-      };
+    // Filter to this sport using league label
+    const sportGroups = standings.filter(group => {
+      const gl = (group.league||"").toLowerCase();
+      return cfg.leagues.some(l => gl.includes(l.toLowerCase()) || l.toLowerCase().includes(gl));
+    });
 
-      const confResult = {};
+    if (!sportGroups.length) return [];
 
-      function walkNode(node, parentConf) {
-        const nodeName = node.name || node.abbreviation || "";
-        const confName = CONF_MAP[nodeName] || parentConf || nodeName || "unknown";
-        if (node.standings?.entries?.length) {
-          if (!confResult[confName]) confResult[confName] = { divs:{} };
-          const divName = nodeName || confName;
-          if (!confResult[confName].divs[divName]) confResult[confName].divs[divName] = [];
-          node.standings.entries.forEach(e => {
-            const name = e.team?.displayName || e.team?.name || "";
-            const s = {};
-            (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value??""); });
-            const w   = parseFloat(s.wins || s.W || 0);
-            const l   = parseFloat(s.losses || s.L || 0);
-            const id  = String(e.team?.id || name);
-            if (!confResult[confName].divs[divName].find(x => x.id === id)) {
-              confResult[confName].divs[divName].push({
-                id, name, w, l,
-                pts: parseFloat(s.points || 0),
-                pct: (w+l)>0 ? w/(w+l) : 0,
-                isNY: isNY(name, cfg.key),
-                isMy: isMyTeam(name),
-              });
-            }
-          });
-        }
-        (node.children||[]).forEach(child => walkNode(child, confName));
-      }
-
-      (json.children||[]).forEach(node => walkNode(node, ""));
-
-      const { divWinners, wcSpots } = cfg;
-      const finalTeams = [];
-
-      Object.values(confResult).forEach(conf => {
-        const divNames = Object.keys(conf.divs);
-        if (!divNames.length) return;
-
-        const divLeaderIds = new Set();
-        divNames.forEach(dn => {
-          const sorted = [...conf.divs[dn]].sort((a,b) => b.pct - a.pct);
-          if (sorted[0]) divLeaderIds.add(sorted[0].id);
-        });
-
-        const seen = new Set();
-        const all = divNames.flatMap(dn => conf.divs[dn])
-          .filter(t => { if(seen.has(t.id)) return false; seen.add(t.id); return true; });
-        const allSorted = [...all].sort((a,b) => b.pct - a.pct);
-
-        const divLeaders = allSorted.filter(t =>  divLeaderIds.has(t.id));
-        const nonLeaders = allSorted.filter(t => !divLeaderIds.has(t.id));
-        const lastWcTeam = nonLeaders[wcSpots - 1];
-
-        divLeaders.forEach((t, i) => {
-          finalTeams.push({ ...t, inPO:true, wcGb:null, seed:i+1 });
-        });
-        nonLeaders.forEach((t, i) => {
-          const inPO = i < wcSpots;
-          let wcGb = null;
-          if (!inPO && lastWcTeam && (t.w+t.l)>0 && (lastWcTeam.w+lastWcTeam.l)>0) {
-            const gb = ((lastWcTeam.w - t.w) + (t.l - lastWcTeam.l)) / 2;
-            wcGb = Math.max(0, Math.round(gb * 2) / 2);
-          }
-          finalTeams.push({ ...t, inPO, wcGb, seed: divWinners + i + 1 });
+    // Group divisions into conferences
+    const confGroups = {};
+    sportGroups.forEach(group => {
+      const divName  = group.division || group.league || "";
+      const confName = CONF_DIV_MAP[divName] || (group.league||"Conf");
+      if (!confGroups[confName]) confGroups[confName] = { divs:{} };
+      if (!confGroups[confName].divs[divName]) confGroups[confName].divs[divName] = [];
+      (group.rows||[]).forEach(row => {
+        const w = parseFloat(row.w)||0;
+        const l = parseFloat(row.l)||0;
+        confGroups[confName].divs[divName].push({
+          id:   row.team, name: row.team, w, l,
+          pct:  (w+l)>0 ? w/(w+l) : 0,
+          isNY: isNY(row.team, sportKey),
+          isMy: isMyTeam(row.team),
         });
       });
+    });
 
-      // If conference walk gave no results, fall back to flat seed-based approach
-      if (finalTeams.length === 0) {
-        console.log("[PO WIDGET] Conference walk empty, using flat fallback");
-        const allEntries = [];
-        function walkFlat(node) {
-          (node?.standings?.entries||[]).forEach(e => allEntries.push(e));
-          (node.children||[]).forEach(walkFlat);
+    const finalTeams = [];
+    const { divWinners, wcSpots } = cfg;
+
+    Object.values(confGroups).forEach(conf => {
+      const divNames = Object.keys(conf.divs);
+      if (!divNames.length) return;
+
+      const divLeaderIds = new Set();
+      divNames.forEach(dn => {
+        const sorted = [...conf.divs[dn]].sort((a,b) => b.pct - a.pct);
+        if (sorted[0]) divLeaderIds.add(sorted[0].id);
+      });
+
+      const seen = new Set();
+      const all = divNames.flatMap(dn => conf.divs[dn])
+        .filter(t => { if(seen.has(t.id)) return false; seen.add(t.id); return true; });
+      const allSorted = [...all].sort((a,b) => b.pct - a.pct);
+
+      const divLeaders = allSorted.filter(t =>  divLeaderIds.has(t.id));
+      const nonLeaders = allSorted.filter(t => !divLeaderIds.has(t.id));
+      const lastWcTeam = nonLeaders[wcSpots - 1];
+
+      divLeaders.forEach((t,i) => {
+        finalTeams.push({...t, inPO:true, wcGb:null, seed:i+1});
+      });
+      nonLeaders.forEach((t,i) => {
+        const inPO = i < wcSpots;
+        let wcGb = null;
+        if (!inPO && lastWcTeam && (t.w+t.l)>0 && (lastWcTeam.w+lastWcTeam.l)>0) {
+          const gb = ((lastWcTeam.w - t.w) + (t.l - lastWcTeam.l)) / 2;
+          wcGb = Math.max(0, Math.round(gb * 2) / 2);
         }
-        walkFlat(json);
-        const seen2 = new Set();
-        const flatTeams = allEntries
-          .map(e => {
-            const name = e.team?.displayName || e.team?.name || "";
-            const s = {};
-            (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value??""); });
-            const w = parseFloat(s.wins||s.W||0);
-            const l = parseFloat(s.losses||s.L||0);
-            const seed = parseInt(s.playoffSeed||99);
-            return { id:String(e.team?.id||name), name, w, l, seed,
-              pct:(w+l)>0?w/(w+l):0, pts:parseFloat(s.points||0),
-              isNY:isNY(name,cfg.key), isMy:isMyTeam(name) };
-          })
-          .filter(t => { if(!t.name||seen2.has(t.id)) return false; seen2.add(t.id); return true; })
-          .sort((a,b) => a.seed-b.seed || b.pct-a.pct);
-        // Split at midpoint for two conferences
-        const half = Math.ceil(flatTeams.length/2);
-        [flatTeams.slice(0,half), flatTeams.slice(half)].forEach(conf => {
-          const lastIn = conf[divWinners+wcSpots-1];
-          conf.forEach((t,i) => {
-            const inPO = i < divWinners+wcSpots;
-            let wcGb = null;
-            if (!inPO && lastIn && (t.w+t.l)>0 && (lastIn.w+lastIn.l)>0) {
-              const gb = ((lastIn.w-t.w)+(t.l-lastIn.l))/2;
-              wcGb = Math.max(0, Math.round(gb*2)/2);
-            }
-            finalTeams.push({...t, inPO, wcGb, seed:i+1});
-          });
-        });
-      }
+        finalTeams.push({...t, inPO, wcGb, seed: divWinners + i + 1});
+      });
+    });
 
-      return finalTeams;
-    } catch(e) { console.error("fetchSport:", e); return []; }
-  }
-  async function fetchAll() {
-    setLoading(true);
-    const results = {};
-    await Promise.all(SPORTS.map(async cfg => {
-      results[cfg.key] = await fetchSport(cfg);
-    }));
-    setData(results);
-    setLastUpdated(new Date());
-    setLoading(false);
+    return finalTeams;
   }
 
-  useEffect(() => {
-    fetchAll();
-    const t = setInterval(fetchAll, 300000);
-    return () => clearInterval(t);
-  }, []);
-
-  const cfg     = SPORTS.find(s => s.key === sport);
-  const teams   = data[sport] || [];
+  const teams   = buildPlayoffData(sport);
   const nyTeams = teams.filter(t => t.isNY).sort((a,b) => (a.seed||99)-(b.seed||99));
   const topRest = teams.filter(t => !t.isNY).sort((a,b) => (a.seed||99)-(b.seed||99)).slice(0,6);
 
   function RecRow({ t, showSeed }) {
-    const rec = sport==="nhl" && t.pts > 0
-      ? `${t.w}W · ${t.pts}pts`
-      : `${t.w}–${t.l}`;
+    const rec = `${t.w}\u2013${t.l}`;
     const gbDisplay = t.inPO
-      ? "✓ IN"
+      ? "\u2713 IN"
       : t.wcGb !== null && t.wcGb > 0
         ? `${Number.isInteger(t.wcGb) ? t.wcGb : t.wcGb.toFixed(1)} out`
-        : "—";
+        : "\u2014";
     const gbColor = t.inPO ? "#22c55e" : "#c8201c";
-
     return (
       <div style={{display:"flex", alignItems:"center", gap:7, padding:"5px 8px",
         background:t.isMy?"rgba(240,180,41,0.06)":"transparent",
         borderLeft:t.isMy?"2px solid #f0b429":"2px solid transparent"}}>
-        {showSeed && (
-          <span style={{fontFamily:"'Georgia',serif", fontSize:10, fontWeight:900,
-            color:"#444", minWidth:14, textAlign:"center"}}>
-            {t.seed < 99 ? t.seed : "—"}
-          </span>
-        )}
-        {t.isMy && <span style={{fontSize:9, color:"#f0b429", flexShrink:0}}>★</span>}
-        <span style={{fontFamily:"'Georgia',serif", fontSize:12,
-          fontWeight:t.isNY?900:700,
-          color:t.inPO?"#22c55e":t.isNY?"#e8e0d0":"#888",
-          flex:1, letterSpacing:"0.03em"}}>
+        {showSeed && <span style={{fontFamily:"Georgia,serif", fontSize:10, fontWeight:900,
+          color:"#444", minWidth:14, textAlign:"center"}}>{t.seed < 99 ? t.seed : "-"}</span>}
+        {t.isMy && <span style={{fontSize:9, color:"#f0b429", flexShrink:0}}>&#9733;</span>}
+        <span style={{fontFamily:"Georgia,serif", fontSize:12, fontWeight:t.isNY?900:700,
+          color:t.inPO?"#22c55e":t.isNY?"#e8e0d0":"#888", flex:1, letterSpacing:"0.03em"}}>
           {t.name.split(" ").slice(-1)[0]}
         </span>
-        <span style={{fontFamily:"'Georgia',serif", fontSize:10, color:"#555",
+        <span style={{fontFamily:"Georgia,serif", fontSize:10, color:"#555",
           minWidth:46, textAlign:"right"}}>{rec}</span>
-        <span style={{fontFamily:"'Georgia',serif", fontSize:10, fontWeight:700,
-          minWidth:50, textAlign:"right", color:gbColor}}>
-          {gbDisplay}
-        </span>
+        <span style={{fontFamily:"Georgia,serif", fontSize:10, fontWeight:700,
+          minWidth:50, textAlign:"right", color:gbColor}}>{gbDisplay}</span>
       </div>
     );
   }
 
   return (
-    <div style={{background:"#111", border:"1px solid #1a1a1a",
-      borderTop:"2px solid #c8201c", marginBottom:8}}>
-      {/* Header */}
-      <div style={{display:"flex", alignItems:"center", gap:8, padding:"7px 12px",
-        borderBottom:"1px solid #1a1a1a"}}>
-        <div style={{width:6, height:6, borderRadius:"50%", background:"#22c55e",
-          animation:"pulse 2s infinite", flexShrink:0}} />
-        <span style={{fontFamily:"'Georgia',serif", fontSize:8, fontWeight:900,
-          letterSpacing:"0.22em", color:"#c8201c", textTransform:"uppercase"}}>
-          🗽 NY Playoff Picture
+    <div style={{background:"#111", border:"1px solid #1a1a1a", borderTop:"2px solid #c8201c", marginBottom:8}}>
+      <div style={{display:"flex", alignItems:"center", gap:8, padding:"7px 12px", borderBottom:"1px solid #1a1a1a"}}>
+        <div style={{width:6, height:6, borderRadius:"50%", background:"#22c55e", animation:"pulse 2s infinite", flexShrink:0}} />
+        <span style={{fontFamily:"Georgia,serif", fontSize:8, fontWeight:900, letterSpacing:"0.22em", color:"#c8201c", textTransform:"uppercase"}}>
+          NY Playoff Picture
         </span>
         <span style={{marginLeft:"auto", fontSize:9, color:"#444"}}>
-          {lastUpdated
-            ? `Updated ${lastUpdated.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}`
-            : loading ? "Loading live data…" : ""}
+          {standings?.length ? "Live data" : "Loading..."}
         </span>
-        <button onClick={fetchAll}
-          style={{fontSize:9, color:"#444", background:"transparent",
-            border:"1px solid #2a2a2a", padding:"2px 6px", cursor:"pointer",
-            fontFamily:"'Georgia',serif", fontWeight:700}}>↺</button>
       </div>
-
-      {/* Sport tabs */}
       <div style={{display:"flex", borderBottom:"1px solid #1a1a1a", background:"#0e0e0e"}}>
         {SPORTS.map(s => (
           <button key={s.key} onClick={() => setSport(s.key)}
-            style={{fontFamily:"'Georgia',serif", fontSize:10, fontWeight:700,
-              letterSpacing:"0.06em", padding:"5px 13px",
-              background:"transparent", border:"none", cursor:"pointer",
+            style={{fontFamily:"Georgia,serif", fontSize:10, fontWeight:700, letterSpacing:"0.06em",
+              padding:"5px 13px", background:"transparent", border:"none", cursor:"pointer",
               color:sport===s.key?"#e8e0d0":"#555",
               borderBottom:sport===s.key?"2px solid #c8201c":"2px solid transparent",
               transition:"all 0.15s"}}>
@@ -11629,47 +11532,38 @@ function NYPlayoffWidget({ myTeams }) {
           </button>
         ))}
       </div>
-
-      {/* Body */}
       <div style={{padding:"6px 4px"}}>
-        {loading && !teams.length ? (
-          <div style={{padding:"14px", textAlign:"center", fontSize:10,
-            color:"#555", letterSpacing:"0.1em"}}>LOADING LIVE DATA…</div>
+        {!standings?.length ? (
+          <div style={{padding:"14px", textAlign:"center", fontSize:10, color:"#555"}}>LOADING...</div>
         ) : (
           <>
-            {nyTeams.length > 0 && (
-              <>
-                <div style={{fontFamily:"'Georgia',serif", fontSize:8, fontWeight:900,
-                  letterSpacing:"0.2em", color:"#444", textTransform:"uppercase",
-                  padding:"5px 8px 3px", borderBottom:"1px solid #1a1a1a", marginBottom:2}}>
-                  🗽 NY TEAMS
-                </div>
-                {nyTeams.map((t,i) => <RecRow key={i} t={t} showSeed={false} />)}
-              </>
-            )}
-            {topRest.length > 0 && (
-              <>
-                <div style={{fontFamily:"'Georgia',serif", fontSize:8, fontWeight:900,
-                  letterSpacing:"0.2em", color:"#333", textTransform:"uppercase",
-                  padding:"6px 8px 3px", borderTop:"1px solid #1a1a1a",
-                  borderBottom:"1px solid #1a1a1a", marginTop:3, marginBottom:2}}>
-                  PLAYOFF PICTURE — TOP {topRest.length}
-                </div>
-                {topRest.map((t,i) => <RecRow key={i} t={t} showSeed={true} />)}
-              </>
-            )}
+            {nyTeams.length > 0 && <>
+              <div style={{fontFamily:"Georgia,serif", fontSize:8, fontWeight:900,
+                letterSpacing:"0.2em", color:"#444", textTransform:"uppercase",
+                padding:"5px 8px 3px", borderBottom:"1px solid #1a1a1a", marginBottom:2}}>
+                NY TEAMS
+              </div>
+              {nyTeams.map((t,i) => <RecRow key={i} t={t} showSeed={false} />)}
+            </>}
+            {topRest.length > 0 && <>
+              <div style={{fontFamily:"Georgia,serif", fontSize:8, fontWeight:900,
+                letterSpacing:"0.2em", color:"#333", textTransform:"uppercase",
+                padding:"6px 8px 3px", borderTop:"1px solid #1a1a1a",
+                borderBottom:"1px solid #1a1a1a", marginTop:3, marginBottom:2}}>
+                PLAYOFF PICTURE
+              </div>
+              {topRest.map((t,i) => <RecRow key={i} t={t} showSeed={true} />)}
+            </>}
             {!nyTeams.length && !topRest.length && (
-              <div style={{padding:"12px", textAlign:"center", fontSize:10,
-                color:"#555", fontStyle:"italic"}}>No standings data available.</div>
+              <div style={{padding:"12px", textAlign:"center", fontSize:10, color:"#555", fontStyle:"italic"}}>
+                No data available.
+              </div>
             )}
           </>
         )}
       </div>
-
-      {/* Legend */}
-      <div style={{display:"flex", gap:12, padding:"5px 12px",
-        borderTop:"1px solid #1a1a1a", background:"#0e0e0e", flexWrap:"wrap"}}>
-        {[{color:"#22c55e",label:"In"},{color:"#c8201c",label:"Out"},{color:"#f0b429",label:"My Teams ★"}]
+      <div style={{display:"flex", gap:12, padding:"5px 12px", borderTop:"1px solid #1a1a1a", background:"#0e0e0e"}}>
+        {[{color:"#22c55e",label:"In"},{color:"#c8201c",label:"Out"},{color:"#f0b429",label:"My Teams"}]
           .map(({color,label}) => (
             <div key={label} style={{display:"flex", alignItems:"center", gap:4}}>
               <div style={{width:5, height:5, borderRadius:"50%", background:color}} />
@@ -11682,7 +11576,6 @@ function NYPlayoffWidget({ myTeams }) {
 }
 
 
-// ─── MORNING DIGEST SIGNUP ────────────────────────────────────────────────
 function DigestSignup() {
   const NY_TEAMS_LIST = [
     "Yankees","Mets","Knicks","Nets","Rangers","Islanders",
