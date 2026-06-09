@@ -11391,8 +11391,7 @@ function NYPlayoffWidget({ myTeams }) {
     "NL East":"NL","NL Central":"NL","NL West":"NL",
     "Atlantic Division":"East","Metropolitan Division":"East",
     "Central Division":"East","Southeast Division":"East",
-    "Pacific Division":"West","Northwest Division":"West",
-    "Southwest Division":"West",
+    "Pacific Division":"West","Northwest Division":"West","Southwest Division":"West",
     "Atlantic":"East","Metropolitan":"East","Southeast":"East",
     "Pacific":"West","Northwest":"West","Southwest":"West",
     "AFC East":"AFC","AFC North":"AFC","AFC South":"AFC","AFC West":"AFC",
@@ -11410,7 +11409,6 @@ function NYPlayoffWidget({ myTeams }) {
   }
 
   async function fetchSport(cfg) {
-    // Try with level=3, then without — with a small delay to avoid rate limits
     const urls = [
       `https://site.api.espn.com/apis/v2/sports/${cfg.espnSport}/${cfg.league}/standings?level=3`,
       `https://site.api.espn.com/apis/v2/sports/${cfg.espnSport}/${cfg.league}/standings`,
@@ -11425,111 +11423,109 @@ function NYPlayoffWidget({ myTeams }) {
     if (!json) return [];
 
     const confResult = {};
-
     function walkNode(node, parentConf) {
       const nodeName = node.name || node.abbreviation || "";
       const confName = CONF_MAP[nodeName] || parentConf || nodeName || "unknown";
-      if (node.standings?.entries?.length) {
+      if (node.standings && node.standings.entries && node.standings.entries.length) {
         if (!confResult[confName]) confResult[confName] = { divs:{} };
         const divName = nodeName || confName;
         if (!confResult[confName].divs[divName]) confResult[confName].divs[divName] = [];
-        node.standings.entries.forEach(e => {
-          const name = e.team?.displayName || e.team?.name || "";
+        node.standings.entries.forEach(function(e) {
+          const name = (e.team && (e.team.displayName || e.team.name)) || "";
           const s = {};
-          (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value??""); });
-          const w  = parseFloat(s.wins||s.W||0);
-          const l  = parseFloat(s.losses||s.L||0);
-          const id = String(e.team?.id || name);
-          if (!confResult[confName].divs[divName].find(x => x.id === id)) {
+          (e.stats||[]).forEach(function(st) { s[st.name] = st.displayValue != null ? st.displayValue : String(st.value != null ? st.value : ""); });
+          const w  = parseFloat(s.wins || s.W || 0);
+          const l  = parseFloat(s.losses || s.L || 0);
+          const id = String((e.team && e.team.id) || name);
+          if (!confResult[confName].divs[divName].find(function(x) { return x.id === id; })) {
             confResult[confName].divs[divName].push({
-              id, name, w, l,
-              pts: parseFloat(s.points||0),
-              pct: (w+l)>0 ? w/(w+l) : 0,
+              id: id, name: name, w: w, l: l,
+              pts: parseFloat(s.points || 0),
+              pct: (w+l) > 0 ? w/(w+l) : 0,
               isNY: isNY(name, cfg.key),
               isMy: isMyTeam(name),
             });
           }
         });
       }
-      (node.children||[]).forEach(child => walkNode(child, confName));
+      (node.children||[]).forEach(function(child) { walkNode(child, confName); });
     }
-
-    (json.children||[]).forEach(node => walkNode(node, ""));
+    (json.children||[]).forEach(function(node) { walkNode(node, ""); });
 
     const finalTeams = [];
-    const { divWinners, wcSpots } = cfg;
+    const divWinners = cfg.divWinners;
+    const wcSpots    = cfg.wcSpots;
 
-    Object.values(confResult).forEach(conf => {
+    Object.values(confResult).forEach(function(conf) {
       const divNames = Object.keys(conf.divs);
       if (!divNames.length) return;
-
       const divLeaderIds = new Set();
-      divNames.forEach(dn => {
-        const sorted = [...conf.divs[dn]].sort((a,b) => b.pct - a.pct);
+      divNames.forEach(function(dn) {
+        const sorted = conf.divs[dn].slice().sort(function(a,b) { return b.pct - a.pct; });
         if (sorted[0]) divLeaderIds.add(sorted[0].id);
       });
-
       const seen = new Set();
-      const all = divNames.flatMap(dn => conf.divs[dn])
-        .filter(t => { if(seen.has(t.id)) return false; seen.add(t.id); return true; });
-      const allSorted = [...all].sort((a,b) => b.pct - a.pct);
-
-      const divLeaders = allSorted.filter(t =>  divLeaderIds.has(t.id));
-      const nonLeaders = allSorted.filter(t => !divLeaderIds.has(t.id));
+      const all = divNames.reduce(function(acc, dn) { return acc.concat(conf.divs[dn]); }, [])
+        .filter(function(t) { if (seen.has(t.id)) return false; seen.add(t.id); return true; });
+      const allSorted = all.slice().sort(function(a,b) { return b.pct - a.pct; });
+      const divLeaders = allSorted.filter(function(t) { return divLeaderIds.has(t.id); });
+      const nonLeaders = allSorted.filter(function(t) { return !divLeaderIds.has(t.id); });
       const lastWcTeam = nonLeaders[wcSpots - 1];
-
-      divLeaders.forEach((t,i) => finalTeams.push({...t, inPO:true, wcGb:null, seed:i+1}));
-      nonLeaders.forEach((t,i) => {
+      divLeaders.forEach(function(t, i) {
+        finalTeams.push(Object.assign({}, t, { inPO:true, wcGb:null, seed:i+1 }));
+      });
+      nonLeaders.forEach(function(t, i) {
         const inPO = i < wcSpots;
         let wcGb = null;
-        if (!inPO && lastWcTeam && (t.w+t.l)>0 && (lastWcTeam.w+lastWcTeam.l)>0) {
-          const gb = ((lastWcTeam.w-t.w)+(t.l-lastWcTeam.l))/2;
-          wcGb = Math.max(0, Math.round(gb*2)/2);
+        if (!inPO && lastWcTeam && (t.w+t.l) > 0 && (lastWcTeam.w+lastWcTeam.l) > 0) {
+          const gb = ((lastWcTeam.w - t.w) + (t.l - lastWcTeam.l)) / 2;
+          wcGb = Math.max(0, Math.round(gb * 2) / 2);
         }
-        finalTeams.push({...t, inPO, wcGb, seed:divWinners+i+1});
+        finalTeams.push(Object.assign({}, t, { inPO:inPO, wcGb:wcGb, seed:divWinners+i+1 }));
       });
     });
-
     return finalTeams;
   }
 
-  useEffect(() => {
-    // Delay 2 seconds to let other page fetches complete first (avoid ESPN rate limit)
-    const timer = setTimeout(async () => {
+  useEffect(function() {
+    const timer = setTimeout(async function() {
       setLoading(true);
       const results = {};
-      // Fetch sports sequentially with small gaps to avoid rate limiting
-      for (const cfg of SPORTS) {
-        results[cfg.key] = await fetchSport(cfg);
-        await new Promise(r => setTimeout(r, 500)); // 500ms between calls
+      for (let i = 0; i < SPORTS.length; i++) {
+        results[SPORTS[i].key] = await fetchSport(SPORTS[i]);
+        await new Promise(function(r) { setTimeout(r, 600); });
       }
       setData(results);
       setLastUpdated(new Date());
       setLoading(false);
     }, 2000);
-    return () => clearTimeout(timer);
+    return function() { clearTimeout(timer); };
   }, []);
 
   const teams   = data[sport] || [];
-  const nyTeams = teams.filter(t => t.isNY).sort((a,b) => (a.seed||99)-(b.seed||99));
-  const topRest = teams.filter(t => !t.isNY).sort((a,b) => (a.seed||99)-(b.seed||99)).slice(0,6);
+  const nyTeams = teams.filter(function(t) { return t.isNY; }).sort(function(a,b) { return (a.seed||99)-(b.seed||99); });
+  const topRest = teams.filter(function(t) { return !t.isNY; }).sort(function(a,b) { return (a.seed||99)-(b.seed||99); }).slice(0,6);
 
   function RecRow({ t, showSeed }) {
-    const rec = sport==="nhl" && t.pts > 0 ? `${t.w}W · ${t.pts}pts` : `${t.w}–${t.l}`;
-    const gbDisplay = t.inPO ? "✓ IN"
-      : t.wcGb !== null && t.wcGb > 0
-        ? `${Number.isInteger(t.wcGb) ? t.wcGb : t.wcGb.toFixed(1)} out`
-        : "—";
+    const rec = (sport === "nhl" && t.pts > 0) ? (t.w + "W \u00b7 " + t.pts + "pts") : (t.w + "\u2013" + t.l);
+    const gbDisplay = t.inPO ? "\u2713 IN"
+      : (t.wcGb !== null && t.wcGb > 0)
+        ? ((Number.isInteger(t.wcGb) ? t.wcGb : t.wcGb.toFixed(1)) + " out")
+        : "\u2014";
     const gbColor = t.inPO ? "#22c55e" : "#c8201c";
     return (
       <div style={{display:"flex", alignItems:"center", gap:7, padding:"5px 8px",
-        background:t.isMy?"rgba(240,180,41,0.06)":"transparent",
-        borderLeft:t.isMy?"2px solid #f0b429":"2px solid transparent"}}>
-        {showSeed && <span style={{fontSize:10, fontWeight:900, color:"#444",
-          minWidth:14, textAlign:"center"}}>{t.seed < 99 ? t.seed : "-"}</span>}
-        {t.isMy && <span style={{fontSize:9, color:"#f0b429", flexShrink:0}}>★</span>}
-        <span style={{fontSize:12, fontWeight:t.isNY?900:700,
-          color:t.inPO?"#22c55e":t.isNY?"#e8e0d0":"#888",
+        background:t.isMy ? "rgba(240,180,41,0.06)" : "transparent",
+        borderLeft:t.isMy ? "2px solid #f0b429" : "2px solid transparent"}}>
+        {showSeed && (
+          <span style={{fontSize:10, fontWeight:900, color:"#444",
+            minWidth:14, textAlign:"center"}}>
+            {t.seed < 99 ? t.seed : "\u2014"}
+          </span>
+        )}
+        {t.isMy && <span style={{fontSize:9, color:"#f0b429", flexShrink:0}}>\u2605</span>}
+        <span style={{fontSize:12, fontWeight:t.isNY ? 900 : 700,
+          color:t.inPO ? "#22c55e" : t.isNY ? "#e8e0d0" : "#888",
           flex:1, letterSpacing:"0.03em"}}>
           {t.name.split(" ").slice(-1)[0]}
         </span>
@@ -11542,147 +11538,85 @@ function NYPlayoffWidget({ myTeams }) {
   }
 
   return (
-    <div style={{background:"#111", border:"1px solid #1a1a1a", borderTop:"2px solid #c8201c", marginBottom:8}}>
-      <div style={{display:"flex", alignItems:"center", gap:8, padding:"7px 12px", borderBottom:"1px solid #1a1a1a"}}>
-        <div style={{width:6, height:6, borderRadius:"50%", background:"#22c55e", animation:"pulse 2s infinite", flexShrink:0}} />
-        <span style={{fontSize:8, fontWeight:900, letterSpacing:"0.22em", color:"#c8201c", textTransform:"uppercase"}}>
-          🗽 NY Playoff Picture
+    <div style={{background:"#111", border:"1px solid #1a1a1a",
+      borderTop:"2px solid #c8201c", marginBottom:8}}>
+      <div style={{display:"flex", alignItems:"center", gap:8, padding:"7px 12px",
+        borderBottom:"1px solid #1a1a1a"}}>
+        <div style={{width:6, height:6, borderRadius:"50%", background:"#22c55e",
+          animation:"pulse 2s infinite", flexShrink:0}} />
+        <span style={{fontSize:8, fontWeight:900, letterSpacing:"0.22em",
+          color:"#c8201c", textTransform:"uppercase"}}>
+          NY Playoff Picture
         </span>
         <span style={{marginLeft:"auto", fontSize:9, color:"#444"}}>
-          {loading ? "Loading…" : lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}` : ""}
+          {loading ? "Loading\u2026" : lastUpdated
+            ? ("Updated " + lastUpdated.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}))
+            : ""}
         </span>
-        <button onClick={async () => {
-          setLoading(true);
-          const results = {};
-          for (const cfg of SPORTS) {
-            results[cfg.key] = await fetchSport(cfg);
-            await new Promise(r => setTimeout(r, 300));
-          }
-          setData(results);
-          setLastUpdated(new Date());
-          setLoading(false);
-        }} style={{fontSize:9, color:"#444", background:"transparent",
-          border:"1px solid #2a2a2a", padding:"2px 6px", cursor:"pointer"}}>
-          ↺
-        </button>
       </div>
       <div style={{display:"flex", borderBottom:"1px solid #1a1a1a", background:"#0e0e0e"}}>
-        {SPORTS.map(s => (
-          <button key={s.key} onClick={() => setSport(s.key)}
-            style={{fontSize:10, fontWeight:700, letterSpacing:"0.06em", padding:"5px 13px",
-              background:"transparent", border:"none", cursor:"pointer",
-              color:sport===s.key?"#e8e0d0":"#555",
-              borderBottom:sport===s.key?"2px solid #c8201c":"2px solid transparent",
-              transition:"all 0.15s"}}>
-            {s.label}
-          </button>
-        ))}
+        {SPORTS.map(function(s) {
+          return (
+            <button key={s.key} onClick={function() { setSport(s.key); }}
+              style={{fontSize:10, fontWeight:700, letterSpacing:"0.06em", padding:"5px 13px",
+                background:"transparent", border:"none", cursor:"pointer",
+                color:sport === s.key ? "#e8e0d0" : "#555",
+                borderBottom:sport === s.key ? "2px solid #c8201c" : "2px solid transparent",
+                transition:"all 0.15s"}}>
+              {s.label}
+            </button>
+          );
+        })}
       </div>
       <div style={{padding:"6px 4px"}}>
         {loading ? (
-          <div style={{padding:"14px", textAlign:"center", fontSize:10, color:"#555", letterSpacing:"0.1em"}}>
-            LOADING LIVE DATA…
-          </div>
+          <div style={{padding:"14px", textAlign:"center", fontSize:10,
+            color:"#555", letterSpacing:"0.1em"}}>LOADING LIVE DATA\u2026</div>
         ) : (
-          <>
-            {nyTeams.length > 0 && <>
-              <div style={{fontSize:8, fontWeight:900, letterSpacing:"0.2em", color:"#444",
-                textTransform:"uppercase", padding:"5px 8px 3px",
-                borderBottom:"1px solid #1a1a1a", marginBottom:2}}>
-                🗽 NY TEAMS
-              </div>
-              {nyTeams.map((t,i) => <RecRow key={i} t={t} showSeed={false} />)}
-            </>}
-            {topRest.length > 0 && <>
-              <div style={{fontSize:8, fontWeight:900, letterSpacing:"0.2em", color:"#333",
-                textTransform:"uppercase", padding:"6px 8px 3px",
-                borderTop:"1px solid #1a1a1a", borderBottom:"1px solid #1a1a1a",
-                marginTop:3, marginBottom:2}}>
-                PLAYOFF PICTURE — TOP {topRest.length}
-              </div>
-              {topRest.map((t,i) => <RecRow key={i} t={t} showSeed={true} />)}
-            </>}
-            {!nyTeams.length && !topRest.length && (
-              <div style={{padding:"12px", textAlign:"center", fontSize:10, color:"#555", fontStyle:"italic"}}>
-                No standings data available.
-              </div>
+          <React.Fragment>
+            {nyTeams.length > 0 && (
+              <React.Fragment>
+                <div style={{fontSize:8, fontWeight:900, letterSpacing:"0.2em", color:"#444",
+                  textTransform:"uppercase", padding:"5px 8px 3px",
+                  borderBottom:"1px solid #1a1a1a", marginBottom:2}}>
+                  NY TEAMS
+                </div>
+                {nyTeams.map(function(t, i) { return <RecRow key={i} t={t} showSeed={false} />; })}
+              </React.Fragment>
             )}
-          </>
+            {topRest.length > 0 && (
+              <React.Fragment>
+                <div style={{fontSize:8, fontWeight:900, letterSpacing:"0.2em", color:"#333",
+                  textTransform:"uppercase", padding:"6px 8px 3px",
+                  borderTop:"1px solid #1a1a1a", borderBottom:"1px solid #1a1a1a",
+                  marginTop:3, marginBottom:2}}>
+                  {"PLAYOFF PICTURE \u2014 TOP " + topRest.length}
+                </div>
+                {topRest.map(function(t, i) { return <RecRow key={i} t={t} showSeed={true} />; })}
+              </React.Fragment>
+            )}
+            {!nyTeams.length && !topRest.length && (
+              <div style={{padding:"12px", textAlign:"center", fontSize:10,
+                color:"#555", fontStyle:"italic"}}>No standings data available.</div>
+            )}
+          </React.Fragment>
         )}
       </div>
-      <div style={{display:"flex", gap:12, padding:"5px 12px", borderTop:"1px solid #1a1a1a", background:"#0e0e0e"}}>
-        {[{color:"#22c55e",label:"In"},{color:"#c8201c",label:"Out"},{color:"#f0b429",label:"My Teams ★"}]
-          .map(({color,label}) => (
-            <div key={label} style={{display:"flex", alignItems:"center", gap:4}}>
-              <div style={{width:5, height:5, borderRadius:"50%", background:color}} />
-              <span style={{fontSize:9, color:"#555"}}>{label}</span>
-            </div>
-          ))}
+      <div style={{display:"flex", gap:12, padding:"5px 12px",
+        borderTop:"1px solid #1a1a1a", background:"#0e0e0e", flexWrap:"wrap"}}>
+        {[{color:"#22c55e", label:"In"}, {color:"#c8201c", label:"Out"}, {color:"#f0b429", label:"My Teams"}]
+          .map(function({color, label}) {
+            return (
+              <div key={label} style={{display:"flex", alignItems:"center", gap:4}}>
+                <div style={{width:5, height:5, borderRadius:"50%", background:color}} />
+                <span style={{fontSize:9, color:"#555"}}>{label}</span>
+              </div>
+            );
+          })}
       </div>
     </div>
   );
 }
-
-              onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSubmit()}
-              style={{flex:"2 1 200px", padding:"8px 12px",
-                background:"#111", border:"1px solid #2a2a2a",
-                color:"#e8e0d0", fontSize:12, fontFamily:"'Georgia',serif",
-                outline:"none"}}
-            />
-          </div>
-
-          {/* Team picker */}
-          <div style={{marginBottom:14}}>
-            <div style={{fontSize:9, fontWeight:900, color:"#555",
-              letterSpacing:"0.18em", textTransform:"uppercase",
-              marginBottom:8}}>
-              Pick your teams (optional — leave blank for all NY):
-            </div>
-            <div style={{display:"flex", flexWrap:"wrap", gap:6}}>
-              {NY_TEAMS_LIST.map(team => {
-                const on = teams.includes(team);
-                return (
-                  <button key={team} onClick={() => toggleTeam(team)}
-                    style={{fontFamily:"'Georgia',serif", fontSize:10,
-                      fontWeight:700, letterSpacing:"0.06em",
-                      padding:"4px 10px",
-                      background: on ? "#c8201c" : "transparent",
-                      border: `1px solid ${on ? "#c8201c" : "#2a2a2a"}`,
-                      color: on ? "#fff" : "#666",
-                      cursor:"pointer", transition:"all 0.12s"}}>
-                    {team}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Error message */}
-          {status === "error" && (
-            <div style={{fontSize:11, color:"#f87171", marginBottom:10}}>{message}</div>
-          )}
-
-          {/* Submit */}
-          <div style={{display:"flex", alignItems:"center", gap:12, flexWrap:"wrap"}}>
-            <button onClick={handleSubmit} disabled={status === "loading"}
-              style={{fontFamily:"'Georgia',serif", fontSize:11, fontWeight:900,
-                letterSpacing:"0.1em", padding:"9px 24px",
-                background: status === "loading" ? "#555" : "#c8201c",
-                border:"none", color:"#fff", cursor:"pointer",
-                transition:"all 0.15s", boxShadow:"0 2px 0 #8a0000"}}>
-              {status === "loading" ? "SUBSCRIBING…" : "GET MY DIGEST →"}
-            </button>
-            <span style={{fontSize:10, color:"#444"}}>
-              No ads. No spam. Unsubscribe anytime.
-            </span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 
 function DigestSignup() {
   const NY_TEAMS_LIST = [
@@ -11849,7 +11783,6 @@ function DigestSignup() {
     </div>
   );
 }
-
 
 
 const styles = {
