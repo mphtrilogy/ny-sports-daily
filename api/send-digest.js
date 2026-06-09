@@ -319,9 +319,87 @@ async function getTodaysGames(teams) {
 }
 
 // ── Headlines ─────────────────────────────────────────────────────────────────
+// ── Quality filter helpers ────────────────────────────────────────────────────
+const TRUSTED_SOURCES = [
+  'espn','athletic','new york post','daily news','newsday',
+  'mlb.com','nba.com','nhl.com','nfl.com','nfl network',
+  'sports illustrated','bleacher report','new york times','nytimes',
+  'ap ','associated press','reuters','cbs sports','nbc sports',
+  'yahoo sports','usa today','sny','yes network','amny','amnewyork',
+  'gothamist','northjersey','fox sports',
+];
+const JUNK_KEYWORDS = [
+  'odds','betting','bet ','parlay','picks','fantasy','dfs',
+  'draftkings','fanduel','prop bet','wager','best bets',
+  'lineup','waiver wire','trade value','rotowire','covers.com',
+];
+
+function isQualityStory(title, source) {
+  const t = (title||'').toLowerCase();
+  const s = (source||'').toLowerCase();
+  // Reject junk keywords in title
+  if (JUNK_KEYWORDS.some(k => t.includes(k))) return false;
+  // Accept if from trusted source
+  if (TRUSTED_SOURCES.some(ts => s.includes(ts))) return true;
+  // If source unknown but title looks legit, include it
+  return true;
+}
+
+function parseRssItems(xml, team, source) {
+  const items = xml.match(/<item>([\s\S]*?)<\/item>/g) || [];
+  const results = [];
+  items.forEach(item => {
+    const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) ||
+                       item.match(/<title>(.*?)<\/title>/);
+    const linkMatch  = item.match(/<link>(.*?)<\/link>/);
+    const srcMatch   = item.match(/<source[^>]*>(.*?)<\/source>/);
+    const title  = titleMatch ? titleMatch[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/<[^>]*>/g,'') : '';
+    const link   = linkMatch  ? linkMatch[1]  : SITE_URL;
+    const src    = source || (srcMatch ? srcMatch[1] : '');
+    if (title && !title.includes('Google News') && isQualityStory(title, src)) {
+      results.push({ team, title, link, source: src });
+    }
+  });
+  return results;
+}
+
 async function getTeamHeadlines(teams) {
   const headlines = [];
-  const toFetch = (teams && teams.length > 0) ? teams.slice(0,3) : ['Yankees','Mets','Knicks'];
+  const toFetch = (teams && teams.length > 0) ? teams : ['Yankees','Mets','Knicks'];
+
+  // Direct RSS feeds for quality NY sports coverage
+  // Note: amNY blocks direct RSS fetches (403) — surfaced via Google News instead
+  const DIRECT_FEEDS = [
+    { url:'https://nypost.com/sports/feed/',   source:'New York Post' },
+    { url:'https://sny.tv/rss/articles',       source:'SNY' },
+  ];
+
+  // Fetch direct feeds in parallel — grab all stories then match to teams
+  const directStories = [];
+  await Promise.all(DIRECT_FEEDS.map(async feed => {
+    try {
+      const r = await fetch(feed.url);
+      if (!r.ok) return;
+      const xml = await r.text();
+      // Match stories to subscriber's teams
+      toFetch.forEach(team => {
+        const teamLower = team.toLowerCase();
+        const items = xml.match(/<item>([\s\S]*?)<\/item>/g) || [];
+        items.forEach(item => {
+          const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) ||
+                             item.match(/<title>(.*?)<\/title>/);
+          const linkMatch  = item.match(/<link>(.*?)<\/link>/);
+          const title = titleMatch ? titleMatch[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/<[^>]*>/g,'') : '';
+          const link  = linkMatch  ? linkMatch[1] : SITE_URL;
+          if (title && title.toLowerCase().includes(teamLower) && isQualityStory(title, feed.source)) {
+            directStories.push({ team, title, link, source: feed.source });
+          }
+        });
+      });
+    } catch(e) { console.error('Direct feed error:', feed.source, e); }
+  }));
+
+  // Google News for each team (fallback + supplement)
   await Promise.all(toFetch.map(async team => {
     try {
       const query = encodeURIComponent('New York ' + team + ' sports');
@@ -330,25 +408,28 @@ async function getTeamHeadlines(teams) {
       );
       if (!r.ok) return;
       const xml = await r.text();
-      const items = xml.match(/<item>([\s\S]*?)<\/item>/g) || [];
-      items.slice(0,2).forEach(item => {
-        const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/) ||
-                           item.match(/<title>(.*?)<\/title>/);
-        const linkMatch  = item.match(/<link>(.*?)<\/link>/);
-        const srcMatch   = item.match(/<source[^>]*>(.*?)<\/source>/);
-        const title  = titleMatch ? titleMatch[1] : '';
-        const link   = linkMatch  ? linkMatch[1]  : SITE_URL;
-        const source = srcMatch   ? srcMatch[1]   : '';
-        if (title && !title.includes('Google News')) {
-          headlines.push({
-            team, title: title.replace(/&amp;/g,'&').replace(/&#39;/g,"'"),
-            link, source,
-          });
-        }
-      });
+      const parsed = parseRssItems(xml, team, '');
+      parsed.slice(0,2).forEach(s => headlines.push(s));
     } catch(e) { console.error('Headlines error:', e); }
   }));
-  return headlines;
+
+  // Merge: direct stories first (higher quality), then Google News
+  // Dedupe by title
+  const seen = new Set();
+  const merged = [...directStories, ...headlines].filter(s => {
+    const key = s.title.toLowerCase().slice(0,60);
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+
+  // Cap at 2 stories per team
+  const byTeam = {};
+  merged.forEach(s => {
+    if (!byTeam[s.team]) byTeam[s.team] = [];
+    if (byTeam[s.team].length < 2) byTeam[s.team].push(s);
+  });
+
+  return Object.values(byTeam).flat();
 }
 
 // ── Glory moments ─────────────────────────────────────────────────────────────
