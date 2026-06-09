@@ -251,9 +251,14 @@ async function getTodaysGames(teams) {
           'new york giants':   'WJLP',
           'new york jets':     'WJLP',
           'new york liberty':  'ION',
-          'brooklyn nets':     'YNETNETS',
+          'brooklyn nets':     'YES Network',
         };
-        const regionalNet = REGIONAL_TV[homeTeamName] || REGIONAL_TV[awayTeamName] || '';
+        // Exclusive streaming deals block local RSN — don't add YES/SNY if exclusive
+        const EXCLUSIVE_STREAMERS = ['apple tv', 'amazon', 'peacock', 'paramount+', 'netflix'];
+        const hasExclusive = broadcasts.some(b =>
+          EXCLUSIVE_STREAMERS.some(s => b.toLowerCase().includes(s))
+        );
+        const regionalNet = (!hasExclusive && (REGIONAL_TV[homeTeamName] || REGIONAL_TV[awayTeamName])) || '';
         const allBroadcasts = regionalNet
           ? [regionalNet, ...broadcasts].slice(0,3)
           : broadcasts.slice(0,3);
