@@ -21,19 +21,52 @@ function isNYTeam(name) {
 
 // ── Stadium coordinates for weather ──────────────────────────────────────────
 const STADIUM_COORDS = {
-  // MLB
-  'yankee stadium':      { lat:40.8296, lon:-73.9262, name:'Yankee Stadium' },
-  'citi field':          { lat:40.7571, lon:-73.8458, name:'Citi Field' },
-  // NBA/NHL (indoor — no weather needed, show arena name only)
-  'madison square garden':{ lat:40.7505, lon:-73.9934, name:'Madison Square Garden', indoor:true },
-  'ubs arena':           { lat:40.7227, lon:-73.5933, name:'UBS Arena', indoor:true },
-  'prudential center':   { lat:40.7334, lon:-74.1713, name:'Prudential Center', indoor:true },
-  'barclays center':     { lat:40.6828, lon:-73.9752, name:'Barclays Center', indoor:true },
-  // NFL
-  'metlife stadium':     { lat:40.8135, lon:-74.0745, name:'MetLife Stadium' },
-  // Soccer
-  'yankee stadium (mls)':{ lat:40.8296, lon:-73.9262, name:'Yankee Stadium' },
-  'red bull arena':      { lat:40.7369, lon:-74.1502, name:'Red Bull Arena' },
+  // ── NY HOME STADIUMS ──
+  'yankee stadium':        { lat:40.8296, lon:-73.9262, name:'Yankee Stadium' },
+  'citi field':            { lat:40.7571, lon:-73.8458, name:'Citi Field' },
+  'metlife stadium':       { lat:40.8135, lon:-74.0745, name:'MetLife Stadium' },
+  'red bull arena':        { lat:40.7369, lon:-74.1502, name:'Red Bull Arena' },
+  // ── NY INDOOR (no weather) ──
+  'madison square garden': { lat:40.7505, lon:-73.9934, name:'MSG', indoor:true },
+  'ubs arena':             { lat:40.7227, lon:-73.5933, name:'UBS Arena', indoor:true },
+  'prudential center':     { lat:40.7334, lon:-74.1713, name:'Prudential Center', indoor:true },
+  'barclays center':       { lat:40.6828, lon:-73.9752, name:'Barclays Center', indoor:true },
+  // ── MLB AWAY STADIUMS ──
+  'progressive field':     { lat:41.4962, lon:-81.6852, name:'Progressive Field' },
+  'fenway park':           { lat:42.3467, lon:-71.0972, name:'Fenway Park' },
+  'camden yards':          { lat:39.2838, lon:-76.6218, name:'Camden Yards' },
+  'tropicana field':       { lat:27.7682, lon:-82.6534, name:'Tropicana Field' },
+  'rogers centre':         { lat:43.6414, lon:-79.3894, name:'Rogers Centre' },
+  'great american ball park':{ lat:39.0979, lon:-84.5082, name:'Great American Ball Park' },
+  'guaranteed rate field': { lat:41.8300, lon:-87.6338, name:'Guaranteed Rate Field' },
+  'wrigley field':         { lat:41.9484, lon:-87.6553, name:'Wrigley Field' },
+  'comerica park':         { lat:42.3390, lon:-83.0485, name:'Comerica Park' },
+  'kauffman stadium':      { lat:39.0517, lon:-94.4803, name:'Kauffman Stadium' },
+  'target field':          { lat:44.9817, lon:-93.2781, name:'Target Field' },
+  'minute maid park':      { lat:29.7573, lon:-95.3555, name:'Minute Maid Park' },
+  'globe life field':      { lat:32.7473, lon:-97.0845, name:'Globe Life Field' },
+  'angel stadium':         { lat:33.8003, lon:-117.8827, name:'Angel Stadium' },
+  'dodger stadium':        { lat:34.0739, lon:-118.2400, name:'Dodger Stadium' },
+  'petco park':            { lat:32.7076, lon:-117.1570, name:'Petco Park' },
+  'oracle park':           { lat:37.7786, lon:-122.3893, name:'Oracle Park' },
+  'chase field':           { lat:33.4453, lon:-112.0667, name:'Chase Field' },
+  't-mobile park':         { lat:47.5914, lon:-122.3325, name:'T-Mobile Park' },
+  'american family field': { lat:43.0280, lon:-87.9712, name:'American Family Field' },
+  'busch stadium':         { lat:38.6226, lon:-90.1928, name:'Busch Stadium' },
+  'pnc park':              { lat:40.4469, lon:-80.0057, name:'PNC Park' },
+  'great american':        { lat:39.0979, lon:-84.5082, name:'Great American Ball Park' },
+  'nationals park':        { lat:38.8730, lon:-77.0074, name:'Nationals Park' },
+  'truist park':           { lat:33.8907, lon:-84.4677, name:'Truist Park' },
+  'loanDepot park':        { lat:25.7781, lon:-80.2197, name:'loanDepot Park' },
+  'loandepot park':        { lat:25.7781, lon:-80.2197, name:'loanDepot Park' },
+  'coors field':           { lat:39.7559, lon:-104.9942, name:'Coors Field' },
+  'oakland coliseum':      { lat:37.7516, lon:-122.2005, name:'Oakland Coliseum' },
+  // ── NFL AWAY ──
+  'acrisure stadium':      { lat:40.4468, lon:-80.0158, name:'Acrisure Stadium' },
+  'sofi stadium':          { lat:33.9535, lon:-118.3392, name:'SoFi Stadium' },
+  'gillette stadium':      { lat:42.0909, lon:-71.2643, name:'Gillette Stadium' },
+  "lincoln financial field":{ lat:39.9008, lon:-75.1675, name:'Lincoln Financial Field' },
+  'm&t bank stadium':      { lat:39.2780, lon:-76.6227, name:'M&T Bank Stadium' },
 };
 
 // ── Weather code → description ────────────────────────────────────────────────
@@ -203,9 +236,35 @@ async function getTodaysGames(teams) {
           timeZone:'America/New_York',
         }) + ' ET';
 
-        // Broadcast info
+        // Broadcast info — ESPN API + regional network mapping
         const broadcasts = (comp.broadcasts||[]).flatMap(b => b.names||[]);
-        const tvStr = broadcasts.slice(0,2).join(' / ') || '';
+        // Add regional networks based on home team
+        const homeTeamName = (home.team?.displayName||'').toLowerCase();
+        const awayTeamName = (away.team?.displayName||'').toLowerCase();
+        const REGIONAL_TV = {
+          'new york yankees':  'YES',
+          'new york mets':     'SNY',
+          'new york knicks':   'MSG',
+          'new york rangers':  'MSG',
+          'new york islanders':'MSG+',
+          'new jersey devils': 'MSGSN',
+          'new york giants':   'WJLP',
+          'new york jets':     'WJLP',
+          'new york liberty':  'ION',
+          'brooklyn nets':     'YNETNETS',
+        };
+        const regionalNet = REGIONAL_TV[homeTeamName] || REGIONAL_TV[awayTeamName] || '';
+        const allBroadcasts = regionalNet
+          ? [regionalNet, ...broadcasts].slice(0,3)
+          : broadcasts.slice(0,3);
+        // Filter out duplicates and clean up
+        const seen = new Set();
+        const uniqueBroadcasts = allBroadcasts.filter(b => {
+          const key = b.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key); return true;
+        });
+        const tvStr = uniqueBroadcasts.join(' / ') || '';
 
         // Venue
         const venueName  = comp.venue?.fullName || '';
