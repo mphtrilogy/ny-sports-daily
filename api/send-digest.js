@@ -427,8 +427,9 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia) {
     + '<div style="font-size:8px;font-weight:900;color:#5555bb;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px">Today&rsquo;s Trivia Question</div>'
     + '<div style="font-size:14px;font-weight:700;color:#111;line-height:1.5;margin-bottom:4px">' + trivia.q + '</div>'
     + '<div style="font-size:11px;color:#888;font-style:italic;margin-bottom:10px">' + trivia.hint + '</div>'
-    + '<div style="font-size:12px;color:#5555bb;font-weight:700;background:#eeeeff;border:1px solid #ccccee;padding:8px 12px;margin-bottom:14px">'
-    + '&#128161; Answer: ' + trivia.a + '</div>'
+    + '<div style="background:#eeeeff;border:1px solid #ccccee;padding:8px 12px">'
+    + '<span style="font-size:9px;font-weight:900;color:#5555bb;letter-spacing:0.1em;text-transform:uppercase">&#128161; Answer &mdash; </span><span style="font-size:9px;color:#888;font-style:italic">select text below to reveal</span></div>'
+    + '<div style="background:#333333;border:1px solid #222222;padding:10px 12px;margin-bottom:14px;border-radius:3px"><span style="font-size:13px;font-weight:700;color:#333333;background:#333333;cursor:text">' + trivia.a + '</span>&nbsp;<span style="font-size:9px;color:#666;font-style:italic">(highlight to reveal)</span></div>'
     + '<a href="' + SITE_URL + '" style="display:inline-block;background:#c8201c;color:#fff;text-decoration:none;font-size:11px;font-weight:900;letter-spacing:0.1em;padding:10px 22px;text-transform:uppercase">Play in the Playroom &rarr;</a>'
     + '<p style="font-size:10px;color:#aaa;margin:10px 0 0;font-style:italic">Also today: Hangman &nbsp;&middot;&nbsp; Anagram &nbsp;&middot;&nbsp; Emoji Quiz &nbsp;&middot;&nbsp; Crossword &nbsp;&middot;&nbsp; Guess the Player</p>'
     + '</div>';
