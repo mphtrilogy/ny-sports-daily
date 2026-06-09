@@ -154,6 +154,14 @@ const NY_RSS_FEEDS = [
   { url:"https://www.netsdaily.com/rss/current",           name:"Nets Daily",        team:"Nets"      },
   // SNY — best Mets/Yankees TV coverage
   { url:"https://sny.tv/rss/articles",                     name:"SNY",               team:"Mets"      },
+  // amNewYork — via Google News (direct RSS blocked by amNY server)
+  { url:"https://news.google.com/rss/search?q=%22new+york+yankees%22+site:amny.com&hl=en-US&gl=US&ceid=US:en", name:"amNewYork", team:"Yankees"   },
+  { url:"https://news.google.com/rss/search?q=%22new+york+mets%22+site:amny.com&hl=en-US&gl=US&ceid=US:en",    name:"amNewYork", team:"Mets"      },
+  { url:"https://news.google.com/rss/search?q=%22new+york+jets%22+site:amny.com&hl=en-US&gl=US&ceid=US:en",    name:"amNewYork", team:"Jets"      },
+  { url:"https://news.google.com/rss/search?q=%22new+york+giants%22+site:amny.com&hl=en-US&gl=US&ceid=US:en",  name:"amNewYork", team:"Giants"    },
+  { url:"https://news.google.com/rss/search?q=%22new+york+knicks%22+site:amny.com&hl=en-US&gl=US&ceid=US:en",  name:"amNewYork", team:"Knicks"    },
+  { url:"https://news.google.com/rss/search?q=%22new+york+rangers%22+site:amny.com&hl=en-US&gl=US&ceid=US:en", name:"amNewYork", team:"Rangers"   },
+  { url:"https://news.google.com/rss/search?q=%22new+york+islanders%22+site:amny.com&hl=en-US&gl=US&ceid=US:en",name:"amNewYork",team:"Islanders" },
 ];
 async function tryRSSFeed(feed) {
   try {
@@ -5809,7 +5817,6 @@ function AwardsTab() {
     { award:"Hart Trophy",      year:1979, winner:"Bryan Trottier",     team:"Islanders",sport:"NHL",note:"NHL MVP the year before the first of four straight Cups" },
     { award:"Norris Trophy",    year:1992, winner:"Brian Leetch",       team:"Rangers", sport:"NHL", note:"Best defenseman in the NHL — set up the 1994 Cup run" },
     { award:"Norris Trophy",    year:1979, winner:"Denis Potvin",       team:"Islanders",sport:"NHL",note:"Third of four Norris Trophies as best defenseman" },
-    { award:"Calder Trophy",    year:2026, winner:"Matthew Schaefer",   team:"Islanders",sport:"NHL",note:"#1 overall pick wins NHL Rookie of the Year — the future of Long Island hockey is here" },
   ];
 
   const SPORTS = ["ALL","MLB","NFL","NBA","NHL","WNBA"];
@@ -11397,18 +11404,10 @@ function NYPlayoffWidget({ myTeams }) {
 
   async function fetchSport(cfg) {
     try {
-      // Try level=3 first, fall back to no level param if rate limited
-      let r = await fetch(
+      const r = await fetch(
         `https://site.api.espn.com/apis/v2/sports/${cfg.espnSport}/${cfg.league}/standings?level=3`,
         { cache:"no-store" }
       );
-      if (!r.ok) {
-        await new Promise(res => setTimeout(res, 1000));
-        r = await fetch(
-          `https://site.api.espn.com/apis/v2/sports/${cfg.espnSport}/${cfg.league}/standings`,
-          { cache:"no-store" }
-        );
-      }
       if (!r.ok) return [];
       const json = await r.json();
 
@@ -11477,13 +11476,10 @@ function NYPlayoffWidget({ myTeams }) {
 
   async function fetchAll() {
     setLoading(true);
-    // Small delay so page finishes loading before ESPN calls fire
-    await new Promise(res => setTimeout(res, 1500));
     const results = {};
-    for (const cfg of SPORTS) {
+    await Promise.all(SPORTS.map(async cfg => {
       results[cfg.key] = await fetchSport(cfg);
-      await new Promise(res => setTimeout(res, 400));
-    }
+    }));
     setData(results);
     setLastUpdated(new Date());
     setLoading(false);
