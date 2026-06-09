@@ -11397,13 +11397,13 @@ function NYPlayoffWidget({ myTeams }) {
 
   async function fetchSport(cfg) {
     try {
-      // Try level=3 first, fall back to level=2 if 400
+      // Try level=3 first, fall back to no level param if rate limited
       let r = await fetch(
         `https://site.api.espn.com/apis/v2/sports/${cfg.espnSport}/${cfg.league}/standings?level=3`,
         { cache:"no-store" }
       );
-      // If 400, try without level param
       if (!r.ok) {
+        await new Promise(res => setTimeout(res, 1000));
         r = await fetch(
           `https://site.api.espn.com/apis/v2/sports/${cfg.espnSport}/${cfg.league}/standings`,
           { cache:"no-store" }
@@ -11412,132 +11412,78 @@ function NYPlayoffWidget({ myTeams }) {
       if (!r.ok) return [];
       const json = await r.json();
 
-      const CONF_MAP = {
-        "AL East":"AL","AL Central":"AL","AL West":"AL",
-        "NL East":"NL","NL Central":"NL","NL West":"NL",
-        "Atlantic":"East","Metropolitan":"East","Central":"East","Southeast":"East",
-        "Pacific":"West","Northwest":"West","Southwest":"West",
-        "AFC East":"AFC","AFC North":"AFC","AFC South":"AFC","AFC West":"AFC",
-        "NFC East":"NFC","NFC North":"NFC","NFC South":"NFC","NFC West":"NFC",
-      };
-
-      const confResult = {};
-
-      function walkNode(node, parentConf) {
-        const nodeName = node.name || node.abbreviation || "";
-        const confName = CONF_MAP[nodeName] || parentConf || nodeName || "unknown";
-        if (node.standings?.entries?.length) {
-          if (!confResult[confName]) confResult[confName] = { divs:{} };
-          const divName = nodeName || confName;
-          if (!confResult[confName].divs[divName]) confResult[confName].divs[divName] = [];
-          node.standings.entries.forEach(e => {
-            const name = e.team?.displayName || e.team?.name || "";
-            const s = {};
-            (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value??""); });
-            const w   = parseFloat(s.wins || s.W || 0);
-            const l   = parseFloat(s.losses || s.L || 0);
-            const id  = String(e.team?.id || name);
-            if (!confResult[confName].divs[divName].find(x => x.id === id)) {
-              confResult[confName].divs[divName].push({
-                id, name, w, l,
-                pts: parseFloat(s.points || 0),
-                pct: (w+l)>0 ? w/(w+l) : 0,
-                isNY: isNY(name, cfg.key),
-                isMy: isMyTeam(name),
-              });
-            }
-          });
-        }
-        (node.children||[]).forEach(child => walkNode(child, confName));
+      // Collect every entry from the full tree
+      const allEntries = [];
+      function walk(node) {
+        (node?.standings?.entries||[]).forEach(e => allEntries.push(e));
+        (node.children||[]).forEach(walk);
       }
+      walk(json);
 
-      (json.children||[]).forEach(node => walkNode(node, ""));
-
-      const { divWinners, wcSpots } = cfg;
-      const finalTeams = [];
-
-      Object.values(confResult).forEach(conf => {
-        const divNames = Object.keys(conf.divs);
-        if (!divNames.length) return;
-
-        const divLeaderIds = new Set();
-        divNames.forEach(dn => {
-          const sorted = [...conf.divs[dn]].sort((a,b) => b.pct - a.pct);
-          if (sorted[0]) divLeaderIds.add(sorted[0].id);
-        });
-
-        const seen = new Set();
-        const all = divNames.flatMap(dn => conf.divs[dn])
-          .filter(t => { if(seen.has(t.id)) return false; seen.add(t.id); return true; });
-        const allSorted = [...all].sort((a,b) => b.pct - a.pct);
-
-        const divLeaders = allSorted.filter(t =>  divLeaderIds.has(t.id));
-        const nonLeaders = allSorted.filter(t => !divLeaderIds.has(t.id));
-        const lastWcTeam = nonLeaders[wcSpots - 1];
-
-        divLeaders.forEach((t, i) => {
-          finalTeams.push({ ...t, inPO:true, wcGb:null, seed:i+1 });
-        });
-        nonLeaders.forEach((t, i) => {
-          const inPO = i < wcSpots;
-          let wcGb = null;
-          if (!inPO && lastWcTeam && (t.w+t.l)>0 && (lastWcTeam.w+lastWcTeam.l)>0) {
-            const gb = ((lastWcTeam.w - t.w) + (t.l - lastWcTeam.l)) / 2;
-            wcGb = Math.max(0, Math.round(gb * 2) / 2);
-          }
-          finalTeams.push({ ...t, inPO, wcGb, seed: divWinners + i + 1 });
+      // Parse into team objects
+      const rawTeams = [];
+      allEntries.forEach(e => {
+        const name = e.team?.displayName || e.team?.name || "";
+        const s = {};
+        (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value ?? ""); });
+        rawTeams.push({
+          name,
+          w:    parseFloat(s.wins   || s.W  || 0),
+          l:    parseFloat(s.losses || s.L  || 0),
+          pts:  parseFloat(s.points || 0),
+          seed: parseInt(s.playoffSeed || 99),
+          pct:  parseFloat(s.winPercent || 0),
+          isNY: isNY(name, cfg.key),
+          isMy: isMyTeam(name),
         });
       });
 
-      // If conference walk gave no results, fall back to flat seed-based approach
-      if (finalTeams.length === 0) {
-        console.log("[PO WIDGET] Conference walk empty, using flat fallback");
-        const allEntries = [];
-        function walkFlat(node) {
-          (node?.standings?.entries||[]).forEach(e => allEntries.push(e));
-          (node.children||[]).forEach(walkFlat);
-        }
-        walkFlat(json);
-        const seen2 = new Set();
-        const flatTeams = allEntries
-          .map(e => {
-            const name = e.team?.displayName || e.team?.name || "";
-            const s = {};
-            (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value??""); });
-            const w = parseFloat(s.wins||s.W||0);
-            const l = parseFloat(s.losses||s.L||0);
-            const seed = parseInt(s.playoffSeed||99);
-            return { id:String(e.team?.id||name), name, w, l, seed,
-              pct:(w+l)>0?w/(w+l):0, pts:parseFloat(s.points||0),
-              isNY:isNY(name,cfg.key), isMy:isMyTeam(name) };
-          })
-          .filter(t => { if(!t.name||seen2.has(t.id)) return false; seen2.add(t.id); return true; })
-          .sort((a,b) => a.seed-b.seed || b.pct-a.pct);
-        // Split at midpoint for two conferences
-        const half = Math.ceil(flatTeams.length/2);
-        [flatTeams.slice(0,half), flatTeams.slice(half)].forEach(conf => {
-          const lastIn = conf[divWinners+wcSpots-1];
-          conf.forEach((t,i) => {
-            const inPO = i < divWinners+wcSpots;
-            let wcGb = null;
-            if (!inPO && lastIn && (t.w+t.l)>0 && (lastIn.w+lastIn.l)>0) {
-              const gb = ((lastIn.w-t.w)+(t.l-lastIn.l))/2;
-              wcGb = Math.max(0, Math.round(gb*2)/2);
-            }
-            finalTeams.push({...t, inPO, wcGb, seed:i+1});
-          });
-        });
-      }
+      // Dedupe — keep first occurrence (div leaders appear in both div + WC nodes)
+      const seen = new Set();
+      const teams = rawTeams.filter(t => {
+        if (!t.name || seen.has(t.name)) return false;
+        seen.add(t.name); return true;
+      });
 
-      return finalTeams;
-    } catch(e) { console.error("fetchSport:", e); return []; }
+      // For MLB/NHL: split into conferences, find the true WC cutoff per conference.
+      // ESPN's playoffSeed is league-wide (1-12 for MLB), so:
+      //   seeds 1-3 = division winners in each league half
+      //   seeds 4-6 = wild card spots
+      // The 6th seed IS the last WC team. Anyone seeded 7+ is out.
+      // Their GB vs the 6th seed team = true WC GB.
+
+      // Sort by seed (ties broken by win%)
+      const sorted = [...teams].sort((a,b) => {
+        if (a.seed !== b.seed) return a.seed - b.seed;
+        return b.pct - a.pct;
+      });
+
+      // The cutoff: last team "in"
+      const cutoffTeam = sorted[cfg.poSlots - 1];
+
+      return teams.map(t => {
+        const inPO = t.seed <= cfg.poSlots;
+        let wcGb = null;
+        if (!inPO && cutoffTeam && (t.w + t.l) > 0 && (cutoffTeam.w + cutoffTeam.l) > 0) {
+          // Standard baseball GB formula
+          wcGb = Math.max(0, ((cutoffTeam.w - t.w) + (t.l - cutoffTeam.l)) / 2);
+          // Round to nearest .5
+          wcGb = Math.round(wcGb * 2) / 2;
+        }
+        return { ...t, inPO, wcGb };
+      });
+    } catch(e) { return []; }
   }
+
   async function fetchAll() {
     setLoading(true);
+    // Small delay so page finishes loading before ESPN calls fire
+    await new Promise(res => setTimeout(res, 1500));
     const results = {};
-    await Promise.all(SPORTS.map(async cfg => {
+    for (const cfg of SPORTS) {
       results[cfg.key] = await fetchSport(cfg);
-    }));
+      await new Promise(res => setTimeout(res, 400));
+    }
     setData(results);
     setLastUpdated(new Date());
     setLoading(false);
