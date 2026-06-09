@@ -143,7 +143,7 @@ async function getYesterdayScores(teams) {
           awayWin:   awayScore > homeScore,
           homeLines: (home.linescores||[]).map(l => l.value),
           awayLines: (away.linescores||[]).map(l => l.value),
-          boxUrl:    'https://www.espn.com/' + cfg.sport + '/recap/_/gameId/' + ev.id,
+          boxUrl:    'https://www.espn.com/' + cfg.league + '/recap/_/gameId/' + ev.id,
         });
       });
     } catch(e) { console.error('Scores error:', e); }
@@ -311,18 +311,18 @@ const GLORY_MOMENTS = [
 
 // ── Trivia questions ──────────────────────────────────────────────────────────
 const TRIVIA_QUESTIONS = [
-  { q:'Which New York Ranger was known as "The Captain" and led the team to the 1994 Stanley Cup?', hint:'He also guaranteed a win in Game 6 of the Conference Finals.' },
-  { q:'Who hit three home runs on three consecutive pitches in World Series Game 6 in 1977?', hint:'His nickname was "Mr. October."' },
-  { q:'Which Met struck out 10 consecutive batters against the Padres in 1969?', hint:'"Tom Terrific" — he won 3 Cy Young Awards with the Mets.' },
-  { q:'Joe Namath guaranteed victory before which Super Bowl?', hint:'The Jets were 17-point underdogs against the Baltimore Colts.' },
-  { q:'Who scored in overtime to give the Islanders their first Stanley Cup in 1980?', hint:'His last name rhymes with "Nystrom."' },
-  { q:'Which Knick limped onto the MSG court before Game 7 of the 1970 NBA Finals?', hint:'His entrance may be the most dramatic moment in Knicks history.' },
-  { q:'What NY team won 5 NASL championships in the 1970s and 80s with Pelé on the roster?', hint:'They played at Giants Stadium and drew 77,000 fans.' },
-  { q:'Which Yankee was the first unanimous Hall of Fame inductee in baseball history?', hint:'His nickname was "The Sandman" and he closed to Enter Sandman.' },
-  { q:'In what year did the Mets win the World Series as 100-to-1 longshots?', hint:'They were known as "The Miracle Mets."' },
-  { q:'Which Islander scored 50+ goals in 9 consecutive seasons and won 4 straight Cups?', hint:'He wore #22 and is considered one of the greatest goal-scorers ever.' },
-  { q:'How many World Series championships have the Yankees won in total?', hint:'More than any other team in baseball history.' },
-  { q:'Which Giants linebacker won the NFL MVP award in 1986 — the only defensive player ever?', hint:'His initials are L.T.' },
+  { q:'Which New York Ranger was known as "The Captain" and led the team to the 1994 Stanley Cup?', hint:'He also guaranteed a win in Game 6 of the Conference Finals.', a:'Mark Messier' },
+  { q:'Who hit three home runs on three consecutive pitches in World Series Game 6 in 1977?', hint:'His nickname was "Mr. October."', a:'Reggie Jackson' },
+  { q:'Which Met struck out 10 consecutive batters against the Padres in 1969?', hint:'"Tom Terrific" — he won 3 Cy Young Awards with the Mets.', a:'Tom Seaver' },
+  { q:'Joe Namath guaranteed victory before which Super Bowl?', hint:'The Jets were 17-point underdogs against the Baltimore Colts.', a:'Super Bowl III (January 1969)' },
+  { q:'Who scored in overtime to give the Islanders their first Stanley Cup in 1980?', hint:'His first name is Bob.', a:'Bob Nystrom' },
+  { q:'Which Knick limped onto the MSG court before Game 7 of the 1970 NBA Finals?', hint:'His entrance may be the most dramatic moment in Knicks history.', a:'Willis Reed' },
+  { q:'What NY team won 5 NASL championships in the 1970s and 80s with Pelé on the roster?', hint:'They played at Giants Stadium and drew 77,000 fans.', a:'New York Cosmos' },
+  { q:'Which Yankee was the first unanimous Hall of Fame inductee in baseball history?', hint:'His nickname was "The Sandman" and he closed to Enter Sandman.', a:'Mariano Rivera' },
+  { q:'In what year did the Mets win the World Series as 100-to-1 longshots?', hint:'They were known as "The Miracle Mets."', a:'1969' },
+  { q:'Which Islander scored 50+ goals in 9 consecutive seasons and won 4 straight Cups?', hint:'He wore #22 and is considered one of the greatest goal-scorers ever.', a:'Mike Bossy' },
+  { q:'How many World Series championships have the Yankees won in total?', hint:'More than any other team in baseball history.', a:'27' },
+  { q:'Which Giants linebacker won the NFL MVP award in 1986 — the only defensive player ever?', hint:'His initials are L.T.', a:'Lawrence Taylor' },
 ];
 
 // ── Email builder ─────────────────────────────────────────────────────────────
@@ -426,7 +426,9 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia) {
   const triviaHtml = '<div style="background:#f5f5ff;border-left:4px solid #5555bb;padding:16px 18px">'
     + '<div style="font-size:8px;font-weight:900;color:#5555bb;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px">Today&rsquo;s Trivia Question</div>'
     + '<div style="font-size:14px;font-weight:700;color:#111;line-height:1.5;margin-bottom:4px">' + trivia.q + '</div>'
-    + '<div style="font-size:11px;color:#888;font-style:italic;margin-bottom:14px">' + trivia.hint + '</div>'
+    + '<div style="font-size:11px;color:#888;font-style:italic;margin-bottom:10px">' + trivia.hint + '</div>'
+    + '<div style="font-size:12px;color:#5555bb;font-weight:700;background:#eeeeff;border:1px solid #ccccee;padding:8px 12px;margin-bottom:14px">'
+    + '&#128161; Answer: ' + trivia.a + '</div>'
     + '<a href="' + SITE_URL + '" style="display:inline-block;background:#c8201c;color:#fff;text-decoration:none;font-size:11px;font-weight:900;letter-spacing:0.1em;padding:10px 22px;text-transform:uppercase">Play in the Playroom &rarr;</a>'
     + '<p style="font-size:10px;color:#aaa;margin:10px 0 0;font-style:italic">Also today: Hangman &nbsp;&middot;&nbsp; Anagram &nbsp;&middot;&nbsp; Emoji Quiz &nbsp;&middot;&nbsp; Crossword &nbsp;&middot;&nbsp; Guess the Player</p>'
     + '</div>';
