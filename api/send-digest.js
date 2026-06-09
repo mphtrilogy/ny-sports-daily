@@ -513,14 +513,20 @@ function buildSubject(scores, todayGames) {
   const today = new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
 
   // Build a score summary for the subject line
+  // Use short name matching for subject line (scores have shortDisplayName)
+  const NY_SHORT = ['yankees','mets','jets','giants','knicks','nets','rangers',
+                    'islanders','devils','liberty','nycfc','red bulls','gotham'];
+  function isNYShort(name) {
+    return NY_SHORT.some(t => (name||'').toLowerCase().includes(t));
+  }
   const nyWins  = scores.filter(g => {
-    const homeNY = isNYTeam((g.homeName||'').toLowerCase());
-    const awayNY = isNYTeam((g.awayName||'').toLowerCase());
+    const homeNY = isNYShort(g.homeName);
+    const awayNY = isNYShort(g.awayName);
     return (homeNY && g.homeWin) || (awayNY && g.awayWin);
   });
   const nyLosses = scores.filter(g => {
-    const homeNY = isNYTeam((g.homeName||'').toLowerCase());
-    const awayNY = isNYTeam((g.awayName||'').toLowerCase());
+    const homeNY = isNYShort(g.homeName);
+    const awayNY = isNYShort(g.awayName);
     return (homeNY && !g.homeWin) || (awayNY && !g.awayWin);
   });
 
