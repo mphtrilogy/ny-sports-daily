@@ -36,7 +36,7 @@ const STADIUM_COORDS = {
   'fenway park':           { lat:42.3467, lon:-71.0972, name:'Fenway Park' },
   'camden yards':          { lat:39.2838, lon:-76.6218, name:'Camden Yards' },
   'tropicana field':       { lat:27.7682, lon:-82.6534, name:'Tropicana Field' },
-  'rogers centre':         { lat:43.6414, lon:-79.3894, name:'Rogers Centre' },
+  'rogers centre':         { lat:43.6414, lon:-79.3894, name:'Rogers Centre', retractable:true },
   'great american ball park':{ lat:39.0979, lon:-84.5082, name:'Great American Ball Park' },
   'guaranteed rate field': { lat:41.8300, lon:-87.6338, name:'Guaranteed Rate Field' },
   'wrigley field':         { lat:41.9484, lon:-87.6553, name:'Wrigley Field' },
@@ -49,7 +49,7 @@ const STADIUM_COORDS = {
   'dodger stadium':        { lat:34.0739, lon:-118.2400, name:'Dodger Stadium' },
   'petco park':            { lat:32.7076, lon:-117.1570, name:'Petco Park' },
   'oracle park':           { lat:37.7786, lon:-122.3893, name:'Oracle Park' },
-  'chase field':           { lat:33.4453, lon:-112.0667, name:'Chase Field' },
+  'chase field':           { lat:33.4453, lon:-112.0667, name:'Chase Field', retractable:true },
   't-mobile park':         { lat:47.5914, lon:-122.3325, name:'T-Mobile Park' },
   'american family field': { lat:43.0280, lon:-87.9712, name:'American Family Field' },
   'busch stadium':         { lat:38.6226, lon:-90.1928, name:'Busch Stadium' },
@@ -85,7 +85,10 @@ function weatherDesc(code) {
 }
 
 function weatherVibes(code, temp) {
-  if (code <= 2 && temp >= 65 && temp <= 85) return '🌟 Perfect baseball weather';
+  if (code >= 95)                            return '⛈️ Thunderstorms likely — confirm game status';
+  if (code >= 80 && code <= 94)              return '🌧️ Showers possible — check game status';
+  if (code >= 60 && code <= 79)              return '☔ Rain possible — bring a jacket';
+  if (code <= 1 && temp >= 68 && temp <= 82) return '🌟 Perfect baseball weather';
   if (code <= 2 && temp >= 85)               return '☀️ Hot one tonight';
   if (code <= 2 && temp < 55)                return '🧥 Dress warm';
   if (code >= 60 && code <= 69)              return '☔ Rain possible — check before heading out';
@@ -927,8 +930,13 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
             + (w.vibes ? '<br><span style="display:inline-block;background:#f0f7ff;border:1px solid #d0e4f7;color:#4a7fa5;font-size:8px;font-weight:700;letter-spacing:0.08em;padding:2px 8px;margin-top:4px;text-transform:uppercase;font-style:normal">' + w.vibes + '</span>' : '')
             + '</div>';
         } else if (g.stadium && g.stadium.indoor) {
-          // Indoor venue — no weather but show if it's a big game
           weatherLine = '';
+        } else if (g.stadium && g.stadium.retractable && g.weather) {
+          const w = g.weather;
+          weatherLine = '<div style="font-size:10px;color:#888;margin-top:4px;font-style:italic">'
+            + w.temp + '&deg;F &nbsp;&middot;&nbsp; ' + w.desc
+            + ' &nbsp;&middot;&nbsp; <span style="color:#f0b429">Retractable roof</span>'
+            + '</div>';
         }
         const seriesLine = g.seriesNote
           ? '<div style="font-size:10px;font-weight:700;color:#5555bb;margin-top:4px">' + g.seriesNote + '</div>'
@@ -987,9 +995,9 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
     + '<div style="font-size:14px;font-weight:700;color:#111;line-height:1.5;margin-bottom:4px">' + trivia.q + '</div>'
     + '<div style="font-size:11px;color:#888;font-style:italic;margin-bottom:10px">' + trivia.hint + '</div>'
     + '<div style="background:#f0f0ff;border:1px solid #ccccee;padding:10px 14px;margin-bottom:14px">'
-    + '<div style="font-size:8px;font-weight:900;color:#5555bb;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">&#128161; Answer — tap and hold or copy to reveal</div>'
-    + '<div style="font-size:13px;font-weight:700;color:#2a2a6e;background:#2a2a6e;padding:7px 12px;display:inline-block;letter-spacing:0.04em;user-select:all;-webkit-user-select:all;border-radius:3px;min-width:120px">' + trivia.a + '</div>'
-    + '<div style="font-size:9px;color:#aaa;margin-top:5px;font-style:italic">&#128073; Select/highlight the dark box above to reveal the answer</div>'
+    + '<div style="font-size:8px;font-weight:900;color:#5555bb;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px">&#128161; Answer</div>'
+    + '<div style="font-size:15px;font-weight:900;color:#2a2a6e;padding:4px 0;margin-bottom:4px">' + trivia.a + '</div>'
+    + ''
     + '</div>'
     + '<a href="' + SITE_URL + '" style="display:inline-block;background:#c8201c;color:#fff;text-decoration:none;font-size:11px;font-weight:900;letter-spacing:0.1em;padding:10px 22px;text-transform:uppercase">Play in the Playroom &rarr;</a>'
     + '<p style="font-size:10px;color:#aaa;margin:10px 0 0;font-style:italic">Also today: Hangman &nbsp;&middot;&nbsp; Anagram &nbsp;&middot;&nbsp; Emoji Quiz &nbsp;&middot;&nbsp; Crossword &nbsp;&middot;&nbsp; Guess the Player</p>'
@@ -1104,12 +1112,12 @@ function buildSubject(scores, todayGames) {
     scoreSummary = 'No games last night';
   } else if (nyWins.length > 0 && nyLosses.length === 0) {
     scoreSummary = nyWins.map(g => {
-      const winner = isNYTeam((g.homeName||'').toLowerCase()) ? g.homeName : g.awayName;
+      const winner = isNYShort(g.homeName) ? g.homeName : g.awayName;
       return winner + ' Win';
     }).join(', ');
   } else if (nyWins.length === 0 && nyLosses.length > 0) {
     scoreSummary = nyLosses.map(g => {
-      const loser = isNYTeam((g.homeName||'').toLowerCase()) ? g.homeName : g.awayName;
+      const loser = isNYShort(g.homeName) ? g.homeName : g.awayName;
       return loser + ' Loss';
     }).join(', ');
   } else if (scores.length > 0) {
