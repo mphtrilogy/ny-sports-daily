@@ -194,6 +194,151 @@ async function getYesterdayScores(teams) {
   );
 }
 
+// ── MLB Pitching Matchup + Series Status ────────────────────────────────────────
+// Uses free public MLB Stats API — silent failsafe, never crashes pipeline
+async function getMLBGameDetails(teams) {
+  try {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth()+1).padStart(2,'0');
+    const d = String(today.getDate()).padStart(2,'0');
+    const dateStr = y + '-' + m + '-' + d;
+
+    // Mets = 121, Yankees = 147
+    const NY_MLB_IDS = { 121:'Mets', 147:'Yankees' };
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000); // 5s max
+
+    let data;
+    try {
+      const r = await fetch(
+        'https://statsapi.mlb.com/api/v1/schedule?sportId=1&date=' + dateStr
+        + '&hydrate=probablePitcher,seriesStatus,team',
+        { signal: controller.signal }
+      );
+      clearTimeout(timeout);
+      if (!r.ok) return {};
+      data = await r.json();
+    } catch(e) {
+      clearTimeout(timeout);
+      return {}; // timeout or network error — fail silently
+    }
+
+    const results = {};
+    const dates = (data && data.dates) || [];
+
+    dates.forEach(function(dateObj) {
+      (dateObj.games || []).forEach(function(game) {
+        try {
+          const homeId = game.teams && game.teams.home && game.teams.home.team && game.teams.home.team.id;
+          const awayId = game.teams && game.teams.away && game.teams.away.team && game.teams.away.team.id;
+
+          // Only process Mets and Yankees games
+          const isNYGame = NY_MLB_IDS[homeId] || NY_MLB_IDS[awayId];
+          if (!isNYGame) return;
+
+          // Series status — e.g. "Game 2 of 3" or "Series tied 1-1"
+          const seriesStatus = (game.seriesStatus && game.seriesStatus.shortDescription) || '';
+
+          // Probable pitchers
+          const homePitcher = game.teams && game.teams.home && game.teams.home.probablePitcher
+            ? game.teams.home.probablePitcher.fullName : '';
+          const awayPitcher = game.teams && game.teams.away && game.teams.away.probablePitcher
+            ? game.teams.away.probablePitcher.fullName : '';
+
+          const pitchingLine = (homePitcher && awayPitcher)
+            ? ('🚀 ' + awayPitcher + ' vs ' + homePitcher)
+            : homePitcher ? ('🚀 ' + homePitcher + ' (home)')
+            : awayPitcher ? ('🚀 ' + awayPitcher + ' (away)')
+            : '';
+
+          // Key by home team name for matching
+          const homeShort = game.teams.home.team.name || '';
+          const awayShort = game.teams.away.team.name || '';
+          const gameKey = awayShort + '_' + homeShort;
+
+          results[gameKey] = {
+            seriesStatus: seriesStatus,
+            pitchingLine: pitchingLine,
+            homePitcher:  homePitcher,
+            awayPitcher:  awayPitcher,
+          };
+        } catch(e) {} // silent — bad game data
+      });
+    });
+
+    return results;
+  } catch(e) {
+    return {}; // always fail silently
+  }
+}
+
+// ── MLB Standings: Streak, Run Diff, Division Position ───────────────────────
+// Silent failsafe — never crashes pipeline. Returns {} on any error.
+async function getMLBStandings() {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    let data;
+    try {
+      const r = await fetch(
+        'https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&standingsTypes=regularSeason&hydrate=team,streak,records',
+        { signal: controller.signal }
+      );
+      clearTimeout(timeout);
+      if (!r.ok) return {};
+      data = await r.json();
+    } catch(e) { clearTimeout(timeout); return {}; }
+
+    const NY_IDS = { 121: 'Mets', 147: 'Yankees' };
+    const results = {};
+
+    (data.records || []).forEach(function(division) {
+      const divName = (division.division && division.division.name) || '';
+      (division.teamRecords || []).forEach(function(rec) {
+        try {
+          const teamId = rec.team && rec.team.id;
+          if (!NY_IDS[teamId]) return;
+
+          // 1. STREAK BADGE
+          const streakCode = (rec.streak && rec.streak.streakCode) || '';
+          let streakBadge = streakCode;
+          if (streakCode) {
+            const type = streakCode[0];
+            const num  = parseInt(streakCode.slice(1)) || 0;
+            if (type === 'W' && num >= 3)      streakBadge = streakCode + ' \uD83D\uDD25';
+            else if (type === 'L' && num >= 3) streakBadge = streakCode + ' \u2744\uFE0F';
+          }
+
+          // 2. RUN DIFFERENTIAL
+          const runDiff = parseInt(rec.runDifferential) || 0;
+          const runDiffStr = (runDiff > 0 ? '+' : '') + runDiff + ' Run Diff';
+
+          // 3. DIVISION POSITION + GAMES BACK
+          const rank   = parseInt(rec.divisionRank) || 0;
+          const gb     = rec.gamesBack || '';
+          const suffix = rank === 1 ? 'st' : rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th';
+          const isFirst = (gb === '-' || gb === '0.0' || gb === '0' || !gb);
+          const gbStr  = rank + suffix + ' in ' + divName + (isFirst ? ' \u00B7 Division Leader' : ' \u00B7 ' + gb + ' GB');
+
+          results[NY_IDS[teamId]] = {
+            streak:   streakBadge,
+            runDiff:  runDiffStr,
+            standing: gbStr,
+            isFirst:  isFirst,
+            isHot:    streakCode && streakCode[0] === 'W' && parseInt(streakCode.slice(1)) >= 3,
+            isCold:   streakCode && streakCode[0] === 'L' && parseInt(streakCode.slice(1)) >= 3,
+          };
+        } catch(e) {}
+      });
+    });
+
+    return results;
+  } catch(e) { return {}; }
+}
+
+
 // ── Today's games ─────────────────────────────────────────────────────────────
 async function getTodaysGames(teams) {
   const today = new Date();
@@ -879,7 +1024,7 @@ const TRIVIA_QUESTIONS = [
 ];
 
 // ── Email builder ─────────────────────────────────────────────────────────────
-function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, otd) {
+function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, mlbStandings) {
   const firstName = subscriber.name ? subscriber.name.split(' ')[0] : 'NY Sports Fan';
   const teams     = (subscriber.teams && subscriber.teams.length > 0)
                     ? subscriber.teams.join(' &nbsp;&middot;&nbsp; ')
@@ -888,7 +1033,29 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
     weekday:'long', month:'long', day:'numeric', year:'numeric'
   });
 
-  // ── SCORES ──────────────────────────────────────────────────────────────────
+  // ── NY STANDINGS STRIP ───────────────────────────────────────────────────────
+  const teamsToShow = ['Yankees', 'Mets'].filter(function(t) {
+    return mlbStandings && mlbStandings[t];
+  });
+  const standingsStrip = teamsToShow.length > 0
+    ? '<div style="padding:10px 28px;border-bottom:1px solid #ebebeb;background:#f8f8f8;display:flex;gap:0;flex-wrap:wrap">'
+      + teamsToShow.map(function(team) {
+          const s = mlbStandings[team];
+          const accentColor = team === 'Yankees' ? '#003087' : '#002D72';
+          const rdColor = (s.runDiff && s.runDiff.startsWith('+')) ? '#22c55e' : '#c8201c';
+          return '<div style="flex:1;min-width:180px;padding:6px 12px;border-right:1px solid #e0e0e0">'
+            + '<div style="font-size:8px;font-weight:900;color:' + accentColor + ';letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px">' + team + '</div>'
+            + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+            + (s.streak   ? '<span style="font-size:13px;font-weight:900;color:#111">' + s.streak + '</span>' : '')
+            + (s.standing ? '<span style="font-size:10px;color:#555">' + s.standing + '</span>' : '')
+            + (s.runDiff  ? '<span style="font-size:10px;font-weight:700;color:' + rdColor + '">' + s.runDiff + '</span>' : '')
+            + '</div>'
+            + '</div>';
+        }).join('')
+      + '</div>'
+    : '';
+
+    // ── SCORES ──────────────────────────────────────────────────────────────────
   const scoresHtml = scores.length > 0
     ? scores.map(g => {
         const awayW = g.awayWin ? 'font-weight:900;color:#111' : 'font-weight:400;color:#999';
@@ -941,6 +1108,16 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
         const seriesLine = g.seriesNote
           ? '<div style="font-size:10px;font-weight:700;color:#5555bb;margin-top:4px">' + g.seriesNote + '</div>'
           : '';
+        // Look up MLB pitching/series details for this game
+        const gameKey = (g.awayFull || g.awayName) + '_' + (g.homeFull || g.homeName);
+        const mlbInfo = (mlbDetails && mlbDetails[gameKey]) || {};
+        const seriesStatusLine = mlbInfo.seriesStatus
+          ? '<div style="font-size:10px;font-weight:700;color:#1a7fc2;margin-top:3px">📊 ' + mlbInfo.seriesStatus + '</div>'
+          : '';
+        const pitchingLine = mlbInfo.pitchingLine
+          ? '<div style="font-size:10px;color:#555;margin-top:3px">' + mlbInfo.pitchingLine + '</div>'
+          : '';
+
         return '<div style="padding:10px 0;border-bottom:1px solid #f2f2f2">'
           + '<div style="font-size:14px;font-weight:700;color:#111;margin-bottom:4px">' + g.emoji + ' ' + g.awayName + ' vs ' + g.homeName + '</div>'
           + '<div style="font-size:11px;color:#666;line-height:1.6">'
@@ -950,6 +1127,8 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
           + '</div>'
           + weatherLine
           + seriesLine
+          + seriesStatusLine
+          + pitchingLine
           + '</div>';
       }).join('')
     : '<p style="color:#aaa;font-style:italic;font-size:13px;margin:8px 0">No NY games scheduled today.</p>';
@@ -978,7 +1157,8 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
     ? '<div style="background:#f0fff4;border:1px solid #b0e0c0;border-left:4px solid #22c55e;padding:14px 18px">'
       + '<div style="font-size:8px;font-weight:900;color:#22c55e;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:6px">&#128197; On This Date in NY Sports</div>'
       + '<div style="font-size:9px;font-weight:900;color:#c8201c;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:4px">' + otd.team + ' &nbsp;&middot;&nbsp; ' + otd.year + '</div>'
-      + '<div style="font-size:13px;color:#333;line-height:1.6;font-style:italic">&ldquo;' + otd.text + '&rdquo;</div>'
+      + (otd.title ? '<div style="font-size:12px;font-weight:700;color:#333;margin-bottom:6px">' + otd.title + '</div>' : '')
+      + '<div style="font-size:13px;color:#333;line-height:1.6;font-style:italic">&ldquo;' + (otd.desc || otd.text || 'A great moment in NY sports history.') + '&rdquo;</div>'
       + '</div>'
     : '';
 
@@ -1019,6 +1199,9 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
     + '<p style="font-size:9px;color:#f0b429;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 5px">Morning Digest</p>'
     + '<p style="font-size:11px;color:#777;margin:0;letter-spacing:0.05em">' + teams + '</p>'
     + '</div>'
+
+    // NY Standings Strip
+    + standingsStrip
 
     // Greeting
     + '<div style="padding:12px 28px;background:#fafafa;border-bottom:1px solid #ebebeb">'
@@ -1146,8 +1329,11 @@ export default async function handler(req, res) {
     const trivia = TRIVIA_QUESTIONS[Math.floor(Math.random() * TRIVIA_QUESTIONS.length)];
 
     // Fetch today's games once (shared across all subscribers)
-    // We'll filter per subscriber in the loop
     const allTodayGames = await getTodaysGames([]);
+
+    // Fetch MLB pitching/series details (Mets + Yankees only, silent failsafe)
+    const mlbDetails = await getMLBGameDetails([]);
+    const mlbStandings = await getMLBStandings();
 
     let sent = 0, errors = 0;
 
@@ -1172,7 +1358,7 @@ export default async function handler(req, res) {
             )
           : allTodayGames;
 
-        const html    = buildEmail(sub, scores, todayGames, headlines, glory, trivia, otd);
+        const html    = buildEmail(sub, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, mlbStandings);
         const subject = buildSubject(scores, todayGames);
 
         // Fix unsubscribe URL with actual email
