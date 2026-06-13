@@ -631,7 +631,43 @@ const DAILY_PLAYERS = [
 
 function getDailyPlayer() {
   const day = Math.floor(Date.now() / 86400000);
-  return DAILY_PLAYERS[day % DAILY_PLAYERS.length];
+
+  // Smart shuffle — no same team within 4 days
+  function buildShuffledOrder(players) {
+    const n       = players.length;
+    const used    = new Array(n).fill(false);
+    const order   = [];
+    const recent  = [];
+
+    while (order.length < n) {
+      let bestScore = -Infinity;
+      let bestIdx   = -1;
+
+      for (let i = 0; i < n; i++) {
+        if (used[i]) continue;
+        const team = players[i].team || '';
+        const lastSeen = recent.lastIndexOf(team);
+        const recencyPenalty = lastSeen >= 0
+          ? Math.max(0, 4 - (recent.length - lastSeen)) * -100
+          : 0;
+        const tiebreak = ((i * 2654435761) >>> 0) % 1000 / 1000;
+        const score = recencyPenalty + tiebreak;
+        if (score > bestScore) { bestScore = score; bestIdx = i; }
+      }
+
+      if (bestIdx === -1) break;
+      used[bestIdx] = true;
+      order.push(bestIdx);
+      recent.push(players[bestIdx].team || '');
+    }
+    return order;
+  }
+
+  if (!window._spotlightOrder || window._spotlightOrder.length !== DAILY_PLAYERS.length) {
+    window._spotlightOrder = buildShuffledOrder(DAILY_PLAYERS);
+  }
+
+  return DAILY_PLAYERS[window._spotlightOrder[day % window._spotlightOrder.length]];
 }
 
 function PlayerSpotlight() {
