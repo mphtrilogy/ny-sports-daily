@@ -985,26 +985,113 @@ function getOnThisDate() {
   return matches[Math.floor(Math.random() * matches.length)];
 }
 
-// ── Glory moments ───────────────────────────────────────────────────────────────
+// ── Trivia: Save today's + fetch yesterday's from Supabase ───────────────────
+async function saveTodayTrivia(trivia) {
+  try {
+    const today = new Date().toISOString().slice(0,10); // "2026-06-13"
+    await fetch(SUPABASE_URL + '/rest/v1/ny_trivia_daily', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Prefer':        'resolution=merge-duplicates', // upsert
+      },
+      body: JSON.stringify({
+        date:     today,
+        question: trivia.q,
+        hint:     trivia.hint,
+        answer:   trivia.a,
+      }),
+    });
+  } catch(e) {
+    console.error('saveTodayTrivia error:', e);
+  }
+}
+
+async function getYesterdayTrivia() {
+  try {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const dateStr = yesterday.toISOString().slice(0,10);
+    const r = await fetch(
+      SUPABASE_URL + '/rest/v1/ny_trivia_daily?date=eq.' + dateStr + '&select=*',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    if (!r.ok) return null;
+    const rows = await r.json();
+    return (rows && rows.length > 0) ? rows[0] : null;
+  } catch(e) {
+    console.error('getYesterdayTrivia error:', e);
+    return null;
+  }
+}
+
+// ── Glory moments ─────────────────────────────────────────────────────────────────
 const GLORY_MOMENTS = [
-  { year:1927, team:'Yankees',   text:"Murderers' Row — the greatest team ever assembled. Ruth hits his 40th home run of the season." },
-  { year:1956, team:'Yankees',   text:'Don Larsen throws the only perfect game in World Series history. Yogi Berra leaps into his arms.' },
-  { year:1969, team:'Mets',      text:'Tom Seaver strikes out 10 consecutive Padres. The Miracle Mets were becoming real.' },
-  { year:1969, team:'Jets',      text:'Joe Namath guarantees Super Bowl victory as a 17-point underdog. Broadway Joe delivers.' },
-  { year:1970, team:'Knicks',    text:'Willis Reed limps onto the MSG court before Game 7. The crowd erupts. The Knicks win.' },
-  { year:1973, team:'Knicks',    text:'The Knicks win their second NBA championship. Frazier, Reed, DeBusschere — a perfect team.' },
-  { year:1977, team:'Yankees',   text:'Reggie Jackson hits 3 home runs on 3 consecutive pitches in World Series Game 6. Mr. October is born.' },
-  { year:1977, team:'NY Cosmos', text:"Pelé, Beckenbauer, and Carlos Alberto on one team. The Cosmos beat Seattle before 77,000 fans at Giants Stadium. Soccer in America would never be the same." },
-  { year:1980, team:'Islanders', text:'Bob Nystrom scores in overtime. The Islanders dynasty begins.' },
-  { year:1983, team:'Islanders', text:"The Islanders sweep Gretzky's Oilers for their 4th straight Stanley Cup. A dynasty for the ages." },
-  { year:1986, team:'Mets',      text:"Mookie Wilson's grounder rolls through Buckner's legs. The Mets are World Champions." },
-  { year:1994, team:'Rangers',   text:'Mark Messier guarantees a Rangers win in Game 6 then scores a hat trick. 54 years of waiting ends.' },
-  { year:2000, team:'Yankees',   text:'The Subway Series — Yankees vs Mets. Derek Jeter leads off Game 4 with a home run.' },
-  { year:2009, team:'Yankees',   text:'Hideki Matsui hits a grand slam in Game 6. The Yankees win their 27th championship.' },
-  { year:1958, team:'Giants',    text:'The Giants beat the Colts in overtime — the Greatest Game Ever Played births modern pro football.' },
-  { year:2021, team:'NYCFC',     text:'NYCFC win their first MLS Cup on penalty kicks. New York finally had an MLS champion.' },
-  { year:2023, team:'Gotham FC', text:'Gotham FC win the NWSL Championship. NJ/NY claims its first major women\'s soccer title.' },
-  { year:2024, team:'Liberty',   text:'Breanna Stewart leads the Liberty to their first WNBA championship. 27 years of waiting over.' },
+  { year:1923, team:"Yankees", title:"World Series", text:"The first championship in The House That Ruth Built — Babe Ruth hit 3 HR in the Series." },
+  { year:1927, team:"Yankees", title:"World Series", text:"Murderers\' Row swept the Pirates. Babe Ruth hit 60 home runs that season — the greatest team ever assembled." },
+  { year:1928, team:"Yankees", title:"World Series", text:"Back-to-back! Ruth and Gehrig combined for 6 HR in the sweep." },
+  { year:1932, team:"Yankees", title:"World Series", text:"The Called Shot — Babe Ruth allegedly pointed to center field before homering off Charlie Root." },
+  { year:1936, team:"Yankees", title:"World Series", text:"Joe DiMaggio\'s first championship. The Yankees won four in five years starting here." },
+  { year:1937, team:"Yankees", title:"World Series", text:"Back-to-back again. DiMaggio and Gehrig were unstoppable." },
+  { year:1938, team:"Yankees", title:"World Series", text:"Three in a row. The Cubs were swept — again. Red Ruffing won two games." },
+  { year:1939, team:"Yankees", title:"World Series", text:"FOUR STRAIGHT! DiMaggio hit .381. The Reds were swept in four games." },
+  { year:1941, team:"Yankees", title:"World Series", text:"Mickey Owen\'s passed ball in Game 4 let the Yankees back in. DiMaggio\'s 56-game streak that season." },
+  { year:1943, team:"Yankees", title:"World Series", text:"A wartime championship. Spud Chandler went 20-4 with a 1.64 ERA to win Cy Young and MVP." },
+  { year:1947, team:"Yankees", title:"World Series", text:"Cookie Lavagetto\'s pinch hit double broke up Bill Bevens\' near no-hitter in Game 4." },
+  { year:1949, team:"Yankees", title:"World Series", text:"Casey Stengel\'s first title. This began another dynasty — five straight championships." },
+  { year:1950, team:"Yankees", title:"World Series", text:"The Whiz Kids swept. Whitey Ford made his first World Series start." },
+  { year:1951, team:"Yankees", title:"World Series", text:"Three straight! Mickey Mantle made his first Series appearance." },
+  { year:1952, team:"Yankees", title:"World Series", text:"Four straight! Billy Martin made a game-saving bare-hand catch in the 7th inning of Game 7." },
+  { year:1953, team:"Yankees", title:"World Series", text:"FIVE STRAIGHT — the record that still stands. Billy Martin hit .500 and delivered the Series winner." },
+  { year:1956, team:"Yankees", title:"World Series", text:"Don Larsen\'s Perfect Game — the only perfect game in World Series history. Yogi Berra leaped into his arms." },
+  { year:1958, team:"Yankees", title:"World Series", text:"Down 3-1 in the Series, the Yankees won three straight. The ultimate comeback." },
+  { year:1961, team:"Yankees", title:"World Series", text:"Roger Maris hit his record 61st home run that season. Whitey Ford pitched 32 scoreless WS innings." },
+  { year:1962, team:"Yankees", title:"World Series", text:"Bobby Richardson caught Willie McCovey\'s screaming liner to end Game 7. Heart attacks all around." },
+  { year:1977, team:"Yankees", title:"World Series", text:"Reggie Jackson hit THREE home runs on THREE consecutive pitches in Game 6. Mr. October was born." },
+  { year:1978, team:"Yankees", title:"World Series", text:"Bucky Dent\'s playoff homer at Fenway set it up. Back-to-back Dodgers victims." },
+  { year:1996, team:"Yankees", title:"World Series", text:"Down 2-0, Yankees won 4 straight. Jim Leyritz\'s 3-run homer in Game 4 was the turning point." },
+  { year:1998, team:"Yankees", title:"World Series", text:"125 wins total. The Padres were swept. The \'98 Yankees are the greatest team of the modern era." },
+  { year:1999, team:"Yankees", title:"World Series", text:"Three straight. Mariano Rivera entered to Enter Sandman. The dynasty at its absolute peak." },
+  { year:2000, team:"Yankees", title:"World Series", text:"THE SUBWAY SERIES! Jeter led off Game 4 with a HR. Luis Sojo\'s single ended it in Game 5." },
+  { year:2009, team:"Yankees", title:"World Series", text:"Hideki Matsui hit a grand slam in Game 6 to win Series MVP. The new Stadium\'s first title." },
+  { year:1969, team:"Mets", title:"World Series", text:"The Miracle Mets! 100-to-1 longshots beat the mighty Orioles. Tom Seaver, Jerry Koosman, and pure belief." },
+  { year:1986, team:"Mets", title:"World Series", text:"Mookie Wilson\'s grounder rolled through Bill Buckner\'s legs. Back from the dead in Game 6, then won Game 7." },
+  { year:1905, team:"NY Giants (Baseball)", title:"World Series", text:"Christy Mathewson threw THREE complete-game shutouts in six days. The most dominant WS pitching ever." },
+  { year:1921, team:"NY Giants (Baseball)", title:"World Series", text:"The first Subway Series — all games at the Polo Grounds. The Giants beat their cross-borough rivals." },
+  { year:1922, team:"NY Giants (Baseball)", title:"World Series", text:"Back-to-back Subway Series wins over the Yankees. John McGraw\'s Giants at their peak." },
+  { year:1933, team:"NY Giants (Baseball)", title:"World Series", text:"Bill Terry\'s Giants won in five. Carl Hubbell was the ace — his 1934 All-Star strikeout streak followed." },
+  { year:1954, team:"NY Giants (Baseball)", title:"World Series", text:"Willie Mays\' over-the-shoulder catch off Vic Wertz is THE greatest defensive play in baseball history." },
+  { year:1955, team:"Brooklyn Dodgers", title:"World Series", text:"\'Next year\' FINALLY came. Sandy Amoros\' miraculous Game 7 catch. Brooklyn exploded in joy." },
+  { year:1970, team:"Knicks", title:"NBA Championship", text:"Willis Reed limped onto the MSG court before Game 7. The crowd erupted. Frazier scored 36 with 19 assists." },
+  { year:1973, team:"Knicks", title:"NBA Championship", text:"The rematch. DeBusschere, Bradley, Monroe, Frazier — a beautifully constructed championship team." },
+  { year:1974, team:"NY Nets (ABA)", title:"ABA Championship", text:"Julius Erving\'s first championship. Dr. J was already redefining what a basketball player could be." },
+  { year:1976, team:"NY Nets (ABA)", title:"ABA Championship", text:"Julius Erving averaged 37.7 points per game in the Finals. The last ABA championship before the merger." },
+  { year:1928, team:"Rangers", title:"Stanley Cup", text:"Their 2nd season in existence! GM Lester Patrick, age 44, played goal when the regular goalie was hurt — and won." },
+  { year:1933, team:"Rangers", title:"Stanley Cup", text:"Bill Cook scored the overtime winner in Game 4. The Rangers were the toast of Broadway." },
+  { year:1940, team:"Rangers", title:"Stanley Cup", text:"Bryan Hextall won it in OT in Game 6. The last Cup before the 54-year drought began." },
+  { year:1994, team:"Rangers", title:"Stanley Cup", text:"Messier GUARANTEED a win in Game 6 when down 3-2. He scored a hat trick. Then the Rangers beat Vancouver. 54 YEARS ENDED." },
+  { year:1980, team:"Islanders", title:"Stanley Cup", text:"Bob Nystrom\'s OT goal in Game 6 launched the dynasty. The Islanders were the new kings of hockey." },
+  { year:1981, team:"Islanders", title:"Stanley Cup", text:"Back-to-back! Bossy scored 50 goals in 50 games that season. The dynasty was unstoppable." },
+  { year:1982, team:"Islanders", title:"Stanley Cup", text:"Three straight! Mike Bossy won the Conn Smythe. Comparisons to the Canadiens dynasties were made." },
+  { year:1983, team:"Islanders", title:"Stanley Cup", text:"FOUR STRAIGHT! The Islanders SWEPT Gretzky\'s Oilers who had scored 424 goals. The dynasty\'s crowning achievement." },
+  { year:1995, team:"NJ Devils", title:"Stanley Cup", text:"The trap system suffocated Detroit\'s offense. Martin Brodeur was brilliant. Claude Lemieux won the Conn Smythe." },
+  { year:2000, team:"NJ Devils", title:"Stanley Cup", text:"Scott Stevens was the most feared hitter in hockey. Brodeur was the best goalie on earth." },
+  { year:2003, team:"NJ Devils", title:"Stanley Cup", text:"Brodeur was magnificent against the Ducks. The Devils won in 7. Ken Daneyko\'s third ring." },
+  { year:1987, team:"Giants (NFL)", title:"Super Bowl XXI", text:"Phil Simms completed 22 of 25 passes — still the highest completion % in Super Bowl history. LT was a force of nature." },
+  { year:1991, team:"Giants (NFL)", title:"Super Bowl XXV", text:"WIDE RIGHT! Scott Norwood\'s kick sailed wide as time expired. Giants win 20-19. Ottis Anderson MVP at age 34." },
+  { year:2008, team:"Giants (NFL)", title:"Super Bowl XLII", text:"David Tyree pinned it to his HELMET. Then Eli hit Burress in the end zone. The 18-0 Patriots became 18-1." },
+  { year:2012, team:"Giants (NFL)", title:"Super Bowl XLVI", text:"Eli did it AGAIN to the Patriots. Bradshaw accidentally scored the go-ahead TD. Two upsets in four years." },
+  { year:1969, team:"Jets", title:"Super Bowl III", text:"Joe Namath GUARANTEED victory as a 17-point underdog. Broadway Joe delivered a 16-7 masterpiece." },
+  { year:2024, team:"NY Liberty", title:"WNBA Championship", text:"Breanna Stewart and Sabrina Ionescu led the Liberty to their FIRST championship in franchise history." },
+  { year:1972, team:"NY Cosmos (NASL)", title:"NASL Championship", text:"The Cosmos win their first NASL title, planting the flag for soccer in New York." },
+  { year:1977, team:"NY Cosmos (NASL)", title:"NASL Championship", text:"Pelé, Beckenbauer, and Carlos Alberto on one team. The Cosmos beat Seattle before 77,000 fans at Giants Stadium. Soccer in America would never be the same." },
+  { year:1978, team:"NY Cosmos (NASL)", title:"NASL Championship", text:"Back-to-back! Beckenbauer led the Cosmos to a second straight Soccer Bowl title." },
+  { year:1980, team:"NY Cosmos (NASL)", title:"NASL Championship", text:"The Cosmos win their fourth title. Carlos Alberto lifts the trophy at Giants Stadium." },
+  { year:1982, team:"NY Cosmos (NASL)", title:"NASL Championship", text:"The fifth and final NASL title — the dynasty\'s last stand before the league collapsed in 1984." },
+  { year:2021, team:"NYCFC", title:"MLS Cup", text:"NYCFC won their first MLS Cup on penalty kicks. New York finally had an MLS champion." },
+  { year:2023, team:"NJ/NY Gotham FC", title:"NWSL Championship", text:"Gotham FC won the NWSL Championship for the first time — NJ/NY\'s first major women\'s soccer title." },
 ];
 
 // ── Trivia questions ──────────────────────────────────────────────────────────
@@ -1024,7 +1111,7 @@ const TRIVIA_QUESTIONS = [
 ];
 
 // ── Email builder ─────────────────────────────────────────────────────────────
-function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, mlbStandings) {
+function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, mlbStandings, yesterdayTrivia) {
   const firstName = subscriber.name ? subscriber.name.split(' ')[0] : 'NY Sports Fan';
   const teams     = (subscriber.teams && subscriber.teams.length > 0)
                     ? subscriber.teams.join(' &nbsp;&middot;&nbsp; ')
@@ -1170,18 +1257,27 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
     + '</div>';
 
   // ── TRIVIA ───────────────────────────────────────────────────────────────────
+  // Today's trivia — question + hint only, NO answer shown
+  // Answer will appear in TOMORROW's digest
   const triviaHtml = '<div style="background:#f5f5ff;border-left:4px solid #5555bb;padding:16px 18px">'
-    + '<div style="font-size:8px;font-weight:900;color:#5555bb;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px">Today&rsquo;s Trivia Question</div>'
-    + '<div style="font-size:14px;font-weight:700;color:#111;line-height:1.5;margin-bottom:4px">' + trivia.q + '</div>'
-    + '<div style="font-size:11px;color:#888;font-style:italic;margin-bottom:10px">' + trivia.hint + '</div>'
-    + '<div style="background:#f0f0ff;border:1px solid #ccccee;padding:10px 14px;margin-bottom:14px">'
-    + '<div style="font-size:8px;font-weight:900;color:#5555bb;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px">&#128161; Answer</div>'
-    + '<div style="font-size:15px;font-weight:900;color:#2a2a6e;padding:4px 0;margin-bottom:4px">' + trivia.a + '</div>'
-    + ''
-    + '</div>'
+    + '<div style="font-size:8px;font-weight:900;color:#5555bb;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px">&#127914; Today&rsquo;s Trivia Question</div>'
+    + '<div style="font-size:15px;font-weight:700;color:#111;line-height:1.5;margin-bottom:6px">' + trivia.q + '</div>'
+    + '<div style="font-size:11px;color:#888;font-style:italic;margin-bottom:14px">' + trivia.hint + '</div>'
+    + '<div style="font-size:11px;color:#5555bb;font-style:italic;margin-bottom:14px">&#128073; Answer revealed in tomorrow&rsquo;s digest &mdash; check back!</div>'
     + '<a href="' + SITE_URL + '" style="display:inline-block;background:#c8201c;color:#fff;text-decoration:none;font-size:11px;font-weight:900;letter-spacing:0.1em;padding:10px 22px;text-transform:uppercase">Play in the Playroom &rarr;</a>'
     + '<p style="font-size:10px;color:#aaa;margin:10px 0 0;font-style:italic">Also today: Hangman &nbsp;&middot;&nbsp; Anagram &nbsp;&middot;&nbsp; Emoji Quiz &nbsp;&middot;&nbsp; Crossword &nbsp;&middot;&nbsp; Guess the Player</p>'
     + '</div>';
+
+  // Yesterday's trivia answer — shown at TOP of email
+  const yesterdayTriviaHtml = yesterdayTrivia
+    ? '<div style="background:#fff9e6;border:1px solid #f0e0a0;border-left:4px solid #f0b429;padding:16px 18px">'
+      + '<div style="font-size:8px;font-weight:900;color:#c8a000;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px">&#129504; Yesterday&rsquo;s Trivia Answer</div>'
+      + '<div style="font-size:13px;color:#555;font-style:italic;margin-bottom:8px">&ldquo;' + yesterdayTrivia.question + '&rdquo;</div>'
+      + '<div style="font-size:10px;color:#888;margin-bottom:6px">' + yesterdayTrivia.hint + '</div>'
+      + '<div style="background:#f0b429;color:#111;padding:10px 14px;display:inline-block;font-size:16px;font-weight:900;letter-spacing:0.02em;margin-bottom:8px">&#128161; ' + yesterdayTrivia.answer + '</div>'
+      + '<div style="font-size:11px;color:#888;font-style:italic">How did you do? &nbsp;&#128522;</div>'
+      + '</div>'
+    : '';
 
   // ── ASSEMBLE ─────────────────────────────────────────────────────────────────
   return '<!DOCTYPE html><html lang="en"><head>'
@@ -1199,6 +1295,9 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
     + '<p style="font-size:9px;color:#f0b429;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 5px">Morning Digest</p>'
     + '<p style="font-size:11px;color:#777;margin:0;letter-spacing:0.05em">' + teams + '</p>'
     + '</div>'
+
+    // Yesterday's trivia answer (shown first — great engagement hook)
+    + yesterdayTriviaHtml
 
     // NY Standings Strip
     + standingsStrip
@@ -1328,6 +1427,10 @@ export default async function handler(req, res) {
   const otd     = getOnThisDate(); // On This Date — null if no match today
     const trivia = TRIVIA_QUESTIONS[Math.floor(Math.random() * TRIVIA_QUESTIONS.length)];
 
+    // Save today's trivia to Supabase + fetch yesterday's answer
+    await saveTodayTrivia(trivia);
+    const yesterdayTrivia = await getYesterdayTrivia();
+
     // Fetch today's games once (shared across all subscribers)
     const allTodayGames = await getTodaysGames([]);
 
@@ -1358,7 +1461,7 @@ export default async function handler(req, res) {
             )
           : allTodayGames;
 
-        const html    = buildEmail(sub, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, mlbStandings);
+        const html    = buildEmail(sub, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, mlbStandings, yesterdayTrivia);
         const subject = buildSubject(scores, todayGames);
 
         // Fix unsubscribe URL with actual email
