@@ -247,12 +247,12 @@ async function getMLBGameDetails(teams) {
           const awayPitcher = game.teams && game.teams.away && game.teams.away.probablePitcher
             ? game.teams.away.probablePitcher.fullName : '';
 
-          const pitchingLine = (homePitcher && awayPitcher)
-            ? ('🚀 ' + awayPitcher + ' vs ' + homePitcher)
-            : homePitcher ? ('🚀 ' + homePitcher + ' (home)')
-            : awayPitcher ? ('🚀 ' + awayPitcher + ' (away)')
-            : '';
 
+          const awayDisplay = awayPitcher || 'TBD';
+          const homeDisplay = homePitcher || 'TBD';
+          const pitchingLine = (homePitcher || awayPitcher)
+            ? ('&#128640; ' + awayDisplay + ' vs. ' + homeDisplay)
+            : '';
           // Key by home team name for matching
           const homeShort = game.teams.home.team.name || '';
           const awayShort = game.teams.away.team.name || '';
@@ -316,11 +316,24 @@ async function getMLBStandings() {
           const runDiffStr = (runDiff > 0 ? '+' : '') + runDiff + ' Run Diff';
 
           // 3. DIVISION POSITION + GAMES BACK
-          const rank   = parseInt(rec.divisionRank) || 0;
-          const gb     = rec.gamesBack || '';
-          const suffix = rank === 1 ? 'st' : rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th';
-          const isFirst = (gb === '-' || gb === '0.0' || gb === '0' || !gb);
-          const gbStr  = rank + suffix + ' in ' + divName + (isFirst ? ' \u00B7 Division Leader' : ' \u00B7 ' + gb + ' GB');
+          const rank    = parseInt(rec.divisionRank) || 0;
+          const wcRank  = parseInt(rec.wildCardRank) || 0;
+          const gb      = rec.gamesBack || '';
+          const wcGb    = rec.wildCardGamesBack || '';
+          const suffix  = rank === 1 ? 'st' : rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th';
+          const isDiv1  = (rank === 1);
+          const isWC    = (rank > 1 && wcRank >= 1 && wcRank <= 3);
+          let gbStr;
+          if (isDiv1) {
+            gbStr = '1st in ' + divName + ' \u00B7 Division Leader';
+          } else if (isWC && wcGb && wcGb !== '-') {
+            gbStr = rank + suffix + ' in ' + divName + ' \u00B7 WC' + wcRank + ' \u00B7 ' + wcGb + ' GB';
+          } else if (isWC) {
+            gbStr = rank + suffix + ' in ' + divName + ' \u00B7 Wild Card';
+          } else {
+            gbStr = rank + suffix + ' in ' + divName + (gb && gb !== '-' ? ' \u00B7 ' + gb + ' GB' : '');
+          }
+          const isFirst = isDiv1;
 
           results[NY_IDS[teamId]] = {
             streak:   streakBadge,
@@ -1198,12 +1211,29 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
         // Look up MLB pitching/series details for this game
         const gameKey = (g.awayFull || g.awayName) + '_' + (g.homeFull || g.homeName);
         const mlbInfo = (mlbDetails && mlbDetails[gameKey]) || {};
-        const seriesStatusLine = mlbInfo.seriesStatus
-          ? '<div style="font-size:10px;font-weight:700;color:#1a7fc2;margin-top:3px">📊 ' + mlbInfo.seriesStatus + '</div>'
+        const seriesStatusTxt = (mlbInfo.seriesStatus || '').trim();
+        const seriesStatusLine = seriesStatusTxt
+          ? '<div style="font-size:10px;font-weight:700;color:#1a7fc2;margin-top:3px">&#128202; ' + seriesStatusTxt + '</div>'
           : '';
         const pitchingLine = mlbInfo.pitchingLine
           ? '<div style="font-size:10px;color:#555;margin-top:3px">' + mlbInfo.pitchingLine + '</div>'
           : '';
+
+        // Clinch badge
+        const NY_CLINCH = ['yankees','mets','jets','giants','knicks','nets','rangers','islanders','devils','liberty','nycfc','red bulls'];
+        const isNYInGame = NY_CLINCH.some(function(t) { return (g.homeName||'').toLowerCase().includes(t) || (g.awayName||'').toLowerCase().includes(t); });
+        let clinchBadge = '';
+        if (isNYInGame) {
+          const seriesStr = ((g.seriesNote || '') + ' ' + (mlbInfo.seriesStatus || '')).toLowerCase();
+          const cm = seriesStr.match(/leads\s+(\d)-(\d)/i);
+          if (cm) {
+            const wL = parseInt(cm[1]);
+            if (wL === 3 || (wL === 2 && seriesStr.indexOf('best-of-5') > -1)) {
+              clinchBadge = '<div style="background:#c8201c;color:#fff;font-size:11px;font-weight:900;padding:8px 12px;margin-top:6px;letter-spacing:0.08em;text-align:center">'
+                + '&#127942; CHAMPIONSHIP CLINCH GAME &#8212; NY leads ' + cm[1] + '-' + cm[2] + '</div>';
+            }
+          }
+        }
 
         return '<div style="padding:10px 0;border-bottom:1px solid #f2f2f2">'
           + '<div style="font-size:14px;font-weight:700;color:#111;margin-bottom:4px">' + g.emoji + ' ' + g.awayName + ' vs ' + g.homeName + '</div>'
@@ -1216,6 +1246,7 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
           + seriesLine
           + seriesStatusLine
           + pitchingLine
+          + clinchBadge
           + '</div>';
       }).join('')
     : '<p style="color:#aaa;font-style:italic;font-size:13px;margin:8px 0">No NY games scheduled today.</p>';
