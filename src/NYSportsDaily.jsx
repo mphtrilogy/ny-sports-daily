@@ -628,6 +628,11 @@ const DAILY_PLAYERS = [
   { name:"Secretariat",      team:"Belmont",sport:"Racing",pos:"Thoroughbred",emoji:"🐎",number:"1",active:false,era:"1973", stats:"31-length Belmont win · 2:24 world record · Triple Crown", fact:"Won the 1973 Belmont Stakes at Belmont Park in Elmont, Long Island by 31 lengths — completing the Triple Crown in a world record 2:24 flat that has never been broken. Not just the greatest horse race ever run, but arguably the greatest performance in the history of sport.", wiki:"https://en.wikipedia.org/wiki/Secretariat",       photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Secretariat_at_1973_Belmont_Stakes.jpg/256px-Secretariat_at_1973_Belmont_Stakes.jpg", cardColor:"#8B4513" },
   { name:"American Pharoah", team:"Belmont",sport:"Racing",pos:"Thoroughbred",emoji:"🐎",number:"1",active:false,era:"2015", stats:"2015 Triple Crown · Ended 37-year drought",           fact:"Ended a 37-year Triple Crown drought in 2015, winning the Belmont Stakes at Belmont Park in front of 90,000 fans in a frenzy. The crowd stormed the rail. Pharoah looked like he could run another mile.", wiki:"https://en.wikipedia.org/wiki/American_Pharoah",   photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/American_Pharoah_wins_Triple_Crown.jpg/256px-American_Pharoah_wins_Triple_Crown.jpg", cardColor:"#8B4513" },
 
+  // ── 2026 NBA CHAMPIONS ────────────────────────────────────────────────────
+  { name:"Jalen Brunson", team:"Knicks", sport:"NBA", pos:"PG", emoji:"\uD83C\uDFC0", number:"11", active:true, era:"2022\u2013present", stats:"2026 NBA Champion \u00B7 Finals MVP \u00B7 45 PTS in Game 5 clincher", fact:"The greatest free agent signing in NBA history. Signed for $104M in 2022 \u2014 widely called an overpay at the time \u2014 Brunson delivered the Knicks\u2019 first championship since 1973, scoring 45 points on the road to close out the Spurs and winning Finals MVP unanimously. Second-shortest Finals MVP ever, at 6\u20191. He is now Knicks royalty, forever.", wiki:"https://en.wikipedia.org/wiki/Jalen_Brunson", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Jalen_Brunson_2023.jpg/256px-Jalen_Brunson_2023.jpg", cardColor:"#006BB6" },
+  { name:"Mike Brown", team:"Knicks", sport:"NBA", pos:"HC", emoji:"\uD83C\uDFC0", number:"\u2014", active:true, era:"2025\u2013present", stats:"2026 NBA Champion \u00B7 Coach of the Year finalist \u00B7 First title since Holzman", fact:"Hired in the summer of 2025, Mike Brown became the 24th Knicks coach since the 1973 championship \u2014 and the first to win one. His calm leadership through a Finals where the Knicks trailed in all four wins of the ECF and clawed back from 16 down in the clincher will be remembered forever.", wiki:"https://en.wikipedia.org/wiki/Mike_Brown_(basketball)", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Mike_Brown_NBA.jpg/256px-Mike_Brown_NBA.jpg", cardColor:"#006BB6" },
+  { name:"Karl-Anthony Towns", team:"Knicks", sport:"NBA", pos:"C", emoji:"\uD83C\uDFC0", number:"32", active:true, era:"2024\u2013present", stats:"2026 NBA Champion \u00B7 All-Star \u00B7 Acquired via trade 2024", fact:"Brought in via trade ahead of the 2024-25 season, KAT gave the Knicks the stretch-five they\u2019d been missing for decades. His spacing and rebounding were essential pieces of the championship puzzle alongside Brunson.", wiki:"https://en.wikipedia.org/wiki/Karl-Anthony_Towns", photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Karl-Anthony_Towns_2022.jpg/256px-Karl-Anthony_Towns_2022.jpg", cardColor:"#006BB6" },
+
   // ── NEW PLAYERS — added June 2026 ────────────────────────────────────────
 // ── JETS (need 15+ more) ──────────────────────────────────────────────────
   { name:"Weeb Ewbank",      team:"Jets", sport:"NFL", pos:"HC",  emoji:"🏈", number:"—",  active:false, era:"1963–1973", stats:"Super Bowl III champion · Only coach to win NFL + AFL titles",              fact:"The only coach in professional football history to win championships in both the NFL and AFL. Built the Jets from nothing and let Broadway Joe be Broadway Joe — the mark of a great coach.",        wiki:"https://en.wikipedia.org/wiki/Weeb_Ewbank",         photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Weeb_Ewbank.jpg/256px-Weeb_Ewbank.jpg",                    cardColor:"#125740" },
@@ -985,8 +990,8 @@ async function fetchNYNews() {
   const STATIC_STORIES = [
     { title:"New York Jets 2026 training camp preview — battles to watch", team:"Jets", source:"ESPN · Jets", link:"https://www.espn.com/nfl/team/news/_/name/nyj", desc:"Key position battles and storylines as the Jets head into camp.", pub:new Date(Date.now()-172800000).toISOString() },
     { title:"Garrett Wilson among NFL's most dynamic receivers in 2026", team:"Jets", source:"ESPN · NFL", link:"https://www.espn.com/nfl/team/news/_/name/nyj", desc:"Wilson's emergence gives the Jets a true No. 1 weapon.", pub:new Date(Date.now()-259200000).toISOString() },
-    { title:"New York Knicks NBA Finals 2026 — latest news and updates", team:"Knicks", source:"ESPN · Knicks", link:"https://www.espn.com/nba/team/news/_/name/ny", desc:"The Knicks are in the NBA Finals. Latest news, analysis and game coverage.", pub:new Date(Date.now()-3600000).toISOString() },
-    { title:"Jalen Brunson leading the Knicks on the biggest stage in basketball", team:"Knicks", source:"ESPN · NBA", link:"https://www.espn.com/nba/team/news/_/name/ny", desc:"Brunson's leadership has the Knicks playing their best basketball.", pub:new Date(Date.now()-86400000).toISOString() },
+    { title:"New York Knicks are 2026 NBA Champions — first title since 1973", team:"Knicks", source:"ESPN · Knicks", link:"https://www.espn.com/nba/team/news/_/name/ny", desc:"The Knicks defeated the Spurs 4-1 to win their first championship in 53 years. Jalen Brunson named unanimous Finals MVP.", pub:new Date(Date.now()-3600000).toISOString() },
+    { title:"Jalen Brunson's 45-point masterpiece clinches Knicks championship", team:"Knicks", source:"ESPN · NBA", link:"https://www.espn.com/nba/team/news/_/name/ny", desc:"Brunson's historic Game 5 performance ends 53 years of waiting for New York.", pub:new Date(Date.now()-86400000).toISOString() },
     { title:"Brooklyn Nets 2026: building around youth and draft capital", team:"Nets", source:"ESPN · Nets", link:"https://www.espn.com/nba/team/news/_/name/bkn", desc:"The Nets enter a new era focused on sustainable rebuilding.", pub:new Date(Date.now()-172800000).toISOString() },
     { title:"Brooklyn Nets lottery pick gives new hope to long-suffering fans", team:"Nets", source:"ESPN · NBA", link:"https://www.espn.com/nba/team/news/_/name/bkn", desc:"Nets fans have reason for optimism as the rebuild continues.", pub:new Date(Date.now()-345600000).toISOString() },
     { title:"New York Rangers 2026 offseason: retooling for another playoff run", team:"Rangers", source:"ESPN · Rangers", link:"https://www.espn.com/nhl/team/news/_/name/nyr", desc:"The Blueshirts face key free agent decisions this summer.", pub:new Date(Date.now()-172800000).toISOString() },
@@ -4144,8 +4149,8 @@ function SiteSearch({ query, onSelect }) {
 
   // Search Misery Index teams
   const MISERY_INLINE = [
-    { team:"Jets", score:98, title:"DEFCON 1 — 56 years without a Super Bowl" },
-    { team:"Knicks", score:91, title:"CHRONIC HEARTBREAK — 52 years without a title" },
+    { team:"Jets", score:99, title:"DEFCON 1 — 57 years without a Super Bowl — now undisputed #1" },
+    { team:"Knicks", score:5, title:"NBA CHAMPIONS 2026 — 53-year title drought is OVER" },
     { team:"Mets", score:85, title:"HIGH SUFFERING — 40 years without a World Series" },
     { team:"Rangers", score:72, title:"ELEVATED SUFFERING — 1994 was the last Cup" },
     { team:"Giants", score:65, title:"MODERATE SUFFERING — 4 Super Bowls but recent drought" },
@@ -4153,7 +4158,7 @@ function SiteSearch({ query, onSelect }) {
     { team:"Nets", score:74, title:"DEEP SUFFERING — never won an NBA title in any city" },
     { team:"Yankees", score:35, title:"BASELINE SUFFERING — 27 titles but 17-year drought" },
     { team:"Devils", score:22, title:"SURPRISINGLY MANAGEABLE — 3 Cups in 9 years" },
-    { team:"Liberty", score:15, title:"REIGNING CHAMPIONS — back-to-back WNBA titles" },
+    { team:"Liberty", score:15, title:"WNBA CHAMPIONS 2024 — first title in franchise history" },
   ];
   MISERY_INLINE.forEach((m, i) => {
     const text = `${m.team} misery index suffering drought heartbreak ${m.title}`.toLowerCase();
@@ -4928,6 +4933,7 @@ function IconicTab() {
 }
 
 const TODAY_IN_NY_SPORTS = [
+  { month:6, day:14, year:2026, team:"Knicks", emoji:"🏆", title:"KNICKS WIN IT ALL — First Title Since 1973", desc:"Jalen Brunson scores 45 points in Game 5 on the road to close out the Spurs 94-90, capping a historic comeback-filled Finals run. 53 years of waiting are over. The Knicks are NBA Champions." },
   // ── JANUARY ──────────────────────────────────────────────────────────────
   { month:1, day:1,  year:1903, team:"Yankees",   emoji:"⚾", title:"New York Highlanders Founded", desc:"The franchise that becomes the Yankees is established. By 1913 they're the Yankees — and by 1923 they've built the greatest stadium in sports." },
   { month:1, day:3,  year:1920, team:"Yankees",   emoji:"⚾", title:"Yankees Acquire Babe Ruth from Red Sox", desc:"For $100,000 cash and a loan on Fenway Park, the Yankees acquire Ruth. The Curse of the Bambino begins. The most consequential transaction in sports history." },
@@ -5777,19 +5783,19 @@ function MiseryTab() {
   const MISERY_DATA = [
     {
       team:"Jets", emoji:"🏈", color:"#125740",
-      score:98,
-      title:"DEFCON 1 — MAXIMUM SUFFERING",
+      score:99,
+      title:"DEFCON 1 \u2014 #1 IN MISERY \u2014 NOW UNDISPUTED",
       last:"1969", drought:57,
       lowlights:["57 years without a Super Bowl — longest drought in the NFL","Missed on Dan Marino in 1983 (took Ken O'Brien)","Brett Favre torn shoulder/elbow, threw 8 INTs in 2008 — fell apart after promising start","Sanchez Butt Fumble on national TV 2012","Sam Darnold seeing ghosts on MNF — a truly historic lowlight","Aaron Rodgers: torn Achilles on play 4 of his debut, 2023"],
       brightside:"They do have Super Bowl III and Broadway Joe's guarantee — the greatest single moment any NY franchise has ever produced. Hope, however faint, springs eternal each fall.",
     },
     {
       team:"Knicks", emoji:"🏀", color:"#006BB6",
-      score:91,
-      title:"CHRONIC HEARTBREAK",
-      last:"1973", drought:53,
-      lowlights:["52 years without an NBA title","1994 Finals — Ewing's closest call, lost to Rockets","7 shots at the playoffs in the Isiah Thomas era","James Dolan's endless ownership chaos","Carmelo Anthony's best years wasted","Kristaps Porzingis traded for nothing tangible"],
-      brightside:"Two championships in the early 70s and the most electric building in sports. When the Garden is rocking, there is nothing like it in basketball.",
+      score:5,
+      title:"REIGNING CHAMPIONS — 53 YEARS OF PAIN, OVER",
+      last:"2026", drought:0,
+      lowlights:["The 52-year drought is now history \u2014 these are just memories now:","1994 Finals \u2014 Ewing\u2019s closest call, lost to Rockets","7 shots at the playoffs in the Isiah Thomas era","James Dolan\u2019s endless ownership chaos (forgiven, for now)","Carmelo Anthony\u2019s best years wasted","Kristaps Porzingis traded for nothing tangible"],
+      brightside:"NBA CHAMPIONS. Jalen Brunson, Finals MVP, 45 points to close it out. The Garden hasn\u2019t stopped shaking since June 13th. Three championships in franchise history \u2014 1970, 1973, and now 2026. The wait is finally, gloriously over.",
     },
     {
       team:"Mets", emoji:"⚾", color:"#FF5910",
@@ -5842,7 +5848,7 @@ function MiseryTab() {
     {
       team:"Liberty", emoji:"🏀", color:"#007A5E",
       score:15,
-      title:"REIGNING CHAMPIONS",
+      title:"WNBA CHAMPIONS (2024)",
       last:"2025", drought:0,
       lowlights:["Years of irrelevance before Stewart's arrival","Played second fiddle to the Knicks for decades","Had to fight for visibility in NY sports media"],
       brightside:"WNBA champions and the premier franchise in women's basketball. After decades of fighting for the spotlight, the Liberty finally own it.",
@@ -5865,6 +5871,9 @@ function MiseryTab() {
       </div>
       <div style={{marginBottom:20, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
         <p style={{margin:0, fontSize:12, color:"#aaa"}}>Every NY team ranked by how much they've made their fans suffer. The higher the score, the deeper the pain. A badge of honor for true NY fans.</p>
+      </div>
+      <div style={{marginBottom:20, padding:"10px 14px", background:"#1e1a00", borderLeft:"3px solid #f0b429"}}>
+        <p style={{margin:0, fontSize:12, color:"#f0b429", fontWeight:700}}>\uD83C\uDFC6 BIGGEST UPSET TO THE MISERY INDEX EVER: The Knicks just dropped from #2 (score 91) to dead last (score 5) overnight. 53 years of suffering, erased by Jalen Brunson in one June evening. The Jets now stand alone at the top \u2014 for the first time in decades, they have absolutely no company.</p>
       </div>
       {MISERY_DATA.sort((a,b)=>b.score-a.score).map((t, i) => (
         <div key={i} style={{...styles.miseryCard, borderLeft:`4px solid ${t.color}`}}>
@@ -5938,7 +5947,8 @@ function AwardsTab() {
     { award:"Defensive POY",    year:1986, winner:"Lawrence Taylor",    team:"Giants",  sport:"NFL", note:"Second straight Defensive Player of the Year" },
     { award:"Defensive POY",    year:1985, winner:"Lawrence Taylor",    team:"Giants",  sport:"NFL", note:"First of back-to-back Defensive Player of the Year awards" },
     // ── NBA ──
-    { award:"NBA MVP",          year:1994, winner:"Hakeem (finals vs Knicks)", team:"Rockets", sport:"NBA", note:"Ewing's Knicks lost the 1994 Finals — Patrick deserved a ring" },
+    { award:"Finals MVP",       year:2026, winner:"Jalen Brunson",      team:"Knicks",  sport:"NBA", note:"Unanimous MVP — 45 PTS in Game 5 clincher, ended the 53-year title drought" },
+    { award:"NBA MVP",          year:1994, winner:"Hakeem (finals vs Knicks)", team:"Rockets", sport:"NBA", note:"Ewing's Knicks lost the 1994 Finals — but New York got its ring 32 years later" },
     { award:"Finals MVP",       year:1973, winner:"Willis Reed",        team:"Knicks",  sport:"NBA", note:"Second Finals MVP — completing the Knicks' dynasty" },
     { award:"Finals MVP",       year:1970, winner:"Willis Reed",        team:"Knicks",  sport:"NBA", note:"Legendary limping entrance, 4-pt start — The Captain delivers" },
     { award:"NBA Rookie of Year",year:1986, winner:"Patrick Ewing",     team:"Knicks",  sport:"NBA", note:"First NBA lottery pick — announced a 15-year era of Knicks basketball" },
@@ -6109,7 +6119,7 @@ function StatsTab() {
 
   const DROUGHT_DATA = [
     { team:"Jets",      emoji:"🏈", last:1969, sport:"NFL"  },
-    { team:"Knicks",    emoji:"🏀", last:1973, sport:"NBA"  },
+    { team:"Knicks",    emoji:"🏀", last:2026, sport:"NBA"  },
     { team:"Islanders", emoji:"🏒", last:1983, sport:"NHL"  },
     { team:"Mets",      emoji:"⚾", last:1986, sport:"MLB"  },
     { team:"Rangers",   emoji:"🏒", last:1994, sport:"NHL"  },
@@ -10497,6 +10507,7 @@ const NY_CHAMPIONSHIPS = [
   // ── KNICKS (2) ──
   { year:1970, team:"Knicks", sport:"NBA", title:"NBA Championship", color:"#006BB6", emoji:"🏀", opponent:"vs Lakers", iconic:true, moment:"Willis Reed limped onto the MSG court before Game 7. The crowd erupted. Frazier scored 36 with 19 assists.", fact:"Reed had torn his thigh muscle. His entrance is one of the most inspiring moments in sports history.", wiki:"https://en.wikipedia.org/wiki/1970_NBA_Finals" },
   { year:1973, team:"Knicks", sport:"NBA", title:"NBA Championship", color:"#006BB6", emoji:"🏀", opponent:"vs Lakers", iconic:false, moment:"The rematch. DeBusschere, Bradley, Monroe, Frazier — a beautifully constructed championship team.", fact:"Dave DeBusschere's final season. The perfect team concept executed flawlessly.", wiki:"https://en.wikipedia.org/wiki/1973_NBA_Finals" },
+  { year:2026, team:"Knicks", sport:"NBA", title:"NBA Championship", color:"#006BB6", emoji:"🏀", opponent:"vs Spurs", iconic:true, moment:"53 years of waiting ended. Jalen Brunson scored 45 points to close out Game 5 on the road, capping a Finals run defined by comeback after comeback. The Knicks are NBA Champions for the first time since 1973.", fact:"Brunson\u2019s 45 points in the clincher matched Michael Jordan (1998) for most ever in a road title-clinching Finals game. He won Finals MVP unanimously \u2014 the fourth player in NBA history selected in the second round to win the award, joining Knicks legend Willis Reed.", wiki:"https://en.wikipedia.org/wiki/2026_NBA_Finals" },
 
   // ── NY NETS ABA (2) ──
   { year:1974, team:"NY Nets (ABA)", sport:"NBA", title:"ABA Championship", color:"#555", emoji:"🏀", opponent:"vs Utah Stars", iconic:false, moment:"Julius Erving's first championship. Dr. J was already redefining what a basketball player could be.", fact:"The Nets played in Uniondale, NY — same arena as the Islanders. Dr. J made them must-see.", wiki:"https://en.wikipedia.org/wiki/1974_ABA_Finals" },
@@ -11200,6 +11211,29 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
 
   return (
     <div style={{marginBottom:12}}>
+      {/* KNICKS CHAMPIONSHIP BANNER \u2014 2026 NBA Champions */}
+      <div style={{
+        background:"linear-gradient(135deg, #006BB6 0%, #F58426 100%)",
+        border:"2px solid #f0b429", borderRadius:4,
+        padding:"14px 18px", marginBottom:12,
+        textAlign:"center", position:"relative", overflow:"hidden",
+      }}>
+        <div style={{fontSize:9, fontWeight:900, letterSpacing:"0.25em", textTransform:"uppercase",
+          color:"#fff8e0", marginBottom:4}}>\uD83C\uDFC6 BREAKING \u2014 JUNE 14, 2026</div>
+        <div style={{fontSize:20, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif",
+          letterSpacing:"0.02em", marginBottom:4, textShadow:"0 1px 4px rgba(0,0,0,0.3)"}}>
+          KNICKS ARE NBA CHAMPIONS!
+        </div>
+        <div style={{fontSize:11, color:"#fff8e0", fontStyle:"italic"}}>
+          First title since 1973 \u2014 Jalen Brunson, Finals MVP, 45 points to close it out vs. Spurs
+        </div>
+        <div style={{fontSize:9, fontWeight:900, letterSpacing:"0.15em", textTransform:"uppercase",
+          color:"#fff", marginTop:8, padding:"4px 14px", background:"rgba(0,0,0,0.25)",
+          borderRadius:20, display:"inline-block"}}>
+          DEFENDING CHAMPS \uD83D\uDC51
+        </div>
+      </div>
+
       {/* Onboard */}
       {!onboardDone && (
         <OnboardBanner
