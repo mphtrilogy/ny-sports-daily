@@ -470,7 +470,7 @@ const DEEP_DIVES_NEW = [
     title: "Patrick Ewing: What New York Owes Its Greatest Knick",
     team: "Knicks",
     charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1985,
-    body: "Patrick Ewing never won a championship in New York. He also never stopped trying. For 15 seasons he was the Knicks — the one constant through coaching changes, ownership drama, and roster upheaval. He carried them to the Finals in 1994, watching from the bench with a torn tendon as they lost Game 7 to Houston. He came back the next year and the year after that. When they traded him to Seattle in 2000, Madison Square Garden gave him a two-minute standing ovation. He cried. The city cried. The ring never came. But ask any New Yorker who came of age in the 1980s and 90s who their Knick was. It's always Patrick. Always. The city owes him more gratitude than it's ever properly given."
+    body: "Patrick Ewing never won a championship in New York. He also never stopped trying. For 15 seasons he was the Knicks — the one constant through coaching changes, ownership drama, and roster upheaval. He carried them to the Finals in 1994, watching from the bench with a torn tendon as they lost Game 7 to Houston. He came back the next year and the year after that. When they traded him to Seattle in 2000, Madison Square Garden gave him a two-minute standing ovation. He cried. The city cried. The ring never came. But ask any New Yorker who came of age in the 1980s and 90s who their Knick was. It's always Patrick. Always. The city owes him more gratitude than it's ever properly given. In June 2026, the Knicks finally won it all again — and somewhere, Patrick Ewing was almost certainly courtside, smiling at a franchise that had carried his torch for over three decades."
   },
 
   {
@@ -692,7 +692,14 @@ const DEEP_DIVES_EXTRA = [
     charity: "Garden of Dreams Foundation | gardenofdreams.org",
     body: "Every championship team has players the history books undervalue. Mark Bavaro caught everything Eli Manning's predecessors could throw and blocked like a pulling guard — the most complete tight end of his era, somehow overlooked. Dave DeBusschere was the defensive engine of those Knicks championship teams, the forward who guarded the other team's best player every night so Frazier and Reed could shine. Butch Goring arrived in Long Island in 1980 and the Islanders immediately won four straight Cups — his spark and leadership the missing piece Bill Torrey had been searching for. Clark Gillies was the enforcer and heart of those same Islanders, the forward who made space for Bossy and Trottier by being the last player anyone wanted to fight. Cleon Jones caught the final out of the 1969 World Series on his knees and has spent 50 years being overshadowed by the pitchers who got them there. Jesse Orosco leaping into Gary Carter's arms after the final out in 1986. Tommy Henrich, 'Old Reliable,' the Yankee who delivered in October after October without ever becoming a household name. New York has always loved its superstars. Sometimes the heroes who made the superstars possible deserve a moment too."
   },
+,
 
+  {
+    title: "53 Years: The Full Story of the 2026 Knicks Championship",
+    team: "Knicks", year: 2026,
+    charity: "Garden of Dreams Foundation | gardenofdreams.org",
+    body: "Fifty-three years. That's how long New York waited between Knicks championships -- longer than the Rangers' famous 54-year Stanley Cup drought, longer than most of the people celebrating in the streets on June 13th had been alive. The 2026 Knicks didn't just end the wait. They ended it in a way that felt, somehow, perfectly Knicks -- chaotic, nerve-wracking, and ultimately triumphant. The story starts in the summer of 2022, when New York handed Jalen Brunson a four-year, $104 million contract. The reaction was skepticism bordering on mockery -- a 6-foot-1 guard, a second-round pick, the son of a journeyman who'd bounced around the league. People called it an overpay. Brunson spent the next four seasons making that contract look like the bargain of the decade. The front office built around him with purpose: Mikal Bridges and OG Anunoby for two-way wing depth, Josh Hart for relentless energy, and ahead of the 2024-25 season, a trade for Karl-Anthony Towns that finally gave the Knicks the stretch-five they'd lacked for a generation. Then in the summer of 2025, New York hired Mike Brown as head coach -- the 24th coach since the 1973 championship. Nobody knew yet that he'd be the one to finally get it done. The 2025-26 regular season was good, not great. But something clicked in the playoffs. The first round against Atlanta went six games, the Knicks falling behind 2-1 before winning three straight to close it out. Then came a sweep of Philadelphia in the second round. Then a sweep of Cleveland in the Eastern Conference Finals -- New York's first trip to the NBA Finals since 1999, achieved by outscoring opponents by 271 points across 14 playoff games, the largest such margin in NBA history entering a Finals. Brunson was named Eastern Conference Finals MVP, unanimously. The Finals against the San Antonio Spurs and Victor Wembanyama began about as well as a Finals can begin -- the Knicks won both road games in San Antonio, extending their postseason winning streak to 13 straight, the second-longest in NBA history. Then the Spurs won Game 3 at the Garden, and Game 4 became one of the strangest, most dramatic games in Finals history: San Antonio led by 29 points at halftime. The Knicks didn't just claw back -- they completed the largest comeback in NBA playoff history, winning 107-106. Of the 38 previous teams to fall behind 3-1 in the Finals, only one had ever come back to win it. The Spurs, a young and talented team, had two days to recover before Game 5 in San Antonio. It didn't matter. Jalen Brunson scored 45 points -- 15 of them in the final 7:43 of regulation, including 13 straight at one stretch -- as the Knicks erased a double-digit deficit one final time and won 94-90. The Larry O'Brien Trophy was heading to New York for the first time since 1973. Brunson's 45 points matched Michael Jordan's 1998 total for the most ever scored on the road in a title-clinching Finals game. The Finals MVP vote was unanimous -- all 11 voters. At 6-foot-1, he became the second-shortest Finals MVP in NBA history, behind only Isiah Thomas. And he became the fourth player ever to win Finals MVP after being drafted in the second round -- joining Dennis Johnson, Nikola Jokic, and a Knicks legend named Willis Reed, who delivered New York's first two championships in 1970 and 1973. After the final buzzer, Brunson found his father Rick -- a Knicks assistant coach -- for an embrace that said everything words couldn't. Walt 'Clyde' Frazier, who led those 1970 and 1973 teams, watched it all happen and had nothing but praise for what he'd just witnessed. Fifty-three years of heartbreak -- Ewing's torn tendon in 1994, the playoff disappointments, the Dolan-era dysfunction, all of it -- gave way to something New York had almost stopped letting itself hope for. The Knicks are NBA Champions. Again. Finally. And with Brunson, Towns, Bridges, Anunoby and Hart all under contract, with Mike Brown established as exactly the right coach, this doesn't look like a one-year miracle. It looks like the beginning."
+  }
 ];
 
 
@@ -1103,10 +1110,30 @@ async function getSaturdayPoll() {
   }
 }
 
+// ── DATE-SPECIFIC OVERRIDES ───────────────────────────────────────────────────
+// For major NY sports moments, force a specific Deep Dive on a specific Sunday
+// regardless of what the shuffle would normally pick. Format: 'YYYY-MM-DD'
+const SUNDAY_DEEP_DIVE_OVERRIDES = {
+  '2026-06-21': '53 Years: The Full Story of the 2026 Knicks Championship',
+};
+
 // ── MAIN: GET TODAY'S NUGGET ─────────────────────────────────────────────────
 function getDayNugget(dayOfWeek, weekNumber) {
   // weekNumber = Math.floor((Date.now() - new Date('2026-01-01')) / 604800000)
   // Ensures rotation through arrays without repeating
+
+  // Check for date-specific Sunday override
+  if (dayOfWeek === 0) {
+    const dateStr = new Date().toISOString().slice(0,10);
+    const overrideTitle = SUNDAY_DEEP_DIVE_OVERRIDES[dateStr];
+    if (overrideTitle) {
+      const overrideEntry = ALL_DEEP_DIVES.find(d => d.title === overrideTitle);
+      if (overrideEntry) {
+        return { type:'deepdive', data: overrideEntry };
+      }
+    }
+  }
+
   switch(dayOfWeek) {
     case 0: {
     // Smart shuffle — no same team within 4 weeks
@@ -2110,6 +2137,7 @@ const GLORY_MOMENTS = [
   { year:1955, team:"Brooklyn Dodgers", title:"World Series", text:"\'Next year\' FINALLY came. Sandy Amoros\' miraculous Game 7 catch. Brooklyn exploded in joy." },
   { year:1970, team:"Knicks", title:"NBA Championship", text:"Willis Reed limped onto the MSG court before Game 7. The crowd erupted. Frazier scored 36 with 19 assists." },
   { year:1973, team:"Knicks", title:"NBA Championship", text:"The rematch. DeBusschere, Bradley, Monroe, Frazier — a beautifully constructed championship team." },
+  { year:2026, team:"Knicks", title:"NBA Championship", text:"53 years of waiting ended. Jalen Brunson scored 45 points on the road to close out the Spurs in Game 5, capping a Finals run defined by comeback after comeback. Unanimous Finals MVP. The Knicks are NBA Champions again." },
   { year:1974, team:"NY Nets (ABA)", title:"ABA Championship", text:"Julius Erving\'s first championship. Dr. J was already redefining what a basketball player could be." },
   { year:1976, team:"NY Nets (ABA)", title:"ABA Championship", text:"Julius Erving averaged 37.7 points per game in the Finals. The last ABA championship before the merger." },
   { year:1928, team:"Rangers", title:"Stanley Cup", text:"Their 2nd season in existence! GM Lester Patrick, age 44, played goal when the regular goalie was hurt — and won." },
@@ -2243,7 +2271,10 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
         const gameKey = (g.awayFull || g.awayName) + '_' + (g.homeFull || g.homeName);
         const mlbInfo = (mlbDetails && mlbDetails[gameKey]) || {};
         const seriesStatusTxt = (mlbInfo.seriesStatus || '').trim();
-        const seriesStatusLine = seriesStatusTxt
+        // Hide generic regular-season label "Season" — only show meaningful series info
+        // (e.g. "Game 2 of 3", "Series tied 1-1") which only appears for postseason/rivalry series
+        const isGenericSeason = /^season$/i.test(seriesStatusTxt) || seriesStatusTxt === '';
+        const seriesStatusLine = (!isGenericSeason)
           ? '<div style="font-size:10px;font-weight:700;color:#1a7fc2;margin-top:3px">&#128202; ' + seriesStatusTxt + '</div>'
           : '';
         const pitchingLine = mlbInfo.pitchingLine
@@ -2481,6 +2512,23 @@ function buildSubject(scores, todayGames) {
     : todayGames.length > 0
       ? ' · ' + todayGames.length + ' game' + (todayGames.length > 1 ? 's' : '') + ' today'
       : '';
+
+  // CHAMPIONSHIP OVERRIDE — checks if any NY team's last game was a title-clinching win
+  // (seriesNote contains "Championship" or "Finals" + a series-ending score like 4-1)
+  const champGame = scores.find(g => {
+    const note = (g.seriesNote || '').toLowerCase();
+    const isTitleClincher = note.includes('championship') || note.includes('finals')
+      || note.includes('world series') || note.includes('stanley cup') || note.includes('super bowl');
+    const homeNY = isNYShort(g.homeName);
+    const awayNY = isNYShort(g.awayName);
+    const nyWon = (homeNY && g.homeWin) || (awayNY && g.awayWin);
+    return isTitleClincher && nyWon;
+  });
+
+  if (champGame) {
+    const winner = isNYShort(champGame.homeName) ? champGame.homeName : champGame.awayName;
+    return '\uD83C\uDFC6 BREAKING: ' + winner.toUpperCase() + ' ARE CHAMPIONS! · ' + today + ' · 🗽 NY Sports Daily';
+  }
 
   return '🗽 NY Sports Daily · ' + today + (scoreSummary ? ' · ' + scoreSummary : '') + gameSuffix;
 }
