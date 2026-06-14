@@ -4150,15 +4150,15 @@ function SiteSearch({ query, onSelect }) {
   // Search Misery Index teams
   const MISERY_INLINE = [
     { team:"Jets", score:99, title:"DEFCON 1 — 57 years without a Super Bowl — now undisputed #1" },
-    { team:"Knicks", score:5, title:"NBA CHAMPIONS 2026 — 53-year title drought is OVER" },
-    { team:"Mets", score:85, title:"HIGH SUFFERING — 40 years without a World Series" },
-    { team:"Rangers", score:72, title:"ELEVATED SUFFERING — 1994 was the last Cup" },
-    { team:"Giants", score:65, title:"MODERATE SUFFERING — 4 Super Bowls but recent drought" },
-    { team:"Islanders", score:62, title:"MODERATE SUFFERING — 43 years since dynasty ended" },
-    { team:"Nets", score:74, title:"DEEP SUFFERING — never won an NBA title in any city" },
+    { team:"Nets", score:78, title:"DEEP SUFFERING — never won an NBA title, ever, in any city" },
+    { team:"Islanders", score:77, title:"DEEP SUFFERING — 43 years since the dynasty ended" },
+    { team:"Mets", score:74, title:"HIGH SUFFERING — 40 years of gut punches since 1986" },
+    { team:"Rangers", score:60, title:"ELEVATED SUFFERING — but 1994 happened" },
+    { team:"Giants", score:45, title:"MILD SUFFERING — 4 Super Bowls, only 14-year drought" },
     { team:"Yankees", score:35, title:"BASELINE SUFFERING — 27 titles but 17-year drought" },
     { team:"Devils", score:22, title:"SURPRISINGLY MANAGEABLE — 3 Cups in 9 years" },
     { team:"Liberty", score:15, title:"WNBA CHAMPIONS 2024 — first title in franchise history" },
+    { team:"Knicks", score:5, title:"NBA CHAMPIONS 2026 — 53-year title drought is OVER" },
   ];
   MISERY_INLINE.forEach((m, i) => {
     const text = `${m.team} misery index suffering drought heartbreak ${m.title}`.toLowerCase();
@@ -4933,7 +4933,7 @@ function IconicTab() {
 }
 
 const TODAY_IN_NY_SPORTS = [
-  { month:6, day:14, year:2026, team:"Knicks", emoji:"🏆", title:"KNICKS WIN IT ALL — First Title Since 1973", desc:"Jalen Brunson scores 45 points in Game 5 on the road to close out the Spurs 94-90, capping a historic comeback-filled Finals run. 53 years of waiting are over. The Knicks are NBA Champions." },
+  { month:6, day:13, year:2026, team:"Knicks", emoji:"🏆", title:"KNICKS WIN IT ALL — First Title Since 1973", desc:"Jalen Brunson scores 45 points in Game 5 on the road to close out the Spurs 94-90, capping a historic comeback-filled Finals run. 53 years of waiting are over. The Knicks are NBA Champions." },
   // ── JANUARY ──────────────────────────────────────────────────────────────
   { month:1, day:1,  year:1903, team:"Yankees",   emoji:"⚾", title:"New York Highlanders Founded", desc:"The franchise that becomes the Yankees is established. By 1913 they're the Yankees — and by 1923 they've built the greatest stadium in sports." },
   { month:1, day:3,  year:1920, team:"Yankees",   emoji:"⚾", title:"Yankees Acquire Babe Ruth from Red Sox", desc:"For $100,000 cash and a loan on Fenway Park, the Yankees acquire Ruth. The Curse of the Bambino begins. The most consequential transaction in sports history." },
@@ -5799,40 +5799,40 @@ function MiseryTab() {
     },
     {
       team:"Mets", emoji:"⚾", color:"#FF5910",
-      score:85,
-      title:"HIGH SUFFERING",
+      score:74,
+      title:"HIGH SUFFERING — 40 YEARS OF GUT PUNCHES",
       last:"1986", drought:40,
       lowlights:["40 years without a World Series title","1988: 100 wins and still lost to the Dodgers in NLCS","Generation K: Wilson, Pulsipher, Isringhausen — all busted before they started","2007: Collapsed with 17 games to play — 7 game lead vanished","2015: Harvey's arm, one strike away, Familia blows Save","Bobby Bonilla Day — paid $1.19M every July 1 through 2035"],
       brightside:"Two World Series titles, the deepest-pocketed ownership in baseball, and the most passionate fans in the National League. The window never truly closes in Queens.",
     },
     {
       team:"Rangers", emoji:"🏒", color:"#0038A8",
-      score:72,
-      title:"ELEVATED SUFFERING",
+      score:60,
+      title:"ELEVATED SUFFERING — BUT 1994 HAPPENED",
       last:"1994", drought:32,
       lowlights:["54-year drought before 1994","2014 Finals loss to the LA Kings","2022 Conference Finals loss to Lightning","Losing Messier's free agent negotiations","Trading Rick Middleton for Ken Hodge — criminal"],
       brightside:"1994 happened — the 54-year curse was broken on Broadway. Four Stanley Cups in the trophy case and the most storied building in hockey.",
     },
     {
       team:"Giants", emoji:"🏈", color:"#0B2265",
-      score:65,
-      title:"MODERATE SUFFERING",
+      score:45,
+      title:"MILD SUFFERING — RECENT ENOUGH SUCCESS",
       last:"2012", drought:14,
       lowlights:["Back-to-back losing seasons 2017-2023","Daniel Jones experiment cost 3 years","Saquon Barkley left for Philadelphia and immediately won","Odell Beckham traded away","McAdoo benched Eli Manning — immediate fan revolt"],
       brightside:"Four Super Bowls, two miracle upsets of the greatest dynasty in NFL history, and Lawrence Taylor. The resume is, simply, elite.",
     },
     {
       team:"Islanders", emoji:"🏒", color:"#00539B",
-      score:62,
-      title:"MODERATE SUFFERING",
+      score:77,
+      title:"DEEP SUFFERING — 43 YEARS AND COUNTING",
       last:"1983", drought:43,
       lowlights:["John Tavares left for Toronto in free agency — broke hearts","Rick DiPietro 15-year $67.5M contract — disaster","Years of arena uncertainty (Nassau vs Brooklyn vs UBS)","Mike Milbury's trades still echoing","No Cup since the dynasty ended in 1983"],
       brightside:"Four consecutive Stanley Cups from 1980-83 — the most dominant dynasty in modern NHL history. No one can ever take those banners down.",
     },
     {
       team:"Nets", emoji:"🏀", color:"#000000",
-      score:74,
-      title:"DEEP SUFFERING — ZERO NBA TITLES",
+      score:78,
+      title:"DEEP SUFFERING — ZERO NBA TITLES, EVER, IN ANY CITY",
       last:"Never (NBA)", drought:999,
       lowlights:["Never won an NBA championship in ANY city (NJ or Brooklyn)","Dr. J sold to 76ers for $3M just to pay the ABA merger fee — franchise-altering betrayal","KD/Kyrie/Harden Big 3 assembled — never won a single playoff SERIES together","Kyrie flat-earther chaos derailed two promising seasons","The Simmons trade: gave up Harden for a player who refused to play","Moved from NJ to Brooklyn — 10+ years still no title, no Finals"],
       brightside:"Brooklyn gave the franchise genuine identity, a beautiful arena, and real star power for the first time in decades. The draft capital stockpile means the next chapter could be written by a transcendent young core.",
@@ -5873,7 +5873,7 @@ function MiseryTab() {
         <p style={{margin:0, fontSize:12, color:"#aaa"}}>Every NY team ranked by how much they've made their fans suffer. The higher the score, the deeper the pain. A badge of honor for true NY fans.</p>
       </div>
       <div style={{marginBottom:20, padding:"10px 14px", background:"#1e1a00", borderLeft:"3px solid #f0b429"}}>
-        <p style={{margin:0, fontSize:12, color:"#f0b429", fontWeight:700}}>\uD83C\uDFC6 BIGGEST UPSET TO THE MISERY INDEX EVER: The Knicks just dropped from #2 (score 91) to dead last (score 5) overnight. 53 years of suffering, erased by Jalen Brunson in one June evening. The Jets now stand alone at the top \u2014 for the first time in decades, they have absolutely no company.</p>
+        <p style={{margin:0, fontSize:12, color:"#f0b429", fontWeight:700}}>🏆 BIGGEST UPSET TO THE MISERY INDEX EVER: On June 13th, the Knicks dropped from #2 (score 91) to dead last (score 5) overnight. 53 years of suffering, erased by Jalen Brunson in one evening. The Jets now stand alone at the top — for the first time in decades, they have absolutely no company.</p>
       </div>
       {MISERY_DATA.sort((a,b)=>b.score-a.score).map((t, i) => (
         <div key={i} style={{...styles.miseryCard, borderLeft:`4px solid ${t.color}`}}>
@@ -11219,7 +11219,7 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
         textAlign:"center", position:"relative", overflow:"hidden",
       }}>
         <div style={{fontSize:9, fontWeight:900, letterSpacing:"0.25em", textTransform:"uppercase",
-          color:"#fff8e0", marginBottom:4}}>\uD83C\uDFC6 BREAKING \u2014 JUNE 14, 2026</div>
+          color:"#fff8e0", marginBottom:4}}>🏆 BREAKING — JUNE 13, 2026</div>
         <div style={{fontSize:20, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif",
           letterSpacing:"0.02em", marginBottom:4, textShadow:"0 1px 4px rgba(0,0,0,0.3)"}}>
           KNICKS ARE NBA CHAMPIONS!
@@ -11230,7 +11230,7 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
         <div style={{fontSize:9, fontWeight:900, letterSpacing:"0.15em", textTransform:"uppercase",
           color:"#fff", marginTop:8, padding:"4px 14px", background:"rgba(0,0,0,0.25)",
           borderRadius:20, display:"inline-block"}}>
-          DEFENDING CHAMPS \uD83D\uDC51
+          DEFENDING CHAMPS 👑
         </div>
       </div>
 
