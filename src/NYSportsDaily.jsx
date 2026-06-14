@@ -11225,7 +11225,7 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
           KNICKS ARE NBA CHAMPIONS!
         </div>
         <div style={{fontSize:11, color:"#fff8e0", fontStyle:"italic"}}>
-          First title since 1973 \u2014 Jalen Brunson, Finals MVP, 45 points to close it out vs. Spurs
+          First title since 1973 — Jalen Brunson, Finals MVP, 45 points to close it out vs. Spurs
         </div>
         <div style={{fontSize:9, fontWeight:900, letterSpacing:"0.15em", textTransform:"uppercase",
           color:"#fff", marginTop:8, padding:"4px 14px", background:"rgba(0,0,0,0.25)",
