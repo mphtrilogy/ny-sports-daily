@@ -2364,14 +2364,13 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
     + '<p style="font-size:10px;color:#aaa;margin:10px 0 0;font-style:italic">Also today: Hangman &nbsp;&middot;&nbsp; Anagram &nbsp;&middot;&nbsp; Emoji Quiz &nbsp;&middot;&nbsp; Crossword &nbsp;&middot;&nbsp; Guess the Player</p>'
     + '</div>';
 
-  // Yesterday's trivia answer — shown at TOP of email
+  // Yesterday's trivia answer — shown BELOW today's question in the Playroom section
   const yesterdayTriviaHtml = yesterdayTrivia
-    ? '<div style="background:#fff9e6;border:1px solid #f0e0a0;border-left:4px solid #f0b429;padding:16px 18px">'
-      + '<div style="font-size:8px;font-weight:900;color:#c8a000;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:8px">&#129504; Yesterday&rsquo;s Trivia Answer</div>'
-      + '<div style="font-size:13px;color:#555;font-style:italic;margin-bottom:8px">&ldquo;' + yesterdayTrivia.question + '&rdquo;</div>'
-      + '<div style="font-size:10px;color:#888;margin-bottom:6px">' + yesterdayTrivia.hint + '</div>'
-      + '<div style="background:#f0b429;color:#111;padding:10px 14px;display:inline-block;font-size:16px;font-weight:900;letter-spacing:0.02em;margin-bottom:8px">&#128161; ' + yesterdayTrivia.answer + '</div>'
-      + '<div style="font-size:11px;color:#888;font-style:italic">How did you do? &nbsp;&#128522;</div>'
+    ? '<div style="background:#fff9e6;border:1px solid #f0e0a0;border-left:3px solid #f0b429;padding:12px 14px;margin-top:14px">'
+      + '<div style="font-size:7px;font-weight:900;color:#c8a000;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:6px">&#129504; Yesterday&rsquo;s Answer</div>'
+      + '<div style="font-size:11px;color:#666;font-style:italic;margin-bottom:6px">&ldquo;' + yesterdayTrivia.question + '&rdquo;</div>'
+      + '<div style="background:#f0b429;color:#111;padding:6px 10px;display:inline-block;font-size:12px;font-weight:900;letter-spacing:0.02em;margin-bottom:4px">&#128161; ' + yesterdayTrivia.answer + '</div>'
+      + '<div style="font-size:9px;color:#999;font-style:italic;margin-top:4px">How did you do? &nbsp;&#128522;</div>'
       + '</div>'
     : '';
 
@@ -2391,9 +2390,6 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
     + '<p style="font-size:9px;color:#f0b429;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 5px">Morning Digest</p>'
     + '<p style="font-size:11px;color:#777;margin:0;letter-spacing:0.05em">' + teams + '</p>'
     + '</div>'
-
-    // Yesterday's trivia answer (shown first — great engagement hook)
-    + yesterdayTriviaHtml
 
     // NY Standings Strip
     + standingsStrip
@@ -2440,10 +2436,11 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
     // Weekly Day Nugget (Sunday-Saturday themed section)
     + nuggetHtml
 
-    // Trivia
+    // Trivia (today's question, then yesterday's answer below it)
     + '<div style="padding:18px 28px;border-bottom:1px solid #ebebeb">'
     + '<div style="font-size:8px;font-weight:900;color:#bbb;letter-spacing:0.25em;text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid #ebebeb;margin-bottom:14px">&#127918; Daily Playroom Challenge</div>'
     + triviaHtml
+    + yesterdayTriviaHtml
     + '</div>'
 
     // CTA
