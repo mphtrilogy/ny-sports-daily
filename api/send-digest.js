@@ -2169,17 +2169,17 @@ const GLORY_MOMENTS = [
 // ── Trivia questions ──────────────────────────────────────────────────────────
 const TRIVIA_QUESTIONS = [
   { q:'Which New York Ranger was known as "The Captain" and led the team to the 1994 Stanley Cup?', hint:'He also guaranteed a win in Game 6 of the Conference Finals.', a:'Mark Messier' },
-  { q:'Who hit three home runs on three consecutive pitches in World Series Game 6 in 1977?', hint:'His nickname was "Mr. October."', a:'Reggie Jackson' },
-  { q:'Which Met struck out 10 consecutive batters against the Padres in 1969?', hint:'"Tom Terrific" — he won 3 Cy Young Awards with the Mets.', a:'Tom Seaver' },
+  { q:'Who hit three home runs on three consecutive pitches in World Series Game 6 in 1977?', hint:'He was a 5-time World Series champion across three different teams.', a:'Reggie Jackson' },
+  { q:'Which Met struck out 10 consecutive batters against the Padres in 1969?', hint:'He won 3 Cy Young Awards and was the first Met to have his number retired.', a:'Tom Seaver' },
   { q:'Joe Namath guaranteed victory before which Super Bowl?', hint:'The Jets were 17-point underdogs against the Baltimore Colts.', a:'Super Bowl III (January 1969)' },
-  { q:'Who scored in overtime to give the Islanders their first Stanley Cup in 1980?', hint:'His first name is Bob.', a:'Bob Nystrom' },
+  { q:'Who scored in overtime to give the Islanders their first Stanley Cup in 1980?', hint:'He spent his entire 14-year career on Long Island.', a:'Bob Nystrom' },
   { q:'Which Knick limped onto the MSG court before Game 7 of the 1970 NBA Finals?', hint:'His entrance may be the most dramatic moment in Knicks history.', a:'Willis Reed' },
   { q:'What NY team won 5 NASL championships in the 1970s and 80s with Pelé on the roster?', hint:'They played at Giants Stadium and drew 77,000 fans.', a:'New York Cosmos' },
-  { q:'Which Yankee was the first unanimous Hall of Fame inductee in baseball history?', hint:'His nickname was "The Sandman" and he closed to Enter Sandman.', a:'Mariano Rivera' },
+  { q:'Which Yankee was the first unanimous Hall of Fame inductee in baseball history?', hint:'He recorded 652 career saves, the most in MLB history at the time of his retirement.', a:'Mariano Rivera' },
   { q:'In what year did the Mets win the World Series as 100-to-1 longshots?', hint:'They were known as "The Miracle Mets."', a:'1969' },
   { q:'Which Islander scored 50+ goals in 9 consecutive seasons and won 4 straight Cups?', hint:'He wore #22 and is considered one of the greatest goal-scorers ever.', a:'Mike Bossy' },
   { q:'How many World Series championships have the Yankees won in total?', hint:'More than any other team in baseball history.', a:'27' },
-  { q:'Which Giants linebacker won the NFL MVP award in 1986 — the only defensive player ever?', hint:'His initials are L.T.', a:'Lawrence Taylor' },
+  { q:'Which Giants linebacker won the NFL MVP award in 1986 — the only defensive player ever?', hint:'He\u2019s widely considered the greatest defensive player in NFL history.', a:'Lawrence Taylor' },
 ];
 
 // ── Email builder ─────────────────────────────────────────────────────────────
