@@ -11026,6 +11026,7 @@ const TEAM_COLORS_DD = {
 };
 
 function DeepDiveTab({ initialSlug }) {
+  const dark = useContext(DarkModeCtx);
   const [selectedSlug, setSelectedSlug] = useState(initialSlug || null);
   const [filterTeam, setFilterTeam]     = useState("ALL");
 
@@ -11052,7 +11053,7 @@ function DeepDiveTab({ initialSlug }) {
     return (
       <div style={{padding:"16px 0"}}>
         <button onClick={() => setSelectedSlug(null)}
-          style={{background:"none", border:"none", color:"#888", fontSize:12,
+          style={{background:"none", border:"none", color: dark ? "#9aa3ad" : "#888", fontSize:12,
             cursor:"pointer", marginBottom:16, padding:0, display:"flex", alignItems:"center", gap:6}}>
           ← Back to all Deep Dives
         </button>
@@ -11063,19 +11064,19 @@ function DeepDiveTab({ initialSlug }) {
         </div>
 
         <h1 style={{fontSize:26, fontWeight:900, fontFamily:"Georgia,serif", lineHeight:1.25,
-          color:"#111", marginBottom:20}}>
+          color: dark ? "#e8e0d0" : "#111", marginBottom:20}}>
           {selected.title}
         </h1>
 
-        <div style={{fontSize:15, lineHeight:1.85, color:"#333", fontFamily:"Georgia,serif"}}>
+        <div style={{fontSize:15, lineHeight:1.85, color: dark ? "#c8c0b0" : "#333", fontFamily:"Georgia,serif"}}>
           {paragraphs.map((p, i) => (
             <p key={i} style={{marginBottom:18}}>{p}</p>
           ))}
         </div>
 
         {selected.charity && (
-          <div style={{marginTop:24, paddingTop:16, borderTop:"1px solid #ebebeb",
-            fontSize:12, color:"#888", fontStyle:"italic"}}>
+          <div style={{marginTop:24, paddingTop:16, borderTop: dark ? "1px solid #2e343a" : "1px solid #ebebeb",
+            fontSize:12, color: dark ? "#9aa3ad" : "#888", fontStyle:"italic"}}>
             🤝 Support this team: {selected.charity}
           </div>
         )}
@@ -11087,10 +11088,10 @@ function DeepDiveTab({ initialSlug }) {
   return (
     <div style={{padding:"16px 0"}}>
       <div style={{marginBottom:16}}>
-        <h2 style={{fontSize:18, fontWeight:900, fontFamily:"Georgia,serif", color:"#111", marginBottom:4}}>
+        <h2 style={{fontSize:18, fontWeight:900, fontFamily:"Georgia,serif", color: dark ? "#e8e0d0" : "#111", marginBottom:4}}>
           🔍 Deep Dive Archive
         </h2>
-        <p style={{fontSize:12, color:"#888"}}>
+        <p style={{fontSize:12, color: dark ? "#9aa3ad" : "#888"}}>
           Full-length stories from the Sunday newsletter — {essaysWithSlugs.length} essays and counting.
         </p>
       </div>
@@ -11100,9 +11101,9 @@ function DeepDiveTab({ initialSlug }) {
           <button key={t} onClick={() => setFilterTeam(t)}
             style={{
               flexShrink:0, padding:"6px 12px", fontSize:11, fontWeight:700,
-              border: filterTeam===t ? "1px solid #c8201c" : "1px solid #ddd",
-              background: filterTeam===t ? "#c8201c" : "#fff",
-              color: filterTeam===t ? "#fff" : "#555",
+              border: filterTeam===t ? "1px solid #c8201c" : (dark ? "1px solid #2e343a" : "1px solid #ddd"),
+              background: filterTeam===t ? "#c8201c" : (dark ? "#1a1c1f" : "#fff"),
+              color: filterTeam===t ? "#fff" : (dark ? "#9aa3ad" : "#555"),
               borderRadius:14, cursor:"pointer", whiteSpace:"nowrap",
             }}>
             {t}
@@ -11117,7 +11118,8 @@ function DeepDiveTab({ initialSlug }) {
           return (
             <button key={i} onClick={() => setSelectedSlug(d.slug)}
               style={{
-                textAlign:"left", background:"#fff", border:"1px solid #ebebeb",
+                textAlign:"left", background: dark ? "#1e2124" : "#fff",
+                border: dark ? "1px solid #2e343a" : "1px solid #ebebeb",
                 borderLeft:`3px solid ${color}`, borderRadius:4, padding:"14px 16px",
                 cursor:"pointer",
               }}>
@@ -11125,11 +11127,11 @@ function DeepDiveTab({ initialSlug }) {
                 color, marginBottom:6}}>
                 {d.team} &nbsp;·&nbsp; {d.year}
               </div>
-              <div style={{fontSize:15, fontWeight:700, color:"#111", fontFamily:"Georgia,serif",
+              <div style={{fontSize:15, fontWeight:700, color: dark ? "#e8e0d0" : "#111", fontFamily:"Georgia,serif",
                 lineHeight:1.35, marginBottom:6}}>
                 {d.title}
               </div>
-              <div style={{fontSize:11, color:"#999"}}>
+              <div style={{fontSize:11, color: dark ? "#777" : "#999"}}>
                 {wordCount} words {wordCount > 400 ? "· Magazine feature" : ""}
               </div>
             </button>
