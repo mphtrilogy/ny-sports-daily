@@ -1134,12 +1134,28 @@ export default function NYSportsDaily() {
   const [myTeamsPending, setMyTeamsPending] = useState(new Set());
   const [activeTab, setActiveTab]         = useState("SCORES");
   const [darkMode, setDarkMode]           = useState(true);
+  const [deepDiveSlug, setDeepDiveSlug]   = useState(null);
 
   const [isMobile, setIsMobile]           = useState(() => typeof window !== "undefined" && window.innerWidth < 680);
   const [drawerOpen, setDrawerOpen]       = useState(false);
   const [searchOpen, setSearchOpen]       = useState(false);
   const [searchQuery, setSearchQuery]     = useState("");
   const days = getLast7Days();
+
+  // Read ?tab= and ?essay= query params on load — lets email links deep-link
+  // directly into the Deep Dive archive (e.g. from "Continue Reading" in the newsletter)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam   = params.get("tab");
+      const essayParam = params.get("essay");
+      if (tabParam === "DEEPDIVE") {
+        setActiveTab("DEEPDIVE");
+        if (essayParam) setDeepDiveSlug(essayParam);
+      }
+    } catch (e) { /* no-op if URL parsing fails */ }
+  }, []);
 
   useEffect(() => {
     function onResize() { setIsMobile(window.innerWidth < 680); }
@@ -1354,7 +1370,7 @@ export default function NYSportsDaily() {
         </div>}
         {/* TAB NAV — Secondary */}
         {!isMobile && <div style={{...styles.tabNav, marginTop:0, borderBottom:"2px solid #2e343a", marginBottom:16, background:"#141618", padding:"0 0 0 0"}}>
-          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","GLORY","PLAYROOM"].map(tab => {
+          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","DEEPDIVE","GLORY","PLAYROOM"].map(tab => {
             const isPlayroom = tab === "PLAYROOM";
             const isGlory    = tab === "GLORY";
             const isActive   = activeTab === tab;
@@ -1580,6 +1596,7 @@ export default function NYSportsDaily() {
         {activeTab === "FORGOTTEN" && <ForgottenTab />}
         {activeTab === "HOF" && <HofTab />}
         {activeTab === "MISERY" && <MiseryTab />}
+        {activeTab === "DEEPDIVE" && <DeepDiveTab initialSlug={deepDiveSlug} />}
         {activeTab === "HISTORY" && (
           <HistoryTab />
         )}
@@ -1749,6 +1766,7 @@ export default function NYSportsDaily() {
               color:"#444", letterSpacing:"0.22em"}}>EXPLORE</div>
             {[
               {tab:"GLORY",     icon:"🏆", gold:true},
+              {tab:"DEEPDIVE",  icon:"🔍", gold:true},
               {tab:"PLAYROOM",  icon:"🎮", gold:true},
               {tab:"STATS",     icon:"📈"},
               {tab:"HISTORY",   icon:"📚"},
@@ -4313,6 +4331,7 @@ function SiteSearch({ query, onSelect }) {
     { keywords:["tv","television","channel","watch","broadcast","network"],   tab:"TV",        icon:"📺", title:"TV Schedule",               sub:"What's on TV tonight for NY sports" },
     { keywords:["schedule","upcoming","next game","calendar"],                tab:"SCHEDULE",  icon:"📅", title:"Schedule",                  sub:"Upcoming NY sports schedule" },
     { keywords:["misery","suffer","drought","worst","pain","losing"],         tab:"MISERY",    icon:"😩", title:"Misery Index",              sub:"NY teams ranked by how much they've made fans suffer" },
+    { keywords:["deep dive","essay","article","story","read","newsletter"],  tab:"DEEPDIVE",   icon:"🔍", title:"Deep Dives",                sub:"Full-length stories behind NY sports history" },
     { keywords:["poll","vote","debate","opinion","survey","question"],        tab:"POLLS",     icon:"🗳️", title:"Weekly Poll",               sub:"This week's NY sports debate" },
     { keywords:["hof","hall","fame","inducted","legend","retired number"],    tab:"HOF",       icon:"🏛️", title:"Hall of Fame",              sub:"Every NY Hall of Famer by team" },
     { keywords:["trivia","quiz","test","challenge","answer"],                 tab:"TRIVIA",    icon:"🧠", title:"Trivia",                    sub:"Daily NY sports trivia challenge" },
@@ -10556,6 +10575,628 @@ const NY_CHAMPIONSHIPS = [
 ];
 
 // ─── GLORY DAYS TAB COMPONENT ─────────────────────────────────────────────
+// ─── DEEP DIVE ESSAY DATA — synced from newsletter (api/send-digest.js) ────
+const DEEP_DIVES = [
+  {
+    title: "The Miracle Mets: How 1969 Actually Happened",
+    body: "In April 1969, the New York Mets were 100-to-1 longshots. By October they were World Champions. It wasn't luck — it was Tom Seaver going 25-7, Jerry Koosman anchoring the rotation, and a manager named Gil Hodges who believed before anyone else did. The turning point came August 13th when the Cubs came to Shea for a crucial series. Two black cats crossed the field. The Cubs collapsed. The Mets went 38-11 the rest of the way. Cleon Jones caught the final out on his knees. New York went insane. 57 years later it remains the most improbable championship in baseball history.",
+    team: "Mets",
+    charity: "Amazin' Mets Foundation | mets.com/community", year: 1969
+  },
+  {
+    title: "The Islanders Dynasty Nobody Talks About Enough",
+    body: "Four straight Stanley Cups. 1980, 1981, 1982, 1983. Nineteen consecutive playoff series wins. Mike Bossy scoring 50 goals nine seasons in a row. Bryan Trottier, Denis Potvin, Billy Smith. The Islanders dynasty was as dominant as any team in the history of North American professional sports — and it happened in the shadow of the Yankees, in a building on Long Island that held 16,000 people. In 1983 they swept Wayne Gretzky's Oilers, widely considered the greatest team ever assembled. They won anyway. Then the dynasty ended, almost overnight, and New York moved on. They deserved so much more.",
+    team: "Islanders",
+    charity: "NY Islanders Children's Foundation | nhl.com/islanders/community", year: 1983
+  },
+  {
+    title: "Broadway Joe's Guarantee: The Full Story",
+    body: "Three days before Super Bowl III, Joe Namath was at the Miami Touchdown Club when a heckler shouted that the Baltimore Colts would win easily. Namath grabbed the microphone. 'We're gonna win Sunday. I guarantee it.' The Jets were 17-point underdogs. Nobody believed him. On January 12, 1969, the Jets won 16-7. Namath completed 17 of 28 passes, called his own plays, and walked off the field with his index finger raised. It wasn't just a win. It changed professional football forever — proving the AFL was equal to the NFL and setting the stage for the merger that created the modern NFL.",
+    team: "Jets",
+    charity: "New York Jets Foundation | newyorkjets.com/community", year: 1969
+  },
+  {
+    title: "The Cosmos and Pelé: When Soccer Almost Conquered New York",
+    body: "In 1975, the New York Cosmos signed Pelé for $4.5 million — the richest contract in team sports history at the time. Then they signed Franz Beckenbauer and Carlos Alberto. Suddenly Giants Stadium was drawing 77,000 fans to watch soccer. The Cosmos won the NASL championship in 1977, 1978, 1980 and 1982. Kids across New York were kicking balls in the streets. Soccer was going to be America's next sport. Then the NASL collapsed in 1984, the Cosmos folded, and the whole dream evaporated. But for a decade, New York had the greatest soccer team on earth.",
+    team: "NY Cosmos",
+    charity: "Soccer for Success NY | soccerforsuccess.org", year: 1977
+  },
+  {
+    title: "Mark Messier's Guarantee: 54 Years Ends Tonight",
+    body: "For 54 years, the New York Rangers had not won the Stanley Cup. An entire generation had been born, grown old, and in some cases died without seeing it happen. Opposing fans had turned the drought into a chant -- \"1940! 1940!\" -- the year of the Rangers' last championship, hurled across rinks like a curse. By the spring of 1994, the wait had become something close to a punchline. It was about to become something else entirely.\n\nThe Rangers had assembled a roster built to end exactly this kind of suffering. Mark Messier arrived via trade from Edmonton in 1991, bringing with him five Stanley Cup rings and a captain's presence that no one in the organization could fully replicate on their own. Mike Keenan took over as head coach in 1993, demanding and unyielding. Brian Leetch anchored the blue line with a smoothness that made the game look slower than it was. Mike Richter stood on his head in net, game after game. They won the Presidents' Trophy for the best regular-season record. Everyone in New York allowed themselves, cautiously, to hope.\n\nThe path to the Cup ran straight through New Jersey. The Devils, the Rangers' tormentors from across the Hudson, had pushed the Eastern Conference Final to six games and held a 3-2 series lead heading into Game 6 at Brendan Byrne Arena. The Rangers were facing elimination on the road, the kind of moment that had swallowed this franchise whole for more than five decades.\n\nThen Mark Messier did something that, in retrospect, only Mark Messier could have pulled off. The day before the game, surrounded by reporters at practice, he was asked about New York's chances. \"We know we are going to go in there and win Game 6 and bring it back to the Garden,\" he said -- not a hope, not a hedge, a guarantee, stated as fact. \"I felt that guaranteeing a win would be a great way to let my players know that I believed we could go in there and win Game 6,\" Messier explained later, \"because we had beaten them six times during the regular season -- three times in their building.\"\n\nThe tabloids could not resist. The Daily News ran \"MESS SEZ WE'LL WIN.\" The Post countered with \"WE'LL WIN TONIGHT\" above a photo of the Rangers captain, branding him Captain Courageous. Messier insisted afterward he hadn't fully grasped what he'd unleashed. \"I was so focused in on our own team that I wasn't really looking into everybody else getting up and reading the New York Post,\" he said. \"I thought there would be 19 or 20 players reading it.\" Instead, by puck drop, the entire tri-state area had read it.\n\nNew Jersey made him look foolish early. The Devils jumped out to a 2-0 first-period lead in front of a hostile home crowd that smelled blood. Messier, nursing sore ribs from the physical series, did not panic. Late in the second period he set up Alexei Kovalev to cut the deficit to 2-1, and the Garden faithful watching on television exhaled, just slightly. Then the third period arrived, and Mark Messier authored one of the great individual performances in playoff history. He tied the game. He put New York ahead with under eight minutes remaining. And with the Devils pulling their goalie in desperation, he found the empty net to complete a natural hat trick and seal a 4-2 victory, exactly as promised.\n\nTwo nights later, back at Madison Square Garden, the Rangers and Devils played a Game 7 that needed double overtime to settle. Stephane Matteau -- a journeyman winger who would never again come close to this kind of moment -- buried the series winner past Martin Brodeur, and the building shook in a way it hadn't in over five decades. \"Matteau! Matteau! Matteau!\" broadcaster Howie Rose screamed into his microphone, the call instantly entering Rangers lore alongside the guarantee itself.\n\nThe Stanley Cup Final against the Vancouver Canucks was, fittingly, not easy. It went the full seven games, the last of them played at the Garden on June 14, 1994. The Rangers won 3-2, and Mark Messier -- already a five-time champion with Edmonton, already a Hall of Famer in waiting -- lifted the Stanley Cup as captain of the New York Rangers. Fifty-four years of waiting ended in a single, deafening roar. Fathers who had waited their whole lives turned to sons who had only ever known the chant of \"1940\" and, for the first time, got to point at a banner instead of an insult.\n\nMessier called that Devils series \"maybe one of the best series\" he ever played in, and three decades later he still describes the run with something between pride and disbelief. \"We had a great team, great camaraderie, we had great chemistry, unbelievable character on our team,\" he said, \"and we were very much a part of the whole fabric of the city. I think because of it, it was something that we were able to share with the entire city and something it had been waiting for for a long time.\"\n\nThe guarantee itself has only grown larger with age. Photos of that Post back page still surface at Rangers games three decades later, held aloft by fans too young to have witnessed it live, passed down like a family heirloom. It remains the single boldest promise in New York sports history that was actually kept -- not a guarantee made and quietly forgotten, but one fulfilled in real time, on the road, against a desperate opponent, by a captain who refused to let his team's 54-year nightmare continue one inning, one period, one shift longer than it absolutely had to.",
+    team: "Rangers",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1994
+  },
+  {
+    title: "Willis Reed Limps Out: The Most Dramatic Moment in NBA History",
+    body: "May 8, 1970. Game 7, NBA Finals. Madison Square Garden. Willis Reed had torn a muscle in his thigh in Game 5 and didn't play Game 6. Nobody knew if he'd play Game 7. The Lakers warmed up. The Knicks warmed up. Then Reed emerged from the tunnel. The crowd erupted before he even touched the ball. He scored the first two baskets of the game — the only points he'd score all night — and MSG never came back down. Walt Frazier scored 36 and dished 19 assists. The Knicks won 113-99. Reed's entrance remains the single most electric moment in Garden history.",
+    team: "Knicks",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1970
+  },
+  {
+    title: "Don Larsen's Perfect Game: The Greatest Moment in World Series History",
+    body: "October 8, 1956. Game 5 of the World Series. Yankee Stadium. Don Larsen was not an ace — he'd gone 11-5 that season, a solid but unremarkable pitcher. Yet that afternoon he retired all 27 Brooklyn Dodgers he faced. No hits. No walks. No errors. 97 pitches. The last out was Dale Mitchell on a called strike three. Yogi Berra sprinted to the mound and leapt into Larsen's arms — one of the most iconic images in sports history. It remains the only perfect game in World Series history. Larsen never threw another one. Sometimes one afternoon defines a lifetime.",
+    team: "Yankees",
+    charity: "New York Yankees Foundation | yankees.com/community", year: 1956
+  },
+  {
+    title: "Reggie Jackson: Three Swings, Three Pitches, Three Home Runs",
+    body: "October 18, 1977. World Series Game 6. Yankee Stadium. Reggie Jackson stepped to the plate in the fourth inning and hit the first pitch he saw into the seats. Then in the fifth — first pitch, home run. Then in the eighth — first pitch, home run. Three consecutive pitches. Three home runs. Five RBIs. The Yankees won 8-4 and claimed their 21st World Series title. In the dugout afterward, a teammate called him 'the straw that stirs the drink.' The nickname Mr. October was born that night. No one has come close to matching it in the 47 years since.",
+    team: "Yankees",
+    charity: "New York Yankees Foundation | yankees.com/community", year: 1977
+  },
+  {
+    title: "Mookie's Grounder: The Night Boston's Curse Was Born",
+    body: "October 25, 1986. Game 6. Shea Stadium. The Mets were one out away from elimination. Two outs, nobody on, trailing 5-3 in the tenth inning. Then the Mets scored twice to tie it. Then Mookie Wilson hit a slow grounder down the first base line toward Bill Buckner. The ball rolled through his legs. Ray Knight scored. The Mets won. Two days later they won Game 7. What followed for Boston — 18 more years of heartbreak — became baseball's most famous curse. For Mets fans it remains the single most electric moment in franchise history. For Buckner it became an unfair lifetime of regret.",
+    team: "Mets",
+    charity: "Amazin' Mets Foundation | mets.com/community", year: 1986
+  },
+  {
+    title: "Breanna Stewart and the Liberty's First Championship",
+    body: "October 2024. The New York Liberty had been waiting 27 years for this. Founded in 1997, they'd reached the Finals three times and lost all three. Then Breanna Stewart arrived — arguably the best player in WNBA history — and everything changed. The 2024 Liberty were dominant all season. In the Finals they faced the Minnesota Lynx in five games. Stewart was everywhere: scoring, rebounding, defending, leading. When the final buzzer sounded, Madison Square Garden — a building that has seen everything — erupted for a WNBA champion for the first time. New York finally had its title.",
+    team: "Liberty",
+    charity: "Brooklyn Nets & NY Liberty Foundation | netslibertyfoundation.org", year: 2024
+  },
+  {
+    title: "The Greatest Game Ever Played: Giants vs. Colts 1958",
+    body: "December 28, 1958. Yankee Stadium. The Baltimore Colts versus the New York Giants for the NFL Championship. The first sudden-death overtime game in league history. Johnny Unitas drove the Colts 80 yards to set up Alan Ameche's touchdown. Colts 23, Giants 17. But the score almost doesn't matter. What matters is that 45 million Americans watched on television — the largest audience for a sporting event in history at the time. Commissioner Bert Bell had insisted the game be televised nationally. Pro football was born as a national obsession that afternoon in the Bronx. Every Super Bowl since traces back to this game.",
+    team: "Giants",
+    charity: "The Giants Foundation | giants.com/community", year: 1958
+  },
+  {
+    title: "Derek Jeter: The Captain, The Farewell, The Legacy",
+    body: "September 25, 2014. Yankee Stadium. Derek Jeter's last home game. Walk-off single in the ninth inning. The whole stadium in tears. It was almost too perfect — except Jeter made it perfect on purpose, the way he always did. Twenty seasons. Five championships. 3,465 hits. The flip play. Mr. November. The dive into the stands. The Yankee Way personified. When you ask New Yorkers to name the defining athlete of their lifetime, more often than not the answer is Jeter. Not for the stats. For what he represented: professionalism, loyalty, clutch performance, and the quiet certainty that everything would be fine.",
+    team: "Yankees",
+    charity: "New York Yankees Foundation | yankees.com/community", year: 2014
+  },
+];const DEEP_DIVES_NEW = [
+
+  // ── YANKEES ────────────────────────────────────────────────────────────────
+
+  {
+    title: "The Mantle/Maris Chase: Summer of '61",
+    team: "Yankees",
+    charity: "New York Yankees Foundation | yankees.com/community", year: 1961,
+    body: "In the summer of 1961, two Yankees were chasing Babe Ruth's ghost. Mickey Mantle and Roger Maris were both gunning for the single-season home run record of 60, set by Ruth in 1927. The city was transfixed. Commissioner Ford Frick — Ruth's old friend — ruled that if the record fell after game 154, it would carry an asterisk. Mantle got hurt in September and finished with 54. Maris kept going. On October 1st, the last day of the season, he hit number 61 off Tracy Stallard of the Red Sox. The crowd of 23,000 barely reacted. Maris was never fully embraced by New York — too quiet, too private, too not-Mantle. History has been kinder. 61 stands as one of the great individual seasons in baseball history."
+  },
+
+  {
+    title: "Mariano Rivera: The Last Sandman",
+    team: "Yankees",
+    charity: "New York Yankees Foundation | yankees.com/community", year: 2013,
+    body: "Enter Sandman hit the speakers and Mariano Rivera jogged in from the bullpen and the game was effectively over. For 19 seasons, Rivera was the most reliable weapon in baseball — a cut fastball that broke bats and broke hearts, delivered with the calm of a man who never seemed to notice the pressure. Five championships. 652 saves. A 0.70 ERA in the postseason. The first unanimous Hall of Fame inductee in baseball history. What made Rivera special wasn't just the numbers — it was the consistency. He never had a bad year. Never had a bad month. Just inning after inning of late-game dominance that Yankees fans took for granted until the day it was gone."
+  },
+
+  {
+    title: "The 1978 Yankees: Down 14, Then Champions",
+    team: "Yankees",
+    charity: "New York Yankees Foundation | yankees.com/community", year: 1978,
+    body: "By July 19th, 1978, the Yankees were 14 games behind the Boston Red Sox. Billy Martin had just resigned. Bob Lemon had taken over. What followed was one of the greatest comebacks in baseball history. The Yankees caught the Red Sox on the last day of the season, forcing a one-game playoff at Fenway. Bucky Dent — a light-hitting shortstop with three home runs all season — hit a three-run shot over the Green Monster in the seventh inning. The Yankees won 5-4. They went on to beat the Dodgers in six games in the World Series. In New England, Bucky Dent's middle name is still unprintable. In New York, it's poetry."
+  },
+
+  {
+    title: "George Steinbrenner: The Boss Who Changed Everything",
+    team: "Yankees",
+    charity: "New York Yankees Foundation | yankees.com/community", year: 1973,
+    body: "He bought the Yankees in 1973 for $10 million and immediately announced he wouldn't be involved in day-to-day operations. He lied. Over 37 years, George Steinbrenner fired managers 20 times — Billy Martin alone five times. He spent lavishly, feuded publicly, and demanded winning with an intensity that exhausted everyone around him. He was also right. The Yankees won seven pennants and four World Series under his ownership. He turned the franchise from a struggling operation into a $4 billion empire. You didn't have to like him. But New York was never boring when the Boss was in charge, and the championships speak for themselves."
+  },
+
+  {
+    title: "Thurman Munson: The Captain We Lost Too Soon",
+    team: "Yankees",
+    charity: "New York Yankees Foundation | yankees.com/community", year: 1979,
+    body: "Thurman Munson was named the Yankees' first team captain since Lou Gehrig in 1976. He was tough, ornery, private, and the heart of those championship teams. He caught every game in 1976, 1977 and 1978. He hit .529 in the 1976 World Series. He was the one player in the clubhouse everyone followed without question. On August 2, 1979, Munson died when he crashed his private plane near Canton, Ohio. He was 32 years old. The Yankees held a ceremony at home plate before their next game. The locker room was never quite the same. The captain's locker was left empty for the rest of the season. It still sits preserved at the Stadium today."
+  },
+
+  // ── METS ──────────────────────────────────────────────────────────────────
+
+  {
+    title: "The 1986 Mets: The Most Talented and Most Complicated Team in NY History",
+    team: "Mets",
+    charity: "Amazin' Mets Foundation | mets.com/community", year: 1986,
+    body: "The 1986 Mets won 108 games. They had Dwight Gooden on the mound, Darryl Strawberry in the outfield, Keith Hernandez at first, Gary Carter behind the plate, and Lenny Dykstra everywhere at once. They were cocky, talented, loud and beloved. The NLCS against Houston was one of the greatest playoff series ever played — Game 6 going 16 innings, the Mets winning in the dark. Then the World Series against Boston: down to their last strike twice in Game 6, Mookie Wilson's grounder through Buckner's legs, Ray Knight scoring. Game 7 they trailed 3-0 and came back anyway. It wasn't just a championship. It was New York at its most New York — loud, improbable, and absolutely unforgettable."
+  },
+
+  {
+    title: "Doc Gooden's 1985: The Greatest Pitching Season You've Ever Seen",
+    team: "Mets",
+    charity: "Amazin' Mets Foundation | mets.com/community", year: 1985,
+    body: "Dwight Gooden was 20 years old in 1985. He went 24-4. His ERA was 1.53 — the lowest in the National League in 43 years. He struck out 268 batters. He completed 16 games. He was so dominant that batters would shake their heads walking back to the dugout, unable to explain what had just happened. The K Korner in right field at Shea became a landmark — fans holding up K signs for every strikeout, running out of room by the sixth inning. He won the Cy Young Award unanimously. He was supposed to be the face of the Mets for a decade. The career that followed was complicated, but that 1985 season stands on its own as one of the finest ever pitched."
+  },
+
+  {
+    title: "Tom Seaver: The Franchise",
+    team: "Mets",
+    charity: "Amazin' Mets Foundation | mets.com/community", year: 1969,
+    body: "Before Tom Seaver arrived in 1967, the Mets were a punchline. After him, they were the Amazin' Mets. Seaver went 16-13 as a rookie, 16-12 in year two, then 25-7 in 1969 as New York won the World Series. He won three Cy Young Awards. He struck out 19 Padres in one game — 10 consecutively, a record that still stands. He was smart, elegant, and fiercely competitive. He was also the first Met that opponents actually feared. When the Mets traded him to Cincinnati in 1977 in a cost-cutting move, Mets fans wept openly. The day is still called the Midnight Massacre. No player has meant more to the franchise, before or since."
+  },
+
+  {
+    title: "The Midnight Massacre: When the Mets Broke Their Fans' Hearts",
+    team: "Mets",
+    charity: "Amazin' Mets Foundation | mets.com/community", year: 1977,
+    body: "June 15, 1977. Baseball's trade deadline. The Mets, cash-strapped and struggling, traded Tom Seaver to the Cincinnati Reds. They also dealt Dave Kingman. In one afternoon, the face of the franchise was gone. Dick Young, a columnist for the Daily News, had written a piece attacking Seaver's wife Nancy for being envious of Nolan Ryan's wife. Seaver — furious — asked to be traded. The Mets obliged. Fans called the radio stations in tears. Some burned their season tickets outside Shea Stadium. New York had given Seaver everything — he'd given them a championship, a dignity, an identity. What they gave him in return was a one-way ticket to Cincinnati. It remains one of the most painful days in franchise history."
+  },
+
+  {
+    title: "September 21, 2001: Mike Piazza and the Home Run That Healed a City",
+    team: "Mets",
+    charity: "Amazin' Mets Foundation | mets.com/community", year: 2001,
+    body: "The first sporting event in New York after 9/11. Shea Stadium, September 21st, ten days after the attacks. The Mets had spent those ten days at the Javits Center, visiting hospitals, volunteering, wearing NYPD and FDNY caps instead of their own. When they finally played, the stadium was electric with grief and defiance. In the eighth inning, down 2-1 to the Braves, Mike Piazza stepped in against Steve Karsay. The pitch came in. Piazza swung. The ball sailed over the center field fence and the stadium erupted like nothing before or since. Players on both benches were crying. Strangers embraced. A city that had been shattered found something — not healing exactly, but a moment to breathe together. It is the most important home run in Mets history."
+  },
+
+  {
+    title: "The 2015 Mets: The Young Arms and the Almost Season",
+    team: "Mets",
+    charity: "Amazin' Mets Foundation | mets.com/community", year: 2015,
+    body: "They came out of nowhere. Jacob deGrom, Noah Syndergaard, Matt Harvey, Steven Matz, Bartolo Colon — five starters who made every game feel winnable. The Mets were in last place on July 31st when they traded for Yoenis Cespedes. He hit .287 with 17 homers in 57 games and turned the season. They won the NL East. They swept the Cubs in four games. They got to the World Series — the first time since 2000. Then the Royals outscored them 12-2 in Game 5 after three straight losses. But that summer — those young arms, that rotation, the way the city fell back in love with the Mets — felt like the beginning of something. It turned out to be the peak. Those arms never stayed healthy at the same time again."
+  },
+
+  // ── KNICKS ────────────────────────────────────────────────────────────────
+
+  {
+    title: "The 1973 Knicks: A Perfect Team",
+    team: "Knicks",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1973,
+    body: "The 1973 Knicks didn't have one superstar. They had five good ones and a coach who made them greater than the sum of their parts. Walt Frazier running the offense with ice-cold precision. Dave DeBusschere defending like his life depended on it. Bill Bradley thinking three passes ahead. Jerry Lucas with his encyclopedic memory and shooting touch. And Willis Reed, still the Captain, the soul of the team. Red Holzman coached them to 57 wins and through the playoffs to a championship over the Lakers. They beat Los Angeles four games to one. It was the last championship the Knicks would win for over 50 years. But what a way to go out — a team that genuinely loved each other, playing the game the right way."
+  },
+
+  {
+    title: "Old School Knicks: When Basketball Was Born in New York",
+    team: "Knicks",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1954,
+    body: "Before the Garden became the World's Most Famous Arena, before Clyde and the Captain, before any of it — the Knicks were one of the NBA's founding franchises, playing in a league that was still figuring itself out. The 1950s Knicks reached the Finals three times — 1951, 1952, 1953 — and lost all three. Carl Braun was their star, a silky shooting guard who could fill it up before scoring was fashionable. Max Zaslofsky. Harry Gallatin. Sweetwater Clifton, one of the first Black players in the NBA, who brought his Harlem Globetrotters showmanship to the Garden and made fans fall in love. They didn't win. But they built something — a fanbase, a tradition, a relationship between New York and basketball that has never broken."
+  },
+
+  {
+    title: "Red Holzman: The Coach New York Never Forgot",
+    team: "Knicks",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1970,
+    body: "Red Holzman coached the Knicks for 18 seasons. He won two championships. But what made him beloved wasn't the trophies — it was the way he coached. Hit the open man. See the ball. Play defense. Simple principles delivered without ego, without drama, without the volatility that defined so many coaches of his era. His players adored him. Walt Frazier, his greatest player, said Holzman treated everyone equally — stars and reserves, veterans and rookies. He was the son of Jewish immigrants from Brooklyn who grew up playing ball on the streets and never forgot where he came from. When he died in 1998, the entire basketball world stopped to remember a man who had made the game more beautiful simply by insisting it be played the right way."
+  },
+
+  {
+    title: "Patrick Ewing: What New York Owes Its Greatest Knick",
+    team: "Knicks",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1985,
+    body: "Patrick Ewing never won a championship in New York. He also never stopped trying. For 15 seasons he was the Knicks — the one constant through coaching changes, ownership drama, and roster upheaval. He carried them to the Finals in 1994, watching from the bench with a torn tendon as they lost Game 7 to Houston. He came back the next year and the year after that. When they traded him to Seattle in 2000, Madison Square Garden gave him a two-minute standing ovation. He cried. The city cried. The ring never came. But ask any New Yorker who came of age in the 1980s and 90s who their Knick was. It's always Patrick. Always. The city owes him more gratitude than it's ever properly given. In June 2026, the Knicks finally won it all again — and somewhere, Patrick Ewing was almost certainly courtside, smiling at a franchise that had carried his torch for over three decades."
+  },
+
+  {
+    title: "The 1994 Knicks: So Close You Could Taste It",
+    team: "Knicks",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1994,
+    body: "Game 7. NBA Finals. MSG. The Knicks against the Houston Rockets. Patrick Ewing had torn his tendon and was watching from the bench in street clothes. John Starks — the undrafted guard who had become the heart of the team — went 2-for-18. The Knicks lost 90-84. It remains the closest the Knicks have come to a championship since 1973. That team — Ewing, Starks, Charles Oakley, Anthony Mason, Derek Harper — was as tough and physical as any team in the league. Pat Riley coached them with military precision. They beat the Bulls. They went seven games with Indiana. They just couldn't get past Hakeem Olajuwon, who was playing the best basketball of his career. One championship. That's all New York needed. It didn't come."
+  },
+
+  // ── RANGERS ───────────────────────────────────────────────────────────────
+
+  {
+    title: "The Original Six Rangers: Three Cups Nobody Knows About",
+    team: "Rangers",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1940,
+    body: "Before the 54-year drought, before the curse, the Rangers were champions. Three times. In 1928, their second season of existence, they won the Stanley Cup in five games over the Montreal Maroons. In 1933 they beat the Toronto Maple Leafs. And in 1940 — the last time before Messier's guarantee — they defeated the Maple Leafs again in six games. Bill Cook, the captain of those early teams, was one of the finest players of his era. Frank Boucher won the Lady Byng Trophy for gentlemanly play seven times — they eventually gave him the trophy to keep. Those early Rangers were a legitimate dynasty. Then the Second World War scattered their roster, the league changed, and the drought began. Most Rangers fans don't know their team has four Cups. Now you do."
+  },
+
+  {
+    title: "Henrik Lundqvist: The King Who Deserved More",
+    team: "Rangers",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 2012,
+    body: "For 15 seasons, Henrik Lundqvist made saves that didn't seem possible. The butterfly technique perfected to an art form, the glove hand impossibly fast, the compete level never wavering. He won the Vezina Trophy in 2012. He backstopped the Rangers to the Stanley Cup Finals in 2014, nearly single-handedly. He made the All-Star team eight times. He was as good as anyone who ever played the position. And he never won a Cup as a Ranger. When injuries finally ended his time in New York in 2021, the Garden put up his number 30 in the rafters. He deserved it. He also deserved a ring. The hockey gods weren't paying attention."
+  },
+
+  {
+    title: "The Drought: 54 Years Between Ranger Cups",
+    team: "Rangers",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1994,
+    body: "From 1940 to 1994, the Rangers did not win the Stanley Cup. Fifty-four years. An entire generation of New York hockey fans grew old and died without seeing it. The chant from opposing fans — '1940! 1940!' — became the most effective taunt in sports. The Rangers got close. They made the Finals in 1950, 1972, 1979. They always found a way to lose. By the time the 1994 team came together around Mark Messier, the drought had become part of the franchise's identity — something between a tragedy and a badge of honor. When Messier lifted the Cup that June night at MSG, fans who had waited 54 years wept openly. Their fathers had waited. Their grandfathers had waited. It was finally over."
+  },
+
+  {
+    title: "Rod Gilbert: The Ranger Who Never Got His Ring",
+    team: "Rangers",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1972,
+    body: "Rod Gilbert played 18 seasons for the Rangers — all of them. He never won a Stanley Cup. He scored 406 goals and added 615 assists, making him the Rangers' all-time scoring leader at the time of his retirement. He played with a back so damaged by surgery that doctors told him he'd never play again — twice. He did anyway. He was the most popular Ranger of his era, a French-Canadian from Montreal who fell in love with New York and stayed forever. When he died in 2021, the tributes from all across hockey spoke of a man who had given everything to one franchise and never asked for more than the chance to compete. Number 7 hangs in the rafters at MSG. It will hang there forever."
+  },
+
+  // ── ISLANDERS ─────────────────────────────────────────────────────────────
+
+  {
+    title: "Bill Torrey and Al Arbour: The Architect and the Coach",
+    team: "Islanders",
+    charity: "NY Islanders Children's Foundation | nhl.com/islanders/community", year: 1980,
+    body: "Every dynasty needs two things: someone to build it and someone to lead it. The Islanders had both in perfect harmony. Bill Torrey was a general manager of rare patience and vision — he drafted Mike Bossy, Bryan Trottier, Denis Potvin and Clark Gillies in consecutive years, building the foundation of four championships. He never panicked. He never chased short-term fixes. Al Arbour was the coach Torrey gave that roster — a former defenseman who had won Cups as a player and understood what it took. Arbour coached 1,607 NHL games, all but 50 of them with the Islanders. He won four Stanley Cups. He was demanding but fair, intense but warm. Together, Torrey and Arbour created something on Long Island that the hockey world still marvels at."
+  },
+
+  {
+    title: "Mike Bossy: The Greatest Goal Scorer Nobody Talks About",
+    team: "Islanders",
+    charity: "NY Islanders Children's Foundation | nhl.com/islanders/community", year: 1981,
+    body: "Mike Bossy scored 50 goals in each of his first nine NHL seasons. Nine straight. No one has come close before or since. He was told at the 1977 draft that he was soft, that he wouldn't fight, that NHL defenses would swallow him whole. Fifteen teams passed on him. Bill Torrey took him 15th overall. What followed was the greatest goal-scoring career of his era. Four Stanley Cups. The Conn Smythe Trophy in 1982. A lifetime shooting percentage so high that analysts still debate whether it was skill or something beyond skill. Back injuries forced him to retire at 30. He never played a single season without 50 goals. When he died in 2022, the hockey world lost one of its purest artists."
+  },
+
+  {
+    title: "Denis Potvin: The Best Defenseman of His Era",
+    team: "Islanders",
+    charity: "NY Islanders Children's Foundation | nhl.com/islanders/community", year: 1979,
+    body: "Before Bobby Orr's injuries ended his prime, the debate was simple: Orr was the best defenseman in hockey. After Orr, it was Denis Potvin — and it wasn't particularly close. Potvin won three Norris Trophies as the league's best defenseman. He was the captain of four championship teams. He could skate, shoot, pass and hit with equal ferocity. He was the engine that drove the Islanders' power play through their dynasty years. Rangers fans — still furious about a 1979 hit on Ulf Nilsson — chanted 'Potvin Sucks' for the next four decades. The chant actually became a Madison Square Garden tradition, played on the organ during stoppages. Potvin was inducted into the Hockey Hall of Fame in 1991. He did not suck."
+  },
+
+  {
+    title: "The Dynasty Ends: What Happened After 1983",
+    team: "Islanders",
+    charity: "NY Islanders Children's Foundation | nhl.com/islanders/community", year: 1984,
+    body: "In 1984, the Islanders faced the Edmonton Oilers in the Stanley Cup Finals for the second straight year. They had swept the Oilers in 1983. In 1984, the Oilers won in five games. Wayne Gretzky had learned from the loss. Mark Messier had grown up. The dynasty was over — not with a collapse, but with a handoff to a new generation. What's remarkable is how quickly it ended. The Islanders won 50 games in 1984-85 and were eliminated in the first round. The roster aged. Bossy's back gave out. The Nassau Coliseum, never a great building for revenue, fell further behind. The dynasty of 1980-83 remains one of the most dominant four-year runs in sports history. It just ended, as all dynasties do, faster than anyone expected."
+  },
+
+  // ── JETS ──────────────────────────────────────────────────────────────────
+
+  {
+    title: "Weeb Ewbank: The Coach Who Won Everything",
+    team: "Jets",
+    charity: "New York Jets Foundation | newyorkjets.com/community", year: 1969,
+    body: "Weeb Ewbank is the only coach in professional football history to win championships in both the NFL and AFL. He won with the Baltimore Colts in 1958 and 1959 — including the Greatest Game Ever Played. Then he came to the Jets, spent seven years building something from nothing, and won Super Bowl III with Joe Namath over those same Colts. He was 61 years old. Ewbank was not flashy. He was an Ohio farm boy who believed in fundamentals, preparation, and treating his players like men. He let Namath be Namath — the nightlife, the fur coat, the guarantee. He understood that the talent was worth the complexity. When the Jets won 16-7 on January 12, 1969, Ewbank became the most accomplished coach in professional football. He deserved every word of it."
+  },
+
+  {
+    title: "The Sack Exchange: Joe Klecko and the Most Feared Defense in Football",
+    team: "Jets",
+    charity: "New York Jets Foundation | newyorkjets.com/community", year: 1981,
+    body: "In 1981, the New York Jets had the most terrifying defensive line in the NFL. Mark Gastineau with his sack dance. Marty Lyons with his relentlessness. Abdul Salaam. And at the center of it all, Joe Klecko — the toughest of the bunch, a blue-collar kid from Chester, Pennsylvania who played nose tackle, defensive end, and defensive tackle with equal dominance. The Sack Exchange, as they were called, led the NFL in sacks in 1981. Gastineau got the headlines. Klecko got the work done. It took 42 years, but in 2023 the Pro Football Hall of Fame finally inducted Klecko — one of the most deserving waits in Hall of Fame history. Green and white forever."
+  },
+
+  {
+    title: "Dennis Byrd: The Comeback That Moved a City",
+    team: "Jets",
+    charity: "New York Jets Foundation | newyorkjets.com/community", year: 1992,
+    body: "On November 29, 1992, Jets defensive end Dennis Byrd collided with a teammate at Giants Stadium and broke his neck. Doctors said he would never walk again. The Jets retired his number 90 immediately. The outpouring of support from New York was overwhelming — 45,000 letters arrived at his home in Oklahoma in the weeks after the injury. What followed was one of the great comeback stories in sports history. Through sheer will, intense rehabilitation and his deep Christian faith, Byrd walked onto the field at Giants Stadium the following season. He walked his daughter down the aisle at her wedding. He lived a full life until 2016, when he died in a car accident at 50. The number 90 still hangs retired for the Jets. It always will."
+  },
+
+  {
+    title: "The 1969 Super Bowl: The Full Story of the Greatest Upset",
+    team: "Jets",
+    charity: "New York Jets Foundation | newyorkjets.com/community", year: 1969,
+    body: "The Baltimore Colts were 18-point favorites. They had gone 15-1 during the regular season. Their quarterback, Earl Morrall, had been the NFL's MVP. The Jets were considered good but outclassed — a team from that other league, the AFL, playing the big boys for the first time in what everyone assumed would be a lopsided coronation. Joe Namath completed 17 of 28 passes for 206 yards and called his own plays at the line, reading the Colts defense with the precision of a chess master. Matt Snell ran for 121 yards. The Jets defense held the Colts to one touchdown. Final score: Jets 16, Colts 7. Namath walked off the field with his index finger raised. The AFL had arrived. Professional football would never be the same."
+  },
+
+  // ── GIANTS ────────────────────────────────────────────────────────────────
+
+  {
+    title: "Frank Gifford and the Boys: The 1950s Giants",
+    team: "Giants",
+    charity: "The Giants Foundation | giants.com/community", year: 1956,
+    body: "Before the Super Bowl era, before television turned pro football into America's game, the New York Giants of the 1950s were the most glamorous team in the sport. Frank Gifford was their star — a USC All-American who was handsome enough to be a movie star and talented enough to be an All-Pro halfback. He ran, caught and occasionally threw the ball for a Giants team that won the NFL Championship in 1956. Kyle Rote. Charlie Conerly at quarterback, beloved despite his losing record. Sam Huff on defense. Vince Lombardi calling plays as offensive coordinator before he went to Green Bay and became a legend. The Giants of the 1950s played to sellout crowds at Yankee Stadium and made professional football fashionable in New York."
+  },
+
+  {
+    title: "Wellington Mara: The Man Who Saved the NFL",
+    team: "Giants",
+    charity: "The Giants Foundation | giants.com/community", year: 1961,
+    body: "In 1961, the NFL's small-market teams were struggling to compete financially with franchises in New York and Chicago. Wellington Mara — owner of the Giants, son of the founder — proposed something radical: all teams should share equally in television revenue, regardless of market size. It meant the Giants would receive the same money as the Green Bay Packers. It was an act of extraordinary generosity and long-term thinking. The NFL accepted. Revenue sharing became the foundation of competitive balance that defines pro football to this day. Without Wellington Mara's willingness to sacrifice his own financial advantage for the good of the league, the NFL as we know it — the most successful sports enterprise in American history — might never have emerged. The Giants won two Super Bowls in his lifetime. His bigger championship was the one he gave the whole league."
+  },
+
+  {
+    title: "Lawrence Taylor: The Greatest Defensive Player Who Ever Lived",
+    team: "Giants",
+    charity: "The Giants Foundation | giants.com/community", year: 1986,
+    body: "Lawrence Taylor changed the way football was played. Before LT, the outside linebacker was a secondary position — a support piece, not a difference-maker. After LT, every team in football tried to find one. Taylor was so disruptive — so fast, so powerful, so instinctively violent in his pursuit of the quarterback — that offensive coordinators had to redesign their entire blocking schemes around containing one player. He was the NFL's MVP in 1986, the only defensive player ever to win the award. He won two Super Bowls. He recorded 132.5 sacks in an era before sacks were an official statistic. He is the standard against which every defensive player since has been measured. None have reached it."
+  },
+
+  {
+    title: "Super Bowl XLII: The Perfect Upset",
+    team: "Giants",
+    charity: "The Giants Foundation | giants.com/community", year: 2008,
+    body: "The New England Patriots had gone 16-0 in the regular season. They were trying to become the first team in NFL history to finish 19-0. No one gave the Giants a chance. Then David Tyree caught a pass against his helmet with 35 seconds left, pinning it to his head with one hand while a Patriots defender tried to rip it away. The Giants scored on the next play. They won 17-14. The 2007 Patriots are still the only 16-0 team in NFL history — the perfect season that became the most famous loss in football history. Eli Manning, who had been mediocre for much of the season, was suddenly a Giant among men. The play is simply called The Helmet Catch. It needs no other explanation."
+  },
+
+  {
+    title: "Phil Simms: The Quarterback Nobody Wanted",
+    team: "Giants",
+    charity: "The Giants Foundation | giants.com/community", year: 1987,
+    body: "When the Giants drafted Phil Simms with the seventh overall pick in 1979, the New York crowd at Madison Square Garden — where the draft was held — booed. They had wanted Notre Dame's Joe Montana or Ohio State's Art Schlichter. They got a kid from Morehead State, a school so small that most scouts hadn't bothered watching him. What followed was 15 seasons of toughness, leadership, and one absolutely perfect afternoon. Super Bowl XXI, January 1987: Phil Simms completed 22 of 25 passes for 268 yards and three touchdowns. An 88 percent completion rate — still the most accurate Super Bowl performance in history. He was named MVP. The crowd that had booed him eight years earlier called him the greatest Giant who ever played."
+  },
+
+  // ── GENERAL NEW YORK ──────────────────────────────────────────────────────
+
+  {
+    title: "The 1994 New York Sports Year: When Everything Was Possible",
+    team: "New York",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1994,
+    body: "In the spring of 1994, New York had three teams in three championship series simultaneously. The Rangers were winning the Stanley Cup. The Knicks were in the NBA Finals. The Yankees, before the strike ended their season, were on pace for 100 wins. It was the most electric sports moment the city had experienced since the early 1970s. The Rangers won. The Knicks lost in seven heartbreaking games to Houston. The baseball strike wiped out the World Series and left the Yankees without a title they were almost certain to claim. Two out of three — one perfect June night when Messier raised the Cup at MSG — made 1994 a year New York sports fans still talk about with a particular kind of wistfulness. We were so close to everything."
+  },
+
+  {
+    title: "The Subway Series: New York vs. New York, October 2000",
+    team: "New York",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 2000,
+    body: "For the first time since 1956, the Yankees and Mets met in the World Series. The city was completely and beautifully at war with itself. Yankees fans and Mets fans who had been ignoring each other for decades were suddenly engaged in arguments that consumed every office, every subway car, every dinner table. Roger Clemens threw a broken bat at Mike Piazza. Derek Jeter hit a home run on the first pitch of Game 4 at midnight — becoming Mr. November. The Yankees won in five games. But the series itself — the tension, the shared geography, the tabloid back pages screaming every morning — was something New York had never quite experienced before and may never experience again. A city arguing with itself. The ultimate New York story."
+  },
+
+  {
+    title: "New York Sports and 9/11: How the Games Helped Heal",
+    team: "New York",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 2001,
+    body: "In the weeks after September 11th, people debated whether sports even mattered. Then the games came back and answered the question. Mike Piazza's home run at Shea on September 21st. The Yankees winning three straight extra-inning World Series games in October — Tino Martinez tying Game 4 in the ninth, Scott Brosius doing the same in Game 5, Jeter's walk-off as Mr. November. The city needed something to cheer for together. It needed to sit next to strangers and share something joyful after so much grief. The Yankees lost the World Series in seven games, but the response of New York sports to that autumn — the players who volunteered, the moments that transcended the games themselves — remains one of the finest chapters in this city's relationship with its teams."
+  },
+
+  {
+    title: "Yogi Berra: Beyond the Yogi-isms",
+    team: "Yankees",
+    charity: "New York Yankees Foundation | yankees.com/community", year: 1955,
+    body: "Everyone knows the quotes. It ain't over till it's over. Nobody goes there anymore, it's too crowded. When you come to a fork in the road, take it. What gets lost in the Yogi-isms is the actual player — one of the greatest catchers in baseball history. Ten World Series rings. Three MVP awards. An 18-time All-Star. A man who grew up on The Hill in St. Louis, barely finished high school, and became the most beloved Yankee since Gehrig. He managed two teams to pennants in two different leagues. He served in the Navy on D-Day. He was small and squat and moved awkwardly and hit pitches that were six inches outside the strike zone for home runs. He was Yogi, which meant he was one of a kind — and New York loved him for every Yogi-ism and every moment between them."
+  },
+
+  {
+    title: "The Back Page: How New York Tabloids Shaped NY Sports Culture",
+    team: "New York",
+    charity: "Garden of Dreams Foundation | gardenofdreams.org", year: 1970,
+    body: "No city reads its sports teams the way New York does. The Daily News and the New York Post have been competing for the back page — the sports front page — since the middle of the 20th century, and the headlines they've produced are as much a part of NY sports history as the games themselves. AMAZIN'! after the '69 Mets. BUCKY BLEEPING DENT. YANKEES WIN! The Post's headline the morning after the 2000 Subway Series: BRONX BOMBERS DO IT AGAIN. The back page is where NY sports lives between games — where the feuds are started, the heroes celebrated, the villains buried. When something great or terrible happens to a New York team, the first thing fans want to know the next morning is: what did the back page say?"
+  },
+
+];const DEEP_DIVES_EXTRA = [
+
+  {
+    title: "Lou, Marty and the Devils: New Jersey's Three Cups",
+    team: "NJ Devils", year: 1995,
+    charity: "NJ Devils Foundation | njdevils.com/community",
+    body: "In 1982, a struggling Colorado Rockies franchise relocated to New Jersey and called themselves the Devils. Rangers fans laughed. Islanders fans ignored them. Twenty-two years later, they had won three Stanley Cups and produced the greatest goaltender of his generation. Lou Lamoriello arrived as general manager in 1987 and immediately established a culture unlike anything in professional hockey — strict, disciplined, team-first in every conceivable way. Players wore no names on the back of their jerseys during his tenure. There were no distractions, no drama, no excuses. Then came Martin Brodeur — drafted 20th overall in 1990 and developed into a 691-win goaltender who redefined the position. Brodeur played the puck like a third defenseman, killed penalties, handled shots with an athleticism that left forwards shaking their heads. The Devils won the Cup in 1995, sweeping Detroit. They won again in 2000 on a Jason Arnott overtime goal in Game 6 against Dallas. Then 2003, beating Anaheim in seven. Three championships in nine years — the most underappreciated dynasty in New York area sports history. Scott Stevens. Scott Niedermayer. Brodeur. Lamoriello. New Jersey had built something extraordinary, right across the river, while New York looked the other way."
+  },
+
+  {
+    title: "Is It New York or New Jersey? The Most Complicated Question in Sports",
+    team: "New York", year: 1984,
+    charity: "NY Giants Foundation | giants.com/community | NY Jets Foundation | newyorkjets.com/community",
+    body: "The New York Giants and New York Jets play in East Rutherford, New Jersey. They have never played a regular season game in New York State. The New Jersey Devils are called the Devils and play in Newark — but they are covered here as part of the NY metro sports family. The Brooklyn Nets began as the New Jersey Americans in 1967, became the New York Nets on Long Island, went back to New Jersey as the Nets, then crossed the river to Barclays Center in Brooklyn in 2012. The New York Red Bulls play in Harrison, New Jersey. MetLife Stadium — home of the Giants and Jets — hosted Super Bowl XLVIII in February 2014, the first outdoor cold-weather Super Bowl in NFL history. The teams called it a New York Super Bowl. The host committee was the New York New Jersey Super Bowl Host Committee. Nobody could quite agree. What makes a team a New York team? It isn't geography — it's identity, fanbase, media market, and history. The Giants have been 'New York' since 1925. The Jets since 1963. The Devils since they stopped being Colorado. The lines have always been blurry in the greatest sports market in the world. And honestly? That's part of what makes it interesting."
+  },
+
+  {
+    title: "Soccer in New York: From Pelé to the Future",
+    team: "New York", year: 1977,
+    charity: "NYCFC Foundation | nycfc.com/foundation | NY Red Bulls Foundation | newyorkredbulls.com/community",
+    body: "The story of soccer in New York is a story of impossible peaks and patient rebuilding. It started with the Cosmos — the most glamorous soccer club America has ever seen, with Pelé and Beckenbauer playing at Giants Stadium before 77,000 fans. When the NASL collapsed in 1984 the dream seemed dead. Then the MetroStars arrived in 1996 as a founding MLS club, eventually becoming the New York Red Bulls under Red Bull's ownership. In 2015 NYCFC launched as the league's second New York team, backed by Manchester City's ownership group, playing at Yankee Stadium to sellout crowds. They won the MLS Cup in 2021. Meanwhile on the women's side, NJ/NY Gotham FC won the NWSL Championship in 2023 and are currently building a dedicated stadium in Queens — the first soccer-specific stadium in New York City. The Red Bulls are building their own training complex. NYCFC is finalizing their own stadium plans. Soccer in New York has never been stronger. The generation that grew up watching the 1994 World Cup hosted in New York is now in their 40s and bringing their kids to matches. The next chapter — dedicated stadiums, homegrown stars, a real soccer culture — is being written right now."
+  },
+
+  {
+    title: "Women's Sports in New York: The Rising Tide",
+    team: "New York", year: 1997,
+    charity: "Brooklyn Nets & NY Liberty Foundation | netslibertyfoundation.org | Gotham FC Foundation | nj-nysc.com",
+    body: "In 1997, the WNBA launched with eight founding franchises. The New York Liberty was one of them. For 27 years they played in MSG's shadow, drawing respectable crowds but never capturing the city the way the Knicks did. Rebecca Lobo, Teresa Weatherspoon, Cappie Pondexter — great players who deserved more attention than they got. Then Breanna Stewart arrived and everything changed. In 2024, Stewart led the Liberty to their first WNBA championship. The Garden erupted. The city finally noticed. At the same time, NJ/NY Gotham FC was building something remarkable on the women's soccer side — winning the NWSL Championship in 2023 and breaking ground on a new dedicated stadium in Queens that will be the first women's soccer-specific stadium in the United States. New York women's sports is having its greatest moment. Attendance is up. Coverage is up. Investment is up. The Liberty sellout Barclays Center. Gotham FC draws passionate crowds. A generation of young girls in New York is growing up with champions to root for who look like them. That is the real championship."
+  },
+
+  {
+    title: "The Nets: From Dr. J to Brooklyn, A Journey Unlike Any Other",
+    team: "Nets", year: 2002,
+    charity: "Brooklyn Nets & NY Liberty Foundation | netslibertyfoundation.org",
+    body: "The franchise that became the Brooklyn Nets has had more identities than any team in professional sports. They began in 1967 as the New Jersey Americans in the ABA. They became the New York Nets and moved to Long Island, where Julius Erving — Dr. J — made them the most exciting team in basketball. His soaring dunks, his impossible finishes, his elegance in the air defined an era. They won two ABA championships in 1974 and 1976. Then came the merger with the NBA and a decision that still stings: to join the NBA, the Nets had to pay a territorial fee to the Knicks. They sold Dr. J to Philadelphia to cover it. The dynasty ended before it began. They moved back to New Jersey, struggled for years, then finally built something around Jason Kidd in the early 2000s — two straight NBA Finals appearances in 2002 and 2003, losing both times but establishing themselves as legitimate contenders. Then more wandering. A move to Brooklyn in 2012. The Kevin Durant and Kyrie Irving superteam that never quite came together. Now a rebuild, a young core, a franchise searching again for its identity. The Nets have always lived in the Knicks' considerable shadow. But their story — from Dr. J's impossible flight to Jason Kidd's no-look passes to the promise of what comes next — is one of the great untold stories in New York sports."
+  },
+
+  {
+    title: "Forgotten Heroes: The Players New York Should Remember",
+    team: "New York", year: 1986,
+    charity: "Garden of Dreams Foundation | gardenofdreams.org",
+    body: "Every championship team has players the history books undervalue. Mark Bavaro caught everything Eli Manning's predecessors could throw and blocked like a pulling guard — the most complete tight end of his era, somehow overlooked. Dave DeBusschere was the defensive engine of those Knicks championship teams, the forward who guarded the other team's best player every night so Frazier and Reed could shine. Butch Goring arrived in Long Island in 1980 and the Islanders immediately won four straight Cups — his spark and leadership the missing piece Bill Torrey had been searching for. Clark Gillies was the enforcer and heart of those same Islanders, the forward who made space for Bossy and Trottier by being the last player anyone wanted to fight. Cleon Jones caught the final out of the 1969 World Series on his knees and has spent 50 years being overshadowed by the pitchers who got them there. Jesse Orosco leaping into Gary Carter's arms after the final out in 1986. Tommy Henrich, 'Old Reliable,' the Yankee who delivered in October after October without ever becoming a household name. New York has always loved its superstars. Sometimes the heroes who made the superstars possible deserve a moment too."
+  },
+,
+
+  {
+    title: "53 Years: The Full Story of the 2026 Knicks Championship",
+    team: "Knicks", year: 2026,
+    charity: "Garden of Dreams Foundation | gardenofdreams.org",
+    body: "Fifty-three years. That is how long the wait lasted between Knicks championships -- longer than the Rangers' famous 54-year Stanley Cup drought felt to anyone living through it, longer than most of the people dancing in the streets outside Madison Square Garden on the night of June 13th had been alive. The 2026 Knicks did not just end the wait. They ended it in a way that felt, somehow, perfectly Knicks -- chaotic, nerve-wracking, and ultimately, gloriously triumphant.\n\nThe story does not begin with a champagne celebration. It begins in the summer of 2022, when New York handed Jalen Brunson a four-year, $104 million contract and the basketball world reacted with something between confusion and mockery. Here was a 6-foot-2 guard, a second-round pick out of Villanova, the son of a journeyman who had bounced between half a dozen NBA cities. People called it an overpay before he had played a single game in blue and orange. Brunson spent the next four seasons quietly making that contract look like the bargain of the decade.\n\nThe front office built around him with real purpose. Mikal Bridges and OG Anunoby arrived for two-way wing depth and the kind of switchable defense that wins in May and June. Josh Hart brought a level of relentless, occasionally irrational energy that New York fans recognized in themselves. And ahead of the 2024-25 season, a trade for Karl-Anthony Towns finally gave the Knicks the stretch-five they had been missing for a generation -- a seven-footer who could both anchor the paint and space the floor, the exact shape of player the modern game demands.\n\nThen, in the summer of 2025, New York hired Mike Brown as head coach. He became the 24th Knicks coach since the 1973 championship. Nobody knew yet that he would be the one to finally get it done.\n\nThe 2025-26 regular season was good, not great -- at one stretch the Knicks sat 25-18, tied for third in the East but closer to tenth than first. \"There's always rocky moments during the course of the season,\" Brown said later. \"I actually hoped there would be some big, rocky times, because you have to try to fight through them as an organization.\" Fight through them they did. Something clicked once the calendar turned to April.\n\nThe first round against Atlanta went six games, the Knicks falling behind 2-1 before winning three straight to close it out, Brunson dropping 39 in the closeout game. A sweep of Philadelphia followed in the second round. Then came the Eastern Conference Finals -- New York's first trip that deep since 1999 -- where the Knicks dispatched a long Cleveland team in convincing fashion, Brunson piling up 38 more. Across 14 playoff games entering the Finals, New York outscored its opponents by 271 points, the largest such margin in NBA history. They arrived in San Antonio winners of their last eleven games in a row.\n\nThe Finals against the Spurs and a generational talent in Victor Wembanyama began about as well as a Finals possibly could. The Knicks stole both games in San Antonio, extending their postseason winning streak to thirteen straight -- the second-longest in NBA history, trailing only the great Spurs teams of 1999. Back at the Garden for Game 3, the run finally snapped; San Antonio's size and Wembanyama's historic shot-blocking took over. Brunson was uncharacteristically loose with the ball, the Bridges-Hart backcourt went cold, and the Spurs evened a series many had assumed was already decided.\n\nThen came Game 4 -- as strange and dramatic a basketball game as has ever been played on a championship stage. Wembanyama tied a Finals record with five blocks in the first half alone. San Antonio led by as many as 29 points. At halftime the margin was 27, the Garden silent in a way Knicks fans had not experienced in years. \"There's nothing to celebrate,\" Brunson had warned his teammates before the game, sensing exactly this kind of danger. \"It's not over yet, not even close.\" He was about to prove his own words right in the most dramatic way imaginable.\n\nThe Knicks did not just claw back. They authored the largest comeback in NBA playoff history, with Brunson and Anunoby each erupting for more than 30 points in the second half alone, winning 107-106 on a frantic final possession. Only one team in NBA history -- the 2016 Cleveland Cavaliers -- had ever come back from a 3-1 Finals deficit. New York was determined not to need that math at all.\n\nSan Antonio, a brilliant and unbothered young team, had two full days to recover before Game 5 back home in Texas. It did not matter. The Spurs jumped out to a 23-13 first-quarter lead and led by 16 points in the third. The Knicks, again, simply refused the storyline being written for them. Jalen Brunson scored 45 points -- thirty-plus for the ninth time that postseason, with thirteen of his points coming in one uninterrupted fourth-quarter stretch -- as New York erased the deficit one final time and won 94-90. The Larry O'Brien Trophy was heading to New York for the first time since 1973.\n\nBrunson's 45 tied Michael Jordan's 1998 mark for the most points ever scored on the road in a title-clinching Finals game. The Finals MVP vote was unanimous, all eleven ballots. At his listed height, Brunson became the second-shortest Finals MVP in league history, behind only Isiah Thomas -- a fitting echo, given how many times Brunson had been told a player his size could not be the best player on a championship team. He also became just the fourth player ever to win Finals MVP after being drafted in the second round, joining Dennis Johnson, Nikola Jokic, and a Knicks legend named Willis Reed, who delivered New York's first two championships in 1970 and 1973.\n\n\"I'm in awe,\" Brunson told reporters in the chaos of the locker room, still catching his breath. \"Whenever someone counted us out, we found a way to come back and do something about it. We're going to find a way. Whatever you put in front of us, every time we step on this court.\" Later, asked to describe the feeling, he was almost boyish about it: \"I was emotional for a good five, ten minutes, and then the excitement started to kick in.\"\n\nThe most enduring image of the night belonged to Brunson and his father, Rick -- a Knicks assistant coach and former NBA journeyman in his own right -- locked in an embrace that needed no words at all. Walt \"Clyde\" Frazier, who had led the 1970 and 1973 teams as a player and had broadcast nearly every Knicks heartbreak in the half-century since, watched it all unfold with nothing but pride for what he had just witnessed. \"It's surreal,\" said Mike Brown, the rookie head coach who had just become winningest in franchise history in the most literal sense. \"I still can't believe it's happened.\"\n\nFifty-three years of heartbreak -- Ewing's torn Achilles tendon in 1994, decades of lottery balls and coaching changes, the Dolan-era dysfunction that became a punchline far beyond New York -- gave way, in one June, to something the city had nearly stopped letting itself hope for. The Knicks are NBA Champions. Again. Finally.\n\nAnd with Brunson, Towns, Bridges, Anunoby and Hart all signed for years to come, and with Mike Brown already established as exactly the right voice for this group, this does not look like a one-year miracle that ends here. It looks, gloriously and improbably, like a beginning.
+  }
+];
+
+// ─── DEEP DIVE ARCHIVE — full-length essays from the Sunday newsletter ──────
+function ddSlugify(title) {
+  return title.toLowerCase()
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+}
+
+const ALL_DEEP_DIVES_SITE = DEEP_DIVES.concat(DEEP_DIVES_NEW).concat(DEEP_DIVES_EXTRA);
+
+// Newsletter started sending Sunday Deep Dives the week of 2026-01-01 (week 0)
+const DEEP_DIVE_EPOCH = new Date('2026-01-01');
+
+// Date-specific overrides — MUST stay in sync with SUNDAY_DEEP_DIVE_OVERRIDES
+// in api/send-digest.js. When an essay is force-scheduled for a specific
+// Sunday, list it here too so the site knows it's "published" on that date
+// even if the shuffle would have picked something else.
+const SUNDAY_DEEP_DIVE_OVERRIDES_SITE = {
+  '2026-06-21': '53 Years: The Full Story of the 2026 Knicks Championship',
+  '2026-07-05': 'George Steinbrenner: The Boss Who Changed Everything',
+};
+
+// Replicates the exact smart-shuffle algorithm from send-digest.js so the
+// site can determine which week number an essay would be sent on, and
+// therefore whether it has already appeared in a Sunday newsletter.
+function getShuffledDiveOrder(entries) {
+  const n      = entries.length;
+  const used   = new Array(n).fill(false);
+  const order  = [];
+  const recent = [];
+
+  while (order.length < n) {
+    let bestScore = -Infinity;
+    let bestIdx   = -1;
+    for (let i = 0; i < n; i++) {
+      if (used[i]) continue;
+      const team = entries[i].team || 'Unknown';
+      const lastSeen = recent.lastIndexOf(team);
+      const recencyPenalty = lastSeen >= 0
+        ? Math.max(0, 4 - (recent.length - lastSeen)) * -10
+        : 0;
+      // Note: tiebreak uses index only (no weekNum) since we just need
+      // the stable ORDER, not per-week selection
+      const tiebreak = ((i * 2654435761) >>> 0) % 100 / 100;
+      const score = recencyPenalty + tiebreak;
+      if (score > bestScore) { bestScore = score; bestIdx = i; }
+    }
+    if (bestIdx === -1) break;
+    used[bestIdx] = true;
+    order.push(bestIdx);
+    recent.push(entries[bestIdx].team || 'Unknown');
+  }
+  return order;
+}
+
+// Returns true if this essay has already been sent in a Sunday newsletter
+// (i.e. should be visible in the public Deep Dive archive)
+function isDeepDivePublished(essay, allEssays) {
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  // Check date-specific overrides first — these are "published" exactly
+  // on (and after) their scheduled date
+  for (const [dateStr, title] of Object.entries(SUNDAY_DEEP_DIVE_OVERRIDES_SITE)) {
+    if (title === essay.title) {
+      return todayStr >= dateStr;
+    }
+  }
+
+  // Otherwise, find this essay's position in the shuffle order and compute
+  // which week number (and therefore which Sunday) it was/will be sent on.
+  // Because the override above can "skip" a regularly-scheduled essay on a
+  // given Sunday, this is approximate for edge cases right around an
+  // override date — acceptable tradeoff for a hardcoded-array approach.
+  const order = getShuffledDiveOrder(allEssays);
+  const essayIdx = allEssays.findIndex(e => e.title === essay.title);
+  const positionInRotation = order.indexOf(essayIdx);
+  if (positionInRotation === -1) return false;
+
+  const now = new Date();
+  const currentWeekNumber = Math.floor((now - DEEP_DIVE_EPOCH) / 604800000);
+  const essayWeekNumber   = positionInRotation % order.length;
+
+  // An essay at rotation position P has appeared on every Sunday where
+  // weekNumber % order.length === P, for weekNumber <= currentWeekNumber.
+  // It's published if at least one such week has already passed.
+  return currentWeekNumber >= essayWeekNumber;
+}
+
+const TEAM_COLORS_DD = {
+  Yankees:"#003087", Mets:"#002D72", Knicks:"#006BB6", Rangers:"#0038A8",
+  Islanders:"#003087", Jets:"#125740", Giants:"#0B2265", Nets:"#000000",
+  Liberty:"#6ECEB2", "NJ Devils":"#CC0000", Devils:"#CC0000",
+  "New York":"#c8201c", "NY Cosmos":"#1a7fc2",
+};
+
+function DeepDiveTab({ initialSlug }) {
+  const [selectedSlug, setSelectedSlug] = useState(initialSlug || null);
+  const [filterTeam, setFilterTeam]     = useState("ALL");
+
+  useEffect(() => {
+    if (initialSlug) setSelectedSlug(initialSlug);
+  }, [initialSlug]);
+
+  // Only show essays that have actually appeared in a Sunday newsletter —
+  // keeps the public archive in sync with what readers have actually received,
+  // so browsing the site never spoils a future week's surprise.
+  const publishedEssays = ALL_DEEP_DIVES_SITE.filter(d => isDeepDivePublished(d, ALL_DEEP_DIVES_SITE));
+  const essaysWithSlugs = publishedEssays.map(d => ({ ...d, slug: ddSlugify(d.title) }));
+  const selected = selectedSlug ? essaysWithSlugs.find(d => d.slug === selectedSlug) : null;
+
+  const teams = ["ALL", ...Array.from(new Set(essaysWithSlugs.map(d => d.team))).sort()];
+  const filtered = filterTeam === "ALL"
+    ? essaysWithSlugs
+    : essaysWithSlugs.filter(d => d.team === filterTeam);
+
+  // ── SINGLE ESSAY VIEW ───────────────────────────────────────────────────
+  if (selected) {
+    const color = TEAM_COLORS_DD[selected.team] || "#c8201c";
+    const paragraphs = selected.body.split('\n\n');
+    return (
+      <div style={{padding:"16px 0"}}>
+        <button onClick={() => setSelectedSlug(null)}
+          style={{background:"none", border:"none", color:"#888", fontSize:12,
+            cursor:"pointer", marginBottom:16, padding:0, display:"flex", alignItems:"center", gap:6}}>
+          ← Back to all Deep Dives
+        </button>
+
+        <div style={{fontSize:11, fontWeight:900, letterSpacing:"0.15em", textTransform:"uppercase",
+          color, marginBottom:8}}>
+          {selected.team} &nbsp;·&nbsp; {selected.year}
+        </div>
+
+        <h1 style={{fontSize:26, fontWeight:900, fontFamily:"Georgia,serif", lineHeight:1.25,
+          color:"#111", marginBottom:20}}>
+          {selected.title}
+        </h1>
+
+        <div style={{fontSize:15, lineHeight:1.85, color:"#333", fontFamily:"Georgia,serif"}}>
+          {paragraphs.map((p, i) => (
+            <p key={i} style={{marginBottom:18}}>{p}</p>
+          ))}
+        </div>
+
+        {selected.charity && (
+          <div style={{marginTop:24, paddingTop:16, borderTop:"1px solid #ebebeb",
+            fontSize:12, color:"#888", fontStyle:"italic"}}>
+            🤝 Support this team: {selected.charity}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── ARCHIVE BROWSE VIEW ─────────────────────────────────────────────────
+  return (
+    <div style={{padding:"16px 0"}}>
+      <div style={{marginBottom:16}}>
+        <h2 style={{fontSize:18, fontWeight:900, fontFamily:"Georgia,serif", color:"#111", marginBottom:4}}>
+          🔍 Deep Dive Archive
+        </h2>
+        <p style={{fontSize:12, color:"#888"}}>
+          Full-length stories from the Sunday newsletter — {essaysWithSlugs.length} essays and counting.
+        </p>
+      </div>
+
+      <div style={{display:"flex", gap:6, overflowX:"auto", marginBottom:16, paddingBottom:6}}>
+        {teams.map(t => (
+          <button key={t} onClick={() => setFilterTeam(t)}
+            style={{
+              flexShrink:0, padding:"6px 12px", fontSize:11, fontWeight:700,
+              border: filterTeam===t ? "1px solid #c8201c" : "1px solid #ddd",
+              background: filterTeam===t ? "#c8201c" : "#fff",
+              color: filterTeam===t ? "#fff" : "#555",
+              borderRadius:14, cursor:"pointer", whiteSpace:"nowrap",
+            }}>
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <div style={{display:"flex", flexDirection:"column", gap:10}}>
+        {filtered.map((d, i) => {
+          const color = TEAM_COLORS_DD[d.team] || "#c8201c";
+          const wordCount = d.body.split(/\s+/).length;
+          return (
+            <button key={i} onClick={() => setSelectedSlug(d.slug)}
+              style={{
+                textAlign:"left", background:"#fff", border:"1px solid #ebebeb",
+                borderLeft:`3px solid ${color}`, borderRadius:4, padding:"14px 16px",
+                cursor:"pointer",
+              }}>
+              <div style={{fontSize:10, fontWeight:900, letterSpacing:"0.1em", textTransform:"uppercase",
+                color, marginBottom:6}}>
+                {d.team} &nbsp;·&nbsp; {d.year}
+              </div>
+              <div style={{fontSize:15, fontWeight:700, color:"#111", fontFamily:"Georgia,serif",
+                lineHeight:1.35, marginBottom:6}}>
+                {d.title}
+              </div>
+              <div style={{fontSize:11, color:"#999"}}>
+                {wordCount} words {wordCount > 400 ? "· Magazine feature" : ""}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function GloryDaysTab({ myTeams }) {
   const [view, setView]         = useState("team");   // "team" | "decade"
   const [sport, setSport]       = useState("ALL");
@@ -11209,30 +11850,57 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
     try { localStorage.setItem("nsd_onboarded","1"); } catch(e) {}
   }
 
+  // ── CHAMPIONSHIP BANNER MODE ─────────────────────────────────────────────
+  // "breaking"  = big celebratory banner (use through ~June 27, 2026)
+  // "badge"     = small permanent ribbon (use after that, indefinitely)
+  // "off"       = hide entirely
+  const CHAMPIONSHIP_BANNER_MODE = "breaking";
+
   return (
     <div style={{marginBottom:12}}>
-      {/* KNICKS CHAMPIONSHIP BANNER \u2014 2026 NBA Champions */}
-      <div style={{
-        background:"linear-gradient(135deg, #006BB6 0%, #F58426 100%)",
-        border:"2px solid #f0b429", borderRadius:4,
-        padding:"14px 18px", marginBottom:12,
-        textAlign:"center", position:"relative", overflow:"hidden",
-      }}>
-        <div style={{fontSize:9, fontWeight:900, letterSpacing:"0.25em", textTransform:"uppercase",
-          color:"#fff8e0", marginBottom:4}}>🏆 BREAKING — JUNE 13, 2026</div>
-        <div style={{fontSize:20, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif",
-          letterSpacing:"0.02em", marginBottom:4, textShadow:"0 1px 4px rgba(0,0,0,0.3)"}}>
-          KNICKS ARE NBA CHAMPIONS!
+      {/* KNICKS CHAMPIONSHIP — 2026 NBA Champions */}
+
+      {CHAMPIONSHIP_BANNER_MODE === "breaking" && (
+        <div style={{
+          background:"linear-gradient(135deg, #006BB6 0%, #F58426 100%)",
+          border:"2px solid #f0b429", borderRadius:4,
+          padding:"14px 18px", marginBottom:12,
+          textAlign:"center", position:"relative", overflow:"hidden",
+        }}>
+          <div style={{fontSize:9, fontWeight:900, letterSpacing:"0.25em", textTransform:"uppercase",
+            color:"#fff8e0", marginBottom:4}}>🏆 BREAKING — JUNE 13, 2026</div>
+          <div style={{fontSize:20, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif",
+            letterSpacing:"0.02em", marginBottom:4, textShadow:"0 1px 4px rgba(0,0,0,0.3)"}}>
+            KNICKS ARE NBA CHAMPIONS!
+          </div>
+          <div style={{fontSize:11, color:"#fff8e0", fontStyle:"italic"}}>
+            First title since 1973 — Jalen Brunson, Finals MVP, 45 points to close it out vs. Spurs
+          </div>
+          <div style={{fontSize:9, fontWeight:900, letterSpacing:"0.15em", textTransform:"uppercase",
+            color:"#fff", marginTop:8, padding:"4px 14px", background:"rgba(0,0,0,0.25)",
+            borderRadius:20, display:"inline-block"}}>
+            DEFENDING CHAMPS 👑
+          </div>
         </div>
-        <div style={{fontSize:11, color:"#fff8e0", fontStyle:"italic"}}>
-          First title since 1973 — Jalen Brunson, Finals MVP, 45 points to close it out vs. Spurs
+      )}
+
+      {CHAMPIONSHIP_BANNER_MODE === "badge" && (
+        <div style={{
+          background:"#1a1c1f", border:"1px solid #f0b429", borderRadius:4,
+          padding:"8px 14px", marginBottom:12,
+          display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+        }}>
+          <span style={{fontSize:14}}>🏆</span>
+          <span style={{fontSize:10, fontWeight:900, letterSpacing:"0.15em",
+            textTransform:"uppercase", color:"#f0b429", fontFamily:"'Georgia',serif"}}>
+            2026 NBA Champions
+          </span>
+          <span style={{fontSize:10, color:"#9aa3ad"}}>·</span>
+          <span style={{fontSize:10, color:"#9aa3ad", fontStyle:"italic"}}>
+            Knicks — first title since 1973
+          </span>
         </div>
-        <div style={{fontSize:9, fontWeight:900, letterSpacing:"0.15em", textTransform:"uppercase",
-          color:"#fff", marginTop:8, padding:"4px 14px", background:"rgba(0,0,0,0.25)",
-          borderRadius:20, display:"inline-block"}}>
-          DEFENDING CHAMPS 👑
-        </div>
-      </div>
+      )}
 
       {/* Onboard */}
       {!onboardDone && (
@@ -11564,6 +12232,15 @@ function NYPlayoffWidget({ myTeams }) {
     nhl:["Rangers","Islanders","Devils"], nfl:["Giants","Jets"],
   };
 
+  // Team nicknames shared by more than one franchise — last-word display
+  // alone is ambiguous for these, so fall back to the team abbreviation
+  // (e.g. "BOS" vs "CWS") instead of just "Sox".
+  const AMBIGUOUS_NICKNAMES = new Set([
+    "Sox",     // Boston Red Sox vs Chicago White Sox
+    "Rangers", // Texas Rangers (MLB) vs NY Rangers (NHL) — only matters cross-sport, harmless to include
+    "Giants",  // SF Giants (MLB) vs NY Giants (NFL) — only matters cross-sport, harmless to include
+  ]);
+
   function isNY(name, key) {
     return (NY_NAMES[key]||[]).some(t => name.toLowerCase().includes(t.toLowerCase()));
   }
@@ -11590,22 +12267,32 @@ function NYPlayoffWidget({ myTeams }) {
       if (!r.ok) return [];
       const json = await r.json();
 
-      // Collect every entry from the full tree
+      // Collect every entry from the full tree, tagging each with its
+      // league/conference group name (e.g. "American League", "National League",
+      // "Eastern Conference") found at the nearest ancestor node that has one.
+      // This is essential for MLB/NHL where playoffSeed is league-relative
+      // (1-6 within AL, 1-6 within NL), NOT a single combined 1-12 ranking —
+      // without this, AL and NL teams get sorted together as if seed 2 in the
+      // AL and seed 2 in the NL were the same thing.
       const allEntries = [];
-      function walk(node) {
-        (node?.standings?.entries||[]).forEach(e => allEntries.push(e));
-        (node.children||[]).forEach(walk);
+      function walk(node, groupName) {
+        const thisGroup = node?.name || node?.abbreviation || groupName;
+        (node?.standings?.entries||[]).forEach(e => allEntries.push({ entry:e, group:thisGroup }));
+        (node.children||[]).forEach(child => walk(child, thisGroup));
       }
-      walk(json);
+      walk(json, null);
 
       // Parse into team objects
       const rawTeams = [];
-      allEntries.forEach(e => {
+      allEntries.forEach(({entry:e, group}) => {
         const name = e.team?.displayName || e.team?.name || "";
+        const abbrev = e.team?.abbreviation || "";
         const s = {};
         (e.stats||[]).forEach(st => { s[st.name] = st.displayValue ?? String(st.value ?? ""); });
         rawTeams.push({
           name,
+          abbrev,
+          group: group || "",
           w:    parseFloat(s.wins   || s.W  || 0),
           l:    parseFloat(s.losses || s.L  || 0),
           pts:  parseFloat(s.points || 0),
@@ -11623,33 +12310,67 @@ function NYPlayoffWidget({ myTeams }) {
         seen.add(t.name); return true;
       });
 
-      // For MLB/NHL: split into conferences, find the true WC cutoff per conference.
-      // ESPN's playoffSeed is league-wide (1-12 for MLB), so:
-      //   seeds 1-3 = division winners in each league half
-      //   seeds 4-6 = wild card spots
-      // The 6th seed IS the last WC team. Anyone seeded 7+ is out.
-      // Their GB vs the 6th seed team = true WC GB.
+      // For MLB/NHL: split into conferences/leagues, find the true WC cutoff
+      // PER LEAGUE. ESPN's playoffSeed is league-relative (1-6 within AL,
+      // 1-6 within NL for MLB; 1-8 per conference for NHL), so:
+      //   seeds 1-3 = division winners within that league/conference
+      //   seeds 4-6 (MLB) or 4-8 (NHL) = wild card spots within that league
+      // The cutoff team must be found separately within each league's own
+      // group of teams — comparing an NL team's GB against an AL cutoff
+      // team (or vice versa) produces meaningless numbers.
 
-      // Sort by seed (ties broken by win%)
-      const sorted = [...teams].sort((a,b) => {
-        if (a.seed !== b.seed) return a.seed - b.seed;
-        return b.pct - a.pct;
+      // Group teams by their league/conference
+      const groups = {};
+      teams.forEach(t => {
+        const g = t.group || "_none";
+        if (!groups[g]) groups[g] = [];
+        groups[g].push(t);
       });
 
-      // The cutoff: last team "in"
-      const cutoffTeam = sorted[cfg.poSlots - 1];
+      // For sports where ESPN's tree doesn't naturally split into separate
+      // leagues (NBA/NFL use poSlots across one combined conference list as
+      // currently handled), fall back to treating everyone as one group.
+      const hasMultipleGroups = Object.keys(groups).filter(g => g !== "_none").length > 1;
 
-      return teams.map(t => {
-        const inPO = t.seed <= cfg.poSlots;
-        let wcGb = null;
-        if (!inPO && cutoffTeam && (t.w + t.l) > 0 && (cutoffTeam.w + cutoffTeam.l) > 0) {
-          // Standard baseball GB formula
-          wcGb = Math.max(0, ((cutoffTeam.w - t.w) + (t.l - cutoffTeam.l)) / 2);
-          // Round to nearest .5
-          wcGb = Math.round(wcGb * 2) / 2;
-        }
-        return { ...t, inPO, wcGb };
-      });
+      let result = [];
+      if (hasMultipleGroups) {
+        Object.values(groups).forEach(groupTeams => {
+          const sorted = [...groupTeams].sort((a,b) => {
+            if (a.seed !== b.seed) return a.seed - b.seed;
+            return b.pct - a.pct;
+          });
+          const cutoffTeam = sorted[cfg.poSlots - 1];
+          groupTeams.forEach(t => {
+            const inPO = t.seed <= cfg.poSlots;
+            let wcGb = null;
+            if (!inPO && cutoffTeam && (t.w + t.l) > 0 && (cutoffTeam.w + cutoffTeam.l) > 0) {
+              wcGb = Math.max(0, ((cutoffTeam.w - t.w) + (t.l - cutoffTeam.l)) / 2);
+              wcGb = Math.round(wcGb * 2) / 2;
+            }
+            result.push({ ...t, inPO, wcGb });
+          });
+        });
+      } else {
+        // Single combined pool (NBA/NFL conferences already pre-split by ESPN
+        // into one tree per conference at this point, or sport doesn't need
+        // cross-league GB math)
+        const sorted = [...teams].sort((a,b) => {
+          if (a.seed !== b.seed) return a.seed - b.seed;
+          return b.pct - a.pct;
+        });
+        const cutoffTeam = sorted[cfg.poSlots - 1];
+        result = teams.map(t => {
+          const inPO = t.seed <= cfg.poSlots;
+          let wcGb = null;
+          if (!inPO && cutoffTeam && (t.w + t.l) > 0 && (cutoffTeam.w + cutoffTeam.l) > 0) {
+            wcGb = Math.max(0, ((cutoffTeam.w - t.w) + (t.l - cutoffTeam.l)) / 2);
+            wcGb = Math.round(wcGb * 2) / 2;
+          }
+          return { ...t, inPO, wcGb };
+        });
+      }
+
+      return result;
     } catch(e) { return []; }
   }
 
@@ -11704,7 +12425,9 @@ function NYPlayoffWidget({ myTeams }) {
           fontWeight:t.isNY?900:700,
           color:t.inPO?"#22c55e":t.isNY?"#e8e0d0":"#888",
           flex:1, letterSpacing:"0.03em"}}>
-          {t.name.split(" ").slice(-1)[0]}
+          {AMBIGUOUS_NICKNAMES.has(t.name.split(" ").slice(-1)[0])
+            ? (t.abbrev || t.name)
+            : t.name.split(" ").slice(-1)[0]}
         </span>
         <span style={{fontFamily:"'Georgia',serif", fontSize:10, color:"#555",
           minWidth:46, textAlign:"right"}}>{rec}</span>
