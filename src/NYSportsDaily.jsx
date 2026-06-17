@@ -10996,82 +10996,26 @@ function ddSlugify(title) {
 
 const ALL_DEEP_DIVES_SITE = DEEP_DIVES.concat(DEEP_DIVES_NEW).concat(DEEP_DIVES_EXTRA);
 
-// Newsletter started sending Sunday Deep Dives the week of 2026-01-01 (week 0)
-const DEEP_DIVE_EPOCH = new Date('2026-01-01');
+// ── PUBLISHED ESSAY TRACKING ─────────────────────────────────────────────
+// This is the single source of truth for which Deep Dives have actually
+// been sent in a Sunday newsletter. Update this list by hand each week
+// after a Sunday digest goes out — add that Sunday's essay title here.
+// This intentionally does NOT try to simulate or predict the rotation;
+// the newsletter's shuffle algorithm and any manual overrides can both
+// change independently, so the only reliable record of "what was
+// actually published" is a real, manually-maintained list like this one.
+//
+// Format: { title: "exact essay title", sentOn: "YYYY-MM-DD" }
+const PUBLISHED_DEEP_DIVES = [
+  { title: "The Cosmos and Pelé: When Soccer Almost Conquered New York", sentOn: "2026-06-14" },
+  // Next: "53 Years: The Full Story of the 2026 Knicks Championship" — scheduled 2026-06-21
+];
 
-// Date-specific overrides — MUST stay in sync with SUNDAY_DEEP_DIVE_OVERRIDES
-// in api/send-digest.js. When an essay is force-scheduled for a specific
-// Sunday, list it here too so the site knows it's "published" on that date
-// even if the shuffle would have picked something else.
-const SUNDAY_DEEP_DIVE_OVERRIDES_SITE = {
-  '2026-06-21': '53 Years: The Full Story of the 2026 Knicks Championship',
-  '2026-07-05': 'George Steinbrenner: The Boss Who Changed Everything',
-};
-
-// Replicates the exact smart-shuffle algorithm from send-digest.js so the
-// site can determine which week number an essay would be sent on, and
-// therefore whether it has already appeared in a Sunday newsletter.
-function getShuffledDiveOrder(entries) {
-  const n      = entries.length;
-  const used   = new Array(n).fill(false);
-  const order  = [];
-  const recent = [];
-
-  while (order.length < n) {
-    let bestScore = -Infinity;
-    let bestIdx   = -1;
-    for (let i = 0; i < n; i++) {
-      if (used[i]) continue;
-      const team = entries[i].team || 'Unknown';
-      const lastSeen = recent.lastIndexOf(team);
-      const recencyPenalty = lastSeen >= 0
-        ? Math.max(0, 4 - (recent.length - lastSeen)) * -10
-        : 0;
-      // Note: tiebreak uses index only (no weekNum) since we just need
-      // the stable ORDER, not per-week selection
-      const tiebreak = ((i * 2654435761) >>> 0) % 100 / 100;
-      const score = recencyPenalty + tiebreak;
-      if (score > bestScore) { bestScore = score; bestIdx = i; }
-    }
-    if (bestIdx === -1) break;
-    used[bestIdx] = true;
-    order.push(bestIdx);
-    recent.push(entries[bestIdx].team || 'Unknown');
-  }
-  return order;
-}
-
-// Returns true if this essay has already been sent in a Sunday newsletter
-// (i.e. should be visible in the public Deep Dive archive)
-function isDeepDivePublished(essay, allEssays) {
-  const todayStr = new Date().toISOString().slice(0, 10);
-
-  // Check date-specific overrides first — these are "published" exactly
-  // on (and after) their scheduled date
-  for (const [dateStr, title] of Object.entries(SUNDAY_DEEP_DIVE_OVERRIDES_SITE)) {
-    if (title === essay.title) {
-      return todayStr >= dateStr;
-    }
-  }
-
-  // Otherwise, find this essay's position in the shuffle order and compute
-  // which week number (and therefore which Sunday) it was/will be sent on.
-  // Because the override above can "skip" a regularly-scheduled essay on a
-  // given Sunday, this is approximate for edge cases right around an
-  // override date — acceptable tradeoff for a hardcoded-array approach.
-  const order = getShuffledDiveOrder(allEssays);
-  const essayIdx = allEssays.findIndex(e => e.title === essay.title);
-  const positionInRotation = order.indexOf(essayIdx);
-  if (positionInRotation === -1) return false;
-
-  const now = new Date();
-  const currentWeekNumber = Math.floor((now - DEEP_DIVE_EPOCH) / 604800000);
-  const essayWeekNumber   = positionInRotation % order.length;
-
-  // An essay at rotation position P has appeared on every Sunday where
-  // weekNumber % order.length === P, for weekNumber <= currentWeekNumber.
-  // It's published if at least one such week has already passed.
-  return currentWeekNumber >= essayWeekNumber;
+// Returns true if this essay has actually been sent in a Sunday newsletter
+// (i.e. should be visible in the public Deep Dive archive). Looks the
+// title up directly in PUBLISHED_DEEP_DIVES — no algorithm, no guessing.
+function isDeepDivePublished(essay) {
+  return PUBLISHED_DEEP_DIVES.some(p => p.title === essay.title);
 }
 
 const TEAM_COLORS_DD = {
@@ -11092,7 +11036,7 @@ function DeepDiveTab({ initialSlug }) {
   // Only show essays that have actually appeared in a Sunday newsletter —
   // keeps the public archive in sync with what readers have actually received,
   // so browsing the site never spoils a future week's surprise.
-  const publishedEssays = ALL_DEEP_DIVES_SITE.filter(d => isDeepDivePublished(d, ALL_DEEP_DIVES_SITE));
+  const publishedEssays = ALL_DEEP_DIVES_SITE.filter(d => isDeepDivePublished(d));
   const essaysWithSlugs = publishedEssays.map(d => ({ ...d, slug: ddSlugify(d.title) }));
   const selected = selectedSlug ? essaysWithSlugs.find(d => d.slug === selectedSlug) : null;
 
@@ -12266,24 +12210,17 @@ function NYPlayoffWidget({ myTeams }) {
       if (!r.ok) return [];
       const json = await r.json();
 
-      // Collect every entry from the full tree, tagging each with its
-      // league/conference group name (e.g. "American League", "National League",
-      // "Eastern Conference") found at the nearest ancestor node that has one.
-      // This is essential for MLB/NHL where playoffSeed is league-relative
-      // (1-6 within AL, 1-6 within NL), NOT a single combined 1-12 ranking —
-      // without this, AL and NL teams get sorted together as if seed 2 in the
-      // AL and seed 2 in the NL were the same thing.
+      // Collect every entry from the full standings tree.
       const allEntries = [];
-      function walk(node, groupName) {
-        const thisGroup = node?.name || node?.abbreviation || groupName;
-        (node?.standings?.entries||[]).forEach(e => allEntries.push({ entry:e, group:thisGroup }));
-        (node.children||[]).forEach(child => walk(child, thisGroup));
+      function walk(node) {
+        (node?.standings?.entries||[]).forEach(e => allEntries.push(e));
+        (node.children||[]).forEach(walk);
       }
-      walk(json, null);
+      walk(json);
 
       // Parse into team objects
       const rawTeams = [];
-      allEntries.forEach(({entry:e, group}) => {
+      allEntries.forEach(e => {
         const name = e.team?.displayName || e.team?.name || "";
         const abbrev = e.team?.abbreviation || "";
         const s = {};
@@ -12291,7 +12228,6 @@ function NYPlayoffWidget({ myTeams }) {
         rawTeams.push({
           name,
           abbrev,
-          group: group || "",
           w:    parseFloat(s.wins   || s.W  || 0),
           l:    parseFloat(s.losses || s.L  || 0),
           pts:  parseFloat(s.points || 0),
@@ -12309,26 +12245,60 @@ function NYPlayoffWidget({ myTeams }) {
         seen.add(t.name); return true;
       });
 
-      // For MLB/NHL: split into conferences/leagues, find the true WC cutoff
-      // PER LEAGUE. ESPN's playoffSeed is league-relative (1-6 within AL,
-      // 1-6 within NL for MLB; 1-8 per conference for NHL), so:
-      //   seeds 1-3 = division winners within that league/conference
-      //   seeds 4-6 (MLB) or 4-8 (NHL) = wild card spots within that league
-      // The cutoff team must be found separately within each league's own
-      // group of teams — comparing an NL team's GB against an AL cutoff
-      // team (or vice versa) produces meaningless numbers.
+      // For MLB/NHL: ESPN's playoffSeed is league/conference-relative
+      // (1-6 within AL, 1-6 within NL for MLB; 1-8 per conference for NHL),
+      // NOT one combined ranking. Rather than rely on parsing ESPN's tree
+      // structure to figure out which league/conference each team belongs
+      // to (fragile — depends on exact, undocumented field names that can
+      // change), we use a hardcoded, permanent mapping of which teams play
+      // in which league/conference. This is public, unchanging knowledge
+      // (league realignment is extremely rare and would need a manual
+      // update here regardless of how the grouping was determined).
+      const MLB_AL = new Set([
+        "Baltimore Orioles","Boston Red Sox","New York Yankees","Tampa Bay Rays","Toronto Blue Jays",
+        "Chicago White Sox","Cleveland Guardians","Detroit Tigers","Kansas City Royals","Minnesota Twins",
+        "Athletics","Houston Astros","Los Angeles Angels","Seattle Mariners","Texas Rangers",
+      ]);
+      const MLB_NL = new Set([
+        "Atlanta Braves","Miami Marlins","New York Mets","Philadelphia Phillies","Washington Nationals",
+        "Chicago Cubs","Cincinnati Reds","Milwaukee Brewers","Pittsburgh Pirates","St. Louis Cardinals",
+        "Arizona Diamondbacks","Colorado Rockies","Los Angeles Dodgers","San Diego Padres","San Francisco Giants",
+      ]);
+      const NHL_EAST = new Set([
+        "Boston Bruins","Buffalo Sabres","Detroit Red Wings","Florida Panthers","Montreal Canadiens",
+        "Ottawa Senators","Tampa Bay Lightning","Toronto Maple Leafs",
+        "Carolina Hurricanes","Columbus Blue Jackets","New Jersey Devils","New York Islanders",
+        "New York Rangers","Philadelphia Flyers","Pittsburgh Penguins","Washington Capitals",
+      ]);
+      const NHL_WEST = new Set([
+        "Chicago Blackhawks","Colorado Avalanche","Dallas Stars","Minnesota Wild","Nashville Predators",
+        "St. Louis Blues","Utah Hockey Club","Winnipeg Jets",
+        "Anaheim Ducks","Calgary Flames","Edmonton Oilers","Los Angeles Kings",
+        "San Jose Sharks","Seattle Kraken","Vancouver Canucks","Vegas Golden Knights",
+      ]);
 
-      // Group teams by their league/conference
+      function getGroup(teamName, sportKey) {
+        if (sportKey === "mlb") {
+          if (MLB_AL.has(teamName)) return "AL";
+          if (MLB_NL.has(teamName)) return "NL";
+        }
+        if (sportKey === "nhl") {
+          if (NHL_EAST.has(teamName)) return "EAST";
+          if (NHL_WEST.has(teamName)) return "WEST";
+        }
+        return "_none"; // NBA/NFL: no split needed, handled as one pool
+      }
+
+      const teamsWithGroup = teams.map(t => ({ ...t, group: getGroup(t.name, cfg.key) }));
+
+      // Group teams by league/conference
       const groups = {};
-      teams.forEach(t => {
+      teamsWithGroup.forEach(t => {
         const g = t.group || "_none";
         if (!groups[g]) groups[g] = [];
         groups[g].push(t);
       });
 
-      // For sports where ESPN's tree doesn't naturally split into separate
-      // leagues (NBA/NFL use poSlots across one combined conference list as
-      // currently handled), fall back to treating everyone as one group.
       const hasMultipleGroups = Object.keys(groups).filter(g => g !== "_none").length > 1;
 
       let result = [];
@@ -12350,15 +12320,13 @@ function NYPlayoffWidget({ myTeams }) {
           });
         });
       } else {
-        // Single combined pool (NBA/NFL conferences already pre-split by ESPN
-        // into one tree per conference at this point, or sport doesn't need
-        // cross-league GB math)
-        const sorted = [...teams].sort((a,b) => {
+        // Single combined pool (NBA/NFL — no league split needed)
+        const sorted = [...teamsWithGroup].sort((a,b) => {
           if (a.seed !== b.seed) return a.seed - b.seed;
           return b.pct - a.pct;
         });
         const cutoffTeam = sorted[cfg.poSlots - 1];
-        result = teams.map(t => {
+        result = teamsWithGroup.map(t => {
           const inPO = t.seed <= cfg.poSlots;
           let wcGb = null;
           if (!inPO && cutoffTeam && (t.w + t.l) > 0 && (cutoffTeam.w + cutoffTeam.l) > 0) {
