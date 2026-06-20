@@ -5444,6 +5444,62 @@ function TodayTab() {
 
 // ─── POLLS TAB ─────────────────────────────────────────────────────────────
 const ALL_POLLS = [
+  // ── NY SPORTS DEBATES — synced with Wednesday newsletter debates ──────────
+  // Week number drives which debate shows (same week as the Wednesday email)
+  { id:"debate_w1_judge_s_62_vs_dimaggio_s_56", question:"Which NY number matters more to baseball history?", options:["Judge's 62", "DiMaggio's 56"] },  // Week 1: Judge's 62 vs DiMaggio's 56
+  { id:"debate_w2_1927_yankees_vs_1998_yankees", question:"Greatest baseball team ever — which one?", options:["1927 Yankees", "1998 Yankees"] },  // Week 2: 1927 Yankees vs 1998 Yankees
+  { id:"debate_w3_tom_seaver_vs_jacob_degrom", question:"Greatest Mets pitcher ever?", options:["Tom Seaver", "Jacob deGrom"] },  // Week 3: Tom Seaver vs Jacob deGrom
+  { id:"debate_w4_derek_jeter_vs_alex_rodriguez", question:"Who meant more to the Yankees dynasty?", options:["Derek Jeter", "Alex Rodriguez"] },  // Week 4: Derek Jeter vs Alex Rodriguez
+  { id:"debate_w5_1969_mets_vs_1986_mets", question:"Greater championship team?", options:["1969 Miracle Mets", "1986 Mets"] },  // Week 5: 1969 Mets vs 1986 Mets
+  { id:"debate_w6_mike_piazza_vs_gary_carter", question:"Greatest Mets catcher?", options:["Mike Piazza", "Gary Carter"] },  // Week 6: Mike Piazza vs Gary Carter
+  { id:"debate_w7_ruth_60_vs_maris_61_vs_judge_6", question:"Which Yankees single-season HR record stands alone?", options:["Ruth's 60", "Judge's 62"] },  // Week 7: Ruth 60 vs Maris 61 vs Judge 62
+  { id:"debate_w8_babe_ruth_vs_mickey_mantle", question:"Greatest Yankee ever?", options:["Babe Ruth", "Mickey Mantle"] },  // Week 8: Babe Ruth vs Mickey Mantle
+  { id:"debate_w9_darryl_strawberry_vs_david_wri", question:"Greatest position player in Mets history?", options:["Darryl Strawberry", "David Wright"] },  // Week 9: Darryl Strawberry vs David Wright
+  { id:"debate_w10_shea_stadium_vs_citi_field", question:"Better home for the Mets?", options:["Shea Stadium", "Citi Field"] },  // Week 10: Shea Stadium vs Citi Field
+  { id:"debate_w11_reggie_jackson_vs_yogi_berra", question:"Greater World Series performer in NY?", options:["Reggie Jackson", "Yogi Berra"] },  // Week 11: Reggie Jackson vs Yogi Berra
+  { id:"debate_w12_seaver_trade_vs_degrom_departu", question:"Bigger Mets front office failure?", options:["Seaver 1977 trade", "deGrom 2022 departure"] },  // Week 12: Seaver trade vs deGrom departure
+  { id:"debate_w13_patrick_ewing_vs_jalen_brunson", question:"Greatest Knick ever when it's all said and done?", options:["Patrick Ewing", "Jalen Brunson"] },  // Week 13: Patrick Ewing vs Jalen Brunson
+  { id:"debate_w14_1970_knicks_vs_2026_knicks", question:"Better championship team?", options:["1970 Knicks", "2026 Knicks"] },  // Week 14: 1970 Knicks vs 2026 Knicks
+  { id:"debate_w15_willis_reed_limping_out_vs_bru", question:"Greatest single Knicks moment?", options:["Willis Reed limping out", "Brunson's 45"] },  // Week 15: Willis Reed limping out vs Brunson's 45
+  { id:"debate_w16_walt_frazier_vs_jalen_brunson", question:"Greatest Knicks guard ever?", options:["Walt Frazier", "Jalen Brunson"] },  // Week 16: Walt Frazier vs Jalen Brunson
+  { id:"debate_w17_1994_knicks_finals_loss_vs_199", question:"Which one hurt more?", options:["1994 Game 7 loss", "1999 Finals loss"] },  // Week 17: 1994 Knicks Finals loss vs 1999 Knicks Finals loss
+  { id:"debate_w18_dr__j_s_nets_vs_kidd_s_nets", question:"Better Brooklyn/NJ basketball?", options:["Dr. J's ABA Nets", "Jason Kidd's Nets"] },  // Week 18: Dr. J's Nets vs Kidd's Nets
+  { id:"debate_w19_1994_rangers_vs_islanders_1980", question:"Greater NY hockey achievement?", options:["1994 Rangers", "Islanders 1980-83 dynasty"] },  // Week 19: 1994 Rangers vs Islanders 1980-83 dynasty
+  { id:"debate_w20_messier_s_guarantee_vs_willis", question:"Greatest leadership moment in NY sports?", options:["Messier's guarantee", "Willis Reed limping out"] },  // Week 20: Messier's guarantee vs Willis Reed limping out
+  { id:"debate_w21_mike_bossy_vs_bryan_trottier", question:"Greater Islander?", options:["Mike Bossy", "Bryan Trottier"] },  // Week 21: Mike Bossy vs Bryan Trottier
+  { id:"debate_w22_henrik_lundqvist_vs_martin_bro", question:"Greater NY-area goalie?", options:["Henrik Lundqvist", "Martin Brodeur"] },  // Week 22: Henrik Lundqvist vs Martin Brodeur
+  { id:"debate_w23_denis_potvin_vs_brian_leetch", question:"Greatest NY-area defenseman ever?", options:["Denis Potvin", "Brian Leetch"] },  // Week 23: Denis Potvin vs Brian Leetch
+  { id:"debate_w24_1940_rangers_cup_vs_1994_range", question:"Which one meant more to the franchise?", options:["1940 Stanley Cup", "1994 Stanley Cup"] },  // Week 24: 1940 Rangers Cup vs 1994 Rangers Cup
+  { id:"debate_w25_lou_lamoriello_vs_bill_torrey", question:"Greater NY-area general manager?", options:["Lou Lamoriello", "Bill Torrey"] },  // Week 25: Lou Lamoriello vs Bill Torrey
+  { id:"debate_w26_namath_s_guarantee_vs_eli_s_he", question:"Greatest NY football moment?", options:["Namath's guarantee", "Eli's helmet catch"] },  // Week 26: Namath's guarantee vs Eli's helmet catch
+  { id:"debate_w27_lawrence_taylor_vs_michael_str", question:"Greatest NY defensive player ever?", options:["Lawrence Taylor", "Michael Strahan"] },  // Week 27: Lawrence Taylor vs Michael Strahan
+  { id:"debate_w28_phil_simms_vs_eli_manning", question:"Greater Giants quarterback?", options:["Phil Simms", "Eli Manning"] },  // Week 28: Phil Simms vs Eli Manning
+  { id:"debate_w29_1986_giants_vs_2007_giants", question:"Better championship team?", options:["1986 Giants", "2007 Giants"] },  // Week 29: 1986 Giants vs 2007 Giants
+  { id:"debate_w30_joe_namath_vs_chad_pennington", question:"Greatest Jets quarterback ever?", options:["Joe Namath", "Chad Pennington"] },  // Week 30: Joe Namath vs Chad Pennington
+  { id:"debate_w31_rex_ryan_s_2010_jets_vs_1968_6", question:"Closest the Jets ever came?", options:["Rex Ryan's 2010 Jets", "1968-69 Jets"] },  // Week 31: Rex Ryan's 2010 Jets vs 1968-69 Jets
+  { id:"debate_w32_frank_gifford_vs_odell_beckham", question:"Most electrifying Giants receiver ever?", options:["Frank Gifford", "Odell Beckham Jr."] },  // Week 32: Frank Gifford vs Odell Beckham Jr.
+  { id:"debate_w33_derek_jeter_vs_patrick_ewing", question:"Greater NY athlete of the 1990s?", options:["Derek Jeter", "Patrick Ewing"] },  // Week 33: Derek Jeter vs Patrick Ewing
+  { id:"debate_w34_1950s_yankees_vs_1990s_yankees", question:"Better dynasty?", options:["1950s Yankees", "1990s Yankees"] },  // Week 34: 1950s Yankees vs 1990s Yankees
+  { id:"debate_w35_madison_square_garden_vs_yanke", question:"Greatest NY sports venue ever?", options:["Madison Square Garden", "Yankee Stadium"] },  // Week 35: Madison Square Garden vs Yankee Stadium
+  { id:"debate_w36_marv_albert_vs_bob_murphy", question:"Greatest NY sports broadcasting voice?", options:["Marv Albert", "Bob Murphy"] },  // Week 36: Marv Albert vs Bob Murphy
+  { id:"debate_w37_mike_francesa_vs_marty_glickma", question:"Greater impact on NY sports media?", options:["Mike Francesa", "Marty Glickman"] },  // Week 37: Mike Francesa vs Marty Glickman
+  { id:"debate_w38_best_ny_sports_decade___1950s", question:"Which decade was greatest for NY sports?", options:["1950s", "2020s"] },  // Week 38: Best NY sports decade — 1950s vs 1990s vs 2020s
+  { id:"debate_w39_ebbets_field_vs_old_shea_vs_ol", question:"Most missed NY sports venue?", options:["Ebbets Field", "Shea Stadium"] },  // Week 39: Ebbets Field vs old Shea vs old MSG
+  { id:"debate_w40_messier_trade_vs_piazza_trade", question:"Best NY sports trade ever?", options:["Messier to the Rangers", "Piazza to the Mets"] },  // Week 40: Messier trade vs Piazza trade
+  { id:"debate_w41_mike_bossy_vs_wayne_gretzky", question:"Greater pure goal scorer?", options:["Mike Bossy", "Wayne Gretzky"] },  // Week 41: Mike Bossy vs Wayne Gretzky
+  { id:"debate_w42_billy_smith_vs_ken_dryden", question:"Greater NY-area playoff goalie?", options:["Billy Smith", "Ken Dryden"] },  // Week 42: Billy Smith vs Ken Dryden
+  { id:"debate_w43_islanders_1980_cup_vs_1983_cup", question:"Which one meant more to the franchise?", options:["1980 Stanley Cup", "1983 Stanley Cup"] },  // Week 43: Islanders 1980 Cup vs 1983 Cup
+  { id:"debate_w44_al_arbour_vs_pat_riley", question:"Greater NY-area coach?", options:["Al Arbour", "Pat Riley"] },  // Week 44: Al Arbour vs Pat Riley
+  { id:"debate_w45_brunson_s_pay_cut_vs_namath_s", question:"Greatest single act of NY sports commitment?", options:["Brunson's pay cut", "Namath's guarantee"] },  // Week 45: Brunson's pay cut vs Namath's guarantee
+  { id:"debate_w46_pete_alonso_vs_darryl_strawber", question:"Better Mets power hitter?", options:["Pete Alonso", "Darryl Strawberry"] },  // Week 46: Pete Alonso vs Darryl Strawberry
+  { id:"debate_w47_aaron_judge_vs_mike_piazza", question:"Best pure hitter in NY baseball, last 30 years?", options:["Aaron Judge", "Mike Piazza"] },  // Week 47: Aaron Judge vs Mike Piazza
+  { id:"debate_w48_kat_trade_vs_the_piazza_trade", question:"Better NY team-building swing?", options:["Karl-Anthony Towns trade", "Piazza trade"] },  // Week 48: KAT trade vs the Piazza trade
+  { id:"debate_w49_citi_field_vs_barclays_center", question:"Better modern NY sports venue?", options:["Citi Field", "Barclays Center"] },  // Week 49: Citi Field vs Barclays Center
+  { id:"debate_w50_ny_giants_vs_ny_jets", question:"Who really owns football in New York?", options:["New York Giants", "New York Jets"] },  // Week 50: NY Giants vs NY Jets
+  { id:"debate_w51_best_ny_sports_year___1969__19", question:"Which single year was the greatest in NY sports history?", options:["1969", "2026"] },  // Week 51: Best NY sports year — 1969, 1986, 1994, or 2026?
+  { id:"debate_w52_babe_ruth_vs_joe_dimaggio_vs_m", question:"Greatest NY athlete of all time?", options:["Babe Ruth", "The debate itself"] },  // Week 52: Babe Ruth vs Joe DiMaggio vs Mickey Mantle vs Jalen Brunson
+
+  // ── EXISTING POLLS (rotate after debate year completes) ─────────────────
   { id:"goat_yankee",       question:"Who is the greatest Yankee of all time?",                        options:["Babe Ruth","Lou Gehrig","Mickey Mantle","Joe DiMaggio","Derek Jeter"] },
   { id:"goat_met",          question:"Who is the greatest Met of all time?",                           options:["Tom Seaver","Mike Piazza","Dwight Gooden","David Wright","Pete Alonso"] },
   { id:"goat_knick",        question:"Who is the greatest Knick of all time?",                         options:["Patrick Ewing","Walt Frazier","Willis Reed","Carmelo Anthony","Jalen Brunson"] },
@@ -5504,9 +5560,13 @@ function PollsTab() {
   const [loading, setLoading]   = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Current week's poll
-  const weekOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / (86400000 * 7));
-  const poll = ALL_POLLS[weekOfYear % ALL_POLLS.length];
+  // Current week's poll — debate polls (first 52 entries) rotate with the
+  // Wednesday newsletter debate. Week number matches so email and site stay in sync.
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const weekOfYear = Math.ceil(((now - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+  const debateWeek = ((weekOfYear - 1) % 52);  // 0-indexed into first 52 entries
+  const poll = ALL_POLLS[debateWeek];
 
   // Load: localStorage for "did I vote", Supabase for actual vote counts
   useEffect(() => {
