@@ -2499,6 +2499,31 @@ function NewsTab({ news, loading }) {
     const combined = (item.title + " " + (item.desc||"") + " " + (item.source||"")).toLowerCase();
     const isNY = item.isNY || NY_KEYWORDS_CHECK.some(kw => combined.includes(kw));
 
+    // Exclude wrong-team articles that slip through team-tagged feeds:
+    // Texas Rangers showing up in NY Rangers feed, SF Giants in NY Giants feed
+    if (item.team === "Rangers") {
+      const t = combined;
+      // Must mention NHL/hockey context OR "new york rangers" — exclude Texas Rangers (MLB) content
+      const isNYRangers = t.includes("new york rangers") || t.includes("nhl") || t.includes("hockey") ||
+        t.includes("blueshirts") || t.includes("garden") || t.includes("nyr");
+      const isTexasRangers = t.includes("texas rangers") || t.includes("globe life") ||
+        (t.includes("rangers") && (t.includes(" mlb") || t.includes("baseball") ||
+         t.includes("padres") || t.includes("astros") || t.includes("mariners") ||
+         t.includes("batting") || t.includes("pitcher") || t.includes("lineup")));
+      if (isTexasRangers && !isNYRangers) return false;
+    }
+    if (item.team === "Giants") {
+      const t = combined;
+      // Must mention NFL/football context OR "new york giants" — exclude SF Giants (MLB) content
+      const isNYGiants = t.includes("new york giants") || t.includes("nfl") || t.includes("football") ||
+        t.includes("metlife") || t.includes("eli") || t.includes("big blue");
+      const isSFGiants = t.includes("san francisco giants") || t.includes("oracle park") ||
+        (t.includes("giants") && (t.includes(" mlb") || t.includes("baseball") ||
+         t.includes("dodgers") || t.includes("padres") || t.includes("pitcher") ||
+         t.includes("batting") || t.includes("lineup")));
+      if (isSFGiants && !isNYGiants) return false;
+    }
+
     // NY only filter
     if (filter === "NY" && !isNY) return false;
 
