@@ -5586,13 +5586,12 @@ function PollsTab() {
   const [loading, setLoading]   = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Current week's poll — debate polls (first 52 entries) rotate with the
-  // Wednesday newsletter debate. Week number matches so email and site stay in sync.
-  const now = new Date();
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
-  const weekOfYear = Math.ceil(((now - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
-  const debateWeek = ((weekOfYear - 1) % 52);  // 0-indexed into first 52 entries
-  const poll = ALL_POLLS[debateWeek];
+  // Week number — MUST match send-digest.js formula exactly so poll syncs with Wednesday debate email
+  const weekNumber = Math.floor((Date.now() - new Date('2026-01-01')) / 604800000);
+  const debateWeek = ((weekNumber % 52) + 1);  // 1-indexed, matches NY_DEBATES week field
+  const poll = ALL_POLLS.find(p => p.id && p.id.startsWith('debate_w' + debateWeek + '_'))
+    || ALL_POLLS[debateWeek - 1]
+    || ALL_POLLS[0];
 
   // Load: localStorage for "did I vote", Supabase for actual vote counts
   useEffect(() => {
