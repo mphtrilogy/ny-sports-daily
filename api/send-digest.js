@@ -1009,16 +1009,33 @@ const DRAFT_ENTRIES = [
 
 async function getSaturdayPoll() {
   try {
-    const r = await fetch(
-      SUPABASE_URL + '/rest/v1/ny_polls?select=*&order=created_at.desc&limit=1',
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
-    );
-    if (!r.ok) return null;
-    const rows = await r.json();
-    if (!rows || !rows.length) return null;
-    // Get vote counts for this poll
-    const poll = rows[0];
-    return poll;
+    // Get current week's debate question directly from NY_DEBATES
+    // This ensures the Saturday poll always shows the right human-readable question
+    const weekNumber = Math.floor((Date.now() - new Date('2026-01-01')) / 604800000);
+    const debateWeek = (weekNumber % 52) + 1;
+    const debate = NY_DEBATES.find(d => d.week === debateWeek) || NY_DEBATES[0];
+
+    // Also fetch vote counts from Supabase if available
+    let voteData = null;
+    try {
+      const pollId = 'debate_w' + debateWeek + '_' + debate.topic.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 30).replace(/_+$/, '');
+      const r = await fetch(
+        SUPABASE_URL + '/rest/v1/ny_polls?select=*&poll_id=eq.' + pollId + '&limit=1',
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+      );
+      if (r.ok) {
+        const rows = await r.json();
+        if (rows && rows.length) voteData = rows[0];
+      }
+    } catch(e) { /* vote fetch optional */ }
+
+    return {
+      question: debate.question,
+      topic: debate.topic,
+      sideA: debate.sideA,
+      sideB: debate.sideB,
+      voteData
+    };
   } catch(e) {
     console.error('getSaturdayPoll error:', e);
     return null;
@@ -1318,11 +1335,21 @@ function buildNuggetHtml(nugget, saturdayPoll, trophyEntry) {
       const p = saturdayPoll;
       if (!p) return '';
       return wrap('&#128483;&#65039; Saturday: Fan Poll', '#22c55e',
-        '<div style="font-size:15px;font-weight:700;color:#111;font-family:Georgia,serif;'
-        + 'line-height:1.4;margin-bottom:14px">' + (p.question || p.poll_id || 'This week\'s poll') + '</div>'
+        '<div style="font-size:10px;font-weight:900;color:#22c55e;letter-spacing:0.15em;'
+        + 'text-transform:uppercase;margin-bottom:8px">&#11088; This Week\'s Debate</div>'
+        + '<div style="font-size:16px;font-weight:900;color:#111;font-family:Georgia,serif;'
+        + 'line-height:1.4;margin-bottom:14px">' + (p.question || 'This week\'s poll') + '</div>'
+        + '<table style="width:100%;border-collapse:collapse;margin-bottom:14px">'
+        + '<tr>'
+        + '<td style="width:50%;padding:8px 10px;background:#f0fdf4;border:1px solid #86efac;'
+        + 'text-align:center;font-size:11px;font-weight:900;color:#15803d">' + (p.sideA || 'Option A') + '</td>'
+        + '<td style="width:50%;padding:8px 10px;background:#f0fdf4;border:1px solid #86efac;'
+        + 'text-align:center;font-size:11px;font-weight:900;color:#15803d">' + (p.sideB || 'Option B') + '</td>'
+        + '</tr>'
+        + '</table>'
         + '<div style="font-size:11px;color:#888;font-style:italic;margin-bottom:14px">'
         + 'Vote on the site &mdash; results revealed next week!</div>'
-        + '<a href="https://nysportsdaily.com" style="display:inline-block;background:#22c55e;color:#fff;'
+        + '<a href="https://nysportsdaily.com/?tab=POLLS" style="display:inline-block;background:#22c55e;color:#fff;'
         + 'text-decoration:none;font-size:11px;font-weight:900;letter-spacing:0.1em;'
         + 'padding:10px 22px;text-transform:uppercase">Cast Your Vote &rarr;</a>'
       );
