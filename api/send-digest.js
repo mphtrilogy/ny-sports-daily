@@ -2624,10 +2624,14 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
     : '';
 
   // ── GLORY ─────────────────────────────────────────────────────────────────────
-  const gloryHtml = '<div style="background:#fffbf2;border:1px solid #f0e2b0;border-left:4px solid #f0b429;padding:16px 18px">'
+  const gloryHtml = !glory ? '' : (
+    '<div style="background:#fffbf2;border:1px solid #f0e2b0;border-left:4px solid #f0b429;padding:16px 18px">'
     + '<div style="font-size:9px;font-weight:900;color:#c8201c;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:4px">' + (glory.team||'New York') + ' &nbsp;&middot;&nbsp; ' + glory.year + '</div>'
     + '<div style="font-size:14px;font-weight:900;color:#111;font-family:Georgia,serif;margin-bottom:8px;line-height:1.35">' + (glory.title||glory.text) + '</div>'
     + '<div style="font-size:12px;color:#555;line-height:1.7;font-family:Georgia,serif">' + (glory.story || glory.text) + '</div>'
+    + (glory.link ? '<div style="margin-top:10px"><a href="' + glory.link + '" style="color:#f0b429;font-size:11px;font-weight:700;text-decoration:none">&#128279; Go Deeper &rarr;</a></div>' : '')
+    + '</div>'
+  );
     + '</div>';
 
   // ── WEEKLY NUGGET ────────────────────────────────────────────────────────────
@@ -2715,11 +2719,13 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
         + '</div>'
       : '')
 
-    // Glory
-    + '<div style="padding:18px 28px;border-bottom:1px solid #ebebeb">'
-    + '<div style="font-size:8px;font-weight:900;color:#bbb;letter-spacing:0.25em;text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid #ebebeb;margin-bottom:14px">&#127942; NY Glory Moment</div>'
-    + gloryHtml
-    + '</div>'
+    // Glory Moment — Thursday only, omitted entirely on other days
+    + (gloryHtml
+      ? '<div style="padding:18px 28px;border-bottom:1px solid #ebebeb">'
+        + '<div style="font-size:8px;font-weight:900;color:#bbb;letter-spacing:0.25em;text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid #ebebeb;margin-bottom:14px">&#127942; NY Glory Moment</div>'
+        + gloryHtml
+        + '</div>'
+      : '')
 
     // Weekly Day Nugget (Sunday-Saturday themed section)
     + nuggetHtml
