@@ -2824,14 +2824,6 @@ export default async function handler(req, res) {
     const subscribers = await getSubscribers();
     console.log('Sending digest to ' + subscribers.length + ' subscribers');
 
-    // Glory Moment: Thursday only (dayOfWeek === 4), date-seeded so same entry shows all day
-    const glory = (dayOfWeek === 4)
-      ? (() => {
-          const today = new Date();
-          const seed = today.getFullYear() * 10000 + (today.getMonth()+1) * 100 + today.getDate();
-          return GLORY_MOMENTS[seed % GLORY_MOMENTS.length];
-        })()
-      : null;
   const otd     = getOnThisDate(); // On This Date — null if no match today
     const trivia = getTodayTrivia();
 
@@ -2851,6 +2843,14 @@ export default async function handler(req, res) {
     const dayOfWeek   = today.getDay(); // 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat
     const weekNumber  = Math.floor((today - new Date('2026-01-01')) / 604800000);
     const nugget      = getDayNugget(dayOfWeek, weekNumber);
+
+    // Glory Moment: Thursday only, date-seeded so same entry shows all day
+    const glory = (dayOfWeek === 4)
+      ? (() => {
+          const seed = today.getFullYear() * 10000 + (today.getMonth()+1) * 100 + today.getDate();
+          return GLORY_MOMENTS[seed % GLORY_MOMENTS.length];
+        })()
+      : null;
 
     // Saturday: fetch poll from Supabase
     let saturdayPoll = null;
