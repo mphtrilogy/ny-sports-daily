@@ -1403,7 +1403,7 @@ async function getMLBStandings() {
     let data;
     try {
       const r = await fetch(
-        'https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&standingsTypes=regularSeason&hydrate=team,streak,records',
+        'https://statsapi.mlb.com/api/v1/standings?leagueId=103,104&standingsTypes=regularSeason&hydrate=team,division,streak,records',
         { signal: controller.signal }
       );
       clearTimeout(timeout);
