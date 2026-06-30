@@ -1472,6 +1472,75 @@ async function getMLBStandings() {
 }
 
 
+// ── Roster Moves: Injuries & Call-ups (Mets + Yankees) ─────────────────────────
+// Isolated feature — fully self-contained, silent failsafe on any error/empty result.
+// Looks back 3 days for IL placements and AAA call-ups for both NY MLB teams.
+async function getRosterMoves() {
+  const ROSTER_TEAMS = { 121: 'Mets', 147: 'Yankees' };
+
+  const INJURY_KEYWORDS = ['injured list', '10-day', '15-day', '60-day', '7-day'];
+  const CALLUP_KEYWORDS = ['recalled', 'selected the contract', 'triple-a', 'syracuse', 'scranton'];
+
+  // 1. Date range: today back 3 days, formatted YYYY-MM-DD
+  const fmt = (d) => d.toISOString().slice(0, 10);
+  const today = new Date();
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - 3);
+  const startStr = fmt(startDate);
+  const endStr   = fmt(today);
+
+  const results = {}; // { Mets: [strings], Yankees: [strings] }
+
+  for (const teamId of Object.keys(ROSTER_TEAMS)) {
+    const teamName = ROSTER_TEAMS[teamId];
+    results[teamName] = [];
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000); // 5s max, matches codebase convention
+
+      let data;
+      try {
+        const r = await fetch(
+          'https://statsapi.mlb.com/api/v1/transactions?teamId=' + teamId +
+          '&startDate=' + startStr + '&endDate=' + endStr,
+          { signal: controller.signal }
+        );
+        clearTimeout(timeout);
+        if (!r.ok) continue; // silent — move to next team
+        data = await r.json();
+      } catch(e) {
+        clearTimeout(timeout);
+        continue; // timeout or network error — silent, try next team
+      }
+
+      const transactions = (data && data.transactions) || [];
+
+      transactions.forEach(function(t) {
+        try {
+          const desc = (t.description || '');
+          const descLower = desc.toLowerCase();
+
+          const isInjury = INJURY_KEYWORDS.some(function(kw) { return descLower.indexOf(kw) !== -1; });
+          const isCallup = CALLUP_KEYWORDS.some(function(kw) { return descLower.indexOf(kw) !== -1; });
+
+          if (isInjury) {
+            results[teamName].push('\uD83D\uDE91 Injury Update: ' + desc);
+          } else if (isCallup) {
+            results[teamName].push('\uD83C\uDF1F Roster Alert: ' + desc);
+          }
+        } catch(e) {} // silent — skip malformed transaction entry
+      });
+
+    } catch(e) {
+      // silent failsafe — leave results[teamName] as empty array
+    }
+  }
+
+  return results; // { Mets: [...strings], Yankees: [...strings] } — empty arrays if nothing found/failed
+}
+
+
 // ── Today's games ─────────────────────────────────────────────────────────────
 async function getTodaysGames(teams) {
   const today = new Date();
@@ -2465,7 +2534,7 @@ function getTodayTrivia() {
 
 
 // ── Email builder ─────────────────────────────────────────────────────────────
-function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, mlbStandings, yesterdayTrivia, nugget, saturdayPoll, trophyEntry) {
+function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, mlbStandings, yesterdayTrivia, nugget, saturdayPoll, trophyEntry, rosterMoves) {
   const firstName = subscriber.name ? subscriber.name.split(' ')[0] : 'NY Sports Fan';
   const teams     = (subscriber.teams && subscriber.teams.length > 0)
                     ? subscriber.teams.join(' &nbsp;&middot;&nbsp; ')
@@ -2484,6 +2553,14 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
           const s = mlbStandings[team];
           const accentColor = team === 'Yankees' ? '#003087' : '#002D72';
           const rdColor = (s.runDiff && s.runDiff.startsWith('+')) ? '#22c55e' : '#c8201c';
+          const moves = (rosterMoves && rosterMoves[team]) || [];
+          const movesHtml = moves.length > 0
+            ? '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #e5e5e5">'
+              + moves.slice(0, 2).map(function(m) {
+                  return '<div style="font-size:9px;color:#555;line-height:1.5;margin-bottom:2px">' + m + '</div>';
+                }).join('')
+              + '</div>'
+            : '';
           return '<div style="flex:1;min-width:180px;padding:6px 12px;border-right:1px solid #e0e0e0">'
             + '<div style="font-size:8px;font-weight:900;color:' + accentColor + ';letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px">' + team + '</div>'
             + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
@@ -2491,6 +2568,7 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
             + (s.standing ? '<span style="font-size:10px;color:#555">' + s.standing + '</span>' : '')
             + (s.runDiff  ? '<span style="font-size:10px;font-weight:700;color:' + rdColor + '">' + s.runDiff + '</span>' : '')
             + '</div>'
+            + movesHtml
             + '</div>';
         }).join('')
       + '</div>'
@@ -2844,6 +2922,7 @@ export default async function handler(req, res) {
     // Fetch MLB pitching/series details (Mets + Yankees only, silent failsafe)
     const mlbDetails = await getMLBGameDetails([]);
     const mlbStandings = await getMLBStandings();
+    const rosterMoves = await getRosterMoves();
 
     // Weekly day nugget
     const today       = new Date();
@@ -2893,7 +2972,7 @@ export default async function handler(req, res) {
             )
           : allTodayGames;
 
-        const html    = buildEmail(sub, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, mlbStandings, yesterdayTrivia, nugget, saturdayPoll, trophyEntry);
+        const html    = buildEmail(sub, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, mlbStandings, yesterdayTrivia, nugget, saturdayPoll, trophyEntry, rosterMoves);
         const subject = buildSubject(scores, todayGames);
 
         // Fix unsubscribe URL with actual email
