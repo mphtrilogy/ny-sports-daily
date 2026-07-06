@@ -11072,20 +11072,45 @@ const ALL_DEEP_DIVES_SITE = DEEP_DIVES.concat(DEEP_DIVES_NEW).concat(DEEP_DIVES_
 // after a Sunday digest goes out — add that Sunday's essay title here.
 // This intentionally does NOT try to simulate or predict the rotation;
 // the newsletter's shuffle algorithm and any manual overrides can both
-// change independently, so the only reliable record of "what was
-// actually published" is a real, manually-maintained list like this one.
+// ── AUTOMATIC PUBLISH LOGIC ──────────────────────────────────────────────────
+// An essay is considered "published" on the site the moment its scheduled
+// Sunday has passed — no manual list to update every week.
 //
-// Format: { title: "exact essay title", sentOn: "YYYY-MM-DD" }
-const PUBLISHED_DEEP_DIVES = [
-  { title: "The Cosmos and Pelé: When Soccer Almost Conquered New York", sentOn: "2026-06-14" },
-  { title: "53 Years: The Full Story of the 2026 Knicks Championship",  sentOn: "2026-06-21" },
-];
+// Two ways an essay gets a scheduled date:
+//   1. It's in the override map below (exact date, exact title) — used for
+//      calendar-anchored essays like Steinbrenner (July 4 birthday) or a
+//      championship essay timed to a specific event.
+//   2. It's NOT in the override map — in which case it's treated as already
+//      published as of DEEP_DIVE_LAUNCH_DATE (the Sunday the whole feature
+//      began), since the pre-existing essay pool was all live from day one.
+//
+// IMPORTANT: keep this override map identical to SUNDAY_DEEP_DIVE_OVERRIDES
+// in send-digest.js — that's the one manual sync point, and it's just a
+// small object literal, not a growing list.
+const DEEP_DIVE_LAUNCH_DATE = new Date('2026-06-07T00:00:00'); // first Sunday the Deep Dive feature existed
 
-// Returns true if this essay has actually been sent in a Sunday newsletter
-// (i.e. should be visible in the public Deep Dive archive). Looks the
-// title up directly in PUBLISHED_DEEP_DIVES — no algorithm, no guessing.
+const SUNDAY_DEEP_DIVE_OVERRIDES_SITE = {
+  '2026-06-21': '53 Years: The Full Story of the 2026 Knicks Championship',
+  '2026-07-05': 'George Steinbrenner: The Boss, the Bully, and the Man Who Made the Yankees the Yankees Again',
+};
+
+// Reverse-lookup: title -> the Sunday it's scheduled for (if it has a specific override)
+const TITLE_TO_SCHEDULED_DATE = {};
+for (const [dateStr, title] of Object.entries(SUNDAY_DEEP_DIVE_OVERRIDES_SITE)) {
+  TITLE_TO_SCHEDULED_DATE[title] = new Date(dateStr + 'T00:00:00');
+}
+
 function isDeepDivePublished(essay) {
-  return PUBLISHED_DEEP_DIVES.some(p => p.title === essay.title);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const scheduledDate = TITLE_TO_SCHEDULED_DATE[essay.title];
+  if (scheduledDate) {
+    // This essay has a specific calendar-anchored date — published once that Sunday arrives
+    return today >= scheduledDate;
+  }
+  // No specific override — it's part of the original always-available pool
+  return today >= DEEP_DIVE_LAUNCH_DATE;
 }
 
 const TEAM_COLORS_DD = {
@@ -11977,14 +12002,16 @@ function OnboardBanner({ onDismiss, onAction }) {
       <div style={{flex:1}}>
         <div style={{fontFamily:"'Georgia',serif", fontSize:12, fontWeight:900,
           color:"#22c55e", marginBottom:4, textTransform:"uppercase",
-          letterSpacing:"0.08em"}}>Welcome to NY Sports Daily</div>
+          letterSpacing:"0.08em"}}>More Than Scores</div>
         <div style={{fontSize:11, color:"#aaa", lineHeight:1.5, marginBottom:8}}>
-          Set your teams once and the whole site personalizes around you.
+          Trivia, forgotten heroes, weekly debates, and deep-dive essays on the moments that made NY sports what it is. All free. Take a look around 👇
         </div>
         <div style={{display:"flex", gap:6, flexWrap:"wrap"}}>
           {[
-            { label:"⭐ Set My Teams", tab:"SCORES" },
-            { label:"🎮 Playroom", tab:"PLAYROOM" },
+            { label:"🧠 Play Trivia", tab:"PLAYROOM" },
+            { label:"🏅 Forgotten Hero", tab:"FORGOTTEN" },
+            { label:"⚔️ This Week's Debate", tab:"POLLS" },
+            { label:"📖 Deep Dive Essays", tab:"DEEPDIVE" },
             { label:"🏆 Glory Days", tab:"GLORY" },
           ].map(({label,tab}) => (
             <button key={tab} onClick={() => onAction(tab)} style={{
