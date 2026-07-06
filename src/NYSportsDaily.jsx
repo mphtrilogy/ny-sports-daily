@@ -11076,25 +11076,24 @@ const ALL_DEEP_DIVES_SITE = DEEP_DIVES.concat(DEEP_DIVES_NEW).concat(DEEP_DIVES_
 // An essay is considered "published" on the site the moment its scheduled
 // Sunday has passed — no manual list to update every week.
 //
-// Two ways an essay gets a scheduled date:
-//   1. It's in the override map below (exact date, exact title) — used for
-//      calendar-anchored essays like Steinbrenner (July 4 birthday) or a
-//      championship essay timed to a specific event.
-//   2. It's NOT in the override map — in which case it's treated as already
-//      published as of DEEP_DIVE_LAUNCH_DATE (the Sunday the whole feature
-//      began), since the pre-existing essay pool was all live from day one.
+// STRICT MODE: an essay is published ONLY if it has an explicit entry below
+// with a date that has already passed. No entry = never shown, period.
+// This is intentional — nothing should appear on the site before it has
+// actually gone out in a Sunday email.
 //
-// IMPORTANT: keep this override map identical to SUNDAY_DEEP_DIVE_OVERRIDES
-// in send-digest.js — that's the one manual sync point, and it's just a
-// small object literal, not a growing list.
-const DEEP_DIVE_LAUNCH_DATE = new Date('2026-06-07T00:00:00'); // first Sunday the Deep Dive feature existed
-
+// To schedule the next few months of content, just add entries here (one
+// line per essay) — the site will automatically reveal each one the moment
+// its Sunday arrives. No other manual step needed.
+//
+// IMPORTANT: keep this map identical to SUNDAY_DEEP_DIVE_OVERRIDES in
+// send-digest.js, since that's what actually controls what the email sends.
 const SUNDAY_DEEP_DIVE_OVERRIDES_SITE = {
+  '2026-06-14': 'The Cosmos and Pelé: When Soccer Almost Conquered New York',
   '2026-06-21': '53 Years: The Full Story of the 2026 Knicks Championship',
   '2026-07-05': 'George Steinbrenner: The Boss, the Bully, and the Man Who Made the Yankees the Yankees Again',
 };
 
-// Reverse-lookup: title -> the Sunday it's scheduled for (if it has a specific override)
+// Reverse-lookup: title -> the Sunday it's scheduled for
 const TITLE_TO_SCHEDULED_DATE = {};
 for (const [dateStr, title] of Object.entries(SUNDAY_DEEP_DIVE_OVERRIDES_SITE)) {
   TITLE_TO_SCHEDULED_DATE[title] = new Date(dateStr + 'T00:00:00');
@@ -11105,12 +11104,8 @@ function isDeepDivePublished(essay) {
   today.setHours(0,0,0,0);
 
   const scheduledDate = TITLE_TO_SCHEDULED_DATE[essay.title];
-  if (scheduledDate) {
-    // This essay has a specific calendar-anchored date — published once that Sunday arrives
-    return today >= scheduledDate;
-  }
-  // No specific override — it's part of the original always-available pool
-  return today >= DEEP_DIVE_LAUNCH_DATE;
+  if (!scheduledDate) return false; // no scheduled date = never shown
+  return today >= scheduledDate;
 }
 
 const TEAM_COLORS_DD = {
