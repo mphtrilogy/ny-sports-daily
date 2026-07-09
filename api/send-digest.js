@@ -2205,6 +2205,44 @@ function getOnThisDate() {
   return matches[Math.floor(Math.random() * matches.length)];
 }
 
+// ── Digest log: idempotency guard against duplicate sends on the same day ────
+async function wasDigestAlreadySentToday() {
+  try {
+    const today = new Date().toISOString().slice(0,10); // "2026-07-12"
+    const r = await fetch(
+      SUPABASE_URL + '/rest/v1/ny_digest_log?sent_date=eq.' + today + '&select=sent_date',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    if (!r.ok) return false; // fail open — if Supabase is down, don't block the real send
+    const rows = await r.json();
+    return !!(rows && rows.length > 0);
+  } catch(e) {
+    console.error('wasDigestAlreadySentToday error:', e);
+    return false; // fail open — same reasoning
+  }
+}
+
+async function markDigestSentToday() {
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    await fetch(SUPABASE_URL + '/rest/v1/ny_digest_log', {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Prefer':        'resolution=merge-duplicates', // upsert — safe even if called twice
+      },
+      body: JSON.stringify({
+        sent_date: today,
+        sent_at:   new Date().toISOString(),
+      }),
+    });
+  } catch(e) {
+    console.error('markDigestSentToday error:', e);
+  }
+}
+
 // ── Trivia: Save today's + fetch yesterday's from Supabase ───────────────────
 async function saveTodayTrivia(trivia) {
   try {
@@ -2909,6 +2947,12 @@ function buildSubject(scores, todayGames) {
 // ── Main handler ──────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   try {
+    // Idempotency guard — if today's digest already went out, don't send again.
+    if (await wasDigestAlreadySentToday()) {
+      console.log('Digest already sent today — skipping.');
+      return res.status(200).json({ ok:true, skipped:true, reason:'already sent today' });
+    }
+
     const subscribers = await getSubscribers();
     console.log('Sending digest to ' + subscribers.length + ' subscribers');
 
@@ -3019,6 +3063,7 @@ export default async function handler(req, res) {
     }
 
     console.log('Done. Sent: ' + sent + ', Errors: ' + errors);
+    if (sent > 0) await markDigestSentToday();
     return res.status(200).json({ ok:true, sent, errors });
 
   } catch(err) {
