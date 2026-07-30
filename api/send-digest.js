@@ -1248,6 +1248,10 @@ function buildNuggetHtml(nugget, saturdayPoll, trophyEntry) {
         + 'text-decoration:none;font-size:11px;font-weight:900;letter-spacing:0.08em;padding:11px 24px;'
         + 'text-transform:uppercase">Continue Reading &rarr;</a>'
         + (d.charity ? '<div style="margin-top:14px;padding-top:10px;border-top:1px solid #ebebeb;font-size:10px;color:#888;font-style:italic">&#129293; Support this team: ' + d.charity + '</div>' : '')
+        + '<div style="margin-top:14px;padding-top:12px;border-top:1px solid #ebebeb;font-size:11px;color:#666">'
+        + '&#128240; Want more than sports? Check out '
+        + '<a href="https://sports-arts-daily.vercel.app" style="color:#1a7fc2;font-weight:900;text-decoration:none">Sports &amp; Arts Daily</a>'
+        + ' for extra sports, arts, and entertainment news.</div>'
       );
     }
 
@@ -1367,7 +1371,13 @@ function buildNuggetHtml(nugget, saturdayPoll, trophyEntry) {
 
     case 'forgotten_hero': {
       const h = nugget.data;
-      if (!h) return '';
+      const nflMention = '<div style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:11px;color:#666">'
+        + '&#127944; Football season is close. For box scores, standings, and deep NFL coverage, check out '
+        + '<a href="https://nflboxscore.com" style="color:#1a5f8a;font-weight:900;text-decoration:none">The Final Whistle</a>'
+        + ' at nflboxscore.com.</div>';
+      if (!h) {
+        return wrap('🏅 Friday: The Forgotten Hero', '#1a5f8a', nflMention);
+      }
       return wrap('🏅 Friday: The Forgotten Hero', '#1a5f8a',
         '<div style="font-size:9px;font-weight:900;color:#1a5f8a;letter-spacing:0.2em;'
         + 'text-transform:uppercase;margin-bottom:4px">' + h.team + ' &nbsp;&middot;&nbsp; ' + h.era + '</div>'
@@ -1379,6 +1389,7 @@ function buildNuggetHtml(nugget, saturdayPoll, trophyEntry) {
         + 'margin-bottom:14px">' + h.story + '</div>'
         + (h.link ? '<a href="' + h.link + '" style="color:#1a5f8a;font-size:11px;font-weight:700;'
         + 'text-decoration:none">&#128279; Go Deeper &rarr;</a>' : '')
+        + nflMention
       );
     }
 
@@ -1409,7 +1420,16 @@ function buildNuggetHtml(nugget, saturdayPoll, trophyEntry) {
 
     case 'poll': {
       const p = saturdayPoll;
-      if (!p) return '';
+      const coopstownClash = '<div style="' + (p ? 'margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0;' : '') + 'font-size:11px;color:#666">'
+        + '&#127942; Weekend plans? Draft an all-time Hall of Fame roster and play out a full season at '
+        + '<a href="https://cooperstownclash.com" style="color:#f0b429;font-weight:900;text-decoration:none">Cooperstown Clash</a>'
+        + ' &mdash; free to play.</div>';
+
+      // Poll data unavailable (Supabase fetch failed) — still show Cooperstown Clash so Saturday isn't empty
+      if (!p) {
+        return wrap('&#127942; Saturday: Weekend Playroom', '#f0b429', coopstownClash);
+      }
+
       return wrap('&#128483;&#65039; Saturday: Fan Poll', '#22c55e',
         '<div style="font-size:10px;font-weight:900;color:#22c55e;letter-spacing:0.15em;'
         + 'text-transform:uppercase;margin-bottom:8px">&#11088; This Week\'s Debate</div>'
@@ -1428,10 +1448,7 @@ function buildNuggetHtml(nugget, saturdayPoll, trophyEntry) {
         + '<a href="https://nysportsdaily.com/?tab=POLLS" style="display:inline-block;background:#22c55e;color:#fff;'
         + 'text-decoration:none;font-size:11px;font-weight:900;letter-spacing:0.1em;'
         + 'padding:10px 22px;text-transform:uppercase">Cast Your Vote &rarr;</a>'
-        + '<div style="margin-top:16px;padding-top:14px;border-top:1px solid #e2e8f0;font-size:11px;color:#666">'
-        + '&#127942; Weekend plans? Draft an all-time Hall of Fame roster and play out a full season at '
-        + '<a href="https://cooperstownclash.com" style="color:#f0b429;font-weight:900;text-decoration:none">Cooperstown Clash</a>'
-        + ' &mdash; free to play.</div>'
+        + coopstownClash
       );
     }
 
