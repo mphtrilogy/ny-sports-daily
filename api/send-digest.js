@@ -1436,7 +1436,10 @@ function buildNuggetHtml(nugget, saturdayPoll, trophyEntry) {
         + '<div style="font-size:12px;color:#444;line-height:1.75;font-family:Georgia,serif;'
         + 'margin-bottom:14px">' + h.story + '</div>'
         + (h.link ? '<a href="' + h.link + '" style="color:#1a5f8a;font-size:11px;font-weight:700;'
-        + 'text-decoration:none">&#128279; Go Deeper &rarr;</a>' : '')
+        + 'text-decoration:none">&#128279; Go Deeper &rarr;</a> &nbsp;&middot;&nbsp; ' : '')
+        + '<a href="' + SITE_URL + '/?tab=QUICKID&player=' + encodeURIComponent(h.name) + '" '
+        + 'style="color:#1a5f8a;font-size:11px;font-weight:700;text-decoration:none">'
+        + '&#128269; Who was ' + h.name + '? Get the Scouting Report &rarr;</a>'
         + nflMention
       );
     }
@@ -2968,6 +2971,8 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
     + '<a href="' + SITE_URL + '" style="color:#888;text-decoration:none;font-size:11px;margin:0 8px">Visit the site</a>'
     + '<a href="https://www.instagram.com/nysportsdaily_com/" style="color:#888;text-decoration:none;font-size:11px;margin:0 8px">&#128248; Instagram</a>'
     + '</div>'
+    + '<p style="font-size:10px;color:#999;margin:10px 0 0">&#128269; See a name in here you don&rsquo;t recognize? '
+    + '<a href="' + SITE_URL + '/?tab=QUICKID" style="color:#888;text-decoration:underline">Look them up in The Scouting Report</a></p>'
     + '<p style="font-size:10px;color:#ccc;margin-top:10px"><a href="' + SITE_URL + '/unsubscribe?email=' + '{{EMAIL}}' + '" style="color:#ccc">Unsubscribe</a></p>'
     + '</div>'
 
