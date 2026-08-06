@@ -1117,6 +1117,7 @@ export default function NYSportsDaily() {
   const [activeTab, setActiveTab]         = useState("SCORES");
   const [darkMode, setDarkMode]           = useState(true);
   const [deepDiveSlug, setDeepDiveSlug]   = useState(null);
+  const [scoutingQuery, setScoutingQuery] = useState(null);
 
   const [isMobile, setIsMobile]           = useState(() => typeof window !== "undefined" && window.innerWidth < 680);
   const [drawerOpen, setDrawerOpen]       = useState(false);
@@ -1126,15 +1127,22 @@ export default function NYSportsDaily() {
 
   // Read ?tab= and ?essay= query params on load — lets email links deep-link
   // directly into the Deep Dive archive (e.g. from "Continue Reading" in the newsletter)
+  // Also supports ?tab=QUICKID&player=Name to deep-link straight into a
+  // pre-run Scouting Report search from a name mentioned in the newsletter.
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const params = new URLSearchParams(window.location.search);
-      const tabParam   = params.get("tab");
-      const essayParam = params.get("essay");
+      const tabParam    = params.get("tab");
+      const essayParam  = params.get("essay");
+      const playerParam = params.get("player");
       if (tabParam === "DEEPDIVE") {
         setActiveTab("DEEPDIVE");
         if (essayParam) setDeepDiveSlug(essayParam);
+      }
+      if (tabParam === "QUICKID") {
+        setActiveTab("QUICKID");
+        if (playerParam) setScoutingQuery(playerParam);
       }
     } catch (e) { /* no-op if URL parsing fails */ }
   }, []);
@@ -1582,7 +1590,7 @@ export default function NYSportsDaily() {
         {activeTab === "DEEPDIVE" && <DeepDiveTab initialSlug={deepDiveSlug} />}
         {/* ──── THE SCOUTING REPORT TAB ──── */}
         {activeTab === "QUICKID" && (
-          <QuickID />
+          <QuickID initialQuery={scoutingQuery} />
         )}
         {activeTab === "HISTORY" && (
           <HistoryTab />
