@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from "react";
+import QuickID from "./QuickID";
 
 // ─── SUPABASE CONFIG ───────────────────────────────────────────────────────
 const SUPABASE_URL = "https://fnxoucliekhotvartyfu.supabase.co";
@@ -1352,7 +1353,7 @@ export default function NYSportsDaily() {
         </div>}
         {/* TAB NAV — Secondary */}
         {!isMobile && <div style={{...styles.tabNav, marginTop:0, borderBottom:"2px solid #2e343a", marginBottom:16, background:"#141618", padding:"0 0 0 0"}}>
-          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","DEEPDIVE","GLORY","PLAYROOM"].map(tab => {
+          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","DEEPDIVE","QUICKID","GLORY","PLAYROOM"].map(tab => {
             const isPlayroom = tab === "PLAYROOM";
             const isGlory    = tab === "GLORY";
             const isActive   = activeTab === tab;
@@ -1378,7 +1379,7 @@ export default function NYSportsDaily() {
                     color:"#fff", borderBottom:"2px solid #f0b429",
                   } : {}),
                 }}>
-                {isPlayroom ? "🎮 PLAYROOM" : isGlory ? "🏆 GLORY" : tab}
+                {isPlayroom ? "🎮 PLAYROOM" : isGlory ? "🏆 GLORY" : tab === "QUICKID" ? "🔎 QUICK ID" : tab}
               </button>
             );
           })}
@@ -1579,6 +1580,10 @@ export default function NYSportsDaily() {
         {activeTab === "HOF" && <HofTab />}
         {activeTab === "MISERY" && <MiseryTab />}
         {activeTab === "DEEPDIVE" && <DeepDiveTab initialSlug={deepDiveSlug} />}
+        {/* ──── QUICK ID TAB ──── */}
+        {activeTab === "QUICKID" && (
+          <QuickID />
+        )}
         {activeTab === "HISTORY" && (
           <HistoryTab />
         )}
@@ -1765,6 +1770,7 @@ export default function NYSportsDaily() {
             {[
               {tab:"GLORY",     icon:"🏆", gold:true},
               {tab:"DEEPDIVE",  icon:"🔍", gold:true},
+              {tab:"QUICKID",   icon:"🔎", gold:true, label:"QUICK ID"},
               {tab:"PLAYROOM",  icon:"🎮", gold:true},
               {tab:"STATS",     icon:"📈"},
               {tab:"HISTORY",   icon:"📚"},
@@ -1775,7 +1781,7 @@ export default function NYSportsDaily() {
               {tab:"FORGOTTEN", icon:"👻"},
               {tab:"POLLS",     icon:"🗳️"},
               {tab:"MISERY",    icon:"😩"},
-            ].map(({tab, icon, gold}) => (
+            ].map(({tab, icon, gold, label}) => (
               <button key={tab}
                 onClick={() => { setActiveTab(tab); setDrawerOpen(false); }}
                 style={{display:"flex", alignItems:"center", gap:12, width:"100%",
@@ -1790,7 +1796,7 @@ export default function NYSportsDaily() {
                   letterSpacing:"0.05em", textAlign:"left",
                   fontFamily:"'Georgia',serif"}}>
                 <span style={{fontSize:14, width:22, textAlign:"center"}}>{icon}</span>
-                {tab}
+                {label || tab}
               </button>
             ))}
           </div>
