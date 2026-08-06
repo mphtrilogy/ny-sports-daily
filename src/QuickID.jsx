@@ -170,7 +170,7 @@ async function exportCardAsImage(result) {
   ctx.fillStyle = SLATE;
   ctx.font = "600 22px 'IBM Plex Mono', monospace";
   ctx.textAlign = "left";
-  ctx.fillText("QUICK ID WIRE", left, y);
+  ctx.fillText("SCOUTING REPORT", left, y);
   ctx.textAlign = "right";
   ctx.fillText(result._stamp || "", right, y);
   ctx.textAlign = "left";
@@ -244,7 +244,7 @@ async function exportCardAsImage(result) {
 
   ctx.fillStyle = "#9A927C";
   ctx.font = "500 18px 'IBM Plex Mono', monospace";
-  ctx.fillText("SOURCE: WIKIPEDIA · QUICK ID WIRE", left, cardY + cardH - 24);
+  ctx.fillText("SOURCE: WIKIPEDIA · SCOUTING REPORT", left, cardY + cardH - 24);
 
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
   const url = URL.createObjectURL(blob);
@@ -599,13 +599,14 @@ export default function QuickIDFree() {
         @media (prefers-reduced-motion: reduce) { .qid-cursor { animation: none; opacity: 1; } .qid-card { animation: none; } }
         @media (max-width: 560px) {
           .qid-name { font-size: 38px !important; }
+          .qid-title { font-size: 28px !important; }
           .qid-shell { padding: 28px 18px !important; }
         }
       `}</style>
 
       <div style={styles.shell} className="qid-shell">
         <div style={styles.eyebrow}>PLAYER LOOKUP WIRE — FREE TIER</div>
-        <h1 style={styles.title}>QUICK ID</h1>
+        <h1 style={styles.title} className="qid-title">THE SCOUTING REPORT</h1>
         <p style={styles.tagline}>Drop a name. Get the dispatch. No API key, no cost.</p>
 
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -828,7 +829,7 @@ const styles = {
   },
   shell: { width: "100%", maxWidth: 620, padding: "56px 32px 80px", fontFamily: "'PT Serif', Georgia, serif", color: PAPER },
   eyebrow: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, letterSpacing: "0.28em", color: AMBER, marginBottom: 10, fontWeight: 500 },
-  title: { fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 56, letterSpacing: "0.01em", margin: 0, lineHeight: 1, color: PAPER },
+  title: { fontFamily: "'Oswald', sans-serif", fontWeight: 700, fontSize: 40, letterSpacing: "0.01em", margin: 0, lineHeight: 1.05, color: PAPER },
   tagline: { marginTop: 10, marginBottom: 36, fontSize: 16, fontStyle: "italic", color: SLATE_LIGHT },
   form: { display: "flex", alignItems: "center", gap: 10, borderBottom: `1px solid #2E3542`, paddingBottom: 12 },
   prompt: { fontFamily: "'IBM Plex Mono', monospace", color: AMBER, fontSize: 18 },
