@@ -1379,7 +1379,7 @@ export default function NYSportsDaily() {
                     color:"#fff", borderBottom:"2px solid #f0b429",
                   } : {}),
                 }}>
-                {isPlayroom ? "🎮 PLAYROOM" : isGlory ? "🏆 GLORY" : tab === "QUICKID" ? "🔎 QUICK ID" : tab}
+                {isPlayroom ? "🎮 PLAYROOM" : isGlory ? "🏆 GLORY" : tab === "QUICKID" ? "🔎 SCOUTING REPORT" : tab}
               </button>
             );
           })}
@@ -1580,7 +1580,7 @@ export default function NYSportsDaily() {
         {activeTab === "HOF" && <HofTab />}
         {activeTab === "MISERY" && <MiseryTab />}
         {activeTab === "DEEPDIVE" && <DeepDiveTab initialSlug={deepDiveSlug} />}
-        {/* ──── QUICK ID TAB ──── */}
+        {/* ──── THE SCOUTING REPORT TAB ──── */}
         {activeTab === "QUICKID" && (
           <QuickID />
         )}
@@ -1770,7 +1770,7 @@ export default function NYSportsDaily() {
             {[
               {tab:"GLORY",     icon:"🏆", gold:true},
               {tab:"DEEPDIVE",  icon:"🔍", gold:true},
-              {tab:"QUICKID",   icon:"🔎", gold:true, label:"QUICK ID"},
+              {tab:"QUICKID",   icon:"🔎", gold:true, label:"THE SCOUTING REPORT"},
               {tab:"PLAYROOM",  icon:"🎮", gold:true},
               {tab:"STATS",     icon:"📈"},
               {tab:"HISTORY",   icon:"📚"},
