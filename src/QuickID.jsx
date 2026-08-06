@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 const FONT_IMPORT_URL =
   "https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap";
@@ -491,12 +491,24 @@ async function fetchNews(name) {
   }
 }
 
-export default function QuickIDFree() {
-  const [query, setQuery] = useState("");
+export default function QuickIDFree({ initialQuery }) {
+  const [query, setQuery] = useState(initialQuery || "");
   const [status, setStatus] = useState("idle");
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [sourceStatus, setSourceStatus] = useState({ wiki: null, reddit: null, news: null });
+
+  // Deep-link support: if we were handed a name from the URL (e.g. a
+  // newsletter link like "who is this guy?" pointing at a specific player),
+  // auto-run that search once on mount instead of waiting for a manual submit.
+  const hasAutoRun = useRef(false);
+  useEffect(() => {
+    if (initialQuery && !hasAutoRun.current) {
+      hasAutoRun.current = true;
+      runLookup(initialQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery]);
 
   async function runLookup(q) {
     if (!q.trim()) return;
