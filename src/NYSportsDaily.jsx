@@ -5514,8 +5514,8 @@ const ALL_POLLS = [
   { id:"debate_w28_phil_simms_vs_eli_manning", question:"Greater Giants quarterback?", options:["Phil Simms", "Eli Manning"] },  // Week 28: Phil Simms vs Eli Manning
   { id:"debate_w29_1986_giants_vs_2007_giants", question:"Better championship team?", options:["1986 Giants", "2007 Giants"] },  // Week 29: 1986 Giants vs 2007 Giants
   { id:"debate_w30_joe_namath_vs_chad_pennington", question:"Greatest Jets quarterback ever?", options:["Joe Namath", "Chad Pennington"] },  // Week 30: Joe Namath vs Chad Pennington
-  { id:"debate_w31_rex_ryan_s_2010_jets_vs_1968_6", question:"Closest the Jets ever came?", options:["Rex Ryan's 2010 Jets", "1968-69 Jets"] },  // Week 31: Rex Ryan's 2010 Jets vs 1968-69 Jets
-  { id:"debate_w32_frank_gifford_vs_odell_beckham", question:"Most electrifying Giants receiver ever?", options:["Frank Gifford", "Odell Beckham Jr."] },  // Week 32: Frank Gifford vs Odell Beckham Jr.
+  { id:"debate_w31_rex_ryan_s_2010_jets_vs_1968_6", question:"Which Jets Team Do You Take: The Champions, or the Closest Call Since?", options:["Rex Ryan's 2010 Jets", "1968-69 Jets"] },  // Week 31: Rex Ryan's 2010 Jets vs 1968-69 Jets
+  { id:"debate_w32_frank_gifford_vs_odell_beckham", question:"Most Electrifying Offensive Weapon in Giants History?", options:["Frank Gifford", "Odell Beckham Jr."] },  // Week 32: Frank Gifford vs Odell Beckham Jr.
   { id:"debate_w33_derek_jeter_vs_patrick_ewing", question:"Greater NY athlete of the 1990s?", options:["Derek Jeter", "Patrick Ewing"] },  // Week 33: Derek Jeter vs Patrick Ewing
   { id:"debate_w34_1950s_yankees_vs_1990s_yankees", question:"Better dynasty?", options:["1950s Yankees", "1990s Yankees"] },  // Week 34: 1950s Yankees vs 1990s Yankees
   { id:"debate_w35_madison_square_garden_vs_yanke", question:"Greatest NY sports venue ever?", options:["Madison Square Garden", "Yankee Stadium"] },  // Week 35: Madison Square Garden vs Yankee Stadium
