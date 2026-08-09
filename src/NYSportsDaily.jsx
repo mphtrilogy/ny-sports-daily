@@ -649,7 +649,7 @@ const DAILY_PLAYERS = [
   { name:"Rebecca Lobo",     team:"Liberty",sport:"WNBA",pos:"C",  emoji:"🏀", number:"50", active:false, era:"1997–2003", stats:"WNBA founding player · UConn icon · Liberty original",                  fact:"One of the original New York Liberty players in the WNBA's founding season of 1997. Brought instant credibility and star power to a league that needed both. Her #50 hangs in the Garden.",                  wiki:"https://en.wikipedia.org/wiki/Rebecca_Lobo",         photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Rebecca_Lobo_2021.jpg/256px-Rebecca_Lobo_2021.jpg",      cardColor:"#6ECEB2" },
   { name:"Cappie Pondexter", team:"Liberty",sport:"WNBA",pos:"G",  emoji:"🏀", number:"23", active:false, era:"2010–2015", stats:"2× scoring champion · 2× All-WNBA First Team · Liberty cornerstone",    fact:"One of the most complete guards of her WNBA generation — scorer, defender, and leader who gave the Liberty a perennial All-Star during a period when the franchise was finding its footing.",                   wiki:"https://en.wikipedia.org/wiki/Cappie_Pondexter",     photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Cappie_Pondexter.jpg/256px-Cappie_Pondexter.jpg",        cardColor:"#6ECEB2" },
   { name:"Jonquel Jones",    team:"Liberty",sport:"WNBA",pos:"F",  emoji:"🏀", number:"35", active:true,  era:"2022–present", stats:"2021 MVP · 2024 WNBA champion · championship cornerstone",            fact:"The 2021 WNBA MVP joined forces with Breanna Stewart to give the Liberty the most powerful frontcourt in the league. When they finally won the championship in 2024, Jones was essential to every moment.",      wiki:"https://en.wikipedia.org/wiki/Jonquel_Jones",        photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Jonquel_Jones.jpg/256px-Jonquel_Jones.jpg",              cardColor:"#6ECEB2" },
-  { name:"Betnijah Laney",   team:"Liberty",sport:"WNBA",pos:"G/F",emoji:"🏀",number:"44", active:true,  era:"2021–present", stats:"2024 WNBA champion · All-Star · defensive stalwart",                  fact:"The versatile wing who brings elite defense and clutch shooting every night. Part of the championship core that finally delivered New York's first WNBA title in 2024 after 27 years of waiting.",               wiki:"https://en.wikipedia.org/wiki/Betnijah_Laney",       photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Betnijah_Laney.jpg/256px-Betnijah_Laney.jpg",           cardColor:"#6ECEB2" },
+  { name:"Betnijah Laney",   team:"Liberty",sport:"WNBA",pos:"G/F",emoji:"🏀",number:"44", active:false,  era:"2021–2026", stats:"2024 WNBA champion · All-Star · defensive stalwart",                  fact:"The versatile wing who brought elite defense and clutch shooting every night. Part of the championship core that finally delivered New York's first WNBA title in 2024 after 27 years of waiting. Released by the Liberty in August 2026 following the trade deadline.",               wiki:"https://en.wikipedia.org/wiki/Betnijah_Laney",       photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Betnijah_Laney.jpg/256px-Betnijah_Laney.jpg",           cardColor:"#6ECEB2" },
 
   // ── RANGERS (need 8+ more) ─────────────────────────────────────────────────
   { name:"Bill Cook",        team:"Rangers",sport:"NHL",pos:"RW",  emoji:"🏒", number:"—",  active:false, era:"1926–1937", stats:"1928 · 1933 Cup champion · First Rangers captain",                       fact:"The captain of the original Rangers dynasty — won the franchise's first two Stanley Cups in 1928 and 1933. One of the finest players of the early NHL era, now largely forgotten outside hockey history books.", wiki:"https://en.wikipedia.org/wiki/Bill_Cook",            photo:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Bill_Cook.jpg/256px-Bill_Cook.jpg",                      cardColor:"#0038A8" },
@@ -757,30 +757,77 @@ function getDailyPlayer() {
   return DAILY_PLAYERS[window._spotlightOrder[day % window._spotlightOrder.length]];
 }
 
+const SCOUTING_REPORT_FONT_URL =
+  "https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap";
+
 function PlayerSpotlight() {
   const [flipped, setFlipped] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [livePhoto, setLivePhoto] = useState(null);
+  const [liveFetchDone, setLiveFetchDone] = useState(false);
   const p = getDailyPlayer();
-  const cardColor = p.cardColor || "#c8201c";
+  const spotlightNo = String(DAILY_PLAYERS.indexOf(p) + 1).padStart(4, "0");
+  const scoutingReportUrl = `/?tab=QUICKID&player=${encodeURIComponent(p.name)}`;
+
+  // Self-healing photo layer: the static `photo` URLs on DAILY_PLAYERS entries
+  // are hardcoded Wikimedia links, which can quietly rot over time (file
+  // renames, moves, etc. on Wikipedia's end). Rather than manually re-checking
+  // ~180 URLs by hand, fetch the current thumbnail live from Wikipedia's REST
+  // summary API in the background — same pattern The Scouting Report uses.
+  // The static photo still paints instantly (no loading flicker); this just
+  // quietly upgrades/corrects it once the live fetch resolves, and becomes
+  // the effective source of truth if the static link is ever broken.
+  useEffect(() => {
+    let cancelled = false;
+    setLivePhoto(null);
+    setImgError(false);
+    setLiveFetchDone(false);
+    if (!p.wiki) { setLiveFetchDone(true); return; }
+    const title = p.wiki.split("/wiki/")[1];
+    if (!title) { setLiveFetchDone(true); return; }
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${title}`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (cancelled) return;
+        if (data?.thumbnail?.source) setLivePhoto(data.thumbnail.source);
+        setLiveFetchDone(true);
+      })
+      .catch(() => { if (!cancelled) setLiveFetchDone(true); });
+    return () => { cancelled = true; };
+  }, [p.wiki]);
+
+  const displayPhoto = livePhoto || p.photo;
 
   return (
     <div style={styles.tcardWrap} onClick={() => setFlipped(!flipped)}>
-      <div style={{...styles.tcardOuter, background:`linear-gradient(135deg, ${cardColor} 0%, #000 70%)`}}>
+      {/* Same font family Scouting Report uses — safe/idempotent to import
+          twice if that tab has already loaded them, and this ensures the
+          card renders correctly even if a visitor never opens Scouting Report. */}
+      <style>{`@import url('${SCOUTING_REPORT_FONT_URL}');`}</style>
+      <div style={styles.tcardOuter}>
         <div style={styles.tcardInner}>
           {!flipped ? (
             <>
               {/* TOP BAR */}
               <div style={styles.tcardTopBar}>
                 <span style={styles.tcardBadge}>⭐ DAILY SPOTLIGHT</span>
-                <span style={styles.tcardYear}>NY SPORTS DAILY</span>
+                <span style={styles.tcardYear}>SPOTLIGHT NO. {spotlightNo}</span>
               </div>
 
               {/* PHOTO FRAME */}
-              <div style={{...styles.tcardPhotoFrame, background:cardColor}}>
-                {p.photo && !imgError ? (
-                  <img src={p.photo} alt={p.name}
+              <div style={styles.tcardPhotoFrame}>
+                {displayPhoto && !imgError ? (
+                  <img src={displayPhoto} alt={p.name}
                     style={styles.tcardPhoto}
-                    onError={() => setImgError(true)} />
+                    onError={() => {
+                      // Don't give up on the first failure — the static photo
+                      // might be the one that's broken while the live fetch
+                      // is still in flight with a working replacement. Only
+                      // fall back to the emoji once the live attempt has
+                      // fully resolved (successfully or not) and we're still
+                      // stuck on a broken image.
+                      if (liveFetchDone) setImgError(true);
+                    }} />
                 ) : (
                   <div style={styles.tcardPhotoFallback}>
                     <span style={{fontSize:60}}>{p.emoji}</span>
@@ -793,7 +840,7 @@ function PlayerSpotlight() {
               <div style={styles.tcardNamePlate}>
                 <div style={styles.tcardName}>{p.name}</div>
                 <div style={styles.tcardTeamRow}>
-                  <span style={{...styles.tcardTeamBadge, background:cardColor}}>{p.team.toUpperCase()}</span>
+                  <span style={styles.tcardTeamBadge}>{p.team.toUpperCase()}</span>
                   <span style={styles.tcardPos}>{p.pos} · {p.sport}</span>
                   {p.active && <span style={styles.tcardActiveDot}>● ACTIVE</span>}
                 </div>
@@ -829,6 +876,9 @@ function PlayerSpotlight() {
                     <span style={styles.tcardBackStatVal}>{p.era}</span>
                   </div>
                 </div>
+                <a href={scoutingReportUrl} style={styles.tcardScoutingLink} onClick={e=>e.stopPropagation()}>
+                  🔎 Full Scouting Report →
+                </a>
                 <div style={styles.tcardLinks}>
                   <a href={p.wiki} target="_blank" rel="noopener noreferrer" style={styles.tcardLink} onClick={e=>e.stopPropagation()}>📖 Wikipedia</a>
                   <a href={googleUrl(`${p.name} ${p.team} career stats`)} target="_blank" rel="noopener noreferrer" style={styles.tcardLink} onClick={e=>e.stopPropagation()}>🔍 Google</a>
@@ -13365,29 +13415,32 @@ const styles = {
   // TRADING CARD STYLE PLAYER SPOTLIGHT
   tcardWrap: { cursor:"pointer", userSelect:"none", width:200 },
   tcardOuter: {
-    padding:3, borderRadius:6,
+    padding:3, borderRadius:2,
+    background:"#14181F",
     boxShadow:"0 2px 12px rgba(0,0,0,0.5)",
   },
   tcardInner: {
-    background:"#141618", borderRadius:4,
+    background:"#14181F", borderRadius:2,
     padding:"10px 12px 12px",
-    border:"1px solid rgba(255,255,255,0.08)",
+    border:"1px solid #2E3542",
   },
   tcardTopBar: {
     display:"flex", justifyContent:"space-between", alignItems:"center",
     marginBottom:8,
   },
   tcardBadge: {
-    fontSize:8, fontWeight:900, color:"#FFD700",
-    letterSpacing:"0.15em",
+    fontSize:8, fontWeight:600, color:"#C97A2B",
+    letterSpacing:"0.2em", fontFamily:"'IBM Plex Mono', monospace",
   },
   tcardYear: {
-    fontSize:7, color:"#666", letterSpacing:"0.1em", fontWeight:700,
+    fontSize:7, color:"#5B6472", letterSpacing:"0.1em", fontWeight:500,
+    fontFamily:"'IBM Plex Mono', monospace",
   },
   tcardPhotoFrame: {
     position:"relative", height:110, marginBottom:6,
-    borderRadius:3, overflow:"hidden",
-    border:"1px solid rgba(255,215,0,0.3)",
+    borderRadius:1, overflow:"hidden",
+    border:"1px solid #2E3542",
+    background:"#0d1016",
     display:"flex", alignItems:"center", justifyContent:"center",
   },
   tcardPhoto: {
@@ -13396,60 +13449,69 @@ const styles = {
   tcardPhotoFallback: {
     width:"100%", height:"100%",
     display:"flex", alignItems:"center", justifyContent:"center",
-    background:"rgba(0,0,0,0.3)",
+    background:"#0d1016",
   },
   tcardJerseyNum: {
     position:"absolute", bottom:4, right:6,
-    fontSize:32, fontWeight:900, color:"rgba(255,255,255,0.85)",
-    fontFamily:"'Georgia',serif",
+    fontSize:32, fontWeight:700, color:"rgba(242,237,225,0.85)",
+    fontFamily:"'Oswald',sans-serif",
     textShadow:"2px 2px 4px rgba(0,0,0,0.9)",
     lineHeight:1,
   },
   tcardNamePlate: {
-    background:"#141618", padding:"4px 0 6px",
-    borderTop:"1px solid rgba(255,215,0,0.3)",
-    borderBottom:"1px solid rgba(255,215,0,0.3)",
+    background:"#14181F", padding:"6px 0 8px",
+    borderTop:"1px dashed #4a3d2e",
+    borderBottom:"1px dashed #4a3d2e",
   },
   tcardName: {
-    fontSize:12, fontWeight:900, color:"#e8e0d0",
-    fontFamily:"'Georgia',serif", lineHeight:1.1, marginBottom:2,
+    fontSize:15, fontWeight:700, color:"#F2EDE1",
+    fontFamily:"'Oswald',sans-serif", lineHeight:1.1, marginBottom:3,
   },
   tcardTeamRow: { display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" },
   tcardTeamBadge: {
-    fontSize:8, fontWeight:900, padding:"2px 6px",
-    color:"#fff", letterSpacing:"0.08em",
+    fontSize:8, fontWeight:600, padding:"2px 6px",
+    color:"#14181F", letterSpacing:"0.08em", background:"#C97A2B",
+    fontFamily:"'IBM Plex Mono', monospace",
   },
-  tcardPos: { fontSize:9, color:"#888", fontWeight:700 },
-  tcardActiveDot: { fontSize:8, color:"#4ade80", fontWeight:900 },
-  tcardStatsLine: { paddingTop:6 },
+  tcardPos: { fontSize:9, color:"#8A93A6", fontWeight:500, fontFamily:"'IBM Plex Mono', monospace" },
+  tcardActiveDot: { fontSize:8, color:"#3F7A4E", fontWeight:600, fontFamily:"'IBM Plex Mono', monospace" },
+  tcardStatsLine: { paddingTop:8 },
   tcardEraLabel: {
-    display:"block", fontSize:8, color:"#FFD700",
-    letterSpacing:"0.1em", fontWeight:700, marginBottom:3,
+    display:"block", fontSize:8, color:"#C97A2B",
+    letterSpacing:"0.15em", fontWeight:600, marginBottom:4,
+    fontFamily:"'IBM Plex Mono', monospace", textTransform:"uppercase",
   },
   tcardStats: {
-    display:"block", fontSize:10, color:"#bbb", lineHeight:1.5,
+    display:"block", fontSize:10.5, color:"#8A93A6", lineHeight:1.6,
+    fontFamily:"'PT Serif', Georgia, serif",
   },
   tcardFlipHint: {
-    fontSize:8, color:"#444", fontStyle:"italic",
-    marginTop:6, textAlign:"right",
+    fontSize:8, color:"#5B6472", fontStyle:"italic",
+    marginTop:8, textAlign:"right", fontFamily:"'IBM Plex Mono', monospace",
   },
   tcardBackBody: { display:"flex", flexDirection:"column", gap:12, minHeight:160 },
   tcardFact: {
-    margin:0, fontSize:12, color:"#bbb", lineHeight:1.6,
-    fontFamily:"'Georgia',serif",
+    margin:0, fontSize:12, color:"#8A93A6", lineHeight:1.7,
+    fontFamily:"'PT Serif', Georgia, serif",
   },
   tcardBackStats: {
     display:"flex", gap:8, padding:"8px 0",
-    borderTop:"1px solid rgba(255,215,0,0.2)",
-    borderBottom:"1px solid rgba(255,215,0,0.2)",
+    borderTop:"1px dashed #4a3d2e",
+    borderBottom:"1px dashed #4a3d2e",
   },
   tcardBackStatItem: {
     flex:1, display:"flex", flexDirection:"column", gap:2, alignItems:"center",
   },
-  tcardBackStatLabel: { fontSize:7, color:"#666", letterSpacing:"0.1em", fontWeight:700 },
-  tcardBackStatVal: { fontSize:11, color:"#e8e0d0", fontWeight:900 },
+  tcardBackStatLabel: { fontSize:7, color:"#5B6472", letterSpacing:"0.15em", fontWeight:600, fontFamily:"'IBM Plex Mono', monospace" },
+  tcardBackStatVal: { fontSize:11, color:"#F2EDE1", fontWeight:700, fontFamily:"'Oswald', sans-serif" },
+  tcardScoutingLink: {
+    display:"block", fontSize:11, color:"#C97A2B", fontWeight:600,
+    textDecoration:"none", fontFamily:"'IBM Plex Mono', monospace",
+    letterSpacing:"0.03em", border:"1px solid #C97A2B", padding:"7px 10px",
+    textAlign:"center",
+  },
   tcardLinks: { display:"flex", gap:10, flexWrap:"wrap" },
-  tcardLink: { fontSize:10, color:"#FFD700", fontWeight:700, textDecoration:"none" },
+  tcardLink: { fontSize:10, color:"#8A93A6", fontWeight:600, textDecoration:"none", fontFamily:"'IBM Plex Mono', monospace" },
 
   // PLAYER SPOTLIGHT (old)
   spotlightWrap: { cursor:"pointer", userSelect:"none" },
