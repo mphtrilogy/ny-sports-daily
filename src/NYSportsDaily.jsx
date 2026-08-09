@@ -764,38 +764,45 @@ function PlayerSpotlight() {
   const [flipped, setFlipped] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [livePhoto, setLivePhoto] = useState(null);
-  const [liveFetchDone, setLiveFetchDone] = useState(false);
   const p = getDailyPlayer();
   const spotlightNo = String(DAILY_PLAYERS.indexOf(p) + 1).padStart(4, "0");
   const scoutingReportUrl = `/?tab=QUICKID&player=${encodeURIComponent(p.name)}`;
 
   // Self-healing photo layer: the static `photo` URLs on DAILY_PLAYERS entries
   // are hardcoded Wikimedia links, which can quietly rot over time (file
-  // renames, moves, etc. on Wikipedia's end). Rather than manually re-checking
-  // ~180 URLs by hand, fetch the current thumbnail live from Wikipedia's REST
-  // summary API in the background — same pattern The Scouting Report uses.
-  // The static photo still paints instantly (no loading flicker); this just
-  // quietly upgrades/corrects it once the live fetch resolves, and becomes
-  // the effective source of truth if the static link is ever broken.
+  // renames, moves, etc. on Wikipedia's end, including accent marks and
+  // disambiguator suffixes getting added to page titles after this data was
+  // originally written — e.g. "Francisco_Alvarez" vs. the page's actual
+  // current title, "Francisco Álvarez (baseball)"). Rather than trust the
+  // stored `wiki` URL's title directly, search by the player's name instead —
+  // same resolution approach The Scouting Report uses — so this stays correct
+  // even if Wikipedia has since renamed or disambiguated the page.
   useEffect(() => {
     let cancelled = false;
     setLivePhoto(null);
     setImgError(false);
-    setLiveFetchDone(false);
-    if (!p.wiki) { setLiveFetchDone(true); return; }
-    const title = p.wiki.split("/wiki/")[1];
-    if (!title) { setLiveFetchDone(true); return; }
-    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${title}`)
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(p.name)}&format=json&origin=*&srlimit=1`;
+    fetch(searchUrl)
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
-        if (cancelled) return;
-        if (data?.thumbnail?.source) setLivePhoto(data.thumbnail.source);
-        setLiveFetchDone(true);
+        if (cancelled) return null;
+        const title = data?.query?.search?.[0]?.title;
+        if (!title) return null;
+        return fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, "_"))}`);
       })
-      .catch(() => { if (!cancelled) setLiveFetchDone(true); });
+      .then(res => (res && res.ok ? res.json() : null))
+      .then(summary => {
+        if (!cancelled && summary?.thumbnail?.source) {
+          setLivePhoto(summary.thumbnail.source);
+          setImgError(false); // give the freshly-found photo a clean shot, even if the static one had already failed
+        }
+      })
+      .catch(() => { /* silent — static photo or emoji fallback still covers this */ });
     return () => { cancelled = true; };
-  }, [p.wiki]);
+  }, [p.name]);
 
+  // Photo priority: a successfully live-fetched photo wins if we have one
+  // (freshest, most reliable), otherwise fall back to the static URL.
   const displayPhoto = livePhoto || p.photo;
 
   return (
@@ -817,17 +824,11 @@ function PlayerSpotlight() {
               {/* PHOTO FRAME */}
               <div style={styles.tcardPhotoFrame}>
                 {displayPhoto && !imgError ? (
-                  <img src={displayPhoto} alt={p.name}
+                  <img
+                    key={displayPhoto}
+                    src={displayPhoto} alt={p.name}
                     style={styles.tcardPhoto}
-                    onError={() => {
-                      // Don't give up on the first failure — the static photo
-                      // might be the one that's broken while the live fetch
-                      // is still in flight with a working replacement. Only
-                      // fall back to the emoji once the live attempt has
-                      // fully resolved (successfully or not) and we're still
-                      // stuck on a broken image.
-                      if (liveFetchDone) setImgError(true);
-                    }} />
+                    onError={() => setImgError(true)} />
                 ) : (
                   <div style={styles.tcardPhotoFallback}>
                     <span style={{fontSize:60}}>{p.emoji}</span>
