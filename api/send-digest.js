@@ -1116,6 +1116,20 @@ async function getSaturdayPoll() {
 // ── DATE-SPECIFIC OVERRIDES ───────────────────────────────────────────────────
 // For major NY sports moments, force a specific Deep Dive on a specific Sunday
 // regardless of what the shuffle would normally pick. Format: 'YYYY-MM-DD'
+// One-off Saturday specials — in memoriam pieces, etc. Not part of the
+// regular rotation. Each entry only ever fires on its exact date.
+const SATURDAY_SPECIALS = [
+  {
+    date: '2026-08-22',
+    title: 'Tommy John — The Pitcher, the Surgery, and the Hall of Fame Case Baseball Keeps Getting Wrong',
+    team: 'Yankees/Dodgers',
+    charity: 'Tommy John Fund at Duke University | duke.is/tommyjohnfund',
+    charityNote: 'In lieu of flowers, the John family has asked that donations be directed here.',
+    year: 2026,
+    body: "Thomas Edward John Jr. died Saturday, August 15, 2026, at his home in Lakewood Ranch, Florida, surrounded by his wife, Cheryl, and family. He was 83. His passing closes out one of the strangest and most under-recognized careers in the history of professional baseball — a pitcher who built a Hall of Fame-caliber career in two separate acts, on opposite coasts, separated by a surgery that had a one-percent chance of working.\n\nJohn had recently undergone treatment for a recurrence of the bladder cancer he'd first disclosed in 2024. Just a week before his death, on August 8, the Yankees shared a letter from him on their social media, thanking the organization, his teammates, and Yankees fans as he said his goodbyes. In lieu of flowers, his family has asked that donations be made to the Tommy John Fund at Duke University.\n\n**THE PITCHER BEFORE THE SURGERY**\n\nJohn broke into the majors with the Cleveland Indians in September 1963, and spent the first decade of his career establishing himself as a legitimate, durable left-hander — seven seasons with the White Sox, then a move to the Los Angeles Dodgers in 1972 that turned him into a genuine ace. He led the National League in winning percentage two years running, .696 in 1973 and .813 in 1974, a run of pitching so sharp that by midseason 1974 he was 13-3 with a 2.59 ERA, squarely in the middle of a career year.\n\nThen, in a game against the Montreal Expos that July, something in his pitching elbow simply gave out.\n\n**THE SURGERY THAT SHOULDN'T HAVE WORKED**\n\nJohn had torn his ulnar collateral ligament — the specific injury that, at that point in baseball history, had never once allowed a pitcher to throw competitively again. Dodgers team physician Dr. Frank Jobe proposed something that had never been tried: replacing the torn ligament entirely, using a tendon taken from elsewhere in John's own body. Jobe himself, by his own later account, put the odds of it actually working at around one percent.\n\nJohn missed the entire 1975 season recovering. When he came back in 1976, he became the first pitcher in the history of the sport to successfully return to the majors after the surgery that now carries his name. Tommy John surgery is performed on hundreds of pitchers a year today, at every level from Little League to the majors, with a success rate north of ninety percent — a complete inversion of the odds John himself faced walking into that operating room.\n\n**THE COMEBACK NOBODY EXPECTED**\n\nHere's the part of the story that tends to get flattened by the surgery's fame: John didn't just come back. He got better. He pitched fourteen more full seasons after the operation — more than half of his entire twenty-six-year career happened after the injury that was supposed to end it. All four of his top-ten Cy Young finishes, in 1977, 1978, 1979, and 1980, came after the surgery. Three of his four All-Star selections came after it too. In 1977, he won 20 games and helped drag the Dodgers back to the World Series for the first time since 1974 — the postseason he'd missed entirely while recovering. He outdueled Steve Carlton in the NLCS with a complete-game, one-run shutout to send Los Angeles to the Fall Classic. He was, in every meaningful sense, a better pitcher after doctors rebuilt his arm from scratch than he had been before it broke.\n\n**TWO COASTS, ONE CAREER**\n\nWhat makes John's story even rarer is how completely it belongs to two cities that don't usually share anything, let alone a beloved pitcher. He spent parts of seven seasons with the Dodgers, then signed with the Yankees in 1979 and pitched parts of eight more seasons in pinstripes, across two separate stints, the last of them ending in 1989 at age 46.\n\nAnd here's the detail that captures the whole strange symmetry of it better than any statistic could: John lost a World Series with each team, against the other one. In 1977, his Dodgers lost to the Yankees in six games. Four years later, in 1981, his Yankees lost to the Dodgers, and John took the loss in his only World Series start of that series. He is, quite possibly, the only player in baseball history to appear in a Subway-adjacent World Series rivalry on both sides of it, years apart, in a Dodgers jersey and then a Yankees one. He didn't just pitch well in two of America's biggest markets. He mattered to both of them, deeply, in a way almost no other player in the sport's history can claim.\n\n**THE CASE FOR COOPERSTOWN**\n\nHere is the number that should end most arguments before they start: 288 career wins, the seventh-most by any left-handed pitcher in the history of the sport. Since 1901, exactly one eligible pitcher with more career wins and more innings pitched than Tommy John is not in the Hall of Fame — Roger Clemens, whose exclusion has nothing to do with his numbers and everything to do with performance-enhancing drug allegations that have never touched John's name in any way. Strip Clemens out of the conversation for the reasons everyone already understands, and Tommy John's career, by the most basic counting stats the Hall has ever cared about, stands alone.\n\nHe has never come remotely close to induction. His best year on the writers' ballot topped out at 31.7 percent of the vote in 2009, less than half of the 75 percent required, and he fell off the ballot for good shortly after. He's been reconsidered by the Era Committee multiple times since — most recently receiving seven votes, more than any other unelected candidate on that particular ballot, but still short of the twelve needed.\n\nThe arguments against him are real, and worth stating honestly rather than waving away. He was a sinkerball pitcher who worked by getting ground balls, not strikeouts — a less dramatic, less \"sexy\" statistical profile than the power pitchers voters have traditionally favored. He never won a World Series. Spread across 26 seasons, his average of roughly 11 wins a year invites the \"compiler\" label from voters who prize peak dominance over sheer longevity. His career ERA+ of 111 is good, not overwhelming.\n\nBut set those objections against Bert Blyleven, a pitcher with a remarkably similar profile — 287 wins, a 3.31 ERA, a long and unglamorous road to Cooperstown — who voters passed over for years before finally electing him in 2011. If Blyleven's case eventually broke through on sustained career value alone, it's difficult to construct an honest argument for why John's nearly identical career, attached to the single most transformative medical contribution any player has ever made to his sport, hasn't broken through as well.\n\n**WHAT THE STATS CAN'T MEASURE**\n\nBecause that's the part of Tommy John's case that has no comparison anywhere else in Cooperstown's history. Plenty of players changed how the game is played on the field. Only one changed how it's played on the operating table. Every single pitcher who tears a UCL today and pitches again — every Little Leaguer, every college arm, every future Hall of Famer who blows out an elbow and comes back stronger — is living inside a possibility that didn't exist until Frank Jobe and Tommy John decided a one-percent chance was still worth taking. That's not a compiler's résumé. That's a fundamentally different kind of Hall of Fame case, and it deserves to be treated as one.\n\n**THE LETTER**\n\nOn August 8, 2026, a week before his death, the Yankees released a letter from John thanking the organization and the Steinbrenner family \"for giving me this opportunity to say goodbye to everyone, along with all the friends and fans who followed me through my 26-year career.\" He singled out one more name before signing off: Dr. Frank Jobe, \"who saved my arm and made it possible for me to continue pitching.\"\n\nWhatever the Era Committee eventually decides, and whenever it decides it, that sentence is really the whole case laid out in John's own words, in his own voice, at the end of a long career he was never supposed to get to finish. A one-percent chance, cashed in for fourteen more seasons, two coasts, and a procedure that has since given that same chance to everyone who came after him.\n\nThe rest is up to Cooperstown. It's overdue."
+  },
+];
+
 const SUNDAY_DEEP_DIVE_OVERRIDES = {
   '2026-06-21': '53 Years: The Full Story of the 2026 Knicks Championship',
   '2026-07-05': 'George Steinbrenner: The Boss, the Bully, and the Man Who Made the Yankees the Yankees Again', // Sunday after his July 4 birthday — also fixes a rotation quirk where Knicks would otherwise repeat 2 weeks after their title essay
@@ -1168,6 +1182,17 @@ function getDayNugget(dayOfWeek, weekNumber) {
       if (overrideEntry) {
         return { type:'deepdive', data: overrideEntry };
       }
+    }
+  }
+
+  // Check for a one-off Saturday special (in memoriam pieces, etc.) — these
+  // are not part of the regular rotation, only trigger on their exact date,
+  // and take priority over the standard Saturday fan poll for that one day.
+  if (dayOfWeek === 6) {
+    const dateStr = new Date().toISOString().slice(0,10);
+    const specialEntry = SATURDAY_SPECIALS.find(s => s.date === dateStr);
+    if (specialEntry) {
+      return { type:'tribute', data: specialEntry };
     }
   }
 
@@ -1279,6 +1304,28 @@ function buildNuggetHtml(nugget, saturdayPoll, trophyEntry) {
   };
 
   switch(nugget.type) {
+
+    case 'tribute': {
+      const t = nugget.data;
+      if (!t) return '';
+      const slug   = slugify(t.title);
+      const teaser = makeTeaser(t.body, 200);
+      const readMoreUrl = SITE_URL + '/?tab=DEEPDIVE&essay=' + slug;
+      return wrap('&#128330; In Memoriam', '#4a4a4a',
+        '<div style="font-size:16px;font-weight:900;color:#111;font-family:Georgia,serif;'
+        + 'line-height:1.3;margin-bottom:10px">' + t.title + '</div>'
+        + '<div style="font-size:11px;font-weight:700;color:#4a4a4a;letter-spacing:0.1em;'
+        + 'text-transform:uppercase;margin-bottom:12px">' + t.team + '</div>'
+        + '<div style="font-size:13px;color:#444;line-height:1.75;font-family:Georgia,serif">' + teaser + '</div>'
+        + '<a href="' + readMoreUrl + '" style="display:inline-block;margin-top:14px;background:#4a4a4a;color:#fff;'
+        + 'text-decoration:none;font-size:11px;font-weight:900;letter-spacing:0.08em;padding:11px 24px;'
+        + 'text-transform:uppercase">Continue Reading &rarr;</a>'
+        + (t.charity ? '<div style="margin-top:16px;padding-top:12px;border-top:1px solid #ddd;font-size:11px;color:#666;line-height:1.6">'
+          + '&#128148; In lieu of flowers: <b>' + t.charity + '</b>'
+          + (t.charityNote ? '<br/><span style="font-style:italic;color:#888">' + t.charityNote + '</span>' : '')
+          + '</div>' : '')
+      );
+    }
 
     case 'deepdive': {
       const d = nugget.data;
