@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useRef, createContext, useContext } f
 import QuickID from "./QuickID";
 
 // ─── SUPABASE CONFIG ───────────────────────────────────────────────────────
-const SUPABASE_URL = "https://fnxoucliekhotvartyfu.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZueG91Y2xpZWtob3R2YXJ0eWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NTI3MzEsImV4cCI6MjA4OTUyODczMX0.V4A75JO9s-7MbDRY7VMydwydOvdkU4SNSz_BRoVAoqA";
+const SUPABASE_URL = "https://awseqiusypnazuddfhay.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF3c2VxaXVzeXBuYXp1ZGRmaGF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjI5MDEsImV4cCI6MjA5NTAzODkwMX0.7lFkZwhFsSfaj4uepbRiCJWH2Oj9AiC3US09Qzoig4E";
 
 // Dark mode context — must be declared before any component that uses it
 const DarkModeCtx  = createContext(true);
