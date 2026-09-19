@@ -95,7 +95,7 @@ export default async function handler(req, res) {
       + '</p>'
       + '<p style="color:#aaa;font-size:11px;margin:0 0 8px">NY Sports Daily · Free always · No ads ever</p>'
       + '<a href="https://buymeacoffee.com/mhughes65v" style="color:#888;font-size:11px;text-decoration:none">'
-      + '☕ Buy me a coffee'
+      + '💿 Buy me a record'
       + '</a>'
       + '</div>'
 
