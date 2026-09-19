@@ -3120,7 +3120,7 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
     + '<p style="font-size:13px;color:#555;font-style:italic;line-height:1.6;margin:0 0 8px">No matter who you root for in NY &mdash; we&rsquo;re in it together. 🗽</p>'
     + '<p style="font-size:10px;color:#aaa;margin:0 0 10px;letter-spacing:0.06em">NY Sports Daily &nbsp;&middot;&nbsp; Free always &nbsp;&middot;&nbsp; No ads ever</p>'
     + '<div>'
-    + '<a href="https://buymeacoffee.com/mhughes65v" style="color:#888;text-decoration:none;font-size:11px;margin:0 8px">&#9749; Buy me a coffee</a>'
+    + '<a href="https://buymeacoffee.com/mhughes65v" style="color:#888;text-decoration:none;font-size:11px;margin:0 8px">&#128191; Buy me a record</a>'
     + '<a href="' + SITE_URL + '" style="color:#888;text-decoration:none;font-size:11px;margin:0 8px">Visit the site</a>'
     + '<a href="https://www.instagram.com/nysportsdaily_com/" style="color:#888;text-decoration:none;font-size:11px;margin:0 8px">&#128248; Instagram</a>'
     + '</div>'
