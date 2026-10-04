@@ -4758,7 +4758,7 @@ function RecapTab({ scores }) {
 
                 {/* Line score expanded */}
                 {isExpanded && bs && bs.linescores?.length > 0 && (
-                  <div style={{padding:"12px 14px", background:"#080808", overflowX:"auto"}}>
+                  <div style={{padding:"12px 14px", background:"var(--bg-page)", overflowX:"auto"}}>
                     {/* Period header */}
                     {(() => {
                       const periods = bs.linescores[0]?.periods || [];
@@ -6182,8 +6182,8 @@ function MiseryTab() {
       <div style={{marginBottom:20, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
         <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>Every NY team ranked by how much they've made their fans suffer. The higher the score, the deeper the pain. A badge of honor for true NY fans.</p>
       </div>
-      <div style={{marginBottom:20, padding:"10px 14px", background:"#1e1a00", borderLeft:"3px solid #f0b429"}}>
-        <p style={{margin:0, fontSize:12, color:"#f0b429", fontWeight:700}}>🏆 BIGGEST UPSET TO THE MISERY INDEX EVER: On June 13th, the Knicks dropped from #2 (score 91) to dead last (score 5) overnight. 53 years of suffering, erased by Jalen Brunson in one evening. The Jets now stand alone at the top — for the first time in decades, they have absolutely no company.</p>
+      <div style={{marginBottom:20, padding:"10px 14px", background:"var(--gold-active-bg)", borderLeft:"3px solid #f0b429"}}>
+        <p style={{margin:0, fontSize:12, color:"var(--ink)", fontWeight:700}}>🏆 BIGGEST UPSET TO THE MISERY INDEX EVER: On June 13th, the Knicks dropped from #2 (score 91) to dead last (score 5) overnight. 53 years of suffering, erased by Jalen Brunson in one evening. The Jets now stand alone at the top — for the first time in decades, they have absolutely no company.</p>
       </div>
       {MISERY_DATA.sort((a,b)=>b.score-a.score).map((t, i) => (
         <div key={i} style={{...styles.miseryCard, borderLeft:`4px solid ${t.color}`}}>
@@ -7472,7 +7472,7 @@ function StandingsTab({ standings, loading }) {
 
   function CutLine({ label, color }) {
     return (
-      <div style={{display:"flex",alignItems:"center",gap:8,padding:"4px 14px",background:"#080808"}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,padding:"4px 14px",background:"var(--bg-page)"}}>
         <div style={{flex:1,height:1,background:`${color}33`}}/>
         <span style={{fontSize:9,color,fontWeight:900,letterSpacing:"0.1em",whiteSpace:"nowrap"}}>{label}</span>
         <div style={{flex:1,height:1,background:`${color}33`}}/>
@@ -13356,7 +13356,7 @@ const styles = {
   scoreCardNY: {
     border: "1px solid var(--accent-red)33",
     borderLeft: "3px solid var(--accent-red)",
-    background: "#1e1416",
+    background: "var(--bg-card)",
     boxShadow: "0 2px 8px rgba(200,32,28,0.08)",
   },
   nyBadge: {
@@ -13892,7 +13892,7 @@ const styles = {
     padding:"10px 14px", borderTop:"1px solid var(--ink)",
   },
   histRowAlt: { background:"var(--bg-content)" },
-  histRowFirst: { background:"#1a1500", borderLeft:"3px solid #FFD700" },
+  histRowFirst: { background:"var(--gold-active-bg)", borderLeft:"3px solid #FFD700" },
   histRank: {
     fontSize:13, fontWeight:900, minWidth:28, textAlign:"center",
     color:"var(--muted)", fontFamily:"'Georgia',serif",
