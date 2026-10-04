@@ -1540,7 +1540,7 @@ export default function NYSportsDaily() {
                 ));
               })()}
               {news.filter(n => ["Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty"].includes(n.team)).length === 0 && (
-                <div style={{padding:"12px", background:"var(--ink)", border:"1px solid #1f1f1f",
+                <div style={{padding:"12px", background:"var(--bg-content)", border:"1px solid #1f1f1f",
                   fontSize:10, color:"var(--muted)", fontStyle:"italic"}}>
                   Loading top NY sports stories…
                 </div>
@@ -2095,7 +2095,7 @@ function MyTeamsModal({ pending, setPending, onSave, onClose }) {
     <div onClick={e => e.target === e.currentTarget && onClose()}
       style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.82)", zIndex:9999,
         display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div style={{ background:"var(--ink)", border:"1px solid var(--border)", borderTop:"3px solid #f0b429",
+      <div style={{ background:"var(--bg-content)", border:"1px solid var(--border)", borderTop:"3px solid #f0b429",
         borderRadius:4, width:"100%", maxWidth:500, maxHeight:"88vh", overflowY:"auto" }}>
         {/* Header */}
         <div style={{ padding:"16px 20px 12px", borderBottom:"1px solid var(--border)",
@@ -4801,7 +4801,7 @@ function RecapTab({ scores }) {
                         <div style={{fontSize:9, color:"var(--muted)", letterSpacing:"0.1em", fontWeight:900, marginBottom:6}}>KEY PERFORMERS</div>
                         <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
                           {bs.playerStats.slice(0,6).map((p,j) => (
-                            <div key={j} style={{fontSize:10, color:"var(--muted)", background:"var(--ink)",
+                            <div key={j} style={{fontSize:10, color:"var(--muted)", background:"var(--bg-content)",
                               padding:"4px 8px", borderRadius:2, border:"1px solid var(--border)"}}>
                               <span style={{color:"#fff", fontWeight:700}}>{p.name}</span>
                               <span style={{color:"var(--muted)", marginLeft:4}}>{p.team}</span>
@@ -7966,7 +7966,7 @@ function SpinTab() {
       </div>
 
       {/* ── WALK-UP SONGS ── */}
-      <div style={{marginBottom:24, padding:"14px 16px", background:"var(--ink)", border:"1px solid var(--border)"}}>
+      <div style={{marginBottom:24, padding:"14px 16px", background:"var(--bg-content)", border:"1px solid var(--border)"}}>
         <div style={{fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.15em", marginBottom:4}}>🎵 WALK-UP SONGS & ENTRANCE MUSIC — 2026 & ALL-TIME</div>
 
         {/* PlateMusic links UP TOP */}
@@ -8076,7 +8076,7 @@ function SpinTab() {
       </div>
 
       {/* ── SPIN WHEEL (below songs) ── */}
-      <div style={{padding:"12px 14px", background:"var(--ink)", border:"1px solid var(--border)", marginBottom:16}}>
+      <div style={{padding:"12px 14px", background:"var(--bg-content)", border:"1px solid var(--border)", marginBottom:16}}>
         <div style={{fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.15em", marginBottom:4}}>🎰 SPIN THE WHEEL — NY SPORTS FACTS</div>
         <div style={{fontSize:9, color:"var(--muted)", marginBottom:10}}>Land on a team, get a random NY sports fact from our database</div>
       </div>
@@ -8576,7 +8576,7 @@ function SongsTab() {
       </div>
 
       {/* Live links banner */}
-      <div style={{marginBottom:20, padding:"12px 16px", background:"var(--ink)", border:"1px solid var(--border)", borderLeft:"3px solid var(--accent-red)"}}>
+      <div style={{marginBottom:20, padding:"12px 16px", background:"var(--bg-content)", border:"1px solid var(--border)", borderLeft:"3px solid var(--accent-red)"}}>
         <div style={{fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.12em", marginBottom:8}}>🔗 CURRENT SEASON WALK-UP SONGS — CHECK LIVE</div>
         <p style={{margin:"0 0 10px", fontSize:11, color:"var(--muted)", lineHeight:1.5}}>Walk-up songs change every season and sometimes mid-season. For the most current songs, check these official sources:</p>
         <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
@@ -8639,7 +8639,7 @@ function SongsTab() {
         );
       })}
 
-      <div style={{marginTop:16, padding:"10px 14px", background:"var(--ink)", borderLeft:"2px solid var(--border)", fontSize:10, color:"var(--muted)"}}>
+      <div style={{marginTop:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"2px solid var(--border)", fontSize:10, color:"var(--muted)"}}>
         💡 Walk-up songs change every season. This is our historical celebration of the greatest songs across the eras. For today\'s current songs, visit PlateMusic above.
       </div>
     </div>
@@ -9212,7 +9212,7 @@ function BirthdaysTab() {
         </div>
       )}
 
-      <div style={{marginTop:20, padding:"10px 14px", background:"var(--ink)", borderLeft:"2px solid var(--border)", fontSize:10, color:"var(--muted)"}}>
+      <div style={{marginTop:20, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"2px solid var(--border)", fontSize:10, color:"var(--muted)"}}>
         🎂 {ALL_BIRTHDAYS.length} NY sports birthdays in our database · Refreshes automatically each day
       </div>
     </div>
@@ -9657,7 +9657,7 @@ function ScrambleGame({ myTeams }) {
       {/* Scrambled tile pool (click mode) */}
       {mode === "click" && result === null && (
         <div style={{display:"flex", gap:6, justifyContent:"center", flexWrap:"wrap", marginBottom:16,
-          padding:"12px", background:"var(--ink)", border:"1px solid var(--border)", minHeight:64}}>
+          padding:"12px", background:"var(--bg-content)", border:"1px solid var(--border)", minHeight:64}}>
           {scrambled.map((letter, i) => {
             const isUsed = !available.includes(i);
             return (
@@ -9697,7 +9697,7 @@ function ScrambleGame({ myTeams }) {
             onKeyDown={e => e.key==="Enter" && handleTypedGuess()}
             placeholder="Type your answer..."
             autoFocus
-            style={{padding:"10px 14px", background:"var(--ink)", border:"1px solid var(--muted)",
+            style={{padding:"10px 14px", background:"var(--bg-content)", border:"1px solid var(--muted)",
               color:"var(--ink)", fontSize:16, fontFamily:"'Georgia',serif",
               letterSpacing:"0.15em", outline:"none", minWidth:180}}
           />
@@ -10218,7 +10218,7 @@ function PlayroomCrossword() {
               onClick={() => { setActiveRow(i); setTimeout(() => inputRefs.current[i]?.focus(), 0); }}
               style={{
                 display:"flex", gap:8, alignItems:"center", padding:"7px 10px",
-                background: isCorrect?"var(--success-bg)":isWrong?"var(--alert-bg)":isActive?"var(--border)":i%2===0?"var(--ink)":"var(--bg-content)",
+                background: isCorrect?"var(--success-bg)":isWrong?"var(--alert-bg)":isActive?"var(--border)":i%2===0?"var(--bg-page)":"var(--bg-content)",
                 border: isActive?"1px solid var(--accent-red)":"1px solid transparent",
                 borderLeft: isCorrect?"3px solid #22c55e":isWrong?"3px solid var(--accent-red)":isActive?"3px solid var(--accent-red)":"3px solid var(--muted)",
                 cursor:"pointer",
@@ -10346,7 +10346,7 @@ function GuessThePlayer() {
   return (
     <div style={{maxWidth:560}}>
       <div style={{display:"flex", gap:16, marginBottom:16, padding:"8px 14px",
-        background:"var(--ink)", border:"1px solid var(--border)", flexWrap:"wrap", alignItems:"center"}}>
+        background:"var(--bg-content)", border:"1px solid var(--border)", flexWrap:"wrap", alignItems:"center"}}>
         <span style={{fontSize:10, color:"var(--muted)"}}>Score: <strong style={{color:"var(--ink)"}}>{score}/{total}</strong></span>
         <span style={{fontSize:10, color:"var(--muted)"}}>Streak: <strong style={{color:streak>2?"#f0b429":"var(--ink)"}}>{streak} 🔥</strong></span>
         <span style={{fontSize:10, color:"var(--muted)"}}>Best: <strong style={{color:"var(--accent-red)"}}>{bestStreak}</strong></span>
@@ -10595,7 +10595,7 @@ function StatGuesser() {
   return (
     <div style={{maxWidth:560}}>
       <div style={{display:"flex", gap:16, marginBottom:16, padding:"8px 14px",
-        background:"var(--ink)", border:"1px solid var(--border)", flexWrap:"wrap", alignItems:"center"}}>
+        background:"var(--bg-content)", border:"1px solid var(--border)", flexWrap:"wrap", alignItems:"center"}}>
         <span style={{fontSize:10, color:"var(--muted)"}}>Score: <strong style={{color:"var(--ink)"}}>{score}/{total}</strong></span>
         <span style={{fontSize:10, color:"var(--muted)"}}>Streak: <strong style={{color:streak>2?"#f0b429":"var(--ink)"}}>{streak} 🔥</strong></span>
         <button onClick={() => { usedRef.current.clear(); setScore(0); setTotal(0); setStreak(0); next(); }}
@@ -11758,7 +11758,7 @@ function GloryDaysTab({ myTeams }) {
             return (
               <div key={c.year} onClick={() => setSpotlight(idx)}
                 style={{
-                  background:"var(--ink)", border:"1px solid #1f1f1f",
+                  background:"var(--bg-content)", border:"1px solid #1f1f1f",
                   borderLeft:`3px solid ${c.color}`,
                   padding:"12px 14px", cursor:"pointer",
                   transition:"all 0.15s", position:"relative",
@@ -11797,7 +11797,7 @@ function GloryDaysTab({ myTeams }) {
         <div style={{fontSize:10, color:"var(--muted)", letterSpacing:"0.18em",
           textTransform:"uppercase", marginBottom:16}}>NY Sports Championships — The Complete Record</div>
         <div style={{display:"inline-flex", alignItems:"center", gap:12,
-          background:"var(--ink)", border:"1px solid #1f1f1f", padding:"8px 20px"}}>
+          background:"var(--bg-content)", border:"1px solid #1f1f1f", padding:"8px 20px"}}>
           <span style={{fontFamily:"'Georgia',serif", fontSize:32, fontWeight:900,
             color:"#f0b429", lineHeight:1}}>{NY_CHAMPIONSHIPS.length}</span>
           <span style={{fontSize:9, fontWeight:700, letterSpacing:"0.15em",
@@ -11830,7 +11830,7 @@ function GloryDaysTab({ myTeams }) {
       {/* ── CONTROLS ── */}
       <div style={{display:"flex", gap:6, flexWrap:"wrap", padding:"12px 16px",
         borderBottom:"1px solid var(--border)", alignItems:"center",
-        position:"sticky", top:0, zIndex:50, background:"var(--ink)"}}>
+        position:"sticky", top:0, zIndex:50, background:"var(--bg-content)"}}>
 
         <span style={{fontSize:9, fontWeight:900, color:"var(--muted)", letterSpacing:"0.18em",
           textTransform:"uppercase"}}>VIEW:</span>
@@ -11873,7 +11873,7 @@ function GloryDaysTab({ myTeams }) {
           style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.88)",
             zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center",
             padding:"20px"}}>
-          <div style={{background:"var(--ink)", border:"1px solid var(--border)",
+          <div style={{background:"var(--bg-content)", border:"1px solid var(--border)",
             maxWidth:520, width:"100%", position:"relative",
             animation:"none"}}
             onClick={e => e.stopPropagation()}>
@@ -12091,7 +12091,7 @@ function LastNightScores({ myTeams }) {
   };
 
   return (
-    <div style={{background:"var(--ink)", border:"1px solid var(--border)",
+    <div style={{background:"var(--bg-content)", border:"1px solid var(--border)",
       borderTop:"2px solid var(--border)", marginBottom:8}}>
       <div style={{display:"flex", alignItems:"center", gap:8,
         padding:"8px 12px", borderBottom:"1px solid var(--border)", background:"var(--bg-content)"}}>
@@ -12121,7 +12121,7 @@ function LastNightScores({ myTeams }) {
             <div key={g.id} style={{
               borderBottom:"1px solid var(--border)",
               borderLeft: g.myTeam ? "3px solid #f0b429" : "3px solid transparent",
-              background: g.myTeam ? "rgba(240,180,41,0.04)" : i%2===0?"var(--ink)":"var(--bg-content)",
+              background: g.myTeam ? "rgba(240,180,41,0.04)" : i%2===0?"var(--bg-page)":"var(--bg-content)",
             }}>
               {/* Score row */}
               <div onClick={() => setExpanded(prev => prev===g.id ? null : g.id)}
@@ -12379,7 +12379,7 @@ function LegendsCorner({ myTeams }) {
 
   return (
     <div style={{
-      background:"var(--ink)", borderTop:"2px solid var(--accent-red)",
+      background:"var(--bg-content)", borderTop:"2px solid var(--accent-red)",
       border:`1px solid ${isFav?"#f0b42944":"var(--border)"}`,
       borderLeft: isFav ? "3px solid #f0b429" : "1px solid var(--border)",
       padding:"12px 14px", height:"100%",
@@ -12467,7 +12467,7 @@ function EnhancedOTD() {
     setSpotlight(todayEvents[Math.floor(Math.random()*todayEvents.length)]);
   }
   return (
-    <div style={{background:"var(--ink)", border:"1px solid var(--border)", borderLeft:"3px solid #f0b429"}}>
+    <div style={{background:"var(--bg-content)", border:"1px solid var(--border)", borderLeft:"3px solid #f0b429"}}>
       <div style={{display:"flex", alignItems:"center", gap:10, padding:"8px 12px",
         borderBottom:"1px solid var(--border)", background:"rgba(240,180,41,0.04)"}}>
         <div style={{background:"#f0b429", color:"#000", padding:"3px 8px",
@@ -12541,7 +12541,7 @@ function EnhancedOTD() {
           style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.85)",
             zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20}}>
           <div onClick={e=>e.stopPropagation()}
-            style={{background:"var(--ink)", border:"1px solid var(--border)",
+            style={{background:"var(--bg-content)", border:"1px solid var(--border)",
               maxWidth:480, width:"100%", padding:"20px 22px", position:"relative"}}>
             <button onClick={() => setSpotlight(null)}
               style={{position:"absolute", top:8, right:8, background:"transparent",
@@ -12822,7 +12822,7 @@ function NYPlayoffWidget({ myTeams }) {
   }
 
   return (
-    <div style={{background:"var(--ink)", border:"1px solid var(--border)",
+    <div style={{background:"var(--bg-content)", border:"1px solid var(--border)",
       borderTop:"2px solid var(--accent-red)", marginBottom:8}}>
       {/* Header */}
       <div style={{display:"flex", alignItems:"center", gap:8, padding:"7px 12px",
@@ -13010,7 +13010,7 @@ function DigestSignup() {
               value={name}
               onChange={e => setName(e.target.value)}
               style={{flex:"1 1 160px", padding:"8px 12px",
-                background:"var(--ink)", border:"1px solid var(--border)",
+                background:"var(--bg-content)", border:"1px solid var(--border)",
                 color:"var(--ink)", fontSize:12, fontFamily:"'Georgia',serif",
                 outline:"none"}}
             />
@@ -13021,7 +13021,7 @@ function DigestSignup() {
               onChange={e => setEmail(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleSubmit()}
               style={{flex:"2 1 200px", padding:"8px 12px",
-                background:"var(--ink)", border:"1px solid var(--border)",
+                background:"var(--bg-content)", border:"1px solid var(--border)",
                 color:"var(--ink)", fontSize:12, fontFamily:"'Georgia',serif",
                 outline:"none"}}
             />
@@ -13400,7 +13400,7 @@ const styles = {
   newsFeaturedTitle: {
     margin: "0 0 10px", fontSize: "clamp(16px, 2.5vw, 21px)",
     fontWeight: 900, lineHeight: 1.25, letterSpacing: "-0.01em",
-    color: "var(--bg-card)", fontFamily: "'Georgia', serif",
+    color: "var(--ink)", fontFamily: "'Georgia', serif",
   },
   newsFeaturedDesc: {
     margin: "0 0 12px", fontSize: 13, lineHeight: 1.65, color: "var(--muted)",
@@ -13796,7 +13796,7 @@ const styles = {
   },
   schRow: {
     display:"flex", alignItems:"center", gap:10,
-    background:"var(--ink)", border:"1px solid var(--border)",
+    background:"var(--bg-content)", border:"1px solid var(--border)",
     padding:"10px 12px", flexWrap:"wrap",
   },
   schTeamBadge: { display:"flex", flexDirection:"column", alignItems:"center", gap:2, minWidth:54, flexShrink:0 },
@@ -13812,7 +13812,7 @@ const styles = {
 
   gameInfoBar: {
     display:"flex", gap:12, flexWrap:"wrap", padding:"6px 10px",
-    background:"var(--ink)", fontSize:9, color:"var(--muted)", marginBottom:8,
+    background:"var(--bg-content)", fontSize:9, color:"var(--muted)", marginBottom:8,
     borderBottom:"1px solid var(--border)",
   },
   scoringSummary: { marginBottom: 12, border:"1px solid var(--border)", overflow:"hidden" },
@@ -14213,7 +14213,7 @@ const styles = {
   },
   tvRow: {
     display: "flex", gap: 12, alignItems: "center",
-    background: "var(--ink)", border: "1px solid #1e1e1e",
+    background:"var(--bg-content)", border: "1px solid #1e1e1e",
     padding: "12px 14px", flexWrap: "wrap",
     transition: "border-color 0.15s",
   },
@@ -14318,7 +14318,7 @@ const styles = {
     cursor: "pointer", border: "1px solid var(--muted)",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
-  xwCellBlack: { background: "var(--ink)", border: "1px solid var(--ink)", cursor: "default" },
+  xwCellBlack: { background:"var(--bg-content)", border: "1px solid var(--ink)", cursor: "default" },
   xwCellNum: {
     position: "absolute", top: 1, left: 2,
     fontSize: "clamp(5px, 1.5vw, 7px)", fontWeight: 900, color: "var(--muted)", lineHeight: 1, zIndex: 1,
