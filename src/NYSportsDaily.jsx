@@ -2579,7 +2579,7 @@ function GoogleNewsSection({ team }) {
           <a key={i} href={item.link} target="_blank" rel="noopener noreferrer"
             style={{display:"flex", justifyContent:"space-between", alignItems:"center",
               padding:"8px 10px", borderBottom:"1px solid var(--border)", textDecoration:"none",
-              background: i%2===0 ? "var(--bg-content)" : "var(--ink)",
+              background: i%2===0 ? "var(--bg-content)" : "var(--bg-content)",
               gap:10}}>
             <span style={{fontSize:12, color:"var(--ink)", fontFamily:"'Georgia',serif", lineHeight:1.3, flex:1}}>
               {item.title}
@@ -3157,27 +3157,34 @@ function dateLabel(date) {
 
 function LookAhead({ schedule, darkMode }) {
   const today = new Date(); today.setHours(0,0,0,0);
-  const windowEnd = new Date(today); windowEnd.setDate(windowEnd.getDate() + 3); windowEnd.setHours(23,59,59,999);
+  const farOut = new Date(today); farOut.setDate(farOut.getDate() + 14); // sane outer bound only
 
   // De-dupe: fetchNYSchedule returns one entry per NY team, so a Rangers-Islanders
   // game would otherwise appear twice. Key on date+matchup to collapse that.
   const seen = new Set();
-  const upcoming = (schedule || []).filter(g => {
-    if (!g.date || g.date < today || g.date > windowEnd) return false;
+  const allUpcoming = (schedule || []).filter(g => {
+    if (!g.date || g.date < today || g.date > farOut) return false;
     const key = `${g.date.toDateString()}|${g.homeTeam}|${g.awayTeam}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
-  }).sort((a,b) => a.date - b.date).slice(0, 8);
+  }).sort((a,b) => a.date - b.date);
 
-  if (upcoming.length === 0) return null;
+  if (allUpcoming.length === 0) return null;
+
+  // Collapse to just the single next calendar day that actually has games —
+  // keeps this short (a handful of games) instead of a long multi-day list.
+  const nextDateKey = allUpcoming[0].date.toDateString();
+  const upcoming = allUpcoming.filter(g => g.date.toDateString() === nextDateKey);
+  const headerLabel = upcoming[0].date.toLocaleDateString("en-US",
+    { weekday:"long", month:"long", day:"numeric", timeZone:"America/New_York" });
 
   return (
     <div style={{marginBottom:16}}>
       <div style={{background:"#1a1a1a", color:"#f4f1ea",
         fontFamily:"Arial,sans-serif", fontSize:11, fontWeight:700,
         letterSpacing:"0.1em", padding:"9px 16px"}}>
-        A LOOK AHEAD — NEXT 3 DAYS
+        A LOOK AHEAD — {headerLabel.toUpperCase()}
       </div>
       {upcoming.map((g, i) => {
         const overrideKey = `${g.date.toISOString().slice(0,10)}|${g.homeTeam}|${g.awayTeam}`;
@@ -4730,16 +4737,16 @@ function RecapTab({ scores }) {
               <div key={i} style={{marginBottom:4, border:"1px solid var(--border)", borderRadius:3, overflow:"hidden"}}>
                 {/* Score row */}
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between",
-                  padding:"10px 14px", background: i%2===0 ? "var(--bg-content)" : "var(--ink)", flexWrap:"wrap", gap:8}}>
+                  padding:"10px 14px", background: i%2===0 ? "var(--bg-content)" : "var(--bg-content)", flexWrap:"wrap", gap:8}}>
                   <div style={{display:"flex", alignItems:"center", gap:10, flex:1, minWidth:200}}>
                     <span style={{fontSize:9, color:"var(--accent-red)", fontWeight:900, letterSpacing:"0.1em"}}>{g.sport}</span>
-                    <span style={{fontSize:13, fontWeight: awayWin?900:400, color: awayWin?"#fff":"var(--muted)",
+                    <span style={{fontSize:13, fontWeight: awayWin?900:400, color: awayWin?"var(--ink)":"var(--muted)",
                       fontFamily:"'Georgia',serif"}}>{g.awayTeam}</span>
-                    <span style={{fontSize:16, fontWeight:900, color:"#fff", minWidth:70, textAlign:"center",
+                    <span style={{fontSize:16, fontWeight:900, color:"var(--ink)", minWidth:70, textAlign:"center",
                       fontFamily:"'Georgia',serif", letterSpacing:"0.05em"}}>
                       {g.awayScore ?? "—"} – {g.homeScore ?? "—"}
                     </span>
-                    <span style={{fontSize:13, fontWeight: homeWin?900:400, color: homeWin?"#fff":"var(--muted)",
+                    <span style={{fontSize:13, fontWeight: homeWin?900:400, color: homeWin?"var(--ink)":"var(--muted)",
                       fontFamily:"'Georgia',serif"}}>{g.homeTeam}</span>
                     {g.statusDesc && <span style={{fontSize:9, color:"var(--muted)"}}>{g.statusDesc}</span>}
                   </div>
@@ -4803,7 +4810,7 @@ function RecapTab({ scores }) {
                           {bs.playerStats.slice(0,6).map((p,j) => (
                             <div key={j} style={{fontSize:10, color:"var(--muted)", background:"var(--bg-content)",
                               padding:"4px 8px", borderRadius:2, border:"1px solid var(--border)"}}>
-                              <span style={{color:"#fff", fontWeight:700}}>{p.name}</span>
+                              <span style={{color:"var(--ink)", fontWeight:700}}>{p.name}</span>
                               <span style={{color:"var(--muted)", marginLeft:4}}>{p.team}</span>
                               <span style={{color:"var(--accent-red)", marginLeft:4}}>{p.stat}</span>
                             </div>
@@ -4867,7 +4874,7 @@ function RecapTab({ scores }) {
         return tmrGames.map((g,i) => (
           <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between",
             padding:"10px 14px", borderBottom:"1px solid var(--border)",
-            background: i%2===0?"var(--bg-content)":"var(--ink)", flexWrap:"wrap", gap:8}}>
+            background: i%2===0?"var(--bg-content)":"var(--bg-content)", flexWrap:"wrap", gap:8}}>
             <div style={{display:"flex", alignItems:"center", gap:10}}>
               <span style={{fontSize:9, color:"var(--accent-red)", fontWeight:900}}>{g.sport}</span>
               <span style={{fontSize:13, color:"var(--ink)", fontFamily:"'Georgia',serif"}}>{g.awayTeam} @ {g.homeTeam}</span>
@@ -6810,7 +6817,7 @@ function StatsTab() {
                   target="_blank" rel="noopener noreferrer"
                   style={{display:"flex", alignItems:"flex-start", gap:10, padding:"9px 14px",
                     borderBottom:"1px solid var(--border)",
-                    background: p.year >= 2025 ? "#0a1a0a" : i%2===0 ? "var(--bg-content)" : "var(--ink)",
+                    background: p.year >= 2025 ? "#0a1a0a" : i%2===0 ? "var(--bg-content)" : "var(--bg-content)",
                     borderLeft: p.year >= 2025 ? "3px solid #22c55e" : p.year >= 2020 ? "3px solid #f59e0b" : "3px solid transparent",
                     textDecoration:"none"}}>
                   <span style={{fontSize:11, color:"var(--accent-red)", fontWeight:900, flexShrink:0, minWidth:36}}>{p.year}</span>
@@ -6841,9 +6848,9 @@ function StatsTab() {
               target="_blank" rel="noopener noreferrer"
               style={{...styles.rivalRow, ...(i%2===0?{}:{background:"var(--bg-content)"}), textDecoration:"none", display:"block", padding:"12px 14px", borderBottom:"1px solid var(--border)"}}>
               <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:6, flexWrap:"wrap"}}>
-                <span style={{fontSize:13, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{r.team1}</span>
+                <span style={{fontSize:13, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif"}}>{r.team1}</span>
                 <span style={{fontSize:10, color:"var(--accent-red)", fontWeight:900}}>vs</span>
-                <span style={{fontSize:13, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{r.team2}</span>
+                <span style={{fontSize:13, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif"}}>{r.team2}</span>
                 <span style={{fontSize:9, color:"var(--muted)", letterSpacing:"0.1em"}}>[{r.sport}]</span>
                 {r.wins && <span style={{fontSize:10, color:"var(--muted)", marginLeft:"auto"}}>{r.wins}</span>}
               </div>
@@ -7433,14 +7440,14 @@ function StandingsTab({ standings, loading }) {
   function TeamRow({ team, rank }) {
     const pct = parseFloat(team.pct) || (team.w+team.l>0 ? team.w/(team.w+team.l) : 0);
     const bar = Math.min(100, Math.round(pct*100));
-    const rec = sport==="NHL" ? `${team.w}W·${team.pts}pts` : `${team.w}–${team.l}`;
+    const rec = sport==="NHL" ? `${team.w}-${team.l}·${team.pts}pts` : `${team.w}–${team.l}`;
     const bdColor = team.divLeader ? "#3b82f6" : team.inPlayoffs ? "#22c55e" : "transparent";
     return (
       <div style={{
         display:"flex", alignItems:"center", gap:8, padding:"9px 14px",
-        background: team.isNY ? "#0b180b" : rank%2===0 ? "var(--ink)" : "var(--bg-content)",
+        background: team.isNY ? "#0b180b" : rank%2===0 ? "var(--bg-page)" : "var(--bg-content)",
         borderLeft:`4px solid ${bdColor}`,
-        borderBottom:"1px solid #1c1c1c",
+        borderBottom:"1px solid var(--border)",
       }}>
         <span style={{fontSize:10, color:"var(--muted)", minWidth:20, textAlign:"right", flexShrink:0}}>{rank}</span>
         {team.logo
@@ -7460,7 +7467,7 @@ function StandingsTab({ standings, loading }) {
           <div style={{height:"100%",width:`${bar}%`,
             background:team.divLeader?"#3b82f6":team.inPlayoffs?"#22c55e":"var(--muted)",borderRadius:2}}/>
         </div>
-        <span style={{fontSize:12,fontWeight:700,color:"#e8e8e8",minWidth:60,textAlign:"right",
+        <span style={{fontSize:12,fontWeight:700,color:"var(--ink)",minWidth:60,textAlign:"right",
           fontFamily:"'Georgia',serif",whiteSpace:"nowrap",flexShrink:0}}>
           {rec}
         </span>
@@ -7504,11 +7511,11 @@ function StandingsTab({ standings, loading }) {
                 {t.logo && <img src={t.logo} alt="" style={{width:28,height:28,objectFit:"contain"}}
                   onError={e=>e.target.style.display="none"}/>}
                 <div>
-                  <div style={{fontSize:13,fontWeight:900,color:"#fff",fontFamily:"'Georgia',serif"}}>
+                  <div style={{fontSize:13,fontWeight:900,color:"var(--ink)",fontFamily:"'Georgia',serif"}}>
                     {t.name}
                   </div>
                   <div style={{fontSize:10,color:"var(--muted)"}}>
-                    {sport==="NHL"?`${t.w}W · ${t.pts}pts`:`${t.w}–${t.l}`} · {t.div}
+                    {sport==="NHL"?`${t.w}-${t.l} · ${t.pts}pts`:`${t.w}–${t.l}`} · {t.div}
                   </div>
                 </div>
                 <div style={{textAlign:"right",marginLeft:4}}>
@@ -7567,7 +7574,7 @@ function StandingsTab({ standings, loading }) {
         <span style={{flex:1,fontSize:9,color:"var(--muted)",letterSpacing:"0.1em"}}>TEAM</span>
         <span style={{width:40,flexShrink:0}}/>
         <span style={{fontSize:9,color:"var(--muted)",minWidth:60,textAlign:"right"}}>
-          {sport==="NHL"?"W–PTS":"W–L"}
+          {sport==="NHL"?"W-L·PTS":"W–L"}
         </span>
         <span style={{fontSize:9,color:"var(--muted)",minWidth:44,textAlign:"right"}}>GB</span>
         <span style={{fontSize:9,color:"var(--muted)",minWidth:44,textAlign:"center"}}>POS</span>
@@ -8500,7 +8507,7 @@ function WordSearchTab() {
                 <div key={w} style={{
                   display:"flex", alignItems:"center", gap:8,
                   padding:"5px 10px",
-                  background: isFound ? `${color}22` : "var(--ink)",
+                  background: isFound ? `${color}22` : "var(--bg-content)",
                   borderLeft:`3px solid ${isFound ? color : "var(--muted)"}`,
                   borderRadius:2,
                 }}>
@@ -8612,11 +8619,11 @@ function SongsTab() {
         return (
           <div key={i} style={{display:"flex", gap:12, padding:"12px 14px",
             borderBottom:"1px solid var(--border)",
-            background: isActive ? "#0a120a" : i%2===0 ? "var(--bg-content)" : "var(--ink)",
+            background: isActive ? "#0a120a" : i%2===0 ? "var(--bg-content)" : "var(--bg-content)",
             borderLeft: isActive ? "3px solid #22c55e" : "3px solid transparent"}}>
             <div style={{flex:1, minWidth:0}}>
               <div style={{display:"flex", alignItems:"baseline", gap:8, flexWrap:"wrap", marginBottom:3}}>
-                <span style={{fontSize:13, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                <span style={{fontSize:13, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif"}}>{s.player}</span>
                 <span style={{fontSize:9, color:"var(--muted)", letterSpacing:"0.08em"}}>{s.era}</span>
                 {isActive && <span style={{fontSize:9, color:"#22c55e", fontWeight:900}}>ACTIVE</span>}
               </div>
@@ -9187,7 +9194,7 @@ function BirthdaysTab() {
                 href={`https://www.google.com/search?q=${encodeURIComponent(b.name+" "+b.team+" sports")}`}
                 target="_blank" rel="noopener noreferrer"
                 style={{display:"flex", alignItems:"flex-start", gap:14, padding:"14px 16px",
-                  borderBottom:"1px solid var(--border)", background: i%2===0?"var(--bg-content)":"var(--ink)",
+                  borderBottom:"1px solid var(--border)", background: i%2===0?"var(--bg-content)":"var(--bg-content)",
                   borderLeft:`4px solid ${color}`, textDecoration:"none", marginBottom:4}}>
                 <div style={{flexShrink:0, width:52, height:52, borderRadius:"50%",
                   background:`${color}22`, border:`2px solid ${color}44`,
@@ -9198,7 +9205,7 @@ function BirthdaysTab() {
                 </div>
                 <div style={{flex:1, minWidth:0}}>
                   <div style={{display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:4}}>
-                    <span style={{fontSize:16, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{b.name}</span>
+                    <span style={{fontSize:16, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif"}}>{b.name}</span>
                     <span style={{fontSize:9, padding:"2px 7px", background:`${color}22`, color,
                       fontWeight:900, letterSpacing:"0.1em", borderRadius:2}}>{b.team}</span>
                     <span style={{fontSize:9, color:"var(--muted)"}}>[{b.sport}]</span>
@@ -9641,7 +9648,7 @@ function ScrambleGame({ myTeams }) {
             style={{
               width:42, height:48,
               border:`2px solid ${letter ? (result==="correct"?"#22c55e":result==="wrong"?"var(--accent-red)":"var(--muted)") : "var(--muted)"}`,
-              background: letter ? (result==="correct"?"var(--success-bg)":result==="wrong"?"#2a0d0d":"var(--border)") : "var(--ink)",
+              background: letter ? (result==="correct"?"var(--success-bg)":result==="wrong"?"#2a0d0d":"var(--border)") : "var(--bg-content)",
               display:"flex", alignItems:"center", justifyContent:"center",
               fontSize:20, fontWeight:900, color: result==="correct"?"#4ade80":result==="wrong"?"#f87171":"var(--ink)",
               fontFamily:"'Georgia',serif",
@@ -10237,7 +10244,7 @@ function PlayroomCrossword() {
                     <div key={ci} style={{
                       width:22,height:26,
                       border:`1px solid ${correct&&letter?"#22c55e":isWrong&&letter&&letter!==entry.answer[ci]?"var(--accent-red)":isActive?"var(--muted)":"var(--muted)"}`,
-                      background:correct&&letter?"var(--success-bg)":"var(--ink)",
+                      background:correct&&letter?"var(--success-bg)":"var(--bg-content)",
                       display:"flex",alignItems:"center",justifyContent:"center",
                       fontSize:13,fontWeight:900,
                       color:correct&&letter?"#4ade80":"var(--ink)",
@@ -11714,7 +11721,7 @@ function GloryDaysTab({ myTeams }) {
                         style={{
                           display:"flex", alignItems:"center", gap:5,
                           padding:"6px 10px",
-                          background: c.iconic ? "rgba(200,32,28,0.08)" : "var(--ink)",
+                          background: c.iconic ? "rgba(200,32,28,0.08)" : "var(--bg-content)",
                           border: `1px solid ${c.iconic ? "var(--accent-red)44" : "var(--border)"}`,
                           borderLeft: `3px solid ${c.color}`,
                           color:"var(--muted)", cursor:"pointer", fontSize:12,
@@ -12783,7 +12790,7 @@ function NYPlayoffWidget({ myTeams }) {
 
   function RecRow({ t, showSeed }) {
     const rec = sport==="nhl" && t.pts > 0
-      ? `${t.w}W · ${t.pts}pts`
+      ? `${t.w}-${t.l} · ${t.pts}pts`
       : `${t.w}–${t.l}`;
     const gbDisplay = t.inPO
       ? "✓ IN"
@@ -13992,7 +13999,7 @@ const styles = {
     fontSize:11, fontWeight:700, textAlign:"left", position:"relative", overflow:"hidden",
     transition:"border-color 0.15s",
   },
-  pollOptionVoted: { border:"1px solid var(--accent-red)", color:"#fff" },
+  pollOptionVoted: { border:"1px solid var(--accent-red)", color:"var(--ink)" },
   pollOptionDisabled: { color:"var(--muted)" },
   pollBar: { position:"absolute", left:0, top:0, bottom:0, opacity:0.2, transition:"width 0.4s" },
   pollOptionText: { position:"relative", zIndex:1, flex:1 },
