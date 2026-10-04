@@ -245,8 +245,8 @@ async function fetchESPNScores(date) {
           awayTeam: away.team?.displayName || "Away",
           homeScore: home.score ?? "-",
           awayScore: away.score ?? "-",
-          homeColor: home.team?.color ? `#${home.team.color}` : "#333",
-          awayColor: away.team?.color ? `#${away.team.color}` : "#333",
+          homeColor: home.team?.color ? `#${home.team.color}` : "var(--muted)",
+          awayColor: away.team?.color ? `#${away.team.color}` : "var(--muted)",
           homeLogo: home.team?.logo,
           awayLogo: away.team?.logo,
           statusState: status?.state,
@@ -1186,6 +1186,7 @@ export default function NYSportsDaily() {
 
   const [isMobile, setIsMobile]           = useState(() => typeof window !== "undefined" && window.innerWidth < 680);
   const [drawerOpen, setDrawerOpen]       = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen]   = useState(false);
   const [searchOpen, setSearchOpen]       = useState(false);
   const [searchQuery, setSearchQuery]     = useState("");
   const days = getLast7Days();
@@ -1279,16 +1280,25 @@ export default function NYSportsDaily() {
   return (
     <MyTeamsCtx.Provider value={myTeams}>
     <DarkModeCtx.Provider value={darkMode}>
-    <div style={{
-      ...styles.root,
-      ...(darkMode ? {
-        background: "#141618",
-        color: "#f0ece4",
-      } : {
-        background: "#f4f2ee",
-        color: "#111111",
-      })
-    }}>
+    <div data-theme={darkMode ? "dark" : "light"} style={styles.root}>
+      {/* THEME VARIABLES — single source of truth for both palettes.
+          Everything in `styles` and inline below reads these via var(),
+          so the dark/light toggle works across all components with no
+          prop-threading needed — the cascade handles it. */}
+      <style>{`
+        [data-theme="dark"] {
+          --bg-page: #141618; --bg-content: #1a1c1f; --bg-card: #1e2124;
+          --border: #2e343a; --ink: #e8e0d0; --muted: #888;
+          --accent-red: #c8201c; --success-bg: #0d2a1a; --alert-bg: #1a0d0d;
+          --gold-active-bg: #1a1600;
+        }
+        [data-theme="light"] {
+          --bg-page: #f4f1ea; --bg-content: #fdfcf9; --bg-card: #ffffff;
+          --border: #e3ddd0; --ink: #1a1a1a; --muted: #6b6257;
+          --accent-red: #b31b1b; --success-bg: #eafaf0; --alert-bg: #fdecec;
+          --gold-active-bg: #fff9e6;
+        }
+      `}</style>
       {/* NOISE TEXTURE OVERLAY */}
       <div style={styles.noise} />
 
@@ -1297,21 +1307,12 @@ export default function NYSportsDaily() {
         <div style={styles.mastheadTop}>
           <span style={styles.mastheadKicker}>EST. 2026 · ALL NEW YORK · ALL THE TIME</span>
           <div style={{display:"flex", gap:12, alignItems:"center"}}>
-            <a href="https://www.instagram.com/nysportsdaily_com/" target="_blank" rel="noopener noreferrer"
-              style={{fontSize:9, color:"#888", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
-              📸 INSTAGRAM
-            </a>
-            <a href="https://www.amazon.com/s?k=new+york+sports&tag=nysportsdaily-20" target="_blank" rel="noopener noreferrer"
-              title="As an Amazon Associate, NY Sports Daily earns from qualifying purchases."
-              style={{fontSize:9, color:"#888", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
-              🛒 AMAZON
-            </a>
             <a href="https://buymeacoffee.com/mhughes65v" target="_blank" rel="noopener noreferrer"
-              style={{fontSize:9, color:"#888", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
-              ☕ TIP JAR
+              style={{fontSize:9, color:"var(--muted)", textDecoration:"none", letterSpacing:"0.1em", fontWeight:700}}>
+              💿 BUY ME A RECORD
             </a>
             <button onClick={() => setDarkMode(d => !d)}
-              style={{fontSize:9, color:"#888", background:"none", border:"none", cursor:"pointer", letterSpacing:"0.1em", fontWeight:700, padding:0}}>
+              style={{fontSize:9, color:"var(--muted)", background:"none", border:"none", cursor:"pointer", letterSpacing:"0.1em", fontWeight:700, padding:0}}>
               {darkMode ? "☀ LIGHT" : "🌙 DARK"}
             </button>
             <span style={styles.mastheadKicker}>{new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"}).toUpperCase()}</span>
@@ -1322,21 +1323,21 @@ export default function NYSportsDaily() {
           <div style={{display:"flex", alignItems:"center", justifyContent:"space-between",
             padding:"6px 10px 0", gap:8}}>
             <button onClick={() => setDrawerOpen(true)}
-              style={{background:"none", border:"1px solid #2a2a2a", color:"#888",
+              style={{background:"none", border:"1px solid var(--border)", color:"var(--muted)",
                 padding:"5px 9px", cursor:"pointer", fontSize:16, lineHeight:1, flexShrink:0}}>
               ☰
             </button>
             <h1 style={{fontFamily:"'Georgia','Times New Roman',serif", fontSize:20,
               fontWeight:900, margin:0, flex:1, textAlign:"center",
-              textShadow:"1px 1px 0 #c8201c", color:"#e8e0d0", letterSpacing:"-0.01em"}}>
-              NY<span style={{color:"#c8201c"}}> SPORTS</span>
-              <span style={{fontWeight:300, color:"#aaa"}}> DAILY</span>
+              textShadow:"1px 1px 0 var(--accent-red)", color:"var(--ink)", letterSpacing:"-0.01em"}}>
+              NY<span style={{color:"var(--accent-red)"}}> SPORTS</span>
+              <span style={{fontWeight:300, color:"var(--muted)"}}> DAILY</span>
             </h1>
             <div style={{display:"flex", gap:10, alignItems:"center", flexShrink:0}}>
               <a href="https://www.instagram.com/nysportsdaily_com/" target="_blank" rel="noopener noreferrer"
                 style={{fontSize:16, textDecoration:"none"}}>📸</a>
               <button onClick={() => setDarkMode(d => !d)}
-                style={{background:"none", border:"none", color:"#888",
+                style={{background:"none", border:"none", color:"var(--muted)",
                   cursor:"pointer", fontSize:14, padding:0}}>
                 {darkMode ? "☀" : "🌙"}
               </button>
@@ -1415,60 +1416,85 @@ export default function NYSportsDaily() {
       <main style={{...styles.main, paddingBottom: isMobile ? 80 : 40}}>
 
         {/* TAB NAV — Primary (desktop only) */}
-        {!isMobile && <div style={styles.tabNav}>
+        {!isMobile && <div style={{...styles.tabNav, position:"relative"}}>
           {["SCORES","TV","STANDINGS","SCHEDULE","RECAP","NEWS","RADIO","SHOP"].map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}),
-                ...(tab==="SHOP" ? {marginLeft:"auto", color:"#c8201c"} : {})}}>
+                ...(tab==="SHOP" ? {color:"var(--accent-red)"} : {})}}>
               {tab === "SHOP" ? "🛒 SHOP" : tab}
             </button>
           ))}
-        </div>}
-        {/* TAB NAV — Secondary */}
-        {!isMobile && <div style={{...styles.tabNav, marginTop:0, borderBottom:"2px solid #2e343a", marginBottom:16, background:"#141618", padding:"0 0 0 0"}}>
-          {["STATS","HISTORY","THIS DATE","NY EVENTS","HOF","AWARDS","FORGOTTEN","POLLS","MISERY","DEEPDIVE","QUICKID","GLORY","PLAYROOM"].map(tab => {
-            const isPlayroom = tab === "PLAYROOM";
-            const isGlory    = tab === "GLORY";
-            const isActive   = activeTab === tab;
-            const isSpecial  = isPlayroom || isGlory;
-            return (
-              <button key={tab} onClick={() => setActiveTab(tab)}
-                style={{
-                  ...styles.tabBtn,
-                  fontSize:9, padding:"7px 10px",
-                  // Active state
-                  ...(isActive && !isSpecial ? styles.tabBtnActive : {}),
-                  // Special pill treatment for GLORY + PLAYROOM
-                  ...(isSpecial && !isActive ? {
-                    color:"#f0b429", fontWeight:900,
-                    borderBottom:"2px solid transparent",
-                  } : {}),
-                  ...(isActive && isPlayroom ? {
-                    background:"#f0b429", color:"#000",
-                    borderBottom:"2px solid #f0b429",
-                  } : {}),
-                  ...(isActive && isGlory ? {
-                    background:"linear-gradient(135deg,#c8201c,#f0b429)",
-                    color:"#fff", borderBottom:"2px solid #f0b429",
-                  } : {}),
-                }}>
-                {isPlayroom ? "🎮 PLAYROOM" : isGlory ? "🏆 GLORY" : tab === "QUICKID" ? "🔎 SCOUTING REPORT" : tab}
-              </button>
-            );
-          })}
+          {/* ── MORE DROPDOWN (desktop) — replaces the old 13-button secondary row ── */}
+          <button onClick={() => setMoreMenuOpen(o => !o)}
+            style={{...styles.tabBtn, marginLeft:"auto", color:"#f0b429", fontWeight:900,
+              display:"flex", alignItems:"center", gap:4}}>
+            MORE {moreMenuOpen ? "▲" : "▼"}
+          </button>
+          {moreMenuOpen && (
+            <>
+              {/* click-outside catcher */}
+              <div onClick={() => setMoreMenuOpen(false)}
+                style={{position:"fixed", inset:0, zIndex:998}} />
+              <div style={{position:"absolute", top:"100%", right:0, zIndex:999,
+                background:"var(--bg-content)", border:"1px solid var(--border)", borderTop:"2px solid #f0b429",
+                width:320, boxShadow:"0 8px 24px rgba(0,0,0,0.5)", padding:"10px 0"}}>
+
+                <div style={{padding:"4px 14px 6px", fontSize:8, fontWeight:900,
+                  color:"var(--muted)", letterSpacing:"0.22em"}}>HIGHLIGHTS</div>
+                <div style={{display:"flex", flexWrap:"wrap", gap:6, padding:"0 14px 10px"}}>
+                  {[
+                    {tab:"GLORY",    icon:"🏆", label:"GLORY"},
+                    {tab:"DEEPDIVE", icon:"🔍", label:"DEEP DIVE"},
+                    {tab:"QUICKID",  icon:"🔎", label:"SCOUTING REPORT"},
+                    {tab:"PLAYROOM", icon:"🎮", label:"PLAYROOM"},
+                  ].map(({tab,icon,label}) => (
+                    <button key={tab} onClick={() => { setActiveTab(tab); setMoreMenuOpen(false); }}
+                      style={{fontSize:10, fontWeight:900, color:"#f0b429",
+                        background:"rgba(240,180,41,0.08)", border:"1px solid rgba(240,180,41,0.3)",
+                        padding:"5px 10px", cursor:"pointer", fontFamily:"'Georgia',serif"}}>
+                      {icon} {label}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{padding:"6px 14px 4px", fontSize:8, fontWeight:900,
+                  color:"var(--muted)", letterSpacing:"0.22em", borderTop:"1px solid var(--border)"}}>EXPLORE</div>
+                <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:2, padding:"4px 8px 4px"}}>
+                  {[
+                    {tab:"STATS",     icon:"📈"},
+                    {tab:"HISTORY",   icon:"📚"},
+                    {tab:"THIS DATE", icon:"📆"},
+                    {tab:"NY EVENTS", icon:"🗽"},
+                    {tab:"HOF",       icon:"⭐"},
+                    {tab:"AWARDS",    icon:"🥇"},
+                    {tab:"FORGOTTEN", icon:"👻"},
+                    {tab:"POLLS",     icon:"🗳️"},
+                    {tab:"MISERY",    icon:"😩"},
+                  ].map(({tab,icon}) => (
+                    <button key={tab} onClick={() => { setActiveTab(tab); setMoreMenuOpen(false); }}
+                      style={{display:"flex", alignItems:"center", gap:8, padding:"7px 8px",
+                        background: activeTab===tab ? "var(--gold-active-bg)" : "transparent",
+                        border:"none", textAlign:"left", cursor:"pointer",
+                        color: activeTab===tab ? "var(--ink)" : "#999",
+                        fontSize:11, fontWeight:700, fontFamily:"'Georgia',serif"}}>
+                      <span style={{fontSize:13}}>{icon}</span>{tab}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>}
 
         {/* ──── SCORES TAB ──── */}
         {activeTab === "SCORES" && (
           <div>
 
-            {/* ── COLLAPSIBLE WIDGET ROW ── */}
-            <HomepageWidgets myTeams={myTeams} setActiveTab={setActiveTab} />
-            {/* ── TOP SECTION: Featured Stories + Quote + Player Card ── */}
+            {/* ── TOP SECTION: Featured Stories (Quote + Player Spotlight moved to The Good Stuff, below) ── */}
             <div style={{display:"flex", gap:10, marginBottom:16, alignItems:"stretch", flexWrap:"wrap"}}>
 
-              {/* Left — Top 2 Featured News Stories */}
-              <div style={{flex:"3 1 260px", display:"flex", flexDirection:"column", gap:8}}>
+              {/* Top 2 Featured News Stories — now full width */}
+              <div style={{flex:"1 1 100%", display:"flex", flexDirection:"column", gap:8}}>
                 {(() => {
                 const nyTeams = ["Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty","NYCFC"];
                 const nyStories = news.filter(n => nyTeams.includes(n.team) && n.title);
@@ -1478,31 +1504,31 @@ export default function NYSportsDaily() {
                   <a key={i} href={story.link} target="_blank" rel="noopener noreferrer"
                     style={{textDecoration:"none", display:"flex", gap:10,
                       padding:"10px 12px",
-                      background: darkMode ? "#1e2124" : "#ffffff",
-                      border: darkMode ? "1px solid #2e343a" : "1px solid #e0dbd3",
-                      borderLeft:"3px solid #c8201c",
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border)",
+                      borderLeft:"3px solid var(--accent-red)",
                       flex:1, transition:"border-color 0.15s"
                     }}
                     onMouseEnter={e=>e.currentTarget.style.borderLeftColor="#f0b429"}
-                    onMouseLeave={e=>e.currentTarget.style.borderLeftColor="#c8201c"}>
+                    onMouseLeave={e=>e.currentTarget.style.borderLeftColor="var(--accent-red)"}>
                     {story.image && (
                       <img src={story.image} alt=""
                         style={{width:72, height:54, objectFit:"cover", flexShrink:0}} />
                     )}
                     <div style={{flex:1, minWidth:0}}>
-                      <div style={{fontSize:8, fontWeight:900, color:"#c8201c",
+                      <div style={{fontSize:8, fontWeight:900, color:"var(--accent-red)",
                         letterSpacing:"0.12em", marginBottom:3, textTransform:"uppercase"}}>
                         {story.team?.toUpperCase()} · {story.source}
                       </div>
                       <div style={{fontSize:12, fontWeight:700,
-                        color: darkMode ? "#e8e0d0" : "#111",
+                        color: "var(--ink)",
                         lineHeight:1.35, fontFamily:"'Georgia',serif",
                         overflow:"hidden", display:"-webkit-box",
                         WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>
                         {story.title}
                       </div>
                       {story.desc && (
-                        <div style={{fontSize:10, color: darkMode ? "#777" : "#666",
+                        <div style={{fontSize:10, color: "var(--muted)",
                           marginTop:3, lineHeight:1.4,
                           overflow:"hidden", display:"-webkit-box",
                           WebkitLineClamp:1, WebkitBoxOrient:"vertical"}}>
@@ -1514,21 +1540,11 @@ export default function NYSportsDaily() {
                 ));
               })()}
               {news.filter(n => ["Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty"].includes(n.team)).length === 0 && (
-                <div style={{padding:"12px", background:"#111", border:"1px solid #1f1f1f",
-                  fontSize:10, color:"#555", fontStyle:"italic"}}>
+                <div style={{padding:"12px", background:"var(--ink)", border:"1px solid #1f1f1f",
+                  fontSize:10, color:"var(--muted)", fontStyle:"italic"}}>
                   Loading top NY sports stories…
                 </div>
               )}
-              </div>
-
-              {/* Center — Quote */}
-              <div style={{flex:"2 1 180px"}}>
-                <QuoteOfDay />
-              </div>
-
-              {/* Right — Player Spotlight card */}
-              <div style={{flex:"0 0 180px"}}>
-                <PlayerSpotlight />
               </div>
             </div>
 
@@ -1557,8 +1573,8 @@ export default function NYSportsDaily() {
               <div style={styles.scoresCol}>
                 {/* Scores header with collapse toggle */}
                 <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:8,
-                  paddingBottom:6, borderBottom:"1px solid #2e343a"}}>
-                  <span style={{fontSize:9, fontWeight:900, color:"#c8201c",
+                  paddingBottom:6, borderBottom:"1px solid var(--border)"}}>
+                  <span style={{fontSize:9, fontWeight:900, color:"var(--accent-red)",
                     letterSpacing:"0.22em", textTransform:"uppercase",
                     fontFamily:"'Georgia',serif"}}>
                     {nyOnly ? "🗽 NY SCORES" : "📅 TODAY'S SCORES"}
@@ -1567,10 +1583,10 @@ export default function NYSportsDaily() {
                     style={{marginLeft:"auto", fontSize:9, fontWeight:700,
                       letterSpacing:"0.1em", padding:"2px 8px",
                       background:"transparent", border:"1px solid #1f1f1f",
-                      color:"#555", cursor:"pointer", fontFamily:"'Georgia',serif",
+                      color:"var(--muted)", cursor:"pointer", fontFamily:"'Georgia',serif",
                       transition:"all 0.15s"}}
-                    onMouseEnter={e=>{e.currentTarget.style.color="#e8e0d0";}}
-                    onMouseLeave={e=>{e.currentTarget.style.color="#555";}}>
+                    onMouseEnter={e=>{e.currentTarget.style.color="var(--ink)";}}
+                    onMouseLeave={e=>{e.currentTarget.style.color="var(--muted)";}}>
                     {scoresCollapsed ? "▼ SHOW" : "▲ HIDE"}
                   </button>
                 </div>
@@ -1600,29 +1616,56 @@ export default function NYSportsDaily() {
               {/* News sidebar */}
               <div style={styles.newsSidebar}>
                 <div style={styles.newsSidebarHeader}>📰 NY SPORTS HEADLINES</div>
-                {loadingNews ? (
-                  <p style={styles.newsSidebarLoading}>LOADING...</p>
-                ) : news.filter(n => {
-                    // Require a real NY team tag — skip generic soccer/MLS stories
-                    const nyTeams = ["Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty","NYCFC","Red Bulls","Gotham FC"];
-                    const hasNYTeam = nyTeams.includes(n.team);
-                    // For soccer teams, require the team name actually in the title
-                    if (["Red Bulls","NYCFC","Gotham FC"].includes(n.team)) {
-                      const titleLower = (n.title||"").toLowerCase();
-                      return titleLower.includes("red bull") || titleLower.includes("nycfc") ||
-                             titleLower.includes("new york city fc") || titleLower.includes("gotham");
-                    }
-                    return hasNYTeam;
-                  }).slice(0, 10).map((item, i) => (
-                  <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" style={styles.newsSidebarItem}>
-                    <span style={styles.newsSidebarSource}>{item.source}</span>
-                    <p style={styles.newsSidebarTitle}>{item.title}</p>
-                  </a>
-                ))}
+                {/* Scrollable list — keeps headlines "quickly scrollable" without scrolling the whole page */}
+                <div style={{maxHeight:320, overflowY:"auto"}}>
+                  {loadingNews ? (
+                    <p style={styles.newsSidebarLoading}>LOADING...</p>
+                  ) : news.filter(n => {
+                      // Require a real NY team tag — skip generic soccer/MLS stories
+                      const nyTeams = ["Yankees","Mets","Jets","Giants","Knicks","Nets","Rangers","Islanders","Devils","Liberty","NYCFC","Red Bulls","Gotham FC"];
+                      const hasNYTeam = nyTeams.includes(n.team);
+                      // For soccer teams, require the team name actually in the title
+                      if (["Red Bulls","NYCFC","Gotham FC"].includes(n.team)) {
+                        const titleLower = (n.title||"").toLowerCase();
+                        return titleLower.includes("red bull") || titleLower.includes("nycfc") ||
+                               titleLower.includes("new york city fc") || titleLower.includes("gotham");
+                      }
+                      return hasNYTeam;
+                    }).slice(0, 10).map((item, i) => (
+                    <a key={i} href={item.link} target="_blank" rel="noopener noreferrer" style={styles.newsSidebarItem}>
+                      <span style={styles.newsSidebarSource}>{item.source}</span>
+                      <p style={styles.newsSidebarTitle}>{item.title}</p>
+                    </a>
+                  ))}
+                </div>
                 <button onClick={() => setActiveTab("NEWS")} style={styles.newsSidebarMore}>
                   ALL STORIES →
                 </button>
               </div>
+            </div>
+
+            {/* ── A LOOK AHEAD — next 3 days, real schedule data ── */}
+            <LookAhead schedule={schedule} darkMode={darkMode} />
+
+            {/* ── THE GOOD STUFF — Quote of Day, Player Spotlight, Playoff Picture, Legends, On This Date, championship badge — demoted below core scores/news ── */}
+            <div style={{marginTop:20, paddingTop:14, borderTop:"2px dashed var(--border)"}}>
+              <div style={{fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.15em",
+                textTransform:"uppercase", fontFamily:"'Georgia',serif", marginBottom:2}}>
+                The Good Stuff
+              </div>
+              <div style={{fontSize:16, fontWeight:900, fontFamily:"'Georgia',serif",
+                color: "var(--ink)", marginBottom:10}}>
+                More from the Daily
+              </div>
+              <div style={{display:"flex", gap:10, marginBottom:12, alignItems:"stretch", flexWrap:"wrap"}}>
+                <div style={{flex:"2 1 180px"}}>
+                  <QuoteOfDay />
+                </div>
+                <div style={{flex:"0 0 180px"}}>
+                  <PlayerSpotlight />
+                </div>
+              </div>
+              <HomepageWidgets myTeams={myTeams} setActiveTab={setActiveTab} />
             </div>
           </div>
         )}
@@ -1691,8 +1734,8 @@ export default function NYSportsDaily() {
         <p style={styles.footerText}>NY SPORTS DAILY · SCORES & NEWS VIA ESPN · FREE ALWAYS</p>
         <p style={styles.footerSub}>Free. Always. Built for New York.</p>
 
-        <div style={{marginTop:16, paddingTop:14, borderTop:"1px solid #2e343a"}}>
-          <p style={{margin:"0 0 10px", fontSize:9, color:"#9aa3ad", letterSpacing:"0.15em"}}>MORE FROM THE NETWORK</p>
+        <div style={{marginTop:16, paddingTop:14, borderTop:"1px solid var(--border)"}}>
+          <p style={{margin:"0 0 10px", fontSize:9, color:"var(--muted)", letterSpacing:"0.15em"}}>MORE FROM THE NETWORK</p>
           <div style={{display:"flex", gap:10, flexWrap:"wrap"}}>
             <a href="https://nflboxscore.com" target="_blank" rel="noopener noreferrer" style={styles.bmcBtn}>
               🏈 The Final Whistle — More NFL Coverage
@@ -1703,11 +1746,21 @@ export default function NYSportsDaily() {
           </div>
         </div>
 
-        <a href="https://buymeacoffee.com/mhughes65v" target="_blank" rel="noopener noreferrer" style={{...styles.bmcBtn, marginTop:16}}>
-          ☕ Buy Me a Coffee
-        </a>
+        <div style={{display:"flex", gap:10, flexWrap:"wrap", marginTop:16}}>
+          <a href="https://buymeacoffee.com/mhughes65v" target="_blank" rel="noopener noreferrer" style={styles.bmcBtn}>
+            💿 Buy me a record
+          </a>
+          <a href="https://www.amazon.com/s?k=new+york+sports&tag=nysportsdaily-20" target="_blank" rel="noopener noreferrer"
+            title="As an Amazon Associate, NY Sports Daily earns from qualifying purchases."
+            style={styles.bmcBtn}>
+            🛒 Shop NY Sports on Amazon
+          </a>
+          <a href="https://www.instagram.com/nysportsdaily_com/" target="_blank" rel="noopener noreferrer" style={styles.bmcBtn}>
+            📸 Follow on Instagram
+          </a>
+        </div>
         <p style={styles.bmcSub}>Enjoying NY Sports Daily? A coffee keeps the lights on!</p>
-        <p style={{margin:"10px 0 0", fontSize:9, color:"#666", letterSpacing:"0.02em", lineHeight:1.5, maxWidth:480}}>
+        <p style={{margin:"10px 0 0", fontSize:9, color:"var(--muted)", letterSpacing:"0.02em", lineHeight:1.5, maxWidth:480}}>
           As an Amazon Associate, NY Sports Daily earns from qualifying purchases made through Amazon links on this site, at no extra cost to you.
         </p>
       </footer>
@@ -1731,7 +1784,7 @@ export default function NYSportsDaily() {
     {isMobile && (
       <nav style={{
         position:"fixed", bottom:0, left:0, right:0, zIndex:900,
-        background:"#1a1c1f", borderTop:"2px solid #2e343a",
+        background:"var(--bg-content)", borderTop:"2px solid var(--border)",
         display:"flex", alignItems:"stretch",
         paddingBottom:"env(safe-area-inset-bottom, 0px)",
         boxShadow:"0 -4px 20px rgba(0,0,0,0.6)",
@@ -1753,7 +1806,7 @@ export default function NYSportsDaily() {
                 padding:"8px 2px 6px", gap:2,
                 background:"transparent", border:"none",
                 borderTop: isActive
-                  ? `2px solid ${isSpecial ? "#f0b429" : "#c8201c"}`
+                  ? `2px solid ${isSpecial ? "#f0b429" : "var(--accent-red)"}`
                   : "2px solid transparent",
                 cursor:"pointer",
               }}>
@@ -1761,7 +1814,7 @@ export default function NYSportsDaily() {
               <span style={{
                 fontSize:8, fontWeight:900, letterSpacing:"0.06em",
                 textTransform:"uppercase", fontFamily:"'Georgia',serif",
-                color: isActive ? (isSpecial ? "#f0b429" : "#e8e0d0") : "#555",
+                color: isActive ? (isSpecial ? "#f0b429" : "var(--ink)") : "var(--muted)",
               }}>{label}</span>
             </button>
           );
@@ -1775,7 +1828,7 @@ export default function NYSportsDaily() {
           <span style={{fontSize:17, lineHeight:1}}>☰</span>
           <span style={{fontSize:8, fontWeight:900, letterSpacing:"0.06em",
             textTransform:"uppercase", fontFamily:"'Georgia',serif",
-            color:"#555"}}>More</span>
+            color:"var(--muted)"}}>More</span>
         </button>
       </nav>
     )}
@@ -1786,29 +1839,29 @@ export default function NYSportsDaily() {
         style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.75)",
           zIndex:2000, display:"flex"}}>
         <div onClick={e => e.stopPropagation()}
-          style={{width:260, maxWidth:"80vw", background:"#1a1c1f",
-            borderRight:"2px solid #c8201c", height:"100%",
+          style={{width:260, maxWidth:"80vw", background:"var(--bg-content)",
+            borderRight:"2px solid var(--accent-red)", height:"100%",
             overflowY:"auto", display:"flex", flexDirection:"column",
             WebkitOverflowScrolling:"touch"}}>
 
           {/* Header */}
           <div style={{display:"flex", alignItems:"center",
             justifyContent:"space-between", padding:"14px 16px",
-            borderBottom:"1px solid #2e343a", flexShrink:0}}>
+            borderBottom:"1px solid var(--border)", flexShrink:0}}>
             <span style={{fontFamily:"'Georgia',serif", fontSize:14,
-              fontWeight:900, color:"#e8e0d0"}}>
-              NY <span style={{color:"#c8201c"}}>SPORTS</span>
-              <span style={{fontWeight:300, color:"#aaa"}}> DAILY</span>
+              fontWeight:900, color:"var(--ink)"}}>
+              NY <span style={{color:"var(--accent-red)"}}>SPORTS</span>
+              <span style={{fontWeight:300, color:"var(--muted)"}}> DAILY</span>
             </span>
             <button onClick={() => setDrawerOpen(false)}
-              style={{background:"none", border:"none", color:"#666",
+              style={{background:"none", border:"none", color:"var(--muted)",
                 fontSize:20, cursor:"pointer", padding:"2px 6px"}}>✕</button>
           </div>
 
           {/* Main nav */}
-          <div style={{borderBottom:"1px solid #2e343a"}}>
+          <div style={{borderBottom:"1px solid var(--border)"}}>
             <div style={{padding:"8px 16px 4px", fontSize:8, fontWeight:900,
-              color:"#444", letterSpacing:"0.22em"}}>MAIN</div>
+              color:"var(--muted)", letterSpacing:"0.22em"}}>MAIN</div>
             {[
               {tab:"SCORES",    icon:"📊"},
               {tab:"TV",        icon:"📺"},
@@ -1825,8 +1878,8 @@ export default function NYSportsDaily() {
                   padding:"10px 16px",
                   background: activeTab===tab ? "#1a0a0a" : "transparent",
                   border:"none",
-                  borderLeft: activeTab===tab ? "3px solid #c8201c" : "3px solid transparent",
-                  color: activeTab===tab ? "#e8e0d0" : "#888",
+                  borderLeft: activeTab===tab ? "3px solid var(--accent-red)" : "3px solid transparent",
+                  color: activeTab===tab ? "var(--ink)" : "var(--muted)",
                   cursor:"pointer", fontSize:12, fontWeight:700,
                   letterSpacing:"0.05em", textAlign:"left",
                   fontFamily:"'Georgia',serif"}}>
@@ -1837,9 +1890,9 @@ export default function NYSportsDaily() {
           </div>
 
           {/* Explore nav */}
-          <div style={{borderBottom:"1px solid #2e343a", flex:1}}>
+          <div style={{borderBottom:"1px solid var(--border)", flex:1}}>
             <div style={{padding:"8px 16px 4px", fontSize:8, fontWeight:900,
-              color:"#444", letterSpacing:"0.22em"}}>EXPLORE</div>
+              color:"var(--muted)", letterSpacing:"0.22em"}}>EXPLORE</div>
             {[
               {tab:"GLORY",     icon:"🏆", gold:true},
               {tab:"DEEPDIVE",  icon:"🔍", gold:true},
@@ -1859,12 +1912,12 @@ export default function NYSportsDaily() {
                 onClick={() => { setActiveTab(tab); setDrawerOpen(false); }}
                 style={{display:"flex", alignItems:"center", gap:12, width:"100%",
                   padding:"9px 16px",
-                  background: activeTab===tab ? "#1a1600" : "transparent",
+                  background: activeTab===tab ? "var(--gold-active-bg)" : "transparent",
                   border:"none",
                   borderLeft: activeTab===tab
-                    ? `3px solid ${gold ? "#f0b429" : "#c8201c"}`
+                    ? `3px solid ${gold ? "#f0b429" : "var(--accent-red)"}`
                     : "3px solid transparent",
-                  color: gold ? "#f0b429" : activeTab===tab ? "#e8e0d0" : "#777",
+                  color: gold ? "#f0b429" : activeTab===tab ? "var(--ink)" : "#777",
                   cursor:"pointer", fontSize:11, fontWeight:700,
                   letterSpacing:"0.05em", textAlign:"left",
                   fontFamily:"'Georgia',serif"}}>
@@ -1875,18 +1928,18 @@ export default function NYSportsDaily() {
           </div>
 
           {/* Footer */}
-          <div style={{padding:"14px 16px", borderTop:"1px solid #2e343a", flexShrink:0}}>
+          <div style={{padding:"14px 16px", borderTop:"1px solid var(--border)", flexShrink:0}}>
             <div style={{display:"flex", gap:14, marginBottom:8, flexWrap:"wrap"}}>
               <a href="https://www.instagram.com/nysportsdaily_com/" target="_blank"
                 rel="noopener noreferrer"
-                style={{fontSize:10, color:"#888", textDecoration:"none",
+                style={{fontSize:10, color:"var(--muted)", textDecoration:"none",
                   fontWeight:700, letterSpacing:"0.06em"}}>📸 @nysportsdaily_com</a>
               <a href="https://buymeacoffee.com/mhughes65v" target="_blank"
                 rel="noopener noreferrer"
-                style={{fontSize:10, color:"#888", textDecoration:"none",
-                  fontWeight:700, letterSpacing:"0.06em"}}>☕ Tip Jar</a>
+                style={{fontSize:10, color:"var(--muted)", textDecoration:"none",
+                  fontWeight:700, letterSpacing:"0.06em"}}>💿 Buy me a record</a>
             </div>
-            <div style={{fontSize:8, color:"#333", letterSpacing:"0.1em"}}>
+            <div style={{fontSize:8, color:"var(--muted)", letterSpacing:"0.1em"}}>
               EST. 2026 · ALL NEW YORK · ALL THE TIME
             </div>
           </div>
@@ -2042,36 +2095,36 @@ function MyTeamsModal({ pending, setPending, onSave, onClose }) {
     <div onClick={e => e.target === e.currentTarget && onClose()}
       style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.82)", zIndex:9999,
         display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
-      <div style={{ background:"#111", border:"1px solid #2a2a2a", borderTop:"3px solid #f0b429",
+      <div style={{ background:"var(--ink)", border:"1px solid var(--border)", borderTop:"3px solid #f0b429",
         borderRadius:4, width:"100%", maxWidth:500, maxHeight:"88vh", overflowY:"auto" }}>
         {/* Header */}
-        <div style={{ padding:"16px 20px 12px", borderBottom:"1px solid #2a2a2a",
+        <div style={{ padding:"16px 20px 12px", borderBottom:"1px solid var(--border)",
           display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
           <div>
             <div style={{ fontSize:13, letterSpacing:".12em", color:"#f0b429", fontWeight:700,
               fontFamily:"Georgia,serif", textTransform:"uppercase" }}>⭐ Pick Your Favorite Teams</div>
-            <div style={{ fontSize:11, color:"#666", marginTop:4, lineHeight:1.4 }}>
+            <div style={{ fontSize:11, color:"var(--muted)", marginTop:4, lineHeight:1.4 }}>
               Your teams float to the top of scores and news. Saved to your browser.
             </div>
           </div>
-          <button onClick={onClose} style={{ background:"none", border:"none", color:"#666",
+          <button onClick={onClose} style={{ background:"none", border:"none", color:"var(--muted)",
             fontSize:20, cursor:"pointer", lineHeight:1, padding:0, marginTop:2 }}>✕</button>
         </div>
         {/* Body */}
         <div style={{ padding:"14px 20px" }}>
           {MY_TEAMS_SPORTS.map(sport => (
             <div key={sport.label} style={{ marginBottom:14 }}>
-              <div style={{ fontSize:9, letterSpacing:".15em", color:"#c8201c", textTransform:"uppercase",
-                marginBottom:8, paddingBottom:4, borderBottom:"1px solid #2e343a" }}>{sport.label}</div>
+              <div style={{ fontSize:9, letterSpacing:".15em", color:"var(--accent-red)", textTransform:"uppercase",
+                marginBottom:8, paddingBottom:4, borderBottom:"1px solid var(--border)" }}>{sport.label}</div>
               <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
                 {sport.teams.map(t => {
                   const on = pending.has(t.id);
                   return (
                     <button key={t.id} onClick={() => toggle(t.id)}
                       style={{ fontFamily:"Georgia,serif", fontSize:11, padding:"6px 14px",
-                        border:`1px solid ${on ? "#f0b429" : "#2a2a2a"}`,
-                        background: on ? "#1a1600" : "#161616",
-                        color: on ? "#f0b429" : "#888",
+                        border:`1px solid ${on ? "#f0b429" : "var(--border)"}`,
+                        background: on ? "var(--gold-active-bg)" : "var(--bg-content)",
+                        color: on ? "#f0b429" : "var(--muted)",
                         borderRadius:3, cursor:"pointer", fontWeight: on ? 700 : 400,
                         transition:"all .15s", letterSpacing:".04em" }}>
                       {on ? "✓ " : ""}{t.name}
@@ -2083,16 +2136,16 @@ function MyTeamsModal({ pending, setPending, onSave, onClose }) {
           ))}
         </div>
         {/* Footer */}
-        <div style={{ padding:"12px 20px", borderTop:"1px solid #2a2a2a",
+        <div style={{ padding:"12px 20px", borderTop:"1px solid var(--border)",
           display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:8 }}>
-          <span style={{ fontSize:10, color:"#555" }}>
+          <span style={{ fontSize:10, color:"var(--muted)" }}>
             <span style={{ color:"#f0b429", fontWeight:700 }}>{pending.size}</span> team{pending.size !== 1 ? "s" : ""} selected
           </span>
           <div style={{ display:"flex", gap:8 }}>
             <button onClick={() => setPending(new Set())}
               style={{ fontFamily:"Georgia,serif", fontSize:10, letterSpacing:".1em", textTransform:"uppercase",
-                padding:"7px 14px", border:"1px solid #333", background:"transparent",
-                color:"#666", cursor:"pointer", borderRadius:2 }}>Clear All</button>
+                padding:"7px 14px", border:"1px solid var(--muted)", background:"transparent",
+                color:"var(--muted)", cursor:"pointer", borderRadius:2 }}>Clear All</button>
             <button onClick={() => onSave(pending)}
               style={{ fontFamily:"Georgia,serif", fontSize:10, letterSpacing:".1em", textTransform:"uppercase",
                 padding:"7px 20px", border:"1px solid #f0b429", background:"#f0b429",
@@ -2156,7 +2209,7 @@ function ScoreCard({ game }) {
 
   return (
     <div style={{...styles.scoreCard, ...(isNY ? styles.scoreCardNY : {}),
-      ...(isFav ? {borderColor:"#f0b429", boxShadow:"inset 3px 0 0 #f0b429, 0 0 0 1px #f0b42944", background:"#1a160033"} : {})}}>
+      ...(isFav ? {borderColor:"#f0b429", boxShadow:"inset 3px 0 0 #f0b429, 0 0 0 1px #f0b42944", background:"var(--gold-active-bg)33"} : {})}}>
       {isFav && <div style={{position:"absolute",top:6,right:8,fontSize:11}}>⭐</div>}
       {isNY && !isFav && <div style={styles.nyBadge}>NY</div>}
       <div style={styles.scoreCardSport}>{game.sport}</div>
@@ -2212,19 +2265,19 @@ function ScoreCard({ game }) {
                             {boxScore.sport === "MLB" ? i+1 : i+1}
                           </th>
                         ))}
-                        <th style={{...styles.lsTh, color:"#c8201c"}}>R/T</th>
+                        <th style={{...styles.lsTh, color:"var(--accent-red)"}}>R/T</th>
                       </tr>
                     </thead>
                     <tbody>
                       {boxScore.linescores.map((ls, i) => (
-                        <tr key={i} style={i%2===0?{}:{background:"#0f0f0f"}}>
+                        <tr key={i} style={i%2===0?{}:{background:"var(--bg-content)"}}>
                           <td style={styles.lsTdTeam}>
                             {ls.logo && <img src={ls.logo} alt="" style={{width:14,height:14,objectFit:"contain",marginRight:4,verticalAlign:"middle"}} onError={e=>e.target.style.display="none"} />}
                             <span>{ls.abbrev}</span>
-                            {ls.record && <span style={{fontSize:8,color:"#555",marginLeft:4}}>({ls.record})</span>}
+                            {ls.record && <span style={{fontSize:8,color:"var(--muted)",marginLeft:4}}>({ls.record})</span>}
                           </td>
                           {ls.periods.map((p,j) => <td key={j} style={styles.lsTd}>{p}</td>)}
-                          <td style={{...styles.lsTd, fontWeight:900, color:"#e8e0d0", fontSize:14}}>{ls.total}</td>
+                          <td style={{...styles.lsTd, fontWeight:900, color:"var(--ink)", fontSize:14}}>{ls.total}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -2239,7 +2292,7 @@ function ScoreCard({ game }) {
                     ⚡ SCORING SUMMARY — {boxScore.scoringSummary.length} SCORING {boxScore.scoringSummary.length === 1 ? "PLAY" : "PLAYS"}
                   </div>
                   {boxScore.scoringSummary.map((play, i) => (
-                    <div key={i} style={{...styles.scoringPlay, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+                    <div key={i} style={{...styles.scoringPlay, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
                       <div style={styles.scoringLeft}>
                         <span style={styles.scoringPeriod}>{play.period}</span>
                         <span style={styles.scoringTeamBadge}>{play.team?.split(" ").pop() || play.team}</span>
@@ -2275,7 +2328,7 @@ function ScoreCard({ game }) {
                                   onClick={() => handleSort(statGroup.keys?.[i])}>
                                   {lbl}
                                   {sortCol === statGroup.keys?.[i] && (
-                                    <span style={{marginLeft:2,color:"#c8201c"}}>{sortDir==="desc"?"▼":"▲"}</span>
+                                    <span style={{marginLeft:2,color:"var(--accent-red)"}}>{sortDir==="desc"?"▼":"▲"}</span>
                                   )}
                                 </th>
                               ))}
@@ -2283,20 +2336,20 @@ function ScoreCard({ game }) {
                           </thead>
                           <tbody>
                             {sortedAthletes(statGroup.athletes, statGroup.keys || []).map((a, ai) => (
-                              <tr key={ai} style={ai%2===0?{}:{background:"#0f0f0f"}}>
+                              <tr key={ai} style={ai%2===0?{}:{background:"var(--bg-content)"}}>
                                 <td style={styles.statTdPlayer}>
                                   {a.headshot && (
                                     <img src={a.headshot} alt="" style={{width:16,height:16,borderRadius:"50%",objectFit:"cover",marginRight:4,verticalAlign:"middle"}}
                                       onError={e=>e.target.style.display="none"} />
                                   )}
                                   <span>{a.name}</span>
-                                  {a.position && <span style={{fontSize:8,color:"#555",marginLeft:3}}>{a.position}</span>}
+                                  {a.position && <span style={{fontSize:8,color:"var(--muted)",marginLeft:3}}>{a.position}</span>}
                                 </td>
                                 {a.stats.map((s,si) => (
                                   <td key={si} style={{
                                     ...styles.statTd,
                                     fontWeight: s === "0" ? 400 : 600,
-                                    color: s === "0" ? "#444" : "#e8e0d0",
+                                    color: s === "0" ? "var(--muted)" : "var(--ink)",
                                   }}>{s}</td>
                                 ))}
                               </tr>
@@ -2312,7 +2365,7 @@ function ScoreCard({ game }) {
               {/* No stats fallback */}
               {(!boxScore.playerStats || boxScore.playerStats.length === 0) &&
                (!boxScore.scoringSummary || boxScore.scoringSummary.length === 0) && (
-                <p style={{fontSize:11, color:"#555", padding:"10px 0"}}>
+                <p style={{fontSize:11, color:"var(--muted)", padding:"10px 0"}}>
                   Detailed stats available after game completes.
                 </p>
               )}
@@ -2373,13 +2426,13 @@ function NewsCardFeatured({ item }) {
   const dark = useContext(DarkModeCtx);
   const myTeams = useContext(MyTeamsCtx);
   const isFav = teamInMyTeams(myTeams, item.team);
-  const teamColor = isFav ? "#f0b429" : (item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c");
+  const teamColor = isFav ? "#f0b429" : (item.team ? (TEAM_COLORS[item.team] || "var(--accent-red)") : "var(--accent-red)");
   const sportEmoji = { MLB:"⚾", NFL:"🏈", NBA:"🏀", NHL:"🏒", WNBA:"🏀", MLS:"⚽", NWSL:"⚽" }[item.sport] || "📰";
   const domain = getSourceDomain(item);
   const hasLink = isValidLink(item.link);
-  const cardBg   = dark ? "#1e2124" : "#ffffff";
-  const titleClr = dark ? "#f0ece4"  : "#111111";
-  const descClr  = dark ? "#aaaaaa"  : "#555555";
+  const cardBg   = dark ? "var(--bg-card)" : "var(--bg-card)";
+  const titleClr = dark ? "var(--ink)"  : "var(--ink)111";
+  const descClr  = dark ? "var(--muted)aaa"  : "var(--muted)555";
   const borderClr= dark ? "#2e2e2e"  : "#e0e0e0";
   return (
     <a href={hasLink ? item.link : "#"} target={hasLink ? "_blank" : "_self"} rel="noopener noreferrer"
@@ -2402,14 +2455,14 @@ function NewsCardFeatured({ item }) {
             {item.team}
           </span>
         )}
-        <span style={{ fontSize:10, letterSpacing:"0.1em", color: dark ? "#666" : "#888", fontWeight:700, textTransform:"uppercase" }}>
+        <span style={{ fontSize:10, letterSpacing:"0.1em", color: dark ? "var(--muted)" : "var(--muted)", fontWeight:700, textTransform:"uppercase" }}>
           {item.source?.replace(/ESPN · /,"")}
         </span>
-        <span style={{ fontSize:9, color: dark ? "#444" : "#bbb", padding:"1px 5px",
+        <span style={{ fontSize:9, color: dark ? "var(--muted)" : "var(--muted)", padding:"1px 5px",
           background: dark ? "#252a2e" : "#e8e4de", borderRadius:2, marginLeft:2 }}>
           {domain}
         </span>
-        <span style={{ fontSize:10, color: dark ? "#555" : "#999", marginLeft:"auto" }}>{timeAgo(item.pub)}</span>
+        <span style={{ fontSize:10, color: dark ? "var(--muted)" : "#999", marginLeft:"auto" }}>{timeAgo(item.pub)}</span>
       </div>
       <h2 style={{...styles.newsFeaturedTitle, color:titleClr}}>{item.title}</h2>
       {item.desc && <p style={{...styles.newsFeaturedDesc, color:descClr}}>{item.desc.slice(0,160)}{item.desc.length > 160 ? "…" : ""}</p>}
@@ -2420,18 +2473,18 @@ function NewsCardFeatured({ item }) {
 
 function NewsCardSmall({ item, index }) {
   const dark = useContext(DarkModeCtx);
-  const teamColor = item.team ? (TEAM_COLORS[item.team] || "#c8201c") : "#c8201c";
+  const teamColor = item.team ? (TEAM_COLORS[item.team] || "var(--accent-red)") : "var(--accent-red)";
   const domain = getSourceDomain(item);
   const hasLink = isValidLink(item.link);
-  const bg     = dark ? (index%2===0 ? "#1a1c1f" : "#1e2124") : (index%2===0 ? "#ffffff" : "#f4f2ee");
-  const titleC = dark ? "#f0ece4" : "#111";
-  const srcC   = dark ? "#666"    : "#888";
-  const dateC  = dark ? "#555"    : "#999";
+  const bg     = dark ? (index%2===0 ? "var(--bg-content)" : "var(--bg-card)") : (index%2===0 ? "var(--bg-card)" : "#f4f2ee");
+  const titleC = dark ? "var(--ink)" : "var(--ink)";
+  const srcC   = dark ? "var(--muted)"    : "var(--muted)";
+  const dateC  = dark ? "var(--muted)"    : "#999";
   const domBg  = dark ? "#252a2e" : "#e8e4de";
   return (
     <a href={hasLink ? item.link : "#"} target={hasLink ? "_blank" : "_self"} rel="noopener noreferrer"
       style={{...styles.newsSmall, background:bg, cursor: hasLink ? "pointer" : "default",
-        opacity: hasLink ? 1 : 0.7, borderBottom: `1px solid ${dark ? "#222" : "#e8e8e8"}`}}>
+        opacity: hasLink ? 1 : 0.7, borderBottom: `1px solid ${dark ? "var(--border)" : "#e8e8e8"}`}}>
       <div style={{display:"flex", gap:10, alignItems:"flex-start"}}>
         {item.image ? (
           <div style={{ width:72, height:54, flexShrink:0, overflow:"hidden", borderRadius:2 }}>
@@ -2518,20 +2571,20 @@ function GoogleNewsSection({ team }) {
       <div style={styles.newsDivider}>
         <span style={styles.newsDividerText}>📰 MORE HEADLINES VIA GOOGLE NEWS</span>
       </div>
-      <div style={{padding:"8px 0", marginBottom:8, fontSize:9, color:"#555"}}>
+      <div style={{padding:"8px 0", marginBottom:8, fontSize:9, color:"var(--muted)"}}>
         Headlines from across the web · Click any story to search Google News for the full article
       </div>
       <div style={{display:"flex", flexDirection:"column", gap:0}}>
         {items.map((item, i) => (
           <a key={i} href={item.link} target="_blank" rel="noopener noreferrer"
             style={{display:"flex", justifyContent:"space-between", alignItems:"center",
-              padding:"8px 10px", borderBottom:"1px solid #2e343a", textDecoration:"none",
-              background: i%2===0 ? "#1a1c1f" : "#111",
+              padding:"8px 10px", borderBottom:"1px solid var(--border)", textDecoration:"none",
+              background: i%2===0 ? "var(--bg-content)" : "var(--ink)",
               gap:10}}>
-            <span style={{fontSize:12, color:"#e8e0d0", fontFamily:"'Georgia',serif", lineHeight:1.3, flex:1}}>
+            <span style={{fontSize:12, color:"var(--ink)", fontFamily:"'Georgia',serif", lineHeight:1.3, flex:1}}>
               {item.title}
             </span>
-            <span style={{fontSize:9, color:"#555", flexShrink:0, whiteSpace:"nowrap"}}>
+            <span style={{fontSize:9, color:"var(--muted)", flexShrink:0, whiteSpace:"nowrap"}}>
               {item.source} · Google News →
             </span>
           </a>
@@ -2640,7 +2693,7 @@ function NewsTab({ news, loading }) {
   return (
     <div>
       {/* Section toggle */}
-      <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:16, borderBottom:"1px solid #2a2a2a", paddingBottom:12}}>
+      <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:16, borderBottom:"1px solid var(--border)", paddingBottom:12}}>
         {["HEADLINES","BEAT WRITERS","FAN COMMUNITIES","NY SPORTS SITES"].map(s => (
           <button key={s} onClick={() => setSection(s)}
             style={{...styles.filterBtn, ...(section===s ? styles.filterBtnActive : {})}}>
@@ -2653,14 +2706,14 @@ function NewsTab({ news, loading }) {
       {section === "HEADLINES" && (
         <>
           {/* Source filter */}
-          <div style={{display:"flex", gap:6, flexWrap:"wrap", padding:"10px 0 14px", borderBottom:"1px solid #222", marginBottom:14}}>
-            <span style={{fontSize:10, color:"#666", alignSelf:"center", letterSpacing:"0.1em", marginRight:4, fontWeight:700}}>SOURCE:</span>
+          <div style={{display:"flex", gap:6, flexWrap:"wrap", padding:"10px 0 14px", borderBottom:"1px solid var(--border)", marginBottom:14}}>
+            <span style={{fontSize:10, color:"var(--muted)", alignSelf:"center", letterSpacing:"0.1em", marginRight:4, fontWeight:700}}>SOURCE:</span>
             {["ALL","ESPN","NY POST","GOOGLE NEWS"].map(s => (
               <button key={s} onClick={() => setSourceFilter(s)}
                 style={{fontSize:10, padding:"4px 12px", letterSpacing:"0.08em", fontWeight:700,
-                  background: sourceFilter===s ? "#c8201c" : "transparent",
+                  background: sourceFilter===s ? "var(--accent-red)" : "transparent",
                   color: sourceFilter===s ? "#fff" : "#777",
-                  border: sourceFilter===s ? "1px solid #c8201c" : "1px solid #444",
+                  border: sourceFilter===s ? "1px solid var(--accent-red)" : "1px solid var(--muted)",
                   cursor:"pointer", fontFamily:"'Georgia',serif", borderRadius:2}}>
                 {s}
               </button>
@@ -2681,12 +2734,12 @@ function NewsTab({ news, loading }) {
                 {s}
               </button>
             ))}
-            <span style={{fontSize:9, color:"#555", marginLeft:"auto"}}>{filtered.length} STORIES</span>
+            <span style={{fontSize:9, color:"var(--muted)", marginLeft:"auto"}}>{filtered.length} STORIES</span>
           </div>
 
           {/* Team filter */}
-          <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:16, paddingBottom:8, borderBottom:"1px solid #2e343a"}}>
-            <span style={{fontSize:9, color:"#555", letterSpacing:"0.1em", alignSelf:"center", flexShrink:0, marginRight:4}}>TEAM:</span>
+          <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:16, paddingBottom:8, borderBottom:"1px solid var(--border)"}}>
+            <span style={{fontSize:9, color:"var(--muted)", letterSpacing:"0.1em", alignSelf:"center", flexShrink:0, marginRight:4}}>TEAM:</span>
             {TEAMS.map(t => (
               <button key={t} onClick={() => setTeamFilter(t)}
                 style={{...styles.filterBtn, ...(teamFilter===t ? styles.filterBtnActive : {}), fontSize:9}}>
@@ -2726,8 +2779,8 @@ function NewsTab({ news, loading }) {
       {/* BEAT WRITERS SECTION */}
       {section === "BEAT WRITERS" && (
         <div>
-          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa"}}>The reporters who break news on NY teams. Follow them for breaking stories, lineups, and inside scoops.</p>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>The reporters who break news on NY teams. Follow them for breaking stories, lineups, and inside scoops.</p>
           </div>
           {[
             { name:"Joel Sherman",    outlet:"NY Post",      teams:"Yankees · MLB",     handle:"@Joelsherman1",     url:"https://twitter.com/Joelsherman1",     desc:"Yankees insider. Breaks the biggest baseball deals." },
@@ -2754,7 +2807,7 @@ function NewsTab({ news, loading }) {
             { name:"Howie Kussoy",    outlet:"NY Post",      teams:"All NY",            handle:"@HowieKussoy",      url:"https://twitter.com/HowieKussoy",      desc:"NY Post sports columnist" },
           ].map((w, i) => (
             <a key={i} href={w.url} target="_blank" rel="noopener noreferrer"
-              style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.beatWriterIcon}>🐦</div>
               <div style={styles.beatWriterInfo}>
                 <div style={styles.beatWriterTopLine}>
@@ -2776,8 +2829,8 @@ function NewsTab({ news, loading }) {
       {/* FAN COMMUNITIES SECTION */}
       {section === "FAN COMMUNITIES" && (
         <div>
-          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa"}}>Reddit subreddits and fan communities where NY sports fans hang out daily. Join the conversation.</p>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>Reddit subreddits and fan communities where NY sports fans hang out daily. Join the conversation.</p>
           </div>
           <div style={styles.stdDivisionHeader}>🗣️ TEAM SUBREDDITS</div>
           {[
@@ -2798,7 +2851,7 @@ function NewsTab({ news, loading }) {
             { name:"r/hockey",          team:"All NHL",     members:"1.4M",  url:"https://reddit.com/r/hockey",          desc:"All NHL discussion" },
           ].map((s, i) => (
             <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
-              style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.beatWriterIcon}>💬</div>
               <div style={styles.beatWriterInfo}>
                 <div style={styles.beatWriterTopLine}>
@@ -2819,8 +2872,8 @@ function NewsTab({ news, loading }) {
       {/* NY SPORTS SITES SECTION */}
       {section === "NY SPORTS SITES" && (
         <div>
-          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa"}}>The best independent NY sports sites — deep coverage, opinion, and analysis.</p>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>The best independent NY sports sites — deep coverage, opinion, and analysis.</p>
           </div>
           <div style={styles.stdDivisionHeader}>📰 INDEPENDENT NY SPORTS SITES</div>
           {[
@@ -2847,7 +2900,7 @@ function NewsTab({ news, loading }) {
             { name:"Giants Wire",         team:"Giants",        url:"https://giantswire.usatoday.com/",          desc:"USA Today Giants coverage" },
           ].map((s, i) => (
             <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
-              style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.beatWriterIcon}>📰</div>
               <div style={styles.beatWriterInfo}>
                 <div style={styles.beatWriterTopLine}>
@@ -2890,9 +2943,9 @@ const CHANNEL_STYLES = {
   "NBATV":   { bg: "#006BB6", text: "#fff",    label: "NBA TV"  },
   "PEACOCK": { bg: "#000000", text: "#00d4ff", label: "PEACOCK" },
   "PRIME":   { bg: "#00a8e1", text: "#fff",    label: "PRIME"   },
-  "APPLE":   { bg: "#555",    text: "#fff",    label: "APPLE TV"},
+  "APPLE":   { bg: "var(--muted)",    text: "#fff",    label: "APPLE TV"},
   "MAX":     { bg: "#001f5e", text: "#fff",    label: "MAX"     },
-  "DEFAULT": { bg: "#444",    text: "#ccc",    label: null       },
+  "DEFAULT": { bg: "var(--muted)",    text: "var(--muted)",    label: null       },
 };
 
 function getChannelStyle(name) {
@@ -3079,6 +3132,82 @@ function TVGameRow({ game, featured }) {
           <span style={styles.tvNoChannel}>CHECK LOCAL LISTINGS</span>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── A LOOK AHEAD — next 3 days, built from real schedule data ────────────
+// Hand-written context lines override the auto-generated one. Key format:
+// "YYYY-MM-DD|HomeTeam|AwayTeam" (date is the game's local date). Add a line
+// here anytime for a marquee matchup — it's picked up automatically, no
+// other code changes needed. Falls back to AUTO (time + venue) otherwise.
+const LOOK_AHEAD_OVERRIDES = {
+  // "2026-10-03|Tampa Bay Rays|New York Yankees": "Cole vs. Rasmussen, first October meeting since 2020.",
+};
+
+function formatGameTime(date) {
+  return date.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit", timeZone:"America/New_York" }) + " ET";
+}
+function dayLabel(date) {
+  return date.toLocaleDateString("en-US", { weekday:"short", timeZone:"America/New_York" }).toUpperCase();
+}
+function dateLabel(date) {
+  return date.toLocaleDateString("en-US", { month:"numeric", day:"numeric", timeZone:"America/New_York" });
+}
+
+function LookAhead({ schedule, darkMode }) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const windowEnd = new Date(today); windowEnd.setDate(windowEnd.getDate() + 3); windowEnd.setHours(23,59,59,999);
+
+  // De-dupe: fetchNYSchedule returns one entry per NY team, so a Rangers-Islanders
+  // game would otherwise appear twice. Key on date+matchup to collapse that.
+  const seen = new Set();
+  const upcoming = (schedule || []).filter(g => {
+    if (!g.date || g.date < today || g.date > windowEnd) return false;
+    const key = `${g.date.toDateString()}|${g.homeTeam}|${g.awayTeam}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).sort((a,b) => a.date - b.date).slice(0, 8);
+
+  if (upcoming.length === 0) return null;
+
+  return (
+    <div style={{marginBottom:16}}>
+      <div style={{background:"#1a1a1a", color:"#f4f1ea",
+        fontFamily:"Arial,sans-serif", fontSize:11, fontWeight:700,
+        letterSpacing:"0.1em", padding:"9px 16px"}}>
+        A LOOK AHEAD — NEXT 3 DAYS
+      </div>
+      {upcoming.map((g, i) => {
+        const overrideKey = `${g.date.toISOString().slice(0,10)}|${g.homeTeam}|${g.awayTeam}`;
+        const override = LOOK_AHEAD_OVERRIDES[overrideKey];
+        const broadcast = g.broadcasts && g.broadcasts.length ? `, ${g.broadcasts[0]}` : "";
+        const autoLine = `${formatGameTime(g.date)}${g.venue ? ", " + g.venue : ""}${broadcast}`;
+        return (
+          <div key={i} style={{display:"flex", gap:12, padding:"12px 16px",
+            borderBottom:"1px solid var(--border)",
+            background:"var(--bg-card)"}}>
+            <div style={{fontFamily:"Arial,sans-serif", fontSize:10, fontWeight:700,
+              color:"var(--accent-red)", flexShrink:0, width:52, lineHeight:1.3}}>
+              {dayLabel(g.date)}<br/>{dateLabel(g.date)}
+            </div>
+            <div>
+              <div style={{fontSize:13, color:"var(--ink)"}}>
+                <b>{g.awayTeam}</b> at <b>{g.homeTeam}</b>
+                {!override && (
+                  <span style={{display:"inline-block", fontFamily:"Arial,sans-serif", fontSize:7,
+                    color:"var(--muted)", border:"1px solid var(--border)",
+                    padding:"1px 5px", marginLeft:6, letterSpacing:"0.05em", verticalAlign:"middle"}}>AUTO</span>
+                )}
+              </div>
+              <div style={{fontSize:11, color:"var(--muted)", fontStyle:"italic", marginTop:2}}>
+                {override || autoLine}
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -3955,8 +4084,8 @@ function HistoryTab() {
 
       {/* Team filter for Greatest NY Moments */}
       {activeGroup === "Greatest NY Moments" && (
-        <div style={{...styles.filterGroup, flexWrap:"wrap", marginBottom:12, paddingBottom:8, borderBottom:"1px solid #2a2a2a"}}>
-          <span style={{fontSize:9, color:"#555", letterSpacing:"0.1em", alignSelf:"center", flexShrink:0}}>FILTER BY TEAM:</span>
+        <div style={{...styles.filterGroup, flexWrap:"wrap", marginBottom:12, paddingBottom:8, borderBottom:"1px solid var(--border)"}}>
+          <span style={{fontSize:9, color:"var(--muted)", letterSpacing:"0.1em", alignSelf:"center", flexShrink:0}}>FILTER BY TEAM:</span>
           {MOMENT_TEAMS.map(t => (
             <button key={t} onClick={() => setMomentFilter(t)}
               style={{...styles.filterBtn, ...(momentFilter===t ? styles.filterBtnActive : {}), fontSize:9}}>
@@ -3997,11 +4126,11 @@ function HistoryTab() {
       {/* BIOS VIEW */}
       {histView === "bios" && (
         <div>
-          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa"}}>The legends who defined NY sports — click any name for their full biography, books, and more.</p>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>The legends who defined NY sports — click any name for their full biography, books, and more.</p>
           </div>
           {DAILY_PLAYERS.map((p, i) => (
-            <div key={i} style={{...styles.bioRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.bioRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.bioEmoji}>{p.emoji}</div>
               <div style={styles.bioInfo}>
                 <div style={styles.bioHeader}>
@@ -4464,21 +4593,21 @@ function SiteSearch({ query, onSelect }) {
   );
 
   const TYPE_COLORS = {
-    "PLAYER SPOTLIGHT":  "#c8201c",
-    "ON THIS DATE":      "#c8201c",
+    "PLAYER SPOTLIGHT":  "var(--accent-red)",
+    "ON THIS DATE":      "var(--accent-red)",
     "HALL OF FAME":      "#FFD700",
-    "HISTORY":           "#888",
-    "HISTORY LIST":      "#888",
+    "HISTORY":           "var(--muted)",
+    "HISTORY LIST":      "var(--muted)",
     "STADIUM":           "#4ade80",
-    "QUOTE":             "#aaa",
-    "POLL":              "#c8201c",
+    "QUOTE":             "var(--muted)",
+    "POLL":              "var(--accent-red)",
     "NAVIGATE":          "#0038A8",
-    "TEAM HUB":          "#c8201c",
+    "TEAM HUB":          "var(--accent-red)",
     "AWARD":             "#FFD700",
     "RADIO / PODCAST":   "#4ade80",
     "BEAT WRITER":       "#1d9bf0",
-    "ALMOST FORGOTTEN":  "#888",
-    "MISERY INDEX":      "#c8201c",
+    "ALMOST FORGOTTEN":  "var(--muted)",
+    "MISERY INDEX":      "var(--accent-red)",
     "WALK-UP SONG":      "#a855f7",
     "FAN COMMUNITY":     "#f97316",
     "SHOP":              "#22c55e",
@@ -4491,7 +4620,7 @@ function SiteSearch({ query, onSelect }) {
           <span style={styles.searchResultIcon}>{r.icon}</span>
           <div style={styles.searchResultBody}>
             <div style={styles.searchResultTop}>
-              <span style={{...styles.searchResultType, color: TYPE_COLORS[r.type] || "#888"}}>{r.type}</span>
+              <span style={{...styles.searchResultType, color: TYPE_COLORS[r.type] || "var(--muted)"}}>{r.type}</span>
               <span style={styles.searchResultTab}>→ {r.tab}</span>
             </div>
             <span style={styles.searchResultTitle}>{r.title}</span>
@@ -4553,7 +4682,7 @@ function RecapTab({ scores }) {
     {name:"Yankees",   keywords:"New York Yankees highlights",  color:"#003087", emoji:"⚾", espn:"https://www.espn.com/mlb/team/_/name/nyy"},
     {name:"Mets",      keywords:"New York Mets highlights",     color:"#FF5910", emoji:"⚾", espn:"https://www.espn.com/mlb/team/_/name/nym"},
     {name:"Knicks",    keywords:"New York Knicks highlights",   color:"#006BB6", emoji:"🏀", espn:"https://www.espn.com/nba/team/_/name/ny"},
-    {name:"Nets",      keywords:"Brooklyn Nets highlights",     color:"#444",    emoji:"🏀", espn:"https://www.espn.com/nba/team/_/name/bkn"},
+    {name:"Nets",      keywords:"Brooklyn Nets highlights",     color:"var(--muted)",    emoji:"🏀", espn:"https://www.espn.com/nba/team/_/name/bkn"},
     {name:"Rangers",   keywords:"New York Rangers highlights",  color:"#0038A8", emoji:"🏒", espn:"https://www.espn.com/nhl/team/_/name/nyr"},
     {name:"Islanders", keywords:"NY Islanders highlights",      color:"#00539B", emoji:"🏒", espn:"https://www.espn.com/nhl/team/_/name/nyi"},
     {name:"Devils",    keywords:"New Jersey Devils highlights", color:"#CE1126", emoji:"🏒", espn:"https://www.espn.com/nhl/team/_/name/njd"},
@@ -4598,27 +4727,27 @@ function RecapTab({ scores }) {
             const isExpanded = expandedGame === g.gameId;
             const bs = boxScores[g.gameId];
             return (
-              <div key={i} style={{marginBottom:4, border:"1px solid #222", borderRadius:3, overflow:"hidden"}}>
+              <div key={i} style={{marginBottom:4, border:"1px solid var(--border)", borderRadius:3, overflow:"hidden"}}>
                 {/* Score row */}
                 <div style={{display:"flex", alignItems:"center", justifyContent:"space-between",
-                  padding:"10px 14px", background: i%2===0 ? "#1a1c1f" : "#111", flexWrap:"wrap", gap:8}}>
+                  padding:"10px 14px", background: i%2===0 ? "var(--bg-content)" : "var(--ink)", flexWrap:"wrap", gap:8}}>
                   <div style={{display:"flex", alignItems:"center", gap:10, flex:1, minWidth:200}}>
-                    <span style={{fontSize:9, color:"#c8201c", fontWeight:900, letterSpacing:"0.1em"}}>{g.sport}</span>
-                    <span style={{fontSize:13, fontWeight: awayWin?900:400, color: awayWin?"#fff":"#aaa",
+                    <span style={{fontSize:9, color:"var(--accent-red)", fontWeight:900, letterSpacing:"0.1em"}}>{g.sport}</span>
+                    <span style={{fontSize:13, fontWeight: awayWin?900:400, color: awayWin?"#fff":"var(--muted)",
                       fontFamily:"'Georgia',serif"}}>{g.awayTeam}</span>
                     <span style={{fontSize:16, fontWeight:900, color:"#fff", minWidth:70, textAlign:"center",
                       fontFamily:"'Georgia',serif", letterSpacing:"0.05em"}}>
                       {g.awayScore ?? "—"} – {g.homeScore ?? "—"}
                     </span>
-                    <span style={{fontSize:13, fontWeight: homeWin?900:400, color: homeWin?"#fff":"#aaa",
+                    <span style={{fontSize:13, fontWeight: homeWin?900:400, color: homeWin?"#fff":"var(--muted)",
                       fontFamily:"'Georgia',serif"}}>{g.homeTeam}</span>
-                    {g.statusDesc && <span style={{fontSize:9, color:"#666"}}>{g.statusDesc}</span>}
+                    {g.statusDesc && <span style={{fontSize:9, color:"var(--muted)"}}>{g.statusDesc}</span>}
                   </div>
                   <div style={{display:"flex", gap:8, flexShrink:0}}>
                     {g.gameId && (
                       <button onClick={() => loadBoxScore(g)}
-                        style={{fontSize:9, padding:"3px 10px", background:"#161616", border:"1px solid #333",
-                          color:"#aaa", cursor:"pointer", letterSpacing:"0.08em", fontWeight:700}}>
+                        style={{fontSize:9, padding:"3px 10px", background:"var(--bg-content)", border:"1px solid var(--muted)",
+                          color:"var(--muted)", cursor:"pointer", letterSpacing:"0.08em", fontWeight:700}}>
                         {isExpanded ? "▲ HIDE" : "📊 LINE SCORE"}
                       </button>
                     )}
@@ -4638,21 +4767,21 @@ function RecapTab({ scores }) {
                         <table style={{width:"100%", borderCollapse:"collapse", fontFamily:"'Georgia',serif", minWidth:320}}>
                           <thead>
                             <tr>
-                              <td style={{fontSize:9, color:"#555", padding:"3px 8px 3px 0", letterSpacing:"0.1em", minWidth:120}}>TEAM</td>
+                              <td style={{fontSize:9, color:"var(--muted)", padding:"3px 8px 3px 0", letterSpacing:"0.1em", minWidth:120}}>TEAM</td>
                               {labels.map((lbl,j) => (
-                                <td key={j} style={{fontSize:9, color:"#666", textAlign:"center", padding:"3px 6px", minWidth:28, fontWeight:900}}>{lbl}</td>
+                                <td key={j} style={{fontSize:9, color:"var(--muted)", textAlign:"center", padding:"3px 6px", minWidth:28, fontWeight:900}}>{lbl}</td>
                               ))}
-                              <td style={{fontSize:9, color:"#c8201c", textAlign:"center", padding:"3px 6px", fontWeight:900, minWidth:36}}>TOT</td>
+                              <td style={{fontSize:9, color:"var(--accent-red)", textAlign:"center", padding:"3px 6px", fontWeight:900, minWidth:36}}>TOT</td>
                             </tr>
                           </thead>
                           <tbody>
                             {bs.linescores.map((team, ti) => (
-                              <tr key={ti} style={{borderTop:"1px solid #2e343a"}}>
-                                <td style={{fontSize:12, fontWeight:700, color: ti===0&&awayWin||ti===1&&homeWin ? "#fff":"#aaa",
+                              <tr key={ti} style={{borderTop:"1px solid var(--border)"}}>
+                                <td style={{fontSize:12, fontWeight:700, color: ti===0&&awayWin||ti===1&&homeWin ? "#fff":"var(--muted)",
                                   padding:"6px 8px 6px 0", whiteSpace:"nowrap"}}>{team.name}</td>
                                 {(team.periods||[]).map((p,j) => (
                                   <td key={j} style={{fontSize:12, textAlign:"center", padding:"6px",
-                                    color: p === "0" || p === "-" ? "#444" : "#ccc",
+                                    color: p === "0" || p === "-" ? "var(--muted)" : "var(--muted)",
                                     fontWeight: p !== "0" && p !== "-" ? 700 : 400}}>{p}</td>
                                 ))}
                                 <td style={{fontSize:13, fontWeight:900, textAlign:"center", padding:"6px",
@@ -4668,15 +4797,15 @@ function RecapTab({ scores }) {
 
                     {/* Key stats if available */}
                     {bs.playerStats?.length > 0 && (
-                      <div style={{marginTop:10, borderTop:"1px solid #2e343a", paddingTop:8}}>
-                        <div style={{fontSize:9, color:"#555", letterSpacing:"0.1em", fontWeight:900, marginBottom:6}}>KEY PERFORMERS</div>
+                      <div style={{marginTop:10, borderTop:"1px solid var(--border)", paddingTop:8}}>
+                        <div style={{fontSize:9, color:"var(--muted)", letterSpacing:"0.1em", fontWeight:900, marginBottom:6}}>KEY PERFORMERS</div>
                         <div style={{display:"flex", flexWrap:"wrap", gap:8}}>
                           {bs.playerStats.slice(0,6).map((p,j) => (
-                            <div key={j} style={{fontSize:10, color:"#aaa", background:"#111",
-                              padding:"4px 8px", borderRadius:2, border:"1px solid #222"}}>
+                            <div key={j} style={{fontSize:10, color:"var(--muted)", background:"var(--ink)",
+                              padding:"4px 8px", borderRadius:2, border:"1px solid var(--border)"}}>
                               <span style={{color:"#fff", fontWeight:700}}>{p.name}</span>
-                              <span style={{color:"#666", marginLeft:4}}>{p.team}</span>
-                              <span style={{color:"#c8201c", marginLeft:4}}>{p.stat}</span>
+                              <span style={{color:"var(--muted)", marginLeft:4}}>{p.team}</span>
+                              <span style={{color:"var(--accent-red)", marginLeft:4}}>{p.stat}</span>
                             </div>
                           ))}
                         </div>
@@ -4691,20 +4820,20 @@ function RecapTab({ scores }) {
       ) : (
         <div style={{padding:"12px 0 20px"}}>
           <div style={styles.stdDivisionHeader}>🏆 YESTERDAY'S NY RESULTS — {yDate.toUpperCase()}</div>
-          <p style={{fontSize:12, color:"#555", padding:"8px 0"}}>No NY games yesterday — check the SCORES tab for upcoming games.</p>
+          <p style={{fontSize:12, color:"var(--muted)", padding:"8px 0"}}>No NY games yesterday — check the SCORES tab for upcoming games.</p>
         </div>
       )}
 
       {/* Video Highlights */}
       <div style={{...styles.stdDivisionHeader, marginTop:20}}>🎬 VIDEO HIGHLIGHTS</div>
-      <div style={{marginBottom:12, fontSize:10, color:"#555"}}>Click any team to find today's highlights on YouTube</div>
+      <div style={{marginBottom:12, fontSize:10, color:"var(--muted)"}}>Click any team to find today's highlights on YouTube</div>
       <div style={styles.ytTeamGrid}>
         {NY_TEAMS_RECAP.map((t, i) => {
           const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${t.keywords} ${dateStr}`)}&sp=EgIIAQ%3D%3D`;
           return (
             <div key={i} style={{display:"flex", gap:6, flexDirection:"column"}}>
               <a href={ytUrl} target="_blank" rel="noopener noreferrer"
-                style={{...styles.ytTeamCard, background:`linear-gradient(135deg, ${t.color}22 0%, #141618 100%)`, borderLeft:`3px solid ${t.color}`}}>
+                style={{...styles.ytTeamCard, background:`linear-gradient(135deg, ${t.color}22 0%, var(--bg-page) 100%)`, borderLeft:`3px solid ${t.color}`}}>
                 <span style={styles.ytEmoji}>{t.emoji}</span>
                 <div style={styles.ytInfo}>
                   <span style={styles.ytTeamName}>{t.name}</span>
@@ -4712,8 +4841,8 @@ function RecapTab({ scores }) {
                 </div>
               </a>
               <a href={t.espn} target="_blank" rel="noopener noreferrer"
-                style={{fontSize:9, color:"#555", textDecoration:"none", textAlign:"center",
-                  padding:"3px 6px", border:"1px solid #222", letterSpacing:"0.08em"}}>
+                style={{fontSize:9, color:"var(--muted)", textDecoration:"none", textAlign:"center",
+                  padding:"3px 6px", border:"1px solid var(--border)", letterSpacing:"0.08em"}}>
                 📊 ESPN RECAP
               </a>
             </div>
@@ -4734,16 +4863,16 @@ function RecapTab({ scores }) {
           return d.toDateString() === tomorrow.toDateString() &&
             NY_NAMES.some(n => teams.includes(n));
         });
-        if (!tmrGames.length) return <p style={{fontSize:12, color:"#555", padding:"8px 0"}}>No NY games scheduled for tomorrow.</p>;
+        if (!tmrGames.length) return <p style={{fontSize:12, color:"var(--muted)", padding:"8px 0"}}>No NY games scheduled for tomorrow.</p>;
         return tmrGames.map((g,i) => (
           <div key={i} style={{display:"flex", alignItems:"center", justifyContent:"space-between",
-            padding:"10px 14px", borderBottom:"1px solid #2e343a",
-            background: i%2===0?"#1a1c1f":"#111", flexWrap:"wrap", gap:8}}>
+            padding:"10px 14px", borderBottom:"1px solid var(--border)",
+            background: i%2===0?"var(--bg-content)":"var(--ink)", flexWrap:"wrap", gap:8}}>
             <div style={{display:"flex", alignItems:"center", gap:10}}>
-              <span style={{fontSize:9, color:"#c8201c", fontWeight:900}}>{g.sport}</span>
-              <span style={{fontSize:13, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{g.awayTeam} @ {g.homeTeam}</span>
+              <span style={{fontSize:9, color:"var(--accent-red)", fontWeight:900}}>{g.sport}</span>
+              <span style={{fontSize:13, color:"var(--ink)", fontFamily:"'Georgia',serif"}}>{g.awayTeam} @ {g.homeTeam}</span>
             </div>
-            <span style={{fontSize:11, color:"#888"}}>{g.statusDesc || g.gameTime || "TBD"}</span>
+            <span style={{fontSize:11, color:"var(--muted)"}}>{g.statusDesc || g.gameTime || "TBD"}</span>
           </div>
         ));
       })()}
@@ -4761,7 +4890,7 @@ function IconicTab() {
         <p style={styles.stdSub}>US OPEN TENNIS · US OPEN GOLF · PGA · RYDER CUP · BELMONT STAKES</p>
       </div>
 
-      <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:16, borderBottom:"1px solid #2a2a2a", paddingBottom:12}}>
+      <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:16, borderBottom:"1px solid var(--border)", paddingBottom:12}}>
         {[["TENNIS","🎾 US OPEN TENNIS"],["GOLF","⛳ US OPEN GOLF"],["BELMONT","🐎 BELMONT / TRIPLE CROWN"]].map(([s,label]) => (
           <button key={s} onClick={() => setSection(s)}
             style={{...styles.filterBtn, ...(section===s ? styles.filterBtnActive : {})}}>
@@ -4773,8 +4902,8 @@ function IconicTab() {
       {/* ── US OPEN TENNIS ── */}
       {section === "TENNIS" && (
         <div>
-          <div style={{marginBottom:16, padding:"12px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6}}>The US Open is held every late August into September at the USTA Billie Jean King National Tennis Center in Flushing Meadows, Queens — the same park that hosted two World's Fairs. Arthur Ashe Stadium, the largest tennis venue in the world (23,771 seats), anchors it. One of the four Grand Slams and the loudest, brashest, most New York of them all.</p>
+          <div style={{marginBottom:16, padding:"12px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)", lineHeight:1.6}}>The US Open is held every late August into September at the USTA Billie Jean King National Tennis Center in Flushing Meadows, Queens — the same park that hosted two World's Fairs. Arthur Ashe Stadium, the largest tennis venue in the world (23,771 seats), anchors it. One of the four Grand Slams and the loudest, brashest, most New York of them all.</p>
           </div>
 
           <div style={styles.stdDivisionHeader}>🎾 THE VENUE — A NY LANDMARK</div>
@@ -4784,7 +4913,7 @@ function IconicTab() {
             { t:"Louis Armstrong Stadium", d:"The second show court, rebuilt in 2018 — named for the jazz legend who lived nearby in Corona, Queens." },
             { t:"Flushing Meadows-Corona Park", d:"Site of the 1939 and 1964 World's Fairs. The Unisphere still towers nearby. Pure Queens history." },
           ].map((x,i) => (
-            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.iconicIcon}>🎾</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicTitle}>{x.t}</span>
@@ -4807,7 +4936,7 @@ function IconicTab() {
             { t:"Super Saturday 1984", d:"One of the greatest days in tennis history — two epic men's semifinals plus the women's final, all in one unforgettable day at Flushing Meadows." },
             { t:"Tiebreak Innovation", d:"The US Open was the first major to use a final-set tiebreak — typical of the event's willingness to break tennis tradition." },
           ].map((x,i) => (
-            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.iconicIcon}>📖</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicTitle}>{x.t}</span>
@@ -4829,8 +4958,8 @@ function IconicTab() {
       {/* ── US OPEN GOLF ── */}
       {section === "GOLF" && (
         <div>
-          <div style={{marginBottom:16, padding:"12px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6}}>No state has hosted more US Opens than New York — 18 and counting. From the wind-swept links of Shinnecock Hills to the brutal slopes of Winged Foot to the public-course beast that is Bethpage Black, NY golf is championship golf. The US Open returns to Shinnecock in 2026 and Winged Foot in 2028.</p>
+          <div style={{marginBottom:16, padding:"12px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)", lineHeight:1.6}}>No state has hosted more US Opens than New York — 18 and counting. From the wind-swept links of Shinnecock Hills to the brutal slopes of Winged Foot to the public-course beast that is Bethpage Black, NY golf is championship golf. The US Open returns to Shinnecock in 2026 and Winged Foot in 2028.</p>
           </div>
 
           <div style={styles.stdDivisionHeader}>⛳ SHINNECOCK HILLS — SOUTHAMPTON, LONG ISLAND</div>
@@ -4842,7 +4971,7 @@ function IconicTab() {
             { y:"2018", d:"Brooks Koepka wins at +1 — the only over-par US Open winner in a decade — defending his title in punishing conditions." },
             { y:"2026", d:"The US Open returns to Shinnecock Hills this June — one of the most anticipated venues on the entire golf calendar." },
           ].map((x,i) => (
-            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.iconicYear}>{x.y}</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicDesc}>{x.d}</span>
@@ -4861,7 +4990,7 @@ function IconicTab() {
             { y:"2020", d:"Bryson DeChambeau overpowers Winged Foot at -6, the only player under par, redefining how the course could be played." },
             { y:"2028", d:"The US Open returns to Winged Foot — its seventh time hosting the national championship." },
           ].map((x,i) => (
-            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.iconicYear}>{x.y}</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicDesc}>{x.d}</span>
@@ -4877,7 +5006,7 @@ function IconicTab() {
             { y:"2019", d:"Bethpage Black hosts the PGA Championship — Brooks Koepka wins his fourth major. The famous warning sign greets every golfer: 'The Black Course is an extremely difficult course recommended only for highly skilled golfers.'" },
             { y:"2025", d:"Bethpage Black hosts the Ryder Cup — the rowdy New York crowd brings unmatched energy to international golf." },
           ].map((x,i) => (
-            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.iconicYear}>{x.y}</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicDesc}>{x.d}</span>
@@ -4894,7 +5023,7 @@ function IconicTab() {
             { y:"2003", d:"Shaun Micheel wins an improbable PGA at Oak Hill. His 7-iron approach on the final hole — two inches from the cup — is one of the great clutch shots in major history." },
             { y:"2013", d:"Jason Dufner wins the PGA at Oak Hill, breaking a final-round scoring record. Rochester NY hosts its third PGA Championship." },
           ].map((x,i) => (
-            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.iconicYear}>{x.y}</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicDesc}>{x.d}</span>
@@ -4908,7 +5037,7 @@ function IconicTab() {
             { y:"1995", d:"The Ryder Cup returns to the NY area — American golf at its most passionate. The region's golf culture makes it a perfect host every generation." },
             { y:"2025", d:"Bethpage Black hosts the Ryder Cup — the most anticipated team golf event in decades. A public course, a roaring NY crowd, and Team USA on home soil." },
           ].map((x,i) => (
-            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.iconicYear}>{x.y}</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicDesc}>{x.d}</span>
@@ -4925,7 +5054,7 @@ function IconicTab() {
             { t:"LPGA at Bethpage Black", d:"Bethpage Black has hosted LPGA events — proving the course challenges the game's best regardless of gender." },
             { t:"Met Amateur Championship", d:"The Metropolitan Golf Association (MGA) has governed NY area golf since 1897 — the oldest regional golf association in America." },
           ].map((x,i) => (
-            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.iconicIcon}>🎓</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicTitle}>{x.t}</span>
@@ -4946,7 +5075,7 @@ function IconicTab() {
             { t:"Maidstone Club — East Hampton, LI", rank:"Top 50 in US", url:"https://www.maidstoneclubeh.com", d:"Classic links-style course right on the Atlantic. One of the most beautiful and challenging courses in the Northeast." },
             { t:"Oak Hill Country Club — Rochester, NY", rank:"Top 20 in US", url:"https://www.oakhillcc.com", d:"3× PGA Championship host. Donald Ross design. Upstate New York's great championship venue." },
           ].map((x,i) => (
-            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.iconicIcon}>⛳</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicTitle}>{x.t}</span>
@@ -4967,7 +5096,7 @@ function IconicTab() {
             { t:"NY Golf Royalty", d:"The Metropolitan Golf Association (MGA), founded 1897, is the oldest regional golf association in America. NY golf has been elite for over 125 years." },
             { t:"Youngest US Open Champion", d:"John McDermott won the 1912 US Open at 19 years old — a record that still stands — at the Country Club of Buffalo." },
           ].map((x,i) => (
-            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.iconicIcon}>📖</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicTitle}>{x.t}</span>
@@ -4987,15 +5116,15 @@ function IconicTab() {
       {/* ── BELMONT / TRIPLE CROWN ── */}
       {section === "BELMONT" && (
         <div>
-          <div style={{marginBottom:16, padding:"12px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6}}>The Belmont Stakes — 'The Test of the Champion' — is the third and final jewel of horse racing's Triple Crown, run at Belmont Park in Elmont, Long Island since 1905. At 1.5 miles, it's the longest of the three races and the ultimate test of stamina. Every Triple Crown bid comes down to Belmont. And in 1973, the greatest performance in the history of the sport happened right here.
+          <div style={{marginBottom:16, padding:"12px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)", lineHeight:1.6}}>The Belmont Stakes — 'The Test of the Champion' — is the third and final jewel of horse racing's Triple Crown, run at Belmont Park in Elmont, Long Island since 1905. At 1.5 miles, it's the longest of the three races and the ultimate test of stamina. Every Triple Crown bid comes down to Belmont. And in 1973, the greatest performance in the history of the sport happened right here.
 </p>
           </div>
 
           <div style={styles.stdDivisionHeader}>🐎 SECRETARIAT — THE GREATEST OF ALL TIME</div>
-          <div style={{padding:"14px 16px", background:"#161616", borderLeft:"3px solid #c8201c", marginBottom:16}}>
-            <p style={{margin:"0 0 8px", fontSize:13, color:"#e8e0d0", fontWeight:700, fontFamily:"'Georgia',serif"}}>June 9, 1973 — Belmont Park</p>
-            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.7}}>Secretariat won the Belmont Stakes by an astonishing 31 lengths — the largest margin in the history of the race — completing the first Triple Crown in 25 years. His time of 2:24 flat set a world record for 1.5 miles on dirt that still stands today. Announcer Chic Anderson's call — 'Secretariat is moving like a tremendous machine!' — is the most famous in racing history. Big Red is universally considered the greatest racehorse that ever lived.</p>
+          <div style={{padding:"14px 16px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)", marginBottom:16}}>
+            <p style={{margin:"0 0 8px", fontSize:13, color:"var(--ink)", fontWeight:700, fontFamily:"'Georgia',serif"}}>June 9, 1973 — Belmont Park</p>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)", lineHeight:1.7}}>Secretariat won the Belmont Stakes by an astonishing 31 lengths — the largest margin in the history of the race — completing the first Triple Crown in 25 years. His time of 2:24 flat set a world record for 1.5 miles on dirt that still stands today. Announcer Chic Anderson's call — 'Secretariat is moving like a tremendous machine!' — is the most famous in racing history. Big Red is universally considered the greatest racehorse that ever lived.</p>
           </div>
 
           <div style={styles.stdDivisionHeader}>🏆 TRIPLE CROWN WINNERS (ALL SEALED AT BELMONT)</div>
@@ -5014,7 +5143,7 @@ function IconicTab() {
             { y:"2015", d:"American Pharoah — ended a 37-year drought, sending Belmont Park into delirium." },
             { y:"2018", d:"Justify — won it all undefeated, the second to do so, in just his sixth career start." },
           ].map((x,i) => (
-            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"}), ...(x.y==="1973"?{borderLeft:"3px solid #c8201c"}:{})}}>
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"var(--bg-content)"}), ...(x.y==="1973"?{borderLeft:"3px solid var(--accent-red)"}:{})}}>
               <div style={styles.iconicYear}>{x.y}</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicDesc}>{x.d}</span>
@@ -5031,7 +5160,7 @@ function IconicTab() {
             { t:"Layered Sports History", d:"Belmont Park's grounds are now also home to UBS Arena, where the NY Islanders play — sports history layered on sports history." },
             { t:"Every Triple Crown Clinched Here", d:"All 13 Triple Crowns in American history have been sealed at Belmont Park — the most decisive stretch of dirt in the sport." },
           ].map((x,i) => (
-            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.iconicRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.iconicIcon}>📖</div>
               <div style={styles.iconicInfo}>
                 <span style={styles.iconicTitle}>{x.t}</span>
@@ -5477,11 +5606,11 @@ function TodayTab() {
         🗽 ON THIS DATE — {now.toLocaleDateString("en-US",{month:"long",day:"numeric"})}
       </div>
       {todayMoments.length === 0 ? (
-        <div style={{padding:"16px 0", fontSize:12, color:"#555"}}>
+        <div style={{padding:"16px 0", fontSize:12, color:"var(--muted)"}}>
           No major NY sports anniversaries on record for today — check back or browse the full calendar below.
         </div>
       ) : todayMoments.map((m, i) => (
-        <div key={i} style={{...styles.todayCard, borderLeft:`3px solid #c8201c`}}>
+        <div key={i} style={{...styles.todayCard, borderLeft:`3px solid var(--accent-red)`}}>
           <div style={styles.todayEmoji}>{m.emoji}</div>
           <div style={styles.todayBody}>
             <div style={styles.todayHeader}>
@@ -5503,11 +5632,11 @@ function TodayTab() {
         <>
           <div style={{...styles.stdDivisionHeader, marginTop:20}}>📆 COMING UP THIS WEEK</div>
           {nearbyMoments.slice(0,5).map((m, i) => (
-            <div key={i} style={{...styles.todayCard, ...(i%2===0?{}:{background:"#0f0f0f"}), borderLeft:"3px solid #333"}}>
+            <div key={i} style={{...styles.todayCard, ...(i%2===0?{}:{background:"var(--bg-content)"}), borderLeft:"3px solid var(--muted)"}}>
               <div style={styles.todayEmoji}>{m.emoji}</div>
               <div style={styles.todayBody}>
                 <div style={styles.todayHeader}>
-                  <span style={{...styles.todayYear, color:"#888"}}>{m.month}/{m.day}/{m.year}</span>
+                  <span style={{...styles.todayYear, color:"var(--muted)"}}>{m.month}/{m.day}/{m.year}</span>
                   <span style={styles.todayTeam}>{m.team}</span>
                 </div>
                 <div style={styles.todayTitle}>{m.title}</div>
@@ -5529,11 +5658,11 @@ function TodayTab() {
         ))}
       </div>
       {allFiltered.sort((a,b) => a.month*100+a.day - (b.month*100+b.day)).map((m, i) => (
-        <div key={i} style={{...styles.todayCard, ...(i%2===0?{}:{background:"#0f0f0f"}), borderLeft:`3px solid #2a2a2a`}}>
+        <div key={i} style={{...styles.todayCard, ...(i%2===0?{}:{background:"var(--bg-content)"}), borderLeft:`3px solid var(--border)`}}>
           <div style={{...styles.todayEmoji, fontSize:20}}>{m.emoji}</div>
           <div style={styles.todayBody}>
             <div style={styles.todayHeader}>
-              <span style={{...styles.todayYear, fontSize:10, color:"#888"}}>{m.month}/{m.day}/{m.year}</span>
+              <span style={{...styles.todayYear, fontSize:10, color:"var(--muted)"}}>{m.month}/{m.day}/{m.year}</span>
               <span style={styles.todayTeam}>{m.team}</span>
             </div>
             <div style={{...styles.todayTitle, fontSize:12}}>{m.title}</div>
@@ -5752,20 +5881,20 @@ function PollsTab() {
         <h2 style={styles.stdTitle}>🗳️ NY SPORTS POLLS</h2>
         <p style={styles.stdSub}>VOTE · DEBATE · SETTLE THE ARGUMENT</p>
       </div>
-      <div style={{marginBottom:20, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-        <p style={{margin:0, fontSize:12, color:"#aaa"}}>
+      <div style={{marginBottom:20, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+        <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>
           Real votes from real NY fans — results are shared across all visitors. A new question every week, 52 polls cycling through the year.
         </p>
       </div>
 
-      <div style={{...styles.pollCard, border:"1px solid #c8201c"}}>
-        <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:8}}>
+      <div style={{...styles.pollCard, border:"1px solid var(--accent-red)"}}>
+        <div style={{fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.15em", marginBottom:8}}>
           ⭐ POLL OF THE WEEK — CHANGES WEEKLY
         </div>
         <div style={styles.pollQuestion}>{poll.question}</div>
 
         {loading ? (
-          <div style={{padding:"20px 0", textAlign:"center", color:"#666", fontSize:11}}>Loading votes...</div>
+          <div style={{padding:"20px 0", textAlign:"center", color:"var(--muted)", fontSize:11}}>Loading votes...</div>
         ) : (
           <div style={styles.pollOptions}>
             {poll.options.map((opt, i) => {
@@ -5784,7 +5913,7 @@ function PollsTab() {
                       cursor: hasVoted ? "default" : "pointer",
                     }}>
                     {hasVoted && (
-                      <div style={{...styles.pollBar, width:`${pct}%`, background:isWinner?"#c8201c":"#2a2a2a"}} />
+                      <div style={{...styles.pollBar, width:`${pct}%`, background:isWinner?"var(--accent-red)":"var(--border)"}} />
                     )}
                     <span style={styles.pollOptionText}>{isMyVote && "✓ "}{opt}</span>
                     {hasVoted && <span style={styles.pollPct}>{pct}%</span>}
@@ -5798,7 +5927,7 @@ function PollsTab() {
         {hasVoted && (
           <div style={styles.pollMeta}>
             your vote: <strong>{voted[poll.id]}</strong>
-            {total > 0 && <span style={{marginLeft:8, color:"#555"}}>· {total} vote{total!==1?"s":""} total</span>}
+            {total > 0 && <span style={{marginLeft:8, color:"var(--muted)"}}>· {total} vote{total!==1?"s":""} total</span>}
           </div>
         )}
         {!hasVoted && !loading && (
@@ -5926,20 +6055,20 @@ function HofTab() {
         <h2 style={styles.stdTitle}>🏛️ NY SPORTS HALL OF FAME</h2>
         <p style={styles.stdSub}>HALL OF FAMERS BY TEAM · LEGENDS · IMMORTALS</p>
       </div>
-      <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Every Hall of Famer with a connection to a New York team. Multiple inductees appear on multiple teams.</p>
+      <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+        <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>Every Hall of Famer with a connection to a New York team. Multiple inductees appear on multiple teams.</p>
       </div>
       <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:20}}>
         {TEAMS.map(t => (
           <button key={t} onClick={() => setActiveTeam(t)}
             style={{...styles.filterBtn, ...(activeTeam===t?styles.filterBtnActive:{})}}>
-            {t} <span style={{fontSize:9, color:"#666", marginLeft:4}}>({HOF_DATA[t]?.length})</span>
+            {t} <span style={{fontSize:9, color:"var(--muted)", marginLeft:4}}>({HOF_DATA[t]?.length})</span>
           </button>
         ))}
       </div>
       <div style={styles.stdDivisionHeader}>{activeTeam.toUpperCase()} HALL OF FAMERS ({players.length})</div>
       {players.map((p, i) => (
-        <div key={i} style={{...styles.hofRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+        <div key={i} style={{...styles.hofRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <div style={styles.hofEmoji}>🏛️</div>
           <div style={styles.hofInfo}>
             <div style={styles.hofHeader}>
@@ -6050,8 +6179,8 @@ function MiseryTab() {
         <h2 style={styles.stdTitle}>😩 THE NY SPORTS MISERY INDEX</h2>
         <p style={styles.stdSub}>RANKED FROM MOST TO LEAST SUFFERING</p>
       </div>
-      <div style={{marginBottom:20, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Every NY team ranked by how much they've made their fans suffer. The higher the score, the deeper the pain. A badge of honor for true NY fans.</p>
+      <div style={{marginBottom:20, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+        <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>Every NY team ranked by how much they've made their fans suffer. The higher the score, the deeper the pain. A badge of honor for true NY fans.</p>
       </div>
       <div style={{marginBottom:20, padding:"10px 14px", background:"#1e1a00", borderLeft:"3px solid #f0b429"}}>
         <p style={{margin:0, fontSize:12, color:"#f0b429", fontWeight:700}}>🏆 BIGGEST UPSET TO THE MISERY INDEX EVER: On June 13th, the Knicks dropped from #2 (score 91) to dead last (score 5) overnight. 53 years of suffering, erased by Jalen Brunson in one evening. The Jets now stand alone at the top — for the first time in decades, they have absolutely no company.</p>
@@ -6066,13 +6195,13 @@ function MiseryTab() {
               <span style={styles.miseryTitle}>{t.title}</span>
             </div>
             <div style={styles.miseryScoreBox}>
-              <div style={{...styles.miseryScoreFill, width:`${t.score}%`, background:t.score>80?"#c8201c":t.score>50?"#cc8800":"#2d8a50"}} />
+              <div style={{...styles.miseryScoreFill, width:`${t.score}%`, background:t.score>80?"var(--accent-red)":t.score>50?"#cc8800":"#2d8a50"}} />
               <span style={styles.miseryScore}>{t.score}</span>
             </div>
           </div>
           <div style={styles.miseryMeta}>
-            <span style={{color:"#888", fontSize:10}}>Last title: <strong style={{color:"#e8e0d0"}}>{t.last}</strong></span>
-            {t.drought > 0 && <span style={{color:"#888", fontSize:10}}>Drought: <strong style={{color:"#c8201c"}}>{t.drought} years</strong></span>}
+            <span style={{color:"var(--muted)", fontSize:10}}>Last title: <strong style={{color:"var(--ink)"}}>{t.last}</strong></span>
+            {t.drought > 0 && <span style={{color:"var(--muted)", fontSize:10}}>Drought: <strong style={{color:"var(--accent-red)"}}>{t.drought} years</strong></span>}
           </div>
           <div style={styles.miseryLowlights}>
             {t.lowlights.map((l, j) => <div key={j} style={styles.miseryLow}>😭 {l}</div>)}
@@ -6162,8 +6291,8 @@ function AwardsTab() {
         <h2 style={styles.stdTitle}>🏅 NY SPORTS AWARDS</h2>
         <p style={styles.stdSub}>EVERY MAJOR AWARD WON BY A NEW YORK PLAYER OR TEAM</p>
       </div>
-      <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Every major individual and team award won by a NY athlete. A testament to the depth of New York sports greatness across a century.</p>
+      <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+        <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>Every major individual and team award won by a NY athlete. A testament to the depth of New York sports greatness across a century.</p>
       </div>
       <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:16}}>
         {SPORTS.map(s => (
@@ -6177,12 +6306,12 @@ function AwardsTab() {
         <div key={groupKey} style={{marginBottom:16}}>
           <div style={styles.stdDivisionHeader}>🏅 {groupKey}</div>
           {items.sort((a,b) => b.year-a.year).map((a, i) => (
-            <div key={i} style={{...styles.hofRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+            <div key={i} style={{...styles.hofRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={{...styles.hofYear, minWidth:44, fontSize:14}}>{a.year}</div>
               <div style={styles.hofInfo}>
                 <div style={styles.hofHeader}>
                   <span style={styles.hofName}>{a.winner}</span>
-                  <span style={{...styles.hofPos, color:"#888"}}>{a.team}</span>
+                  <span style={{...styles.hofPos, color:"var(--muted)"}}>{a.team}</span>
                 </div>
                 <p style={styles.hofNote}>{a.note}</p>
                 <div style={{display:"flex", gap:10}}>
@@ -6241,8 +6370,8 @@ function ForgottenTab() {
         <h2 style={styles.stdTitle}>🕯️ THE ALMOST FORGOTTEN</h2>
         <p style={styles.stdSub}>NY PLAYERS WHO DESERVE MORE LOVE</p>
       </div>
-      <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-        <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6}}>Great players who got overshadowed by larger legends, fell victim to injury, or simply played in an era before social media could amplify their brilliance. New York sports history is deeper than the headlines.</p>
+      <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+        <p style={{margin:0, fontSize:12, color:"var(--muted)", lineHeight:1.6}}>Great players who got overshadowed by larger legends, fell victim to injury, or simply played in an era before social media could amplify their brilliance. New York sports history is deeper than the headlines.</p>
       </div>
       <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:16}}>
         {TEAMS.map(t => (
@@ -6254,13 +6383,13 @@ function ForgottenTab() {
       </div>
       <div style={styles.stdDivisionHeader}>{filtered.length} OVERLOOKED LEGENDS</div>
       {filtered.map((p, i) => (
-        <div key={i} style={{...styles.hofRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+        <div key={i} style={{...styles.hofRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <div style={{fontSize:24, flexShrink:0, width:36, textAlign:"center"}}>{p.emoji}</div>
           <div style={styles.hofInfo}>
             <div style={styles.hofHeader}>
               <span style={styles.hofName}>{p.name}</span>
               <span style={styles.hofPos}>{p.team}</span>
-              <span style={{fontSize:9, color:"#666"}}>{p.era}</span>
+              <span style={{fontSize:9, color:"var(--muted)"}}>{p.era}</span>
             </div>
             <p style={styles.hofNote}>{p.why}</p>
             <div style={{display:"flex", gap:10}}>
@@ -6292,7 +6421,7 @@ function StatsTab() {
 
   const STATS_REFERENCE = {
     MLB:  { emoji:"⚾", color:"#003087" },
-    NFL:  { emoji:"🏈", color:"#c8201c" },
+    NFL:  { emoji:"🏈", color:"var(--accent-red)" },
     NBA:  { emoji:"🏀", color:"#FF5910" },
     NHL:  { emoji:"🏒", color:"#0038A8" },
     WNBA: { emoji:"🏀", color:"#007A5E" },
@@ -6589,7 +6718,7 @@ function StatsTab() {
         <p style={styles.stdSub}>LEADERS · DROUGHT TRACKER · DRAFT HISTORY · RIVALRIES · TEAM LINKS</p>
       </div>
 
-      <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:20, borderBottom:"1px solid #2a2a2a", paddingBottom:12}}>
+      <div style={{display:"flex", gap:4, flexWrap:"wrap", marginBottom:20, borderBottom:"1px solid var(--border)", paddingBottom:12}}>
         {sections.map(s => (
           <button key={s} onClick={() => setActiveSection(s)}
             style={{...styles.filterBtn, ...(activeSection===s ? styles.filterBtnActive : {})}}>
@@ -6610,40 +6739,40 @@ function StatsTab() {
           </div>
           <div>
             <div style={styles.stdDivisionHeader}>{STATS_REFERENCE[activeLeague]?.emoji} {activeLeague} STAT LEADERS & REFERENCE</div>
-            <div style={{marginBottom:12, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-              <p style={{margin:0, fontSize:12, color:"#aaa"}}>Live leaderboards from Baseball Reference, Pro Football Reference, Basketball Reference, and Hockey Reference. Click any category to see current leaders.</p>
+            <div style={{marginBottom:12, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+              <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>Live leaderboards from Baseball Reference, Pro Football Reference, Basketball Reference, and Hockey Reference. Click any category to see current leaders.</p>
             </div>
             {(STAT_SITES[activeLeague] || []).map((cat, i) => (
               <a key={i} href={cat.url} target="_blank" rel="noopener noreferrer"
-                style={{...styles.leaderRow, ...(i%2===0?{}:{background:"#0f0f0f"}), textDecoration:"none", display:"flex", alignItems:"center", gap:12}}>
+                style={{...styles.leaderRow, ...(i%2===0?{}:{background:"var(--bg-content)"}), textDecoration:"none", display:"flex", alignItems:"center", gap:12}}>
                 <div style={{flex:1}}>
                   <div style={{fontSize:13, fontWeight:700, color:"#e8e8e8", fontFamily:"'Georgia',serif", marginBottom:2}}>{cat.name}</div>
-                  <div style={{fontSize:10, color:"#666"}}>{cat.desc}</div>
+                  <div style={{fontSize:10, color:"var(--muted)"}}>{cat.desc}</div>
                 </div>
                 <div style={{textAlign:"right", flexShrink:0}}>
-                  <div style={{fontSize:9, color:"#c8201c", fontWeight:900, letterSpacing:"0.1em"}}>{cat.site}</div>
-                  <div style={{fontSize:9, color:"#555"}}>VIEW LEADERS →</div>
+                  <div style={{fontSize:9, color:"var(--accent-red)", fontWeight:900, letterSpacing:"0.1em"}}>{cat.site}</div>
+                  <div style={{fontSize:9, color:"var(--muted)"}}>VIEW LEADERS →</div>
                 </div>
               </a>
             ))}
           </div>
-          <div style={{marginTop:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:11, color:"#aaa"}}>Powered by Sports Reference · The gold standard for sports statistics since 2000</p>
+          <div style={{marginTop:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:11, color:"var(--muted)"}}>Powered by Sports Reference · The gold standard for sports statistics since 2000</p>
           </div>
         </div>
       )}
 
       {activeSection === "DROUGHT" && (
         <div>
-          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa"}}>How long has it been since each NY team last won a championship? Sorted by most desperate first.</p>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>How long has it been since each NY team last won a championship? Sorted by most desperate first.</p>
           </div>
           {DROUGHT_DATA.map((t, i) => {
             const years = t.last ? (year - t.last) : 999;
             const pct = Math.min(years / 60 * 100, 100);
-            const color = years > 40 ? "#c8201c" : years > 20 ? "#f59e0b" : years === 999 ? "#c8201c" : "#22c55e";
+            const color = years > 40 ? "var(--accent-red)" : years > 20 ? "#f59e0b" : years === 999 ? "var(--accent-red)" : "#22c55e";
             return (
-              <div key={i} style={{...styles.droughtRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              <div key={i} style={{...styles.droughtRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
                 <span style={styles.droughtEmoji}>{t.emoji}</span>
                 <div style={styles.droughtInfo}>
                   <span style={styles.droughtTeam}>{t.team}</span>
@@ -6663,8 +6792,8 @@ function StatsTab() {
 
       {activeSection === "DRAFT" && (
         <div>
-          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa"}}>Notable draft picks — the best, worst, and most memorable selections in NY sports history. Includes 2025 and 2026 picks.</p>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>Notable draft picks — the best, worst, and most memorable selections in NY sports history. Includes 2025 and 2026 picks.</p>
           </div>
           {Object.entries(DRAFT_DATA).map(([team, teamData]) => (
             <div key={team} style={{marginBottom:28}}>
@@ -6680,12 +6809,12 @@ function StatsTab() {
                   href={`https://www.google.com/search?q=${encodeURIComponent(p.name+" "+team+" draft pick career")}`}
                   target="_blank" rel="noopener noreferrer"
                   style={{display:"flex", alignItems:"flex-start", gap:10, padding:"9px 14px",
-                    borderBottom:"1px solid #2e343a",
-                    background: p.year >= 2025 ? "#0a1a0a" : i%2===0 ? "#1a1c1f" : "#111",
+                    borderBottom:"1px solid var(--border)",
+                    background: p.year >= 2025 ? "#0a1a0a" : i%2===0 ? "var(--bg-content)" : "var(--ink)",
                     borderLeft: p.year >= 2025 ? "3px solid #22c55e" : p.year >= 2020 ? "3px solid #f59e0b" : "3px solid transparent",
                     textDecoration:"none"}}>
-                  <span style={{fontSize:11, color:"#c8201c", fontWeight:900, flexShrink:0, minWidth:36}}>{p.year}</span>
-                  <span style={{fontSize:10, color:"#555", flexShrink:0, minWidth:32, letterSpacing:"0.05em"}}>{p.pick}</span>
+                  <span style={{fontSize:11, color:"var(--accent-red)", fontWeight:900, flexShrink:0, minWidth:36}}>{p.year}</span>
+                  <span style={{fontSize:10, color:"var(--muted)", flexShrink:0, minWidth:32, letterSpacing:"0.05em"}}>{p.pick}</span>
                   <div style={{flex:1, minWidth:0}}>
                     <div style={{fontSize:13, fontWeight:700, color:"#e8e8e8", fontFamily:"'Georgia',serif", marginBottom:2}}>
                       {p.name}
@@ -6693,7 +6822,7 @@ function StatsTab() {
                     </div>
                     <div style={{fontSize:11, color:"#777", lineHeight:1.4}}>{p.note}</div>
                   </div>
-                  <span style={{fontSize:9, color:"#555", flexShrink:0, alignSelf:"center"}}>→</span>
+                  <span style={{fontSize:9, color:"var(--muted)", flexShrink:0, alignSelf:"center"}}>→</span>
                 </a>
               ))}
             </div>
@@ -6703,22 +6832,22 @@ function StatsTab() {
 
       {activeSection === "RIVALS" && (
         <div>
-          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa"}}>The rivalries that define New York sports — blood, history, and hatred.</p>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>The rivalries that define New York sports — blood, history, and hatred.</p>
           </div>
           {RIVALS_DATA.map((r,i) => (
             <a key={i}
               href={`https://www.google.com/search?q=${encodeURIComponent(r.team1+" vs "+r.team2+" rivalry history")}`}
               target="_blank" rel="noopener noreferrer"
-              style={{...styles.rivalRow, ...(i%2===0?{}:{background:"#0f0f0f"}), textDecoration:"none", display:"block", padding:"12px 14px", borderBottom:"1px solid #222"}}>
+              style={{...styles.rivalRow, ...(i%2===0?{}:{background:"var(--bg-content)"}), textDecoration:"none", display:"block", padding:"12px 14px", borderBottom:"1px solid var(--border)"}}>
               <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:6, flexWrap:"wrap"}}>
                 <span style={{fontSize:13, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{r.team1}</span>
-                <span style={{fontSize:10, color:"#c8201c", fontWeight:900}}>vs</span>
+                <span style={{fontSize:10, color:"var(--accent-red)", fontWeight:900}}>vs</span>
                 <span style={{fontSize:13, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{r.team2}</span>
-                <span style={{fontSize:9, color:"#666", letterSpacing:"0.1em"}}>[{r.sport}]</span>
-                {r.wins && <span style={{fontSize:10, color:"#888", marginLeft:"auto"}}>{r.wins}</span>}
+                <span style={{fontSize:9, color:"var(--muted)", letterSpacing:"0.1em"}}>[{r.sport}]</span>
+                {r.wins && <span style={{fontSize:10, color:"var(--muted)", marginLeft:"auto"}}>{r.wins}</span>}
               </div>
-              <p style={{margin:0, fontSize:12, color:"#888", lineHeight:1.5}}>{r.note}</p>
+              <p style={{margin:0, fontSize:12, color:"var(--muted)", lineHeight:1.5}}>{r.note}</p>
             </a>
           ))}
         </div>
@@ -6726,12 +6855,12 @@ function StatsTab() {
 
       {activeSection === "TEAM LINKS" && (
         <div>
-          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa"}}>Official sites, fan blogs, and Reddit communities for every NY team.</p>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>Official sites, fan blogs, and Reddit communities for every NY team.</p>
           </div>
           {TEAM_LINKS.map((t,i) => (
             <a key={i} href={t.url} target="_blank" rel="noopener noreferrer"
-              style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+              style={{...styles.beatWriterRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
               <div style={styles.beatWriterIcon}>{t.emoji}</div>
               <div style={styles.beatWriterInfo}>
                 <span style={styles.beatWriterName}>{t.name}</span>
@@ -6752,8 +6881,8 @@ function RadioTab() {
         <h2 style={styles.stdTitle}>📻 NY SPORTS RADIO & PODCASTS</h2>
         <p style={styles.stdSub}>STATIONS · PODCASTS · STREAMING</p>
       </div>
-      <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Official radio, podcasts and streams for all NY teams. WFAN is the heartbeat of NY sports radio.</p>
+      <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+        <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>Official radio, podcasts and streams for all NY teams. WFAN is the heartbeat of NY sports radio.</p>
       </div>
 
       <div style={styles.stdDivisionHeader}>📻 NY SPORTS RADIO STATIONS</div>
@@ -6767,7 +6896,7 @@ function RadioTab() {
         { name:"97.3 ESPN NJ",            teams:"Devils · Giants · Jets",url:"https://www.973espnnj.com",           desc:"NJ-focused ESPN Radio — Devils, Giants, Jets coverage from the NJ perspective" },
       ].map((r, i) => (
         <a key={i} href={r.url} target="_blank" rel="noopener noreferrer"
-          style={{...styles.radioRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          style={{...styles.radioRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <div style={styles.radioIcon}>📻</div>
           <div style={styles.radioInfo}>
             <span style={styles.radioName}>{r.name}</span>
@@ -6794,7 +6923,7 @@ function RadioTab() {
         { name:"Gotham FC Podcast",        team:"Gotham FC ⚽", url:"https://www.gothamfc.com",                       desc:"2x NWSL champion Gotham FC — official team coverage from Harrison NJ" },
       ].map((p, i) => (
         <a key={i} href={p.url} target="_blank" rel="noopener noreferrer"
-          style={{...styles.radioRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          style={{...styles.radioRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <div style={styles.radioIcon}>🎙️</div>
           <div style={styles.radioInfo}>
             <span style={styles.radioName}>{p.name}</span>
@@ -6813,7 +6942,7 @@ function RadioTab() {
         { name:"YouTube TV",  icon:"📺", url:"https://tv.youtube.com",                                   desc:"YES Network, SNY, MSG — stream live NY sports TV" },
       ].map((s, i) => (
         <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
-          style={{...styles.radioRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          style={{...styles.radioRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <div style={styles.radioIcon}>{s.icon}</div>
           <div style={styles.radioInfo}>
             <span style={styles.radioName}>{s.name}</span>
@@ -6833,25 +6962,25 @@ function ShopTab() {
         <h2 style={styles.stdTitle}>🛒 NY SPORTS SHOP</h2>
         <p style={styles.stdSub}>BOOKS · GEAR · SUPPORT THE SITE</p>
       </div>
-      <div style={{padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c", marginBottom:20}}>
-        <p style={{margin:0, fontSize:12, color:"#aaa"}}>Curated NY sports books, gear and gifts. All Amazon links support nysportsdaily.com at no extra cost to you. 🙏</p>
-        <p style={{margin:"6px 0 0", fontSize:10, color:"#555"}}>As an Amazon Associate, NY Sports Daily earns from qualifying purchases.</p>
+      <div style={{padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)", marginBottom:20}}>
+        <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>Curated NY sports books, gear and gifts. All Amazon links support nysportsdaily.com at no extra cost to you. 🙏</p>
+        <p style={{margin:"6px 0 0", fontSize:10, color:"var(--muted)"}}>As an Amazon Associate, NY Sports Daily earns from qualifying purchases.</p>
       </div>
 
       {/* Support */}
-      <div style={styles.stdDivisionHeader}>☕ SUPPORT NY SPORTS DAILY</div>
-      <div style={{display:"flex", gap:12, flexWrap:"wrap", marginBottom:20, paddingBottom:16, borderBottom:"1px solid #2e343a"}}>
+      <div style={styles.stdDivisionHeader}>💿 SUPPORT NY SPORTS DAILY</div>
+      <div style={{display:"flex", gap:12, flexWrap:"wrap", marginBottom:20, paddingBottom:16, borderBottom:"1px solid var(--border)"}}>
         <a href="https://buymeacoffee.com/mhughes65v" target="_blank" rel="noopener noreferrer"
-          style={{...styles.shopRow, flex:1, minWidth:200, background:"#2e343a", border:"1px solid #2a2a2a", textDecoration:"none"}}>
-          <span style={styles.shopEmoji}>☕</span>
+          style={{...styles.shopRow, flex:1, minWidth:200, background:"var(--border)", border:"1px solid var(--border)", textDecoration:"none"}}>
+          <span style={styles.shopEmoji}>💿</span>
           <div style={styles.shopInfo}>
-            <span style={styles.shopTitle}>Buy Me a Coffee</span>
-            <span style={styles.shopDesc}>Keep nysportsdaily.com free — a coffee goes a long way!</span>
+            <span style={styles.shopTitle}>Buy me a record</span>
+            <span style={styles.shopDesc}>Keep nysportsdaily.com free — a record goes a long way!</span>
           </div>
           <span style={styles.shopBtn}>Support →</span>
         </a>
         <a href="https://www.amazon.com?tag=nysportsdaily-20" target="_blank" rel="noopener noreferrer"
-          style={{...styles.shopRow, flex:1, minWidth:200, background:"#2e343a", border:"1px solid #2a2a2a", textDecoration:"none"}}>
+          style={{...styles.shopRow, flex:1, minWidth:200, background:"var(--border)", border:"1px solid var(--border)", textDecoration:"none"}}>
           <span style={styles.shopEmoji}>🛒</span>
           <div style={styles.shopInfo}>
             <span style={styles.shopTitle}>Shop Amazon</span>
@@ -6895,7 +7024,7 @@ function ShopTab() {
       ].map((b, i) => (
         <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(b.tag)}&tag=nysportsdaily-20`}
           target="_blank" rel="noopener noreferrer"
-          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <span style={styles.shopEmoji}>📖</span>
           <div style={styles.shopInfo}>
             <span style={styles.shopTitle}>{b.title}</span>
@@ -6925,7 +7054,7 @@ function ShopTab() {
       ].map((g, i) => (
         <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(g.tag)}&tag=nysportsdaily-20`}
           target="_blank" rel="noopener noreferrer"
-          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <span style={styles.shopEmoji}>👕</span>
           <div style={styles.shopInfo}>
             <span style={styles.shopTitle}>{g.title}</span>
@@ -6948,7 +7077,7 @@ function ShopTab() {
       ].map((v, i) => (
         <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(v.tag)}&tag=nysportsdaily-20`}
           target="_blank" rel="noopener noreferrer"
-          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <span style={styles.shopEmoji}>🏆</span>
           <div style={styles.shopInfo}>
             <span style={styles.shopTitle}>{v.title}</span>
@@ -6969,7 +7098,7 @@ function ShopTab() {
       ].map((m, i) => (
         <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(m.tag)}&tag=nysportsdaily-20`}
           target="_blank" rel="noopener noreferrer"
-          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <span style={styles.shopEmoji}>✍️</span>
           <div style={styles.shopInfo}>
             <span style={styles.shopTitle}>{m.title}</span>
@@ -6991,7 +7120,7 @@ function ShopTab() {
       ].map((d, i) => (
         <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(d.tag)}&tag=nysportsdaily-20`}
           target="_blank" rel="noopener noreferrer"
-          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <span style={styles.shopEmoji}>🏠</span>
           <div style={styles.shopInfo}>
             <span style={styles.shopTitle}>{d.title}</span>
@@ -7013,7 +7142,7 @@ function ShopTab() {
       ].map((k, i) => (
         <a key={i} href={`https://www.amazon.com/s?k=${encodeURIComponent(k.tag)}&tag=nysportsdaily-20`}
           target="_blank" rel="noopener noreferrer"
-          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <span style={styles.shopEmoji}>👦</span>
           <div style={styles.shopInfo}>
             <span style={styles.shopTitle}>{k.title}</span>
@@ -7035,7 +7164,7 @@ function ShopTab() {
         { name:"SeatGeek — NY Sports",   url:"https://seatgeek.com/new-york-sports-tickets",                     desc:"Best seats finder — compare prices across all NY venues" },
       ].map((s, i) => (
         <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
-          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <span style={styles.shopEmoji}>🏟️</span>
           <div style={styles.shopInfo}>
             <span style={styles.shopTitle}>{s.name}</span>
@@ -7059,7 +7188,7 @@ function ShopTab() {
       ].map((b, i) => (
         <a key={i} href={`https://www.google.com/search?q=${encodeURIComponent(b.name + " " + b.area + " sports bar")}`}
           target="_blank" rel="noopener noreferrer"
-          style={{...styles.shopRow, ...(i%2===0?{}:{background:"#0f0f0f"})}}>
+          style={{...styles.shopRow, ...(i%2===0?{}:{background:"var(--bg-content)"})}}>
           <span style={styles.shopEmoji}>🍺</span>
           <div style={styles.shopInfo}>
             <span style={styles.shopTitle}>{b.name}</span>
@@ -7070,7 +7199,7 @@ function ShopTab() {
         </a>
       ))}
 
-      <div style={{marginTop:20, padding:"12px 14px", background:"#0f0f0f", fontSize:10, color:"#555"}}>
+      <div style={{marginTop:20, padding:"12px 14px", background:"var(--bg-content)", fontSize:10, color:"var(--muted)"}}>
         As an Amazon Associate, NY Sports Daily earns from qualifying purchases at no extra cost to you. Bar recommendations are independent — no paid placement.
       </div>
     </div>
@@ -7146,7 +7275,7 @@ function StandingsTab({ standings, loading }) {
             name:   t.shortDisplayName || t.name,
             abbr:   t.abbreviation,
             logo:   t.logos?.[0]?.href || null,
-            color:  t.color ? `#${t.color}` : "#888",
+            color:  t.color ? `#${t.color}` : "var(--muted)",
             conf:   confName,
             div:    divName,
             w:      parseFloat(s.wins   || s.w  || 0),
@@ -7296,9 +7425,9 @@ function StandingsTab({ standings, loading }) {
 
   function GBCell({ val }) {
     if (!val || val === "—" || val === "-" || parseFloat(val) === 0) {
-      return <span style={{fontSize:11, color:"#555", minWidth:44, textAlign:"right"}}>—</span>;
+      return <span style={{fontSize:11, color:"var(--muted)", minWidth:44, textAlign:"right"}}>—</span>;
     }
-    return <span style={{fontSize:11, color:"#888", minWidth:44, textAlign:"right", whiteSpace:"nowrap"}}>{val}</span>;
+    return <span style={{fontSize:11, color:"var(--muted)", minWidth:44, textAlign:"right", whiteSpace:"nowrap"}}>{val}</span>;
   }
 
   function TeamRow({ team, rank }) {
@@ -7309,11 +7438,11 @@ function StandingsTab({ standings, loading }) {
     return (
       <div style={{
         display:"flex", alignItems:"center", gap:8, padding:"9px 14px",
-        background: team.isNY ? "#0b180b" : rank%2===0 ? "#111" : "#1a1c1f",
+        background: team.isNY ? "#0b180b" : rank%2===0 ? "var(--ink)" : "var(--bg-content)",
         borderLeft:`4px solid ${bdColor}`,
         borderBottom:"1px solid #1c1c1c",
       }}>
-        <span style={{fontSize:10, color:"#555", minWidth:20, textAlign:"right", flexShrink:0}}>{rank}</span>
+        <span style={{fontSize:10, color:"var(--muted)", minWidth:20, textAlign:"right", flexShrink:0}}>{rank}</span>
         {team.logo
           ? <img src={team.logo} alt="" style={{width:22,height:22,objectFit:"contain",flexShrink:0}}
               onError={e=>e.target.style.display="none"}/>
@@ -7321,15 +7450,15 @@ function StandingsTab({ standings, loading }) {
         }
         <span style={{
           flex:1, fontSize:13, fontWeight:team.isNY?900:500,
-          color:team.isNY?"#fff":"#ccc", fontFamily:"'Georgia',serif",
+          color:team.isNY?"#fff":"var(--muted)", fontFamily:"'Georgia',serif",
           overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", minWidth:0,
         }}>
           {team.name}
-          {team.isNY && <span style={{fontSize:8,color:"#c8201c",marginLeft:5,fontWeight:900}}>NY</span>}
+          {team.isNY && <span style={{fontSize:8,color:"var(--accent-red)",marginLeft:5,fontWeight:900}}>NY</span>}
         </span>
-        <div style={{width:40,height:4,background:"#222",borderRadius:2,overflow:"hidden",flexShrink:0}}>
+        <div style={{width:40,height:4,background:"var(--border)",borderRadius:2,overflow:"hidden",flexShrink:0}}>
           <div style={{height:"100%",width:`${bar}%`,
-            background:team.divLeader?"#3b82f6":team.inPlayoffs?"#22c55e":"#444",borderRadius:2}}/>
+            background:team.divLeader?"#3b82f6":team.inPlayoffs?"#22c55e":"var(--muted)",borderRadius:2}}/>
         </div>
         <span style={{fontSize:12,fontWeight:700,color:"#e8e8e8",minWidth:60,textAlign:"right",
           fontFamily:"'Georgia',serif",whiteSpace:"nowrap",flexShrink:0}}>
@@ -7361,16 +7490,16 @@ function StandingsTab({ standings, loading }) {
       {/* NY glance strip */}
       {nyTeams.length > 0 && !fetching && (
         <div style={{marginBottom:16}}>
-          <div style={{fontSize:9,color:"#555",letterSpacing:"0.12em",fontWeight:900,marginBottom:8}}>
+          <div style={{fontSize:9,color:"var(--muted)",letterSpacing:"0.12em",fontWeight:900,marginBottom:8}}>
             🗽 NY TEAMS — QUICK LOOK
           </div>
           <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
             {nyTeams.map(t => (
               <div key={t.id} style={{
                 display:"flex",alignItems:"center",gap:8,padding:"8px 12px",
-                background:"#1e2124",borderRadius:3,
-                border:`1px solid ${t.divLeader?"#3b82f644":t.inPlayoffs?"#22c55e44":"#c8201c33"}`,
-                borderLeft:`3px solid ${t.divLeader?"#3b82f6":t.inPlayoffs?"#22c55e":"#c8201c"}`,
+                background:"var(--bg-card)",borderRadius:3,
+                border:`1px solid ${t.divLeader?"#3b82f644":t.inPlayoffs?"#22c55e44":"var(--accent-red)33"}`,
+                borderLeft:`3px solid ${t.divLeader?"#3b82f6":t.inPlayoffs?"#22c55e":"var(--accent-red)"}`,
               }}>
                 {t.logo && <img src={t.logo} alt="" style={{width:28,height:28,objectFit:"contain"}}
                   onError={e=>e.target.style.display="none"}/>}
@@ -7378,7 +7507,7 @@ function StandingsTab({ standings, loading }) {
                   <div style={{fontSize:13,fontWeight:900,color:"#fff",fontFamily:"'Georgia',serif"}}>
                     {t.name}
                   </div>
-                  <div style={{fontSize:10,color:"#666"}}>
+                  <div style={{fontSize:10,color:"var(--muted)"}}>
                     {sport==="NHL"?`${t.w}W · ${t.pts}pts`:`${t.w}–${t.l}`} · {t.div}
                   </div>
                 </div>
@@ -7387,7 +7516,7 @@ function StandingsTab({ standings, loading }) {
                     color:t.divLeader?"#60a5fa":t.inPlayoffs?"#4ade80":"#f87171"}}>
                     {t.divLeader?"🏆":t.inPlayoffs?"✅":"❌"} {t.wcLabel}
                   </div>
-                  <div style={{fontSize:9,color:"#555"}}>{t.conf}</div>
+                  <div style={{fontSize:9,color:"var(--muted)"}}>{t.conf}</div>
                 </div>
               </div>
             ))}
@@ -7416,32 +7545,32 @@ function StandingsTab({ standings, loading }) {
       </div>
 
       {/* Legend */}
-      <div style={{display:"flex",gap:12,padding:"5px 14px",background:"#141618",
+      <div style={{display:"flex",gap:12,padding:"5px 14px",background:"var(--bg-page)",
         marginBottom:8,borderRadius:2,flexWrap:"wrap"}}>
         {[
           {color:"#3b82f6",label:"Division leader"},
           {color:"#22c55e",label:"Wild card"},
-          {color:"#c8201c",label:"Out of playoffs"},
+          {color:"var(--accent-red)",label:"Out of playoffs"},
         ].map((l,i) => (
           <div key={i} style={{display:"flex",alignItems:"center",gap:5}}>
             <div style={{width:10,height:10,background:l.color,borderRadius:1,flexShrink:0}}/>
-            <span style={{fontSize:10,color:"#666"}}>{l.label}</span>
+            <span style={{fontSize:10,color:"var(--muted)"}}>{l.label}</span>
           </div>
         ))}
       </div>
 
       {/* Col headers */}
       <div style={{display:"flex",alignItems:"center",gap:8,padding:"5px 14px",
-        borderBottom:"1px solid #2a2a2a",marginBottom:2}}>
-        <span style={{fontSize:9,color:"#444",minWidth:20}}>#</span>
+        borderBottom:"1px solid var(--border)",marginBottom:2}}>
+        <span style={{fontSize:9,color:"var(--muted)",minWidth:20}}>#</span>
         <span style={{width:22,flexShrink:0}}/>
-        <span style={{flex:1,fontSize:9,color:"#444",letterSpacing:"0.1em"}}>TEAM</span>
+        <span style={{flex:1,fontSize:9,color:"var(--muted)",letterSpacing:"0.1em"}}>TEAM</span>
         <span style={{width:40,flexShrink:0}}/>
-        <span style={{fontSize:9,color:"#444",minWidth:60,textAlign:"right"}}>
+        <span style={{fontSize:9,color:"var(--muted)",minWidth:60,textAlign:"right"}}>
           {sport==="NHL"?"W–PTS":"W–L"}
         </span>
-        <span style={{fontSize:9,color:"#444",minWidth:44,textAlign:"right"}}>GB</span>
-        <span style={{fontSize:9,color:"#444",minWidth:44,textAlign:"center"}}>POS</span>
+        <span style={{fontSize:9,color:"var(--muted)",minWidth:44,textAlign:"right"}}>GB</span>
+        <span style={{fontSize:9,color:"var(--muted)",minWidth:44,textAlign:"center"}}>POS</span>
       </div>
 
       {fetching ? (
@@ -7452,7 +7581,7 @@ function StandingsTab({ standings, loading }) {
       ) : Object.keys(confData).length === 0 ? (
         // Fallback to prop-based standings if ESPN API returned nothing
         <div>
-          <div style={{padding:"12px 14px", background:"#161616", borderLeft:"3px solid #f59e0b", marginBottom:12, fontSize:11, color:"#aaa"}}>
+          <div style={{padding:"12px 14px", background:"var(--bg-content)", borderLeft:"3px solid #f59e0b", marginBottom:12, fontSize:11, color:"var(--muted)"}}>
             ⚠️ Live standings unavailable — {sport} may be in offseason or ESPN API is temporarily down.
           </div>
           {standings.filter(s => s.league === sport).map((group, gi) => (
@@ -7470,7 +7599,7 @@ function StandingsTab({ standings, loading }) {
                   <div key={i} style={{...styles.stdRow,...(row.isNY?styles.stdRowNY:{}),...(i%2===0?{}:styles.stdRowAlt)}}>
                     <span style={styles.stdColTeam}>
                       {row.logo && <img src={row.logo} alt="" style={styles.stdLogo} onError={e=>e.target.style.display="none"}/>}
-                      <span style={{...styles.stdTeamName,...(row.isNY?{color:"#e8e0d0",fontWeight:900}:{})}}>{row.team}</span>
+                      <span style={{...styles.stdTeamName,...(row.isNY?{color:"var(--ink)",fontWeight:900}:{})}}>{row.team}</span>
                       {row.isNY && <span style={styles.stdNYBadge}>NY</span>}
                     </span>
                     <span style={styles.stdColStat}>{row.w}</span>
@@ -7497,7 +7626,7 @@ function StandingsTab({ standings, loading }) {
             <div key={ci} style={{marginBottom:24}}>
               <div style={{...styles.stdDivisionHeader,display:"flex",justifyContent:"space-between"}}>
                 <span>{cfg.emoji} {conf.name}</span>
-                <span style={{fontSize:9,color:"#555"}}>
+                <span style={{fontSize:9,color:"var(--muted)"}}>
                   {divLeaders.length} div leaders + {cfg.wcSpots} wild cards = {divLeaders.length+cfg.wcSpots} playoff spots
                 </span>
               </div>
@@ -7507,7 +7636,7 @@ function StandingsTab({ standings, loading }) {
                     <CutLine label="── WILD CARD RACE ──" color="#3b82f6" />
                   )}
                   {i === divLeaders.length + wcIn.length && wcIn.length > 0 && (
-                    <CutLine label="── PLAYOFF CUTOFF ──" color="#c8201c" />
+                    <CutLine label="── PLAYOFF CUTOFF ──" color="var(--accent-red)" />
                   )}
                   <TeamRow team={team} rank={i+1} />
                 </div>
@@ -7518,8 +7647,8 @@ function StandingsTab({ standings, loading }) {
       ) : view === "DIVISION" ? (
         Object.values(confData).map((conf, ci) => (
           <div key={ci} style={{marginBottom:24}}>
-            <div style={{fontSize:10,color:"#c8201c",fontWeight:900,letterSpacing:"0.15em",
-              padding:"6px 14px",background:"#141618",marginBottom:4}}>
+            <div style={{fontSize:10,color:"var(--accent-red)",fontWeight:900,letterSpacing:"0.15em",
+              padding:"6px 14px",background:"var(--bg-page)",marginBottom:4}}>
               {cfg.emoji} {conf.name}
             </div>
             {Object.entries(conf.divs).map(([divName, teams], di) => (
@@ -7539,7 +7668,7 @@ function StandingsTab({ standings, loading }) {
         ))
       )}
 
-      <div style={{marginTop:12,fontSize:9,color:"#444",fontStyle:"italic",display:"flex",justifyContent:"space-between",flexWrap:"wrap"}}>
+      <div style={{marginTop:12,fontSize:9,color:"var(--muted)",fontStyle:"italic",display:"flex",justifyContent:"space-between",flexWrap:"wrap"}}>
         <span>Live from ESPN · Updates each page load</span>
         <a href={`https://www.espn.com/${cfg.espnUrl}/standings`} target="_blank"
           rel="noopener noreferrer" style={styles.histLink}>ESPN standings →</a>
@@ -7669,7 +7798,7 @@ const WHEEL_SEGMENTS = [
   { label: "KNICKS",    color: "#006BB6", emoji: "🏀" },
   { label: "RANGERS",   color: "#0038A8", emoji: "🏒" },
   { label: "ISLANDERS", color: "#003B8E", emoji: "🏒" },
-  { label: "NETS",      color: "#444",    emoji: "🏀" },
+  { label: "NETS",      color: "var(--muted)",    emoji: "🏀" },
   { label: "LIBERTY",   color: "#007A5E", emoji: "🏀" },
   { label: "DEVILS",    color: "#CE1126", emoji: "🏒" },
   { label: "RED BULLS", color: "#ED1C2E", emoji: "⚽" },
@@ -7694,9 +7823,9 @@ function SVGWheel({ rotation }) {
   const cx  = 160, cy = 160, r = 148, rl = 105;
 
   return (
-    <svg width="320" height="320" viewBox="0 0 320 320" style={{ display:"block", filter:"drop-shadow(0 0 12px #c8201c44)" }}>
+    <svg width="320" height="320" viewBox="0 0 320 320" style={{ display:"block", filter:"drop-shadow(0 0 12px var(--accent-red)44)" }}>
       {/* Outer ring */}
-      <circle cx={cx} cy={cy} r={r+6} fill="none" stroke="#c8201c" strokeWidth="3" />
+      <circle cx={cx} cy={cy} r={r+6} fill="none" stroke="var(--accent-red)" strokeWidth="3" />
 
       <g transform={`rotate(${rotation} ${cx} ${cy})`}>
         {WHEEL_SEGMENTS.map((seg, i) => {
@@ -7707,7 +7836,7 @@ function SVGWheel({ rotation }) {
 
           return (
             <g key={i}>
-              <path d={slicePath(cx, cy, r, start, end)} fill={seg.color} stroke="#1a1c1f" strokeWidth="1.5" />
+              <path d={slicePath(cx, cy, r, start, end)} fill={seg.color} stroke="var(--bg-content)" strokeWidth="1.5" />
               {/* Emoji */}
               <text
                 x={lp.x} y={lp.y - 9}
@@ -7733,14 +7862,14 @@ function SVGWheel({ rotation }) {
       <g transform={`rotate(${rotation} ${cx} ${cy})`}>
         {WHEEL_SEGMENTS.map((_, i) => {
           const p = polarToCartesian(cx, cy, r, i * DEG);
-          return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#1a1c1f" strokeWidth="1" />;
+          return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="var(--bg-content)" strokeWidth="1" />;
         })}
       </g>
 
       {/* Center cap */}
-      <circle cx={cx} cy={cy} r={24} fill="#1a1c1f" stroke="#c8201c" strokeWidth="2.5" />
+      <circle cx={cx} cy={cy} r={24} fill="var(--bg-content)" stroke="var(--accent-red)" strokeWidth="2.5" />
       <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle"
-        fontSize="11" fontWeight="900" fill="#c8201c" fontFamily="Georgia, serif">NY</text>
+        fontSize="11" fontWeight="900" fill="var(--accent-red)" fontFamily="Georgia, serif">NY</text>
     </svg>
   );
 }
@@ -7822,7 +7951,7 @@ function SpinTab() {
 
   const CATEGORY_COLORS = {
     stat:    { bg: "#003087", label: "STAT"    },
-    moment:  { bg: "#c8201c", label: "MOMENT"  },
+    moment:  { bg: "var(--accent-red)", label: "MOMENT"  },
     record:  { bg: "#125740", label: "RECORD"  },
     legend:  { bg: "#5a2d82", label: "LEGEND"  },
     weird:   { bg: "#7a4a00", label: "WEIRD ✦" },
@@ -7837,12 +7966,12 @@ function SpinTab() {
       </div>
 
       {/* ── WALK-UP SONGS ── */}
-      <div style={{marginBottom:24, padding:"14px 16px", background:"#111", border:"1px solid #2a2a2a"}}>
-        <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:4}}>🎵 WALK-UP SONGS & ENTRANCE MUSIC — 2026 & ALL-TIME</div>
+      <div style={{marginBottom:24, padding:"14px 16px", background:"var(--ink)", border:"1px solid var(--border)"}}>
+        <div style={{fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.15em", marginBottom:4}}>🎵 WALK-UP SONGS & ENTRANCE MUSIC — 2026 & ALL-TIME</div>
 
         {/* PlateMusic links UP TOP */}
-        <div style={{display:"flex", gap:10, flexWrap:"wrap", marginBottom:14, padding:"8px 10px", background:"#141618", border:"1px solid #2a2a2a"}}>
-          <span style={{fontSize:9, color:"#555", alignSelf:"center", flexShrink:0}}>🔗 FULL ROSTERS:</span>
+        <div style={{display:"flex", gap:10, flexWrap:"wrap", marginBottom:14, padding:"8px 10px", background:"var(--bg-page)", border:"1px solid var(--border)"}}>
+          <span style={{fontSize:9, color:"var(--muted)", alignSelf:"center", flexShrink:0}}>🔗 FULL ROSTERS:</span>
           <a href="https://platemusic.com/team/yankees" target="_blank" rel="noopener noreferrer" style={styles.histLink}>⚾ Yankees 2026</a>
           <a href="https://platemusic.com/team/mets" target="_blank" rel="noopener noreferrer" style={styles.histLink}>⚾ Mets 2026</a>
           <a href="https://platemusic.com/team" target="_blank" rel="noopener noreferrer" style={styles.histLink}>🎵 All MLB Teams</a>
@@ -7864,16 +7993,16 @@ function SpinTab() {
           { player:"Carlos Rodón",      pos:"SP",  song:"Would?",                                  artist:"Alice in Chains",   note:"Heavy grunge for a hard-throwing lefty — dark and powerful" },
           { player:"Clarke Schmidt",    pos:"RP",  song:"Hey Ya!",                                 artist:"OutKast",           note:"Unexpected fun — Schmidt walks to the mound with a classic banger" },
         ].map((s, i) => (
-          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid #2e343a", flexWrap:"wrap"}}>
+          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid var(--border)", flexWrap:"wrap"}}>
             <div style={{flexShrink:0, width:22, fontSize:13, textAlign:"center"}}>⚾</div>
             <div style={{flex:1, minWidth:0}}>
               <div style={{display:"flex", gap:6, alignItems:"baseline", flexWrap:"wrap", marginBottom:1}}>
-                <span style={{fontSize:11, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
-                <span style={{fontSize:8, color:"#666"}}>{s.pos}</span>
+                <span style={{fontSize:11, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                <span style={{fontSize:8, color:"var(--muted)"}}>{s.pos}</span>
                 <span style={{fontSize:9, color:"#003087", fontWeight:700}}>Yankees</span>
               </div>
               <div style={{fontSize:11, color:"#FFD700", marginBottom:1}}>"{s.song}" — {s.artist}</div>
-              <div style={{fontSize:9, color:"#555", fontStyle:"italic"}}>{s.note}</div>
+              <div style={{fontSize:9, color:"var(--muted)", fontStyle:"italic"}}>{s.note}</div>
             </div>
             <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
               target="_blank" rel="noopener noreferrer"
@@ -7895,16 +8024,16 @@ function SpinTab() {
           { player:"Clay Holmes",       pos:"RP",  song:"TBD 2026",                               artist:"Various",             note:"The veteran reliever brought from the Bronx — curious what he picks for Citi" },
           { player:"Sean Manaea",       pos:"SP",  song:"TBD 2026",                               artist:"Various",             note:"The lefty starter — Citi Field will give him a big welcome" },
         ].map((s, i) => (
-          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid #2e343a", flexWrap:"wrap"}}>
+          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid var(--border)", flexWrap:"wrap"}}>
             <div style={{flexShrink:0, width:22, fontSize:13, textAlign:"center"}}>⚾</div>
             <div style={{flex:1, minWidth:0}}>
               <div style={{display:"flex", gap:6, alignItems:"baseline", flexWrap:"wrap", marginBottom:1}}>
-                <span style={{fontSize:11, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
-                <span style={{fontSize:8, color:"#666"}}>{s.pos}</span>
+                <span style={{fontSize:11, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                <span style={{fontSize:8, color:"var(--muted)"}}>{s.pos}</span>
                 <span style={{fontSize:9, color:"#FF5910", fontWeight:700}}>Mets</span>
               </div>
               <div style={{fontSize:11, color:"#FFD700", marginBottom:1}}>"{s.song}" — {s.artist}</div>
-              <div style={{fontSize:9, color:"#555", fontStyle:"italic"}}>{s.note}</div>
+              <div style={{fontSize:9, color:"var(--muted)", fontStyle:"italic"}}>{s.note}</div>
             </div>
             <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
               target="_blank" rel="noopener noreferrer"
@@ -7929,15 +8058,15 @@ function SpinTab() {
           { player:"Curtis Martin",    team:"Jets",     song:"Can't Stop Won't Stop",      artist:"Young Jeezy",            note:"Martin's workman intensity perfectly captured in music." },
           { player:"Joe Namath",       team:"Jets",     song:"New York, New York",         artist:"Frank Sinatra",          note:"Broadway Joe's era — Sinatra defined the city and Namath defined the Jets." },
         ].map((s, i) => (
-          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid #2e343a", flexWrap:"wrap"}}>
+          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid var(--border)", flexWrap:"wrap"}}>
             <div style={{flexShrink:0, width:22, fontSize:13, textAlign:"center"}}>🎵</div>
             <div style={{flex:1, minWidth:0}}>
               <div style={{display:"flex", gap:8, alignItems:"baseline", flexWrap:"wrap", marginBottom:1}}>
-                <span style={{fontSize:11, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
-                <span style={{fontSize:9, color:"#888", fontWeight:700}}>{s.team}</span>
+                <span style={{fontSize:11, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                <span style={{fontSize:9, color:"var(--muted)", fontWeight:700}}>{s.team}</span>
               </div>
               <div style={{fontSize:11, color:"#FFD700", marginBottom:1}}>"{s.song}" — {s.artist}</div>
-              <div style={{fontSize:9, color:"#555", fontStyle:"italic"}}>{s.note}</div>
+              <div style={{fontSize:9, color:"var(--muted)", fontStyle:"italic"}}>{s.note}</div>
             </div>
             <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
               target="_blank" rel="noopener noreferrer"
@@ -7947,9 +8076,9 @@ function SpinTab() {
       </div>
 
       {/* ── SPIN WHEEL (below songs) ── */}
-      <div style={{padding:"12px 14px", background:"#111", border:"1px solid #2a2a2a", marginBottom:16}}>
-        <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:4}}>🎰 SPIN THE WHEEL — NY SPORTS FACTS</div>
-        <div style={{fontSize:9, color:"#555", marginBottom:10}}>Land on a team, get a random NY sports fact from our database</div>
+      <div style={{padding:"12px 14px", background:"var(--ink)", border:"1px solid var(--border)", marginBottom:16}}>
+        <div style={{fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.15em", marginBottom:4}}>🎰 SPIN THE WHEEL — NY SPORTS FACTS</div>
+        <div style={{fontSize:9, color:"var(--muted)", marginBottom:10}}>Land on a team, get a random NY sports fact from our database</div>
       </div>
         {[
           { player:"Aaron Judge",      song:"Swag Surfin'",              artist:"F.L.Y.",           note:"The Captain's swagger anthem — fitting for the AL HR record holder" },
@@ -7957,15 +8086,15 @@ function SpinTab() {
           { player:"Ben Rice",         song:"Feel Good Inc.",             artist:"Gorillaz",          note:"The fan favorite 'Ben Arroz' keeps the Gorillaz classic" },
           { player:"Cody Bellinger",   song:"TBD 2026",                  artist:"Various",           note:"New Yankee — watch for a big intro song at the Stadium" },
         ].map((s, i) => (
-          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid #2e343a", flexWrap:"wrap"}}>
+          <div key={i} style={{display:"flex", gap:10, padding:"7px 0", borderBottom:"1px solid var(--border)", flexWrap:"wrap"}}>
             <div style={{flexShrink:0, width:22, fontSize:14, textAlign:"center"}}>⚾</div>
             <div style={{flex:1, minWidth:0}}>
               <div style={{display:"flex", gap:8, alignItems:"baseline", flexWrap:"wrap", marginBottom:1}}>
-                <span style={{fontSize:11, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{s.player}</span>
+                <span style={{fontSize:11, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif"}}>{s.player}</span>
                 <span style={{fontSize:9, color:"#003087", fontWeight:700}}>Yankees</span>
               </div>
               <div style={{fontSize:11, color:"#FFD700", marginBottom:1}}>"{s.song}" — {s.artist}</div>
-              <div style={{fontSize:9, color:"#555", fontStyle:"italic"}}>{s.note}</div>
+              <div style={{fontSize:9, color:"var(--muted)", fontStyle:"italic"}}>{s.note}</div>
             </div>
             <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(s.song+" "+s.artist)}`}
               target="_blank" rel="noopener noreferrer"
@@ -8223,7 +8352,7 @@ function WordSearchTab() {
 
   function cellColor(r, c) {
     const key = cellKey(r,c);
-    if (currentSel.find(([cr,cc]) => cr===r && cc===c)) return "#c8201c";
+    if (currentSel.find(([cr,cc]) => cr===r && cc===c)) return "var(--accent-red)";
     if (selected.has(key)) {
       // Find which word owns this cell and give it that word's color
       for (let i = 0; i < wordData.length; i++) {
@@ -8251,7 +8380,7 @@ function WordSearchTab() {
             if (wordData[i].cells.find(([wr,wc]) => wr===r && wc===c)) { bg = colors[i % colors.length]; break; }
           }
         }
-        row += `<td style="width:${CS}px;height:${CS}px;border:1px solid #ccc;text-align:center;vertical-align:middle;font-size:14px;font-weight:700;font-family:monospace;background:${bg} !important;box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;">${letter}</td>`;
+        row += `<td style="width:${CS}px;height:${CS}px;border:1px solid var(--muted);text-align:center;vertical-align:middle;font-size:14px;font-weight:700;font-family:monospace;background:${bg} !important;box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;">${letter}</td>`;
       }
       gridHtml += row + "</tr>";
     }
@@ -8259,7 +8388,7 @@ function WordSearchTab() {
     const wordListHtml = words.map((w,i) => {
       const isFoundW = found.has(w);
       const bg = isFoundW ? colors[i % colors.length] : "#fff";
-      return `<span style="display:inline-block;margin:3px 4px 3px 0;padding:3px 8px;border:1.5px solid #ccc;border-radius:3px;font-size:11px;font-weight:700;font-family:monospace;background:${bg} !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;text-decoration:${isFoundW?"line-through":"none"}">${w}</span>`;
+      return `<span style="display:inline-block;margin:3px 4px 3px 0;padding:3px 8px;border:1.5px solid var(--muted);border-radius:3px;font-size:11px;font-weight:700;font-family:monospace;background:${bg} !important;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;text-decoration:${isFoundW?"line-through":"none"}">${w}</span>`;
     }).join("");
     const answerKey = wordData.map(wd => {
       const r1=wd.cells[0][0],c1=wd.cells[0][1],r2=wd.cells[wd.cells.length-1][0],c2=wd.cells[wd.cells.length-1][1];
@@ -8269,13 +8398,13 @@ function WordSearchTab() {
       *{box-sizing:border-box;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
       body{font-family:Georgia,serif;margin:20px;color:#000;}
       h2{text-align:center;font-size:20px;margin:0 0 2px;}
-      .sub{text-align:center;font-size:11px;color:#555;margin:0 0 3px;}
-      .site{text-align:center;font-size:10px;color:#aaa;margin:0 0 14px;letter-spacing:0.15em;}
+      .sub{text-align:center;font-size:11px;color:var(--muted);margin:0 0 3px;}
+      .site{text-align:center;font-size:10px;color:var(--muted);margin:0 0 14px;letter-spacing:0.15em;}
       .layout{display:flex;gap:24px;align-items:flex-start;}
       table{border-collapse:collapse;flex-shrink:0;}
       .words-title{font-size:12px;font-weight:bold;border-bottom:2px solid #000;margin:0 0 10px;padding-bottom:4px;}
-      .hint{font-size:9px;color:#888;margin-top:12px;font-style:italic;line-height:1.5;}
-      .key{font-size:9px;color:#666;margin-top:14px;border-top:1px solid #ccc;padding-top:10px;line-height:1.9;}
+      .hint{font-size:9px;color:var(--muted);margin-top:12px;font-style:italic;line-height:1.5;}
+      .key{font-size:9px;color:var(--muted);margin-top:14px;border-top:1px solid var(--muted);padding-top:10px;line-height:1.9;}
       .key-title{font-size:10px;font-weight:bold;margin-bottom:4px;}
       @media print{body{margin:6px;}@page{margin:0.4in;size:landscape;}}
     </style></head><body>
@@ -8328,7 +8457,7 @@ function WordSearchTab() {
               display:"grid",
               gridTemplateColumns:`repeat(${size}, 1fr)`,
               gap:1, userSelect:"none", cursor:"crosshair",
-              background:"#222", padding:2, borderRadius:3,
+              background:"var(--border)", padding:2, borderRadius:3,
             }}>
             {grid.map((row, r) =>
               row.map((letter, c) => {
@@ -8353,14 +8482,14 @@ function WordSearchTab() {
               })
             )}
           </div>
-          <div style={{fontSize:9, color:"#555", marginTop:6}}>
+          <div style={{fontSize:9, color:"var(--muted)", marginTop:6}}>
             Click and drag to select letters · Works in any direction
           </div>
         </div>
 
         {/* Word list */}
         <div style={{flex:1, minWidth:160}}>
-          <div style={{fontSize:10, fontWeight:900, color:"#c8201c", letterSpacing:"0.12em", marginBottom:12}}>
+          <div style={{fontSize:10, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.12em", marginBottom:12}}>
             FIND THESE WORDS ({found.size}/{words.length})
           </div>
           <div style={{display:"flex", flexDirection:"column", gap:5}}>
@@ -8371,12 +8500,12 @@ function WordSearchTab() {
                 <div key={w} style={{
                   display:"flex", alignItems:"center", gap:8,
                   padding:"5px 10px",
-                  background: isFound ? `${color}22` : "#111",
-                  borderLeft:`3px solid ${isFound ? color : "#333"}`,
+                  background: isFound ? `${color}22` : "var(--ink)",
+                  borderLeft:`3px solid ${isFound ? color : "var(--muted)"}`,
                   borderRadius:2,
                 }}>
                   <span style={{fontSize:12, fontWeight:700,
-                    color: isFound ? color : "#888",
+                    color: isFound ? color : "var(--muted)",
                     textDecoration: isFound ? "line-through" : "none",
                     fontFamily:"monospace", letterSpacing:"0.05em"}}>
                     {w}
@@ -8394,7 +8523,7 @@ function WordSearchTab() {
           </button>
           <button onClick={handlePrint}
             style={{...styles.filterBtn, marginTop:6, width:"100%", padding:"8px",
-              fontSize:10, letterSpacing:"0.1em", color:"#aaa"}}>
+              fontSize:10, letterSpacing:"0.1em", color:"var(--muted)"}}>
             🖨 PRINT / SAVE PDF
           </button>
         </div>
@@ -8447,18 +8576,18 @@ function SongsTab() {
       </div>
 
       {/* Live links banner */}
-      <div style={{marginBottom:20, padding:"12px 16px", background:"#111", border:"1px solid #2a2a2a", borderLeft:"3px solid #c8201c"}}>
-        <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.12em", marginBottom:8}}>🔗 CURRENT SEASON WALK-UP SONGS — CHECK LIVE</div>
-        <p style={{margin:"0 0 10px", fontSize:11, color:"#888", lineHeight:1.5}}>Walk-up songs change every season and sometimes mid-season. For the most current songs, check these official sources:</p>
+      <div style={{marginBottom:20, padding:"12px 16px", background:"var(--ink)", border:"1px solid var(--border)", borderLeft:"3px solid var(--accent-red)"}}>
+        <div style={{fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.12em", marginBottom:8}}>🔗 CURRENT SEASON WALK-UP SONGS — CHECK LIVE</div>
+        <p style={{margin:"0 0 10px", fontSize:11, color:"var(--muted)", lineHeight:1.5}}>Walk-up songs change every season and sometimes mid-season. For the most current songs, check these official sources:</p>
         <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
           <a href="https://platemusic.com/team/yankees" target="_blank" rel="noopener noreferrer"
-            style={{...styles.histLink, padding:"5px 12px", border:"1px solid #333", fontSize:10}}>⚾ Yankees Walk-Ups @ PlateMusic</a>
+            style={{...styles.histLink, padding:"5px 12px", border:"1px solid var(--muted)", fontSize:10}}>⚾ Yankees Walk-Ups @ PlateMusic</a>
           <a href="https://platemusic.com/team/mets" target="_blank" rel="noopener noreferrer"
-            style={{...styles.histLink, padding:"5px 12px", border:"1px solid #333", fontSize:10}}>⚾ Mets Walk-Ups @ PlateMusic</a>
+            style={{...styles.histLink, padding:"5px 12px", border:"1px solid var(--muted)", fontSize:10}}>⚾ Mets Walk-Ups @ PlateMusic</a>
           <a href="https://open.spotify.com/search/baseball%20walk%20up%20songs" target="_blank" rel="noopener noreferrer"
             style={{...styles.histLink, padding:"5px 12px", border:"1px solid #1DB954", fontSize:10, color:"#1DB954"}}>🎵 Find on Spotify</a>
           <a href="https://platemusic.com" target="_blank" rel="noopener noreferrer"
-            style={{...styles.histLink, padding:"5px 12px", border:"1px solid #333", fontSize:10}}>🎵 All MLB Teams</a>
+            style={{...styles.histLink, padding:"5px 12px", border:"1px solid var(--muted)", fontSize:10}}>🎵 All MLB Teams</a>
         </div>
       </div>
 
@@ -8472,7 +8601,7 @@ function SongsTab() {
         ))}
       </div>
 
-      <div style={{marginBottom:8, padding:"8px 12px", background:"#161616", borderLeft:"2px solid #444", fontSize:10, color:"#666", fontStyle:"italic"}}>
+      <div style={{marginBottom:8, padding:"8px 12px", background:"var(--bg-content)", borderLeft:"2px solid var(--muted)", fontSize:10, color:"var(--muted)", fontStyle:"italic"}}>
         Legendary walk-up songs across all eras — from Shea Stadium to Citi Field, from the old Yankee Stadium to the new
       </div>
 
@@ -8482,19 +8611,19 @@ function SongsTab() {
         const isActive = s.era.includes("present");
         return (
           <div key={i} style={{display:"flex", gap:12, padding:"12px 14px",
-            borderBottom:"1px solid #2e343a",
-            background: isActive ? "#0a120a" : i%2===0 ? "#1a1c1f" : "#111",
+            borderBottom:"1px solid var(--border)",
+            background: isActive ? "#0a120a" : i%2===0 ? "var(--bg-content)" : "var(--ink)",
             borderLeft: isActive ? "3px solid #22c55e" : "3px solid transparent"}}>
             <div style={{flex:1, minWidth:0}}>
               <div style={{display:"flex", alignItems:"baseline", gap:8, flexWrap:"wrap", marginBottom:3}}>
                 <span style={{fontSize:13, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{s.player}</span>
-                <span style={{fontSize:9, color:"#666", letterSpacing:"0.08em"}}>{s.era}</span>
+                <span style={{fontSize:9, color:"var(--muted)", letterSpacing:"0.08em"}}>{s.era}</span>
                 {isActive && <span style={{fontSize:9, color:"#22c55e", fontWeight:900}}>ACTIVE</span>}
               </div>
               <div style={{fontSize:12, color:"#FFD700", marginBottom:4}}>
-                "{s.song}" — <span style={{color:"#aaa"}}>{s.artist}</span>
+                "{s.song}" — <span style={{color:"var(--muted)"}}>{s.artist}</span>
               </div>
-              <div style={{fontSize:11, color:"#666", lineHeight:1.5, fontStyle:"italic"}}>{s.note}</div>
+              <div style={{fontSize:11, color:"var(--muted)", lineHeight:1.5, fontStyle:"italic"}}>{s.note}</div>
             </div>
             <div style={{display:"flex", flexDirection:"column", gap:4, flexShrink:0, alignSelf:"center"}}>
               <a href={spotifyUrl} target="_blank" rel="noopener noreferrer"
@@ -8510,7 +8639,7 @@ function SongsTab() {
         );
       })}
 
-      <div style={{marginTop:16, padding:"10px 14px", background:"#111", borderLeft:"2px solid #2a2a2a", fontSize:10, color:"#555"}}>
+      <div style={{marginTop:16, padding:"10px 14px", background:"var(--ink)", borderLeft:"2px solid var(--border)", fontSize:10, color:"var(--muted)"}}>
         💡 Walk-up songs change every season. This is our historical celebration of the greatest songs across the eras. For today\'s current songs, visit PlateMusic above.
       </div>
     </div>
@@ -8589,8 +8718,8 @@ function SpinWheelTab() {
 
   const CATEGORY_COLORS = {
     stat:   { bg:"#003087", text:"#fff", label:"📊 STAT"   },
-    moment: { bg:"#c8201c", text:"#fff", label:"⚡ MOMENT" },
-    record: { bg:"#FFD700", text:"#111", label:"🏆 RECORD" },
+    moment: { bg:"var(--accent-red)", text:"#fff", label:"⚡ MOMENT" },
+    record: { bg:"#FFD700", text:"var(--ink)", label:"🏆 RECORD" },
     legend: { bg:"#6B21A8", text:"#fff", label:"🌟 LEGEND" },
     weird:  { bg:"#065f46", text:"#fff", label:"🤔 WEIRD"  },
   };
@@ -8624,18 +8753,18 @@ function SpinWheelTab() {
             {result.label}
           </div>
           {loading ? (
-            <div style={{fontSize:12, color:"#666"}}>Loading fact...</div>
+            <div style={{fontSize:12, color:"var(--muted)"}}>Loading fact...</div>
           ) : fact ? (
             <>
               <div style={{display:"inline-block", padding:"2px 8px", borderRadius:2, fontSize:9, fontWeight:900,
                 letterSpacing:"0.1em", background: catStyle.bg, color: catStyle.text, marginBottom:8}}>
                 {catStyle.label}
               </div>
-              <div style={{fontSize:11, color:"#888", marginBottom:6, fontStyle:"italic"}}>{fact.teaser}</div>
-              <p style={{fontSize:13, color:"#e8e0d0", lineHeight:1.6, margin:0, fontFamily:"'Georgia',serif"}}>{fact.fact}</p>
+              <div style={{fontSize:11, color:"var(--muted)", marginBottom:6, fontStyle:"italic"}}>{fact.teaser}</div>
+              <p style={{fontSize:13, color:"var(--ink)", lineHeight:1.6, margin:0, fontFamily:"'Georgia',serif"}}>{fact.fact}</p>
             </>
           ) : (
-            <p style={{fontSize:13, color:"#888"}}>Spin to get a random NY sports fact!</p>
+            <p style={{fontSize:13, color:"var(--muted)"}}>Spin to get a random NY sports fact!</p>
           )}
         </div>
       )}
@@ -9022,7 +9151,7 @@ function BirthdaysTab() {
   const todayBirthdays = ALL_BIRTHDAYS.filter(b => b.month === month && b.day === day);
 
   const SPORT_COLORS = {
-    MLB:"#003087", NFL:"#c8201c", NBA:"#F57C00", NHL:"#0038A8",
+    MLB:"#003087", NFL:"var(--accent-red)", NBA:"#F57C00", NHL:"#0038A8",
     Tennis:"#22c55e", Boxing:"#7C3AED", Golf:"#065f46", Culture:"#BE185D", Broadcasting:"#0891B2"
   };
 
@@ -9036,54 +9165,54 @@ function BirthdaysTab() {
       {todayBirthdays.length === 0 ? (
         <div style={{padding:"30px 0", textAlign:"center"}}>
           <div style={{fontSize:40, marginBottom:12}}>🎂</div>
-          <div style={{fontSize:14, color:"#aaa", fontFamily:"'Georgia',serif", marginBottom:8}}>
+          <div style={{fontSize:14, color:"var(--muted)", fontFamily:"'Georgia',serif", marginBottom:8}}>
             No major NY sports birthdays found for {dateStr}.
           </div>
-          <div style={{fontSize:11, color:"#555"}}>
+          <div style={{fontSize:11, color:"var(--muted)"}}>
             Check back tomorrow — or explore another date in the HISTORY tab.
           </div>
         </div>
       ) : (
         <div>
-          <div style={{marginBottom:16, padding:"10px 14px", background:"#161616", borderLeft:"3px solid #c8201c"}}>
-            <p style={{margin:0, fontSize:12, color:"#aaa"}}>
+          <div style={{marginBottom:16, padding:"10px 14px", background:"var(--bg-content)", borderLeft:"3px solid var(--accent-red)"}}>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)"}}>
               {todayBirthdays.length} NY sports legend{todayBirthdays.length !== 1 ? "s" : ""} born on {dateStr}
             </p>
           </div>
           {todayBirthdays.map((b, i) => {
-            const color = SPORT_COLORS[b.sport] || "#888";
+            const color = SPORT_COLORS[b.sport] || "var(--muted)";
             const age = new Date().getFullYear() - b.year;
             return (
               <a key={i}
                 href={`https://www.google.com/search?q=${encodeURIComponent(b.name+" "+b.team+" sports")}`}
                 target="_blank" rel="noopener noreferrer"
                 style={{display:"flex", alignItems:"flex-start", gap:14, padding:"14px 16px",
-                  borderBottom:"1px solid #2e343a", background: i%2===0?"#1a1c1f":"#111",
+                  borderBottom:"1px solid var(--border)", background: i%2===0?"var(--bg-content)":"var(--ink)",
                   borderLeft:`4px solid ${color}`, textDecoration:"none", marginBottom:4}}>
                 <div style={{flexShrink:0, width:52, height:52, borderRadius:"50%",
                   background:`${color}22`, border:`2px solid ${color}44`,
                   display:"flex", alignItems:"center", justifyContent:"center",
                   flexDirection:"column", textAlign:"center"}}>
                   <div style={{fontSize:14, fontWeight:900, color, lineHeight:1}}>{b.year}</div>
-                  <div style={{fontSize:9, color:"#666"}}>{age}y</div>
+                  <div style={{fontSize:9, color:"var(--muted)"}}>{age}y</div>
                 </div>
                 <div style={{flex:1, minWidth:0}}>
                   <div style={{display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:4}}>
                     <span style={{fontSize:16, fontWeight:900, color:"#fff", fontFamily:"'Georgia',serif"}}>{b.name}</span>
                     <span style={{fontSize:9, padding:"2px 7px", background:`${color}22`, color,
                       fontWeight:900, letterSpacing:"0.1em", borderRadius:2}}>{b.team}</span>
-                    <span style={{fontSize:9, color:"#666"}}>[{b.sport}]</span>
+                    <span style={{fontSize:9, color:"var(--muted)"}}>[{b.sport}]</span>
                   </div>
-                  <p style={{margin:0, fontSize:12, color:"#888", lineHeight:1.55, fontFamily:"'Georgia',serif"}}>{b.note}</p>
+                  <p style={{margin:0, fontSize:12, color:"var(--muted)", lineHeight:1.55, fontFamily:"'Georgia',serif"}}>{b.note}</p>
                 </div>
-                <span style={{fontSize:9, color:"#555", flexShrink:0, alignSelf:"center"}}>→</span>
+                <span style={{fontSize:9, color:"var(--muted)", flexShrink:0, alignSelf:"center"}}>→</span>
               </a>
             );
           })}
         </div>
       )}
 
-      <div style={{marginTop:20, padding:"10px 14px", background:"#111", borderLeft:"2px solid #2a2a2a", fontSize:10, color:"#555"}}>
+      <div style={{marginTop:20, padding:"10px 14px", background:"var(--ink)", borderLeft:"2px solid var(--border)", fontSize:10, color:"var(--muted)"}}>
         🎂 {ALL_BIRTHDAYS.length} NY sports birthdays in our database · Refreshes automatically each day
       </div>
     </div>
@@ -9468,21 +9597,21 @@ function ScrambleGame({ myTeams }) {
   const allPlaced  = answer.every(s => s !== null);
 
   return (
-    <div style={{background:"#161616", border:"1px solid #2a2a2a", padding:"20px", maxWidth:520}}>
+    <div style={{background:"var(--bg-content)", border:"1px solid var(--border)", padding:"20px", maxWidth:520}}>
       {/* Header */}
       <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:8}}>
-        <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em"}}>
+        <div style={{fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.15em"}}>
           🔀 SCRAMBLE — NY SPORTS LEGEND
         </div>
         <div style={{display:"flex", gap:6}}>
           <button onClick={() => setMode(m => m==="click"?"type":"click")}
-            style={{fontSize:9, padding:"3px 10px", background:"transparent", border:"1px solid #444",
-              color:"#888", cursor:"pointer", fontWeight:700, letterSpacing:"0.08em"}}>
+            style={{fontSize:9, padding:"3px 10px", background:"transparent", border:"1px solid var(--muted)",
+              color:"var(--muted)", cursor:"pointer", fontWeight:700, letterSpacing:"0.08em"}}>
             {mode==="click" ? "⌨️ TYPE MODE" : "🖱️ CLICK MODE"}
           </button>
           <button onClick={newWord}
-            style={{fontSize:9, padding:"3px 10px", background:"transparent", border:"1px solid #444",
-              color:"#888", cursor:"pointer", fontWeight:700, letterSpacing:"0.08em"}}>
+            style={{fontSize:9, padding:"3px 10px", background:"transparent", border:"1px solid var(--muted)",
+              color:"var(--muted)", cursor:"pointer", fontWeight:700, letterSpacing:"0.08em"}}>
             ↺ NEW WORD
           </button>
         </div>
@@ -9490,14 +9619,14 @@ function ScrambleGame({ myTeams }) {
 
       {/* Category + hint */}
       <div style={{textAlign:"center", marginBottom:16}}>
-        <div style={{fontSize:10, color:"#666", marginBottom:6}}>
-          Category: <span style={{color:"#c8201c", fontWeight:900}}>{wordObj.category}</span>
+        <div style={{fontSize:10, color:"var(--muted)", marginBottom:6}}>
+          Category: <span style={{color:"var(--accent-red)", fontWeight:900}}>{wordObj.category}</span>
           {tries > 0 && <span style={{color:"#f87171", marginLeft:12}}>
             {3 - tries} {3-tries===1?"try":"tries"} left
           </span>}
         </div>
         {hints >= 1 && (
-          <div style={{fontSize:11, color:"#f0b429", fontStyle:"italic", background:"#1a1600",
+          <div style={{fontSize:11, color:"#f0b429", fontStyle:"italic", background:"var(--gold-active-bg)",
             border:"1px solid #f0b42944", padding:"6px 12px", display:"inline-block"}}>
             💡 {wordObj.hint}
           </div>
@@ -9511,14 +9640,14 @@ function ScrambleGame({ myTeams }) {
             onClick={() => mode==="click" && clickAnswerSlot(i)}
             style={{
               width:42, height:48,
-              border:`2px solid ${letter ? (result==="correct"?"#22c55e":result==="wrong"?"#c8201c":"#888") : "#333"}`,
-              background: letter ? (result==="correct"?"#0d2a1a":result==="wrong"?"#2a0d0d":"#2a2a2a") : "#111",
+              border:`2px solid ${letter ? (result==="correct"?"#22c55e":result==="wrong"?"var(--accent-red)":"var(--muted)") : "var(--muted)"}`,
+              background: letter ? (result==="correct"?"var(--success-bg)":result==="wrong"?"#2a0d0d":"var(--border)") : "var(--ink)",
               display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:20, fontWeight:900, color: result==="correct"?"#4ade80":result==="wrong"?"#f87171":"#e8e0d0",
+              fontSize:20, fontWeight:900, color: result==="correct"?"#4ade80":result==="wrong"?"#f87171":"var(--ink)",
               fontFamily:"'Georgia',serif",
               cursor: mode==="click" && letter ? "pointer" : "default",
               transition:"all 0.15s",
-              borderBottom: letter ? "3px solid #444" : "3px solid #222",
+              borderBottom: letter ? "3px solid var(--muted)" : "3px solid var(--border)",
             }}>
             {letter || ""}
           </div>
@@ -9528,7 +9657,7 @@ function ScrambleGame({ myTeams }) {
       {/* Scrambled tile pool (click mode) */}
       {mode === "click" && result === null && (
         <div style={{display:"flex", gap:6, justifyContent:"center", flexWrap:"wrap", marginBottom:16,
-          padding:"12px", background:"#111", border:"1px solid #2e343a", minHeight:64}}>
+          padding:"12px", background:"var(--ink)", border:"1px solid var(--border)", minHeight:64}}>
           {scrambled.map((letter, i) => {
             const isUsed = !available.includes(i);
             return (
@@ -9536,11 +9665,11 @@ function ScrambleGame({ myTeams }) {
                 onClick={() => !isUsed && clickTile(i)}
                 style={{
                   width:42, height:48,
-                  border:`2px solid ${isUsed?"#222":"#c8201c"}`,
-                  background: isUsed ? "#141618" : "#2e343a",
+                  border:`2px solid ${isUsed?"var(--border)":"var(--accent-red)"}`,
+                  background: isUsed ? "var(--bg-page)" : "var(--border)",
                   display:"flex", alignItems:"center", justifyContent:"center",
                   fontSize:20, fontWeight:900,
-                  color: isUsed ? "#222" : "#e8e0d0",
+                  color: isUsed ? "var(--border)" : "var(--ink)",
                   fontFamily:"'Georgia',serif",
                   cursor: isUsed ? "default" : "pointer",
                   transition:"all 0.15s",
@@ -9552,7 +9681,7 @@ function ScrambleGame({ myTeams }) {
               </div>
             );
           })}
-          <div style={{width:"100%", textAlign:"center", fontSize:9, color:"#444", marginTop:6}}>
+          <div style={{width:"100%", textAlign:"center", fontSize:9, color:"var(--muted)", marginTop:6}}>
             Click tiles to build your answer · Click an answer letter to return it
           </div>
         </div>
@@ -9568,12 +9697,12 @@ function ScrambleGame({ myTeams }) {
             onKeyDown={e => e.key==="Enter" && handleTypedGuess()}
             placeholder="Type your answer..."
             autoFocus
-            style={{padding:"10px 14px", background:"#111", border:"1px solid #444",
-              color:"#e8e0d0", fontSize:16, fontFamily:"'Georgia',serif",
+            style={{padding:"10px 14px", background:"var(--ink)", border:"1px solid var(--muted)",
+              color:"var(--ink)", fontSize:16, fontFamily:"'Georgia',serif",
               letterSpacing:"0.15em", outline:"none", minWidth:180}}
           />
           <button onClick={handleTypedGuess}
-            style={{background:"#c8201c", border:"none", color:"#fff",
+            style={{background:"var(--accent-red)", border:"none", color:"#fff",
               padding:"10px 20px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>
             GUESS
           </button>
@@ -9592,14 +9721,14 @@ function ScrambleGame({ myTeams }) {
           )}
           {mode === "click" && allPlaced && (
             <button onClick={() => checkWord(answerWord.join(""), answer, available)}
-              style={{background:"#c8201c", border:"none", color:"#fff",
+              style={{background:"var(--accent-red)", border:"none", color:"#fff",
                 padding:"7px 20px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>
               ✓ CHECK
             </button>
           )}
           {mode === "click" && !allPlaced && available.length < scrambled.length && (
             <button onClick={() => { setAnswer(Array(wordObj.word.length).fill(null)); setAvailable(scrambled.map((_,i)=>i)); }}
-              style={{background:"transparent", border:"1px solid #444", color:"#666",
+              style={{background:"transparent", border:"1px solid var(--muted)", color:"var(--muted)",
                 padding:"7px 14px", cursor:"pointer", fontSize:11, fontWeight:700}}>
               CLEAR
             </button>
@@ -9611,10 +9740,10 @@ function ScrambleGame({ myTeams }) {
       {result === "correct" && (
         <div style={{textAlign:"center", marginTop:12}}>
           <div style={{fontSize:18, fontWeight:900, color:"#4ade80", marginBottom:8}}>🎉 CORRECT!</div>
-          <p style={{fontSize:12, color:"#aaa", lineHeight:1.6, marginBottom:16,
+          <p style={{fontSize:12, color:"var(--muted)", lineHeight:1.6, marginBottom:16,
             fontFamily:"'Georgia',serif", textAlign:"left"}}>{wordObj.fact}</p>
           <button onClick={newWord}
-            style={{background:"#c8201c", border:"none", color:"#fff",
+            style={{background:"var(--accent-red)", border:"none", color:"#fff",
               padding:"10px 24px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>
             NEXT WORD →
           </button>
@@ -9624,12 +9753,12 @@ function ScrambleGame({ myTeams }) {
       {result === "wrong" && (
         <div style={{textAlign:"center", marginTop:12}}>
           <div style={{fontSize:14, fontWeight:900, color:"#f87171", marginBottom:6}}>
-            The answer was: <span style={{color:"#e8e0d0", letterSpacing:"0.15em"}}>{wordObj.word}</span>
+            The answer was: <span style={{color:"var(--ink)", letterSpacing:"0.15em"}}>{wordObj.word}</span>
           </div>
-          <p style={{fontSize:12, color:"#aaa", lineHeight:1.6, marginBottom:16,
+          <p style={{fontSize:12, color:"var(--muted)", lineHeight:1.6, marginBottom:16,
             fontFamily:"'Georgia',serif", textAlign:"left"}}>{wordObj.fact}</p>
           <button onClick={newWord}
-            style={{background:"#c8201c", border:"none", color:"#fff",
+            style={{background:"var(--accent-red)", border:"none", color:"#fff",
               padding:"10px 24px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>
             TRY ANOTHER →
           </button>
@@ -9665,21 +9794,21 @@ function EmojiQuizGame({ myTeams }) {
   const isCorrect = selected === q.answer;
 
   return (
-    <div style={{background:"#161616", border:"1px solid #2a2a2a", padding:"20px"}}>
-      <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:16}}>
+    <div style={{background:"var(--bg-content)", border:"1px solid var(--border)", padding:"20px"}}>
+      <div style={{fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.15em", marginBottom:16}}>
         🤔 EMOJI QUIZ — GUESS THE NY SPORTS MOMENT
       </div>
       <div style={{textAlign:"center", marginBottom:20}}>
         <div style={{fontSize:48, letterSpacing:"0.1em", marginBottom:12}}>{q.emojis}</div>
-        <div style={{fontSize:11, color:"#666", fontStyle:"italic"}}>Hint: {q.hint}</div>
+        <div style={{fontSize:11, color:"var(--muted)", fontStyle:"italic"}}>Hint: {q.hint}</div>
       </div>
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:16}}>
         {q.choices.map((c, i) => {
           const isRight = c === q.answer;
-          let bg = "#2e343a", border = "1px solid #333", color = "#ccc";
+          let bg = "var(--border)", border = "1px solid var(--muted)", color = "var(--muted)";
           if (selected) {
-            if (isRight) { bg = "#0d2a1a"; border = "1px solid #2d8a50"; color = "#4ade80"; }
-            else if (c === selected && !isRight) { bg = "#2a0d0d"; border = "1px solid #c8201c"; color = "#f87171"; }
+            if (isRight) { bg = "var(--success-bg)"; border = "1px solid #2d8a50"; color = "#4ade80"; }
+            else if (c === selected && !isRight) { bg = "#2a0d0d"; border = "1px solid var(--accent-red)"; color = "#f87171"; }
           }
           return (
             <button key={i} onClick={() => handleChoice(c)}
@@ -9695,15 +9824,15 @@ function EmojiQuizGame({ myTeams }) {
       </div>
       {showFact && (
         <div>
-          <div style={{padding:"12px 14px", background:isCorrect?"#0d2a1a":"#1a0d0d",
-            border:`1px solid ${isCorrect?"#2d8a50":"#c8201c"}`, marginBottom:12}}>
+          <div style={{padding:"12px 14px", background:isCorrect?"var(--success-bg)":"var(--alert-bg)",
+            border:`1px solid ${isCorrect?"#2d8a50":"var(--accent-red)"}`, marginBottom:12}}>
             <div style={{fontSize:14, fontWeight:900, color:isCorrect?"#4ade80":"#f87171", marginBottom:6}}>
               {isCorrect ? "🎉 Correct!" : `❌ The answer was: ${q.answer}`}
             </div>
-            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6, fontFamily:"'Georgia',serif"}}>{q.fact}</p>
+            <p style={{margin:0, fontSize:12, color:"var(--muted)", lineHeight:1.6, fontFamily:"'Georgia',serif"}}>{q.fact}</p>
           </div>
           <div style={{display:"flex", gap:8, justifyContent:"center", flexWrap:"wrap"}}>
-            <button onClick={nextQ} style={{background:"#c8201c", border:"none", color:"#fff",
+            <button onClick={nextQ} style={{background:"var(--accent-red)", border:"none", color:"#fff",
               padding:"10px 24px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>
               NEXT EMOJI →
             </button>
@@ -9711,7 +9840,7 @@ function EmojiQuizGame({ myTeams }) {
               <button onClick={() => {
                 const text = `I nailed the NY Sports Emoji Quiz on nysportsdaily.com! Can you guess ${q.emojis}?`;
                 navigator.clipboard?.writeText(text).catch(()=>{});
-              }} style={{background:"transparent", border:"1px solid #555", color:"#888",
+              }} style={{background:"transparent", border:"1px solid var(--muted)", color:"var(--muted)",
                 padding:"10px 16px", cursor:"pointer", fontSize:11, fontWeight:900}}>
                 📋 SHARE
               </button>
@@ -9755,30 +9884,30 @@ function HangmanGame({ myTeams }) {
 
   // Simple SVG gallows
   const parts = [
-    <line key="h" x1="10" y1="10" x2="90" y2="10" stroke="#c8201c" strokeWidth="3"/>,
-    <line key="v" x1="50" y1="10" x2="50" y2="25" stroke="#c8201c" strokeWidth="3"/>,
-    <circle key="head" cx="50" cy="32" r="7" stroke="#e8e0d0" strokeWidth="2" fill="none"/>,
-    <line key="body" x1="50" y1="39" x2="50" y2="60" stroke="#e8e0d0" strokeWidth="2"/>,
-    <line key="larm" x1="50" y1="45" x2="38" y2="55" stroke="#e8e0d0" strokeWidth="2"/>,
-    <line key="rarm" x1="50" y1="45" x2="62" y2="55" stroke="#e8e0d0" strokeWidth="2"/>,
-    <line key="lleg" x1="50" y1="60" x2="38" y2="75" stroke="#e8e0d0" strokeWidth="2"/>,
-    <line key="rleg" x1="50" y1="60" x2="62" y2="75" stroke="#e8e0d0" strokeWidth="2"/>,
+    <line key="h" x1="10" y1="10" x2="90" y2="10" stroke="var(--accent-red)" strokeWidth="3"/>,
+    <line key="v" x1="50" y1="10" x2="50" y2="25" stroke="var(--accent-red)" strokeWidth="3"/>,
+    <circle key="head" cx="50" cy="32" r="7" stroke="var(--ink)" strokeWidth="2" fill="none"/>,
+    <line key="body" x1="50" y1="39" x2="50" y2="60" stroke="var(--ink)" strokeWidth="2"/>,
+    <line key="larm" x1="50" y1="45" x2="38" y2="55" stroke="var(--ink)" strokeWidth="2"/>,
+    <line key="rarm" x1="50" y1="45" x2="62" y2="55" stroke="var(--ink)" strokeWidth="2"/>,
+    <line key="lleg" x1="50" y1="60" x2="38" y2="75" stroke="var(--ink)" strokeWidth="2"/>,
+    <line key="rleg" x1="50" y1="60" x2="62" y2="75" stroke="var(--ink)" strokeWidth="2"/>,
   ];
 
   return (
-    <div style={{background:"#161616", border:"1px solid #2a2a2a", padding:"20px"}}>
-      <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:16}}>
+    <div style={{background:"var(--bg-content)", border:"1px solid var(--border)", padding:"20px"}}>
+      <div style={{fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.15em", marginBottom:16}}>
         🎯 HANGMAN — GUESS THE NY SPORTS LEGEND
       </div>
       <div style={{display:"flex", gap:20, alignItems:"flex-start", flexWrap:"wrap"}}>
         {/* Gallows */}
         <div style={{flexShrink:0}}>
           <svg width="100" height="90" viewBox="0 0 100 90">
-            <line x1="10" y1="85" x2="90" y2="85" stroke="#555" strokeWidth="3"/>
-            <line x1="20" y1="10" x2="20" y2="85" stroke="#555" strokeWidth="3"/>
+            <line x1="10" y1="85" x2="90" y2="85" stroke="var(--muted)" strokeWidth="3"/>
+            <line x1="20" y1="10" x2="20" y2="85" stroke="var(--muted)" strokeWidth="3"/>
             {parts.slice(0, wrong + 1)}
           </svg>
-          <div style={{textAlign:"center", fontSize:10, color:"#555"}}>
+          <div style={{textAlign:"center", fontSize:10, color:"var(--muted)"}}>
             {MAX_WRONG - wrong} left
           </div>
         </div>
@@ -9788,17 +9917,17 @@ function HangmanGame({ myTeams }) {
           <div style={{display:"flex", gap:8, flexWrap:"wrap", marginBottom:16}}>
             {wordObj.word.split("").map((l, i) => (
               <div key={i} style={{
-                width:32, height:40, borderBottom:`2px solid ${guessed.has(l)?"#e8e0d0":"#555"}`,
+                width:32, height:40, borderBottom:`2px solid ${guessed.has(l)?"var(--ink)":"var(--muted)"}`,
                 display:"flex", alignItems:"center", justifyContent:"center",
-                fontSize:20, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif",
+                fontSize:20, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif",
               }}>
                 {guessed.has(l) || won || lost ? l : ""}
               </div>
             ))}
           </div>
 
-          <div style={{fontSize:10, color:"#666", marginBottom:12}}>
-            Category: <span style={{color:"#c8201c", fontWeight:900}}>{wordObj.category}</span>
+          <div style={{fontSize:10, color:"var(--muted)", marginBottom:12}}>
+            Category: <span style={{color:"var(--accent-red)", fontWeight:900}}>{wordObj.category}</span>
             {" · "}{wordObj.hint}
           </div>
 
@@ -9814,8 +9943,8 @@ function HangmanGame({ myTeams }) {
               <div style={{fontSize:16, fontWeight:900, color:won?"#4ade80":"#f87171", marginBottom:8}}>
                 {won ? "🎉 CORRECT!" : `💀 The answer was: ${wordObj.word}`}
               </div>
-              <p style={{fontSize:11, color:"#aaa", lineHeight:1.6, marginBottom:12, fontFamily:"'Georgia',serif"}}>{wordObj.hint}</p>
-              <button onClick={newGame} style={{background:"#c8201c", border:"none", color:"#fff",
+              <p style={{fontSize:11, color:"var(--muted)", lineHeight:1.6, marginBottom:12, fontFamily:"'Georgia',serif"}}>{wordObj.hint}</p>
+              <button onClick={newGame} style={{background:"var(--accent-red)", border:"none", color:"#fff",
                 padding:"8px 20px", cursor:"pointer", fontSize:11, fontWeight:900, letterSpacing:"0.1em"}}>
                 NEW WORD →
               </button>
@@ -9827,14 +9956,14 @@ function HangmanGame({ myTeams }) {
                 <button key={l} onClick={() => guess(l)} disabled={guessed.has(l) || won || lost}
                   style={{
                     width:30, height:30, background:guessed.has(l)
-                      ? (wordObj.word.includes(l) ? "#0d2a1a" : "#2a0d0d")
-                      : "#2e343a",
+                      ? (wordObj.word.includes(l) ? "var(--success-bg)" : "#2a0d0d")
+                      : "var(--border)",
                     border:`1px solid ${guessed.has(l)
-                      ? (wordObj.word.includes(l) ? "#2d8a50" : "#c8201c")
-                      : "#444"}`,
+                      ? (wordObj.word.includes(l) ? "#2d8a50" : "var(--accent-red)")
+                      : "var(--muted)"}`,
                     color:guessed.has(l)
                       ? (wordObj.word.includes(l) ? "#4ade80" : "#f87171")
-                      : "#ccc",
+                      : "var(--muted)",
                     cursor:guessed.has(l)?"default":"pointer",
                     fontSize:12, fontWeight:900,
                   }}>
@@ -10052,29 +10181,29 @@ function PlayroomCrossword() {
       <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start",
         marginBottom:16, flexWrap:"wrap", gap:8}}>
         <div>
-          <div style={{fontSize:13, fontWeight:900, color:"#e8e0d0",
+          <div style={{fontSize:13, fontWeight:900, color:"var(--ink)",
             fontFamily:"'Georgia',serif", marginBottom:2}}>
             {MONTH_NAMES[monthNum]}: {fillin.theme}
           </div>
-          <div style={{fontSize:9, color:"#c8201c", fontWeight:700, letterSpacing:"0.1em"}}>
+          <div style={{fontSize:9, color:"var(--accent-red)", fontWeight:700, letterSpacing:"0.1em"}}>
             FILL-IN PUZZLE · 10 NY SPORTS LEGENDS · UPDATES MONTHLY
           </div>
         </div>
         <div style={{display:"flex", gap:6}}>
-          <button onClick={checkAll} style={{background:"transparent",border:"1px solid #555",color:"#aaa",padding:"5px 14px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>✓ CHECK</button>
-          <button onClick={reset}    style={{background:"transparent",border:"1px solid #444",color:"#666",padding:"5px 14px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>↺ RESET</button>
-          <button onClick={revealAll} style={{background:"transparent",border:"1px solid #c8201c",color:"#c8201c",padding:"5px 14px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>REVEAL</button>
+          <button onClick={checkAll} style={{background:"transparent",border:"1px solid var(--muted)",color:"var(--muted)",padding:"5px 14px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>✓ CHECK</button>
+          <button onClick={reset}    style={{background:"transparent",border:"1px solid var(--muted)",color:"var(--muted)",padding:"5px 14px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>↺ RESET</button>
+          <button onClick={revealAll} style={{background:"transparent",border:"1px solid var(--accent-red)",color:"var(--accent-red)",padding:"5px 14px",cursor:"pointer",fontSize:10,letterSpacing:"0.1em",fontWeight:700}}>REVEAL</button>
         </div>
       </div>
 
       {solved && !revealed && (
-        <div style={{background:"#0d2a1a",border:"1px solid #2d8a50",color:"#4ade80",
+        <div style={{background:"var(--success-bg)",border:"1px solid #2d8a50",color:"#4ade80",
           padding:"10px 16px",marginBottom:14,fontSize:13,fontWeight:700,textAlign:"center"}}>
           🎉 PERFECT SCORE! True NY sports fan confirmed.
         </div>
       )}
 
-      <div style={{fontSize:10, color:"#555", marginBottom:14, fontStyle:"italic"}}>
+      <div style={{fontSize:10, color:"var(--muted)", marginBottom:14, fontStyle:"italic"}}>
         Type the answer · Press Enter to advance · Hit CHECK when done
       </div>
 
@@ -10089,16 +10218,16 @@ function PlayroomCrossword() {
               onClick={() => { setActiveRow(i); setTimeout(() => inputRefs.current[i]?.focus(), 0); }}
               style={{
                 display:"flex", gap:8, alignItems:"center", padding:"7px 10px",
-                background: isCorrect?"#0d2a1a":isWrong?"#1a0d0d":isActive?"#2e343a":i%2===0?"#111":"#1a1c1f",
-                border: isActive?"1px solid #c8201c":"1px solid transparent",
-                borderLeft: isCorrect?"3px solid #22c55e":isWrong?"3px solid #c8201c":isActive?"3px solid #c8201c":"3px solid #333",
+                background: isCorrect?"var(--success-bg)":isWrong?"var(--alert-bg)":isActive?"var(--border)":i%2===0?"var(--ink)":"var(--bg-content)",
+                border: isActive?"1px solid var(--accent-red)":"1px solid transparent",
+                borderLeft: isCorrect?"3px solid #22c55e":isWrong?"3px solid var(--accent-red)":isActive?"3px solid var(--accent-red)":"3px solid var(--muted)",
                 cursor:"pointer",
               }}>
-              <span style={{fontSize:10,fontWeight:900,color:"#c8201c",minWidth:20,flexShrink:0}}>{i+1}.</span>
-              <span style={{flex:1,fontSize:12,color:isCorrect?"#4ade80":isWrong?"#888":"#ccc",
+              <span style={{fontSize:10,fontWeight:900,color:"var(--accent-red)",minWidth:20,flexShrink:0}}>{i+1}.</span>
+              <span style={{flex:1,fontSize:12,color:isCorrect?"#4ade80":isWrong?"var(--muted)":"var(--muted)",
                 fontFamily:"'Georgia',serif",lineHeight:1.4}}>
                 {entry.clue}
-                <span style={{fontSize:9,color:"#444",marginLeft:8}}>({letterCount} letters)</span>
+                <span style={{fontSize:9,color:"var(--muted)",marginLeft:8}}>({letterCount} letters)</span>
               </span>
               <div style={{display:"flex",gap:3,alignItems:"center",flexShrink:0}}>
                 {Array.from({length:letterCount}).map((_, ci) => {
@@ -10107,11 +10236,11 @@ function PlayroomCrossword() {
                   return (
                     <div key={ci} style={{
                       width:22,height:26,
-                      border:`1px solid ${correct&&letter?"#22c55e":isWrong&&letter&&letter!==entry.answer[ci]?"#c8201c":isActive?"#555":"#333"}`,
-                      background:correct&&letter?"#0d2a1a":"#111",
+                      border:`1px solid ${correct&&letter?"#22c55e":isWrong&&letter&&letter!==entry.answer[ci]?"var(--accent-red)":isActive?"var(--muted)":"var(--muted)"}`,
+                      background:correct&&letter?"var(--success-bg)":"var(--ink)",
                       display:"flex",alignItems:"center",justifyContent:"center",
                       fontSize:13,fontWeight:900,
-                      color:correct&&letter?"#4ade80":"#e8e0d0",
+                      color:correct&&letter?"#4ade80":"var(--ink)",
                       fontFamily:"'Georgia',serif",
                     }}>{letter}</div>
                   );
@@ -10126,7 +10255,7 @@ function PlayroomCrossword() {
                   style={{position:"absolute",opacity:0,width:1,height:1,pointerEvents:"none"}}
                 />
                 {isCorrect && <span style={{fontSize:14,marginLeft:4}}>✓</span>}
-                {isWrong   && <span style={{fontSize:12,color:"#c8201c",marginLeft:4}}>✗</span>}
+                {isWrong   && <span style={{fontSize:12,color:"var(--accent-red)",marginLeft:4}}>✗</span>}
               </div>
             </div>
           );
@@ -10134,15 +10263,15 @@ function PlayroomCrossword() {
       </div>
 
       {checked && (
-        <div style={{marginTop:14,padding:"10px 14px",background:"#161616",border:"1px solid #2a2a2a",
+        <div style={{marginTop:14,padding:"10px 14px",background:"var(--bg-content)",border:"1px solid var(--border)",
           display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
-          <span style={{fontSize:12,color:"#e8e0d0"}}>
+          <span style={{fontSize:12,color:"var(--ink)"}}>
             Score: <strong style={{color:solved?"#4ade80":"#f0b429"}}>{checked.filter(Boolean).length}</strong>
-            <span style={{color:"#555"}}> / {fillin.entries.length}</span>
+            <span style={{color:"var(--muted)"}}> / {fillin.entries.length}</span>
           </span>
           {!solved && (
-            <button onClick={revealAll} style={{fontSize:10,color:"#c8201c",background:"transparent",
-              border:"1px solid #c8201c",padding:"4px 12px",cursor:"pointer",fontWeight:700,letterSpacing:"0.08em"}}>
+            <button onClick={revealAll} style={{fontSize:10,color:"var(--accent-red)",background:"transparent",
+              border:"1px solid var(--accent-red)",padding:"4px 12px",cursor:"pointer",fontWeight:700,letterSpacing:"0.08em"}}>
               SHOW ANSWERS
             </button>
           )}
@@ -10211,40 +10340,40 @@ function GuessThePlayer() {
 
   function nextRound() { setRound(buildRound()); setSelected(null); }
 
-  if (!round) return <div style={{color:"#555", padding:20}}>Loading...</div>;
+  if (!round) return <div style={{color:"var(--muted)", padding:20}}>Loading...</div>;
   const isCorrect = selected?.name === round.correct.name;
 
   return (
     <div style={{maxWidth:560}}>
       <div style={{display:"flex", gap:16, marginBottom:16, padding:"8px 14px",
-        background:"#111", border:"1px solid #2e343a", flexWrap:"wrap", alignItems:"center"}}>
-        <span style={{fontSize:10, color:"#888"}}>Score: <strong style={{color:"#e8e0d0"}}>{score}/{total}</strong></span>
-        <span style={{fontSize:10, color:"#888"}}>Streak: <strong style={{color:streak>2?"#f0b429":"#e8e0d0"}}>{streak} 🔥</strong></span>
-        <span style={{fontSize:10, color:"#888"}}>Best: <strong style={{color:"#c8201c"}}>{bestStreak}</strong></span>
+        background:"var(--ink)", border:"1px solid var(--border)", flexWrap:"wrap", alignItems:"center"}}>
+        <span style={{fontSize:10, color:"var(--muted)"}}>Score: <strong style={{color:"var(--ink)"}}>{score}/{total}</strong></span>
+        <span style={{fontSize:10, color:"var(--muted)"}}>Streak: <strong style={{color:streak>2?"#f0b429":"var(--ink)"}}>{streak} 🔥</strong></span>
+        <span style={{fontSize:10, color:"var(--muted)"}}>Best: <strong style={{color:"var(--accent-red)"}}>{bestStreak}</strong></span>
         <button onClick={() => { usedIdxRef.current.clear(); setScore(0); setTotal(0); setStreak(0); setBestStreak(0); nextRound(); }}
-          style={{marginLeft:"auto", fontSize:9, color:"#555", background:"transparent",
-            border:"1px solid #333", padding:"2px 8px", cursor:"pointer", fontWeight:700}}>RESET</button>
+          style={{marginLeft:"auto", fontSize:9, color:"var(--muted)", background:"transparent",
+            border:"1px solid var(--muted)", padding:"2px 8px", cursor:"pointer", fontWeight:700}}>RESET</button>
       </div>
 
-      <div style={{background:"#161616", border:"1px solid #2a2a2a", borderLeft:"3px solid #c8201c",
+      <div style={{background:"var(--bg-content)", border:"1px solid var(--border)", borderLeft:"3px solid var(--accent-red)",
         padding:"16px 18px", marginBottom:14}}>
-        <div style={{fontSize:8, fontWeight:900, color:"#c8201c", letterSpacing:"0.2em", marginBottom:8}}>
+        <div style={{fontSize:8, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.2em", marginBottom:8}}>
           🎤 {round.clue.label} CLUE — WHO IS THIS NY LEGEND?
         </div>
-        <p style={{margin:0, fontSize:14, color:"#e8e0d0", lineHeight:1.6,
+        <p style={{margin:0, fontSize:14, color:"var(--ink)", lineHeight:1.6,
           fontFamily:"'Georgia',serif", fontStyle:"italic"}}>"{round.clue.text}"</p>
-        <div style={{marginTop:8, fontSize:9, color:"#555"}}>{round.correct.sport} · {round.correct.team}</div>
+        <div style={{marginTop:8, fontSize:9, color:"var(--muted)"}}>{round.correct.sport} · {round.correct.team}</div>
       </div>
 
       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:14}}>
         {round.choices.map((player, i) => {
           const isRight = player.name === round.correct.name;
           const isPicked = selected?.name === player.name;
-          let bg="#2e343a", border="1px solid #333", color="#ccc";
+          let bg="var(--border)", border="1px solid var(--muted)", color="var(--muted)";
           if (selected) {
-            if (isRight)       { bg="#0d2a1a"; border="1px solid #22c55e"; color="#4ade80"; }
-            else if (isPicked) { bg="#2a0d0d"; border="1px solid #c8201c"; color="#f87171"; }
-            else               { color="#444"; }
+            if (isRight)       { bg="var(--success-bg)"; border="1px solid #22c55e"; color="#4ade80"; }
+            else if (isPicked) { bg="#2a0d0d"; border="1px solid var(--accent-red)"; color="#f87171"; }
+            else               { color="var(--muted)"; }
           }
           return (
             <button key={i} onClick={() => handleChoice(player)}
@@ -10263,17 +10392,17 @@ function GuessThePlayer() {
 
       {selected && (
         <>
-          <div style={{padding:"14px 16px", background:isCorrect?"#0d2a1a":"#161616",
-            border:`1px solid ${isCorrect?"#22c55e":"#2a2a2a"}`, marginBottom:12}}>
+          <div style={{padding:"14px 16px", background:isCorrect?"var(--success-bg)":"var(--bg-content)",
+            border:`1px solid ${isCorrect?"#22c55e":"var(--border)"}`, marginBottom:12}}>
             <div style={{fontSize:13, fontWeight:900, color:isCorrect?"#4ade80":"#f87171", marginBottom:8}}>
               {isCorrect ? "🎉 Correct!" : `The answer was ${round.correct.name}`}
             </div>
-            <p style={{margin:"0 0 6px", fontSize:12, color:"#aaa", lineHeight:1.6,
+            <p style={{margin:"0 0 6px", fontSize:12, color:"var(--muted)", lineHeight:1.6,
               fontFamily:"'Georgia',serif"}}>{round.correct.fact}</p>
-            <div style={{fontSize:10, color:"#555"}}>{round.correct.stats}</div>
+            <div style={{fontSize:10, color:"var(--muted)"}}>{round.correct.stats}</div>
           </div>
           <button onClick={nextRound}
-            style={{width:"100%", background:"#c8201c", border:"none", color:"#fff",
+            style={{width:"100%", background:"var(--accent-red)", border:"none", color:"#fff",
               padding:"12px", cursor:"pointer", fontSize:12, fontWeight:900, letterSpacing:"0.1em"}}>
             NEXT PLAYER →
           </button>
@@ -10340,7 +10469,7 @@ function MatchingPairs() {
     }
   }
 
-  if (!cards.length) return <div style={{color:"#555", padding:20}}>Loading...</div>;
+  if (!cards.length) return <div style={{color:"var(--muted)", padding:20}}>Loading...</div>;
 
   const TEAM_COLORS = {
     Yankees:"#003087", Mets:"#002D72", Jets:"#125740", Giants:"#0B2265",
@@ -10352,27 +10481,27 @@ function MatchingPairs() {
       <div style={{display:"flex", justifyContent:"space-between", alignItems:"center",
         marginBottom:12, flexWrap:"wrap", gap:8}}>
         <div>
-          <div style={{fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em", marginBottom:2}}>
+          <div style={{fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.15em", marginBottom:2}}>
             🃏 MATCHING PAIRS — NY SPORTS LEGENDS
           </div>
-          <div style={{fontSize:10, color:"#666"}}>
+          <div style={{fontSize:10, color:"var(--muted)"}}>
             Match player to stat · {matched.size}/8 matched · {moves} moves
             {best && <span style={{color:"#f0b429", marginLeft:8}}>Best: {best}</span>}
           </div>
         </div>
         <button onClick={buildGame}
-          style={{fontSize:10, background:"transparent", border:"1px solid #444",
-            color:"#888", padding:"5px 14px", cursor:"pointer", fontWeight:900}}>↺ NEW GAME</button>
+          style={{fontSize:10, background:"transparent", border:"1px solid var(--muted)",
+            color:"var(--muted)", padding:"5px 14px", cursor:"pointer", fontWeight:900}}>↺ NEW GAME</button>
       </div>
 
       {won && (
-        <div style={{background:"#0d2a1a", border:"1px solid #22c55e", color:"#4ade80",
+        <div style={{background:"var(--success-bg)", border:"1px solid #22c55e", color:"#4ade80",
           padding:"10px 16px", marginBottom:12, textAlign:"center", fontSize:13, fontWeight:700}}>
           🎉 All matched in {moves} moves! {moves<=12?"Excellent!":moves<=16?"Nice work!":"Keep practicing!"}
         </div>
       )}
 
-      <div style={{fontSize:10, color:"#444", marginBottom:10, fontStyle:"italic"}}>
+      <div style={{fontSize:10, color:"var(--muted)", marginBottom:10, fontStyle:"italic"}}>
         Click a card to flip · Match each player name to their achievement
       </div>
 
@@ -10380,28 +10509,28 @@ function MatchingPairs() {
         {cards.map((card, idx) => {
           const isFlipped = flipped.has(idx) || matched.has(card.pairId);
           const isMatched = matched.has(card.pairId);
-          const teamColor = TEAM_COLORS[card.team] || "#c8201c";
+          const teamColor = TEAM_COLORS[card.team] || "var(--accent-red)";
           return (
             <div key={card.id} onClick={() => !isFlipped && handleFlip(idx)}
               style={{height:70, cursor:isFlipped?"default":"pointer", position:"relative"}}>
               {!isFlipped ? (
-                <div style={{width:"100%", height:"100%", background:"#2e343a",
-                  border:"1px solid #2a2a2a", display:"flex", alignItems:"center",
+                <div style={{width:"100%", height:"100%", background:"var(--border)",
+                  border:"1px solid var(--border)", display:"flex", alignItems:"center",
                   justifyContent:"center", fontSize:22, userSelect:"none"}}>🗽</div>
               ) : (
                 <div style={{width:"100%", height:"100%",
-                  background: isMatched ? `${teamColor}22` : "#2e343a",
-                  border:`2px solid ${isMatched ? teamColor : "#555"}`,
+                  background: isMatched ? `${teamColor}22` : "var(--border)",
+                  border:`2px solid ${isMatched ? teamColor : "var(--muted)"}`,
                   display:"flex", flexDirection:"column", alignItems:"center",
                   justifyContent:"center", padding:"5px 4px", textAlign:"center"}}>
                   {card.type === "name" ? (
                     <>
                       <span style={{fontSize:14, marginBottom:2}}>{card.emoji}</span>
-                      <span style={{fontSize:9, fontWeight:900, color:isMatched?teamColor:"#e8e0d0",
+                      <span style={{fontSize:9, fontWeight:900, color:isMatched?teamColor:"var(--ink)",
                         lineHeight:1.2}}>{card.text}</span>
                     </>
                   ) : (
-                    <span style={{fontSize:8, color:isMatched?"#4ade80":"#aaa",
+                    <span style={{fontSize:8, color:isMatched?"#4ade80":"var(--muted)",
                       lineHeight:1.3}}>{card.text}</span>
                   )}
                 </div>
@@ -10460,28 +10589,28 @@ function StatGuesser() {
 
   function next() { setRound(buildRound()); setSelected(null); }
 
-  if (!round) return <div style={{color:"#555", padding:20}}>Loading...</div>;
+  if (!round) return <div style={{color:"var(--muted)", padding:20}}>Loading...</div>;
   const isCorrect = selected?.name === round.correct.name;
 
   return (
     <div style={{maxWidth:560}}>
       <div style={{display:"flex", gap:16, marginBottom:16, padding:"8px 14px",
-        background:"#111", border:"1px solid #2e343a", flexWrap:"wrap", alignItems:"center"}}>
-        <span style={{fontSize:10, color:"#888"}}>Score: <strong style={{color:"#e8e0d0"}}>{score}/{total}</strong></span>
-        <span style={{fontSize:10, color:"#888"}}>Streak: <strong style={{color:streak>2?"#f0b429":"#e8e0d0"}}>{streak} 🔥</strong></span>
+        background:"var(--ink)", border:"1px solid var(--border)", flexWrap:"wrap", alignItems:"center"}}>
+        <span style={{fontSize:10, color:"var(--muted)"}}>Score: <strong style={{color:"var(--ink)"}}>{score}/{total}</strong></span>
+        <span style={{fontSize:10, color:"var(--muted)"}}>Streak: <strong style={{color:streak>2?"#f0b429":"var(--ink)"}}>{streak} 🔥</strong></span>
         <button onClick={() => { usedRef.current.clear(); setScore(0); setTotal(0); setStreak(0); next(); }}
-          style={{marginLeft:"auto", fontSize:9, color:"#555", background:"transparent",
-            border:"1px solid #333", padding:"2px 8px", cursor:"pointer", fontWeight:700}}>RESET</button>
+          style={{marginLeft:"auto", fontSize:9, color:"var(--muted)", background:"transparent",
+            border:"1px solid var(--muted)", padding:"2px 8px", cursor:"pointer", fontWeight:700}}>RESET</button>
       </div>
 
-      <div style={{background:"#161616", border:"1px solid #2a2a2a", borderLeft:"3px solid #f0b429",
+      <div style={{background:"var(--bg-content)", border:"1px solid var(--border)", borderLeft:"3px solid #f0b429",
         padding:"16px 18px", marginBottom:14}}>
         <div style={{fontSize:8, fontWeight:900, color:"#f0b429", letterSpacing:"0.2em", marginBottom:10}}>
           📊 WHOSE STAT IS THIS?
         </div>
-        <div style={{fontSize:18, fontWeight:900, color:"#e8e0d0",
+        <div style={{fontSize:18, fontWeight:900, color:"var(--ink)",
           fontFamily:"'Georgia',serif", lineHeight:1.4}}>{round.statClue}</div>
-        <div style={{marginTop:10, fontSize:9, color:"#555"}}>
+        <div style={{marginTop:10, fontSize:9, color:"var(--muted)"}}>
           {round.correct.sport} · {round.correct.team} · {round.correct.era}
         </div>
       </div>
@@ -10490,11 +10619,11 @@ function StatGuesser() {
         {round.choices.map((player, i) => {
           const isRight  = player.name === round.correct.name;
           const isPicked = selected?.name === player.name;
-          let bg="#2e343a", border="1px solid #333", color="#ccc";
+          let bg="var(--border)", border="1px solid var(--muted)", color="var(--muted)";
           if (selected) {
-            if (isRight)       { bg="#0d2a1a"; border="1px solid #22c55e"; color="#4ade80"; }
-            else if (isPicked) { bg="#2a0d0d"; border="1px solid #c8201c"; color="#f87171"; }
-            else               { color="#444"; }
+            if (isRight)       { bg="var(--success-bg)"; border="1px solid #22c55e"; color="#4ade80"; }
+            else if (isPicked) { bg="#2a0d0d"; border="1px solid var(--accent-red)"; color="#f87171"; }
+            else               { color="var(--muted)"; }
           }
           return (
             <button key={i} onClick={() => handleChoice(player)}
@@ -10513,17 +10642,17 @@ function StatGuesser() {
 
       {selected && (
         <>
-          <div style={{padding:"12px 14px", background:isCorrect?"#0d2a1a":"#161616",
-            border:`1px solid ${isCorrect?"#22c55e":"#2a2a2a"}`, marginBottom:12}}>
+          <div style={{padding:"12px 14px", background:isCorrect?"var(--success-bg)":"var(--bg-content)",
+            border:`1px solid ${isCorrect?"#22c55e":"var(--border)"}`, marginBottom:12}}>
             <div style={{fontSize:13, fontWeight:900,
               color:isCorrect?"#4ade80":"#f87171", marginBottom:6}}>
               {isCorrect ? "🎉 Correct!" : `It was ${round.correct.name}`}
             </div>
-            <p style={{margin:0, fontSize:12, color:"#aaa", lineHeight:1.6,
+            <p style={{margin:0, fontSize:12, color:"var(--muted)", lineHeight:1.6,
               fontFamily:"'Georgia',serif"}}>{round.correct.fact}</p>
           </div>
           <button onClick={next}
-            style={{width:"100%", background:"#c8201c", border:"none", color:"#fff",
+            style={{width:"100%", background:"var(--accent-red)", border:"none", color:"#fff",
               padding:"12px", cursor:"pointer", fontSize:12, fontWeight:900, letterSpacing:"0.1em"}}>
             NEXT STAT →
           </button>
@@ -10564,11 +10693,11 @@ function PlayroomTab({ myTeams }) {
   return (
     <div style={{paddingTop:8}}>
       {/* Header */}
-      <div style={{textAlign:"center", padding:"16px 0 20px", borderBottom:"2px solid #2a2a2a", marginBottom:20}}>
-        <h2 style={{margin:"0 0 4px", fontSize:22, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", letterSpacing:"0.05em"}}>
+      <div style={{textAlign:"center", padding:"16px 0 20px", borderBottom:"2px solid var(--border)", marginBottom:20}}>
+        <h2 style={{margin:"0 0 4px", fontSize:22, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif", letterSpacing:"0.05em"}}>
           🎮 NY Sports Playroom
         </h2>
-        <p style={{margin:"0 0 14px", fontSize:11, color:"#888", letterSpacing:"0.1em"}}>
+        <p style={{margin:"0 0 14px", fontSize:11, color:"var(--muted)", letterSpacing:"0.1em"}}>
           QUICK GAMES FOR TRUE FANS
         </p>
         <button onClick={randomGame} style={{
@@ -10581,7 +10710,7 @@ function PlayroomTab({ myTeams }) {
         </button>
         {active && (
           <button onClick={() => setActive(null)} style={{
-            background:"transparent", border:"1px solid #444", color:"#888",
+            background:"transparent", border:"1px solid var(--muted)", color:"var(--muted)",
             padding:"10px 20px", cursor:"pointer", fontSize:11, fontWeight:900,
             letterSpacing:"0.1em", marginLeft:10,
           }}>
@@ -10594,16 +10723,16 @@ function PlayroomTab({ myTeams }) {
       {!active && (
         <>
           {myTeamNames.length > 0 && (
-            <div style={{marginBottom:16, padding:"10px 14px", background:"#1a1600", border:"1px solid #f0b42944", borderLeft:"3px solid #f0b429"}}>
+            <div style={{marginBottom:16, padding:"10px 14px", background:"var(--gold-active-bg)", border:"1px solid #f0b42944", borderLeft:"3px solid #f0b429"}}>
               <span style={{fontSize:9, fontWeight:900, color:"#f0b429", letterSpacing:"0.15em"}}>⭐ YOUR TEAMS: </span>
-              <span style={{fontSize:11, color:"#e8e0d0"}}>{[...myTeams].join(" · ")} — all puzzles feature your teams prominently</span>
+              <span style={{fontSize:11, color:"var(--ink)"}}>{[...myTeams].join(" · ")} — all puzzles feature your teams prominently</span>
             </div>
           )}
 
           {/* Featured: Cooperstown Clash — full external game, not a quick puzzle */}
           <a href="https://cooperstownclash.com" target="_blank" rel="noopener noreferrer" style={{textDecoration:"none"}}>
             <div style={{
-              marginBottom:20, padding:"20px 22px", background:"linear-gradient(135deg, #1a1600, #161616)",
+              marginBottom:20, padding:"20px 22px", background:"linear-gradient(135deg, var(--gold-active-bg), var(--bg-content))",
               border:"1px solid #f0b429", borderLeft:"4px solid #f0b429",
               display:"flex", alignItems:"center", justifyContent:"space-between", gap:16,
               cursor:"pointer", transition:"transform 0.15s",
@@ -10614,7 +10743,7 @@ function PlayroomTab({ myTeams }) {
                 <div style={{fontSize:9, fontWeight:900, color:"#f0b429", letterSpacing:"0.15em", marginBottom:6}}>
                   🏆 FEATURED · FULL GAME
                 </div>
-                <div style={{fontSize:17, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", marginBottom:4}}>
+                <div style={{fontSize:17, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif", marginBottom:4}}>
                   Cooperstown Clash
                 </div>
                 <div style={{fontSize:12, color:"#999", lineHeight:1.5}}>
@@ -10634,16 +10763,16 @@ function PlayroomTab({ myTeams }) {
           <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(160px, 1fr))", gap:10, marginBottom:24}}>
             {GAMES.map(g => (
               <button key={g.id} onClick={() => setActive(g.id)} style={{
-                background:"#161616", border:"1px solid #2a2a2a",
+                background:"var(--bg-content)", border:"1px solid var(--border)",
                 padding:"20px 14px", cursor:"pointer", textAlign:"center",
                 transition:"border-color 0.15s, background 0.15s",
                 display:"flex", flexDirection:"column", alignItems:"center", gap:8,
               }}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor="#c8201c";e.currentTarget.style.background="#2e343a";}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor="#2a2a2a";e.currentTarget.style.background="#161616";}}>
+              onMouseEnter={e=>{e.currentTarget.style.borderColor="var(--accent-red)";e.currentTarget.style.background="var(--border)";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border)";e.currentTarget.style.background="var(--bg-content)";}}>
                 <span style={{fontSize:32}}>{g.icon}</span>
-                <span style={{fontSize:12, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif"}}>{g.label}</span>
-                <span style={{fontSize:10, color:"#666"}}>{g.desc}</span>
+                <span style={{fontSize:12, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif"}}>{g.label}</span>
+                <span style={{fontSize:10, color:"var(--muted)"}}>{g.desc}</span>
               </button>
             ))}
           </div>
@@ -10708,11 +10837,11 @@ const NY_CHAMPIONSHIPS = [
   { year:1986, team:"Mets", sport:"MLB", title:"World Series", color:"#002D72", emoji:"⚾", opponent:"vs Red Sox", iconic:true, moment:"Mookie Wilson's grounder rolled through Bill Buckner's legs. Back from the dead in Game 6, then won Game 7.", fact:"'The Bad Guys Won.' Doc, Straw, Keith, Gary, Mookie — the most colorful champion in baseball history.", wiki:"https://en.wikipedia.org/wiki/1986_World_Series" },
 
   // ── NY GIANTS BASEBALL (5) ──
-  { year:1905, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"#333", emoji:"⚾", opponent:"vs Athletics", iconic:true, moment:"Christy Mathewson threw THREE complete-game shutouts in six days. The most dominant WS pitching ever.", fact:"Mathewson's performance remains the most remarkable individual pitching feat in World Series history.", wiki:"https://en.wikipedia.org/wiki/1905_World_Series" },
-  { year:1921, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"#333", emoji:"⚾", opponent:"vs Yankees", iconic:false, moment:"The first Subway Series — all games at the Polo Grounds. The Giants beat their cross-borough rivals.", fact:"The last World Series played entirely at one ballpark.", wiki:"https://en.wikipedia.org/wiki/1921_World_Series" },
-  { year:1922, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"#333", emoji:"⚾", opponent:"vs Yankees", iconic:false, moment:"Back-to-back Subway Series wins over the Yankees. John McGraw's Giants at their peak.", fact:"The Giants won 4-0-1 — the 'game' being a controversial tie called for darkness.", wiki:"https://en.wikipedia.org/wiki/1922_World_Series" },
-  { year:1933, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"#333", emoji:"⚾", opponent:"vs Senators", iconic:false, moment:"Bill Terry's Giants won in five. Carl Hubbell was the ace — his 1934 All-Star strikeout streak followed.", fact:"Hubbell struck out Ruth, Gehrig, Foxx, Simmons and Cronin consecutively in the 1934 All-Star Game.", wiki:"https://en.wikipedia.org/wiki/1933_World_Series" },
-  { year:1954, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"#333", emoji:"⚾", opponent:"vs Indians", iconic:true, moment:"Willie Mays' over-the-shoulder catch off Vic Wertz is THE greatest defensive play in baseball history.", fact:"The Indians won 111 games — a record. The Giants swept them in four. The Catch changed everything.", wiki:"https://en.wikipedia.org/wiki/1954_World_Series" },
+  { year:1905, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"var(--muted)", emoji:"⚾", opponent:"vs Athletics", iconic:true, moment:"Christy Mathewson threw THREE complete-game shutouts in six days. The most dominant WS pitching ever.", fact:"Mathewson's performance remains the most remarkable individual pitching feat in World Series history.", wiki:"https://en.wikipedia.org/wiki/1905_World_Series" },
+  { year:1921, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"var(--muted)", emoji:"⚾", opponent:"vs Yankees", iconic:false, moment:"The first Subway Series — all games at the Polo Grounds. The Giants beat their cross-borough rivals.", fact:"The last World Series played entirely at one ballpark.", wiki:"https://en.wikipedia.org/wiki/1921_World_Series" },
+  { year:1922, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"var(--muted)", emoji:"⚾", opponent:"vs Yankees", iconic:false, moment:"Back-to-back Subway Series wins over the Yankees. John McGraw's Giants at their peak.", fact:"The Giants won 4-0-1 — the 'game' being a controversial tie called for darkness.", wiki:"https://en.wikipedia.org/wiki/1922_World_Series" },
+  { year:1933, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"var(--muted)", emoji:"⚾", opponent:"vs Senators", iconic:false, moment:"Bill Terry's Giants won in five. Carl Hubbell was the ace — his 1934 All-Star strikeout streak followed.", fact:"Hubbell struck out Ruth, Gehrig, Foxx, Simmons and Cronin consecutively in the 1934 All-Star Game.", wiki:"https://en.wikipedia.org/wiki/1933_World_Series" },
+  { year:1954, team:"NY Giants (Baseball)", sport:"MLB", title:"World Series", color:"var(--muted)", emoji:"⚾", opponent:"vs Indians", iconic:true, moment:"Willie Mays' over-the-shoulder catch off Vic Wertz is THE greatest defensive play in baseball history.", fact:"The Indians won 111 games — a record. The Giants swept them in four. The Catch changed everything.", wiki:"https://en.wikipedia.org/wiki/1954_World_Series" },
 
   // ── BROOKLYN DODGERS (1) ──
   { year:1955, team:"Brooklyn Dodgers", sport:"MLB", title:"World Series", color:"#005A9C", emoji:"⚾", opponent:"vs Yankees", iconic:true, moment:"'Next year' FINALLY came. Sandy Amoros' miraculous Game 7 catch. Brooklyn exploded in joy.", fact:"The Dodgers had lost to the Yankees in 1941, 1947, 1949, 1952, and 1953. 1955 was their glorious year.", wiki:"https://en.wikipedia.org/wiki/1955_World_Series" },
@@ -10723,8 +10852,8 @@ const NY_CHAMPIONSHIPS = [
   { year:2026, team:"Knicks", sport:"NBA", title:"NBA Championship", color:"#006BB6", emoji:"🏀", opponent:"vs Spurs", iconic:true, moment:"53 years of waiting ended. Jalen Brunson scored 45 points to close out Game 5 on the road, capping a Finals run defined by comeback after comeback. The Knicks are NBA Champions for the first time since 1973.", fact:"Brunson\u2019s 45 points in the clincher matched Michael Jordan (1998) for most ever in a road title-clinching Finals game. He won Finals MVP unanimously \u2014 the fourth player in NBA history selected in the second round to win the award, joining Knicks legend Willis Reed.", wiki:"https://en.wikipedia.org/wiki/2026_NBA_Finals" },
 
   // ── NY NETS ABA (2) ──
-  { year:1974, team:"NY Nets (ABA)", sport:"NBA", title:"ABA Championship", color:"#555", emoji:"🏀", opponent:"vs Utah Stars", iconic:false, moment:"Julius Erving's first championship. Dr. J was already redefining what a basketball player could be.", fact:"The Nets played in Uniondale, NY — same arena as the Islanders. Dr. J made them must-see.", wiki:"https://en.wikipedia.org/wiki/1974_ABA_Finals" },
-  { year:1976, team:"NY Nets (ABA)", sport:"NBA", title:"ABA Championship", color:"#555", emoji:"🏀", opponent:"vs Denver", iconic:true, moment:"Julius Erving averaged 37.7 points per game in the Finals. The last ABA championship before the merger.", fact:"Dr. J scored 45 in the clincher. The ABA merged with the NBA that fall — and the Nets had to sell his rights.", wiki:"https://en.wikipedia.org/wiki/1976_ABA_Finals" },
+  { year:1974, team:"NY Nets (ABA)", sport:"NBA", title:"ABA Championship", color:"var(--muted)", emoji:"🏀", opponent:"vs Utah Stars", iconic:false, moment:"Julius Erving's first championship. Dr. J was already redefining what a basketball player could be.", fact:"The Nets played in Uniondale, NY — same arena as the Islanders. Dr. J made them must-see.", wiki:"https://en.wikipedia.org/wiki/1974_ABA_Finals" },
+  { year:1976, team:"NY Nets (ABA)", sport:"NBA", title:"ABA Championship", color:"var(--muted)", emoji:"🏀", opponent:"vs Denver", iconic:true, moment:"Julius Erving averaged 37.7 points per game in the Finals. The last ABA championship before the merger.", fact:"Dr. J scored 45 in the clincher. The ABA merged with the NBA that fall — and the Nets had to sell his rights.", wiki:"https://en.wikipedia.org/wiki/1976_ABA_Finals" },
 
   // ── RANGERS (4) ──
   { year:1928, team:"Rangers", sport:"NHL", title:"Stanley Cup", color:"#0038A8", emoji:"🏒", opponent:"vs Maroons", iconic:false, moment:"Their 2nd season in existence! GM Lester Patrick, age 44, played goal when the regular goalie was hurt — and won.", fact:"Patrick held off the Maroons in overtime. One of the great stories in hockey history.", wiki:"https://en.wikipedia.org/wiki/1928_Stanley_Cup_Finals" },
@@ -10765,7 +10894,7 @@ const NY_CHAMPIONSHIPS = [
   // NYCFC — 2021 MLS Cup
   { year:2021, team:"NYCFC", sport:"SOCCER", title:"MLS Cup", color:"#6CACE4", emoji:"⚽", opponent:"vs Portland Timbers", iconic:true, moment:"NYCFC won their first MLS Cup on penalty kicks. New York finally had an MLS champion.", fact:"NYCFC was founded in 2013 and won it all in just their 7th season. Valentín Castellanos was the MVP.", wiki:"https://en.wikipedia.org/wiki/2021_MLS_Cup" },
   // NJ/NY Gotham FC — 2023 NWSL Championship
-  { year:2023, team:"NJ/NY Gotham FC", sport:"SOCCER", title:"NWSL Championship", color:"#2e343a", emoji:"⚽", opponent:"vs Portland Thorns", iconic:true, moment:"Gotham FC won the NWSL Championship for the first time — NJ/NY's first major women's soccer title.", fact:"Marta, Rose Lavelle, and Lynn Williams led Gotham to the title. New Jersey and New York claimed their first NWSL crown.", wiki:"https://en.wikipedia.org/wiki/2023_NWSL_Championship" },
+  { year:2023, team:"NJ/NY Gotham FC", sport:"SOCCER", title:"NWSL Championship", color:"var(--border)", emoji:"⚽", opponent:"vs Portland Thorns", iconic:true, moment:"Gotham FC won the NWSL Championship for the first time — NJ/NY's first major women's soccer title.", fact:"Marta, Rose Lavelle, and Lynn Williams led Gotham to the title. New Jersey and New York claimed their first NWSL crown.", wiki:"https://en.wikipedia.org/wiki/2023_NWSL_Championship" },
 ];
 
 // ─── GLORY DAYS TAB COMPONENT ─────────────────────────────────────────────
@@ -11365,7 +11494,7 @@ const TEAM_COLORS_DD = {
   Yankees:"#003087", Mets:"#002D72", Knicks:"#006BB6", Rangers:"#0038A8",
   Islanders:"#003087", Jets:"#125740", Giants:"#0B2265", Nets:"#000000",
   Liberty:"#6ECEB2", "NJ Devils":"#CC0000", Devils:"#CC0000",
-  "New York":"#c8201c", "NY Cosmos":"#1a7fc2",
+  "New York":"var(--accent-red)", "NY Cosmos":"#1a7fc2",
 };
 
 function DeepDiveTab({ initialSlug }) {
@@ -11391,12 +11520,12 @@ function DeepDiveTab({ initialSlug }) {
 
   // ── SINGLE ESSAY VIEW ───────────────────────────────────────────────────
   if (selected) {
-    const color = TEAM_COLORS_DD[selected.team] || "#c8201c";
+    const color = TEAM_COLORS_DD[selected.team] || "var(--accent-red)";
     const paragraphs = selected.body.split('\n\n');
     return (
       <div style={{padding:"16px 0"}}>
         <button onClick={() => setSelectedSlug(null)}
-          style={{background:"none", border:"none", color: dark ? "#9aa3ad" : "#888", fontSize:12,
+          style={{background:"none", border:"none", color: dark ? "var(--muted)" : "var(--muted)", fontSize:12,
             cursor:"pointer", marginBottom:16, padding:0, display:"flex", alignItems:"center", gap:6}}>
           ← Back to all Deep Dives
         </button>
@@ -11407,19 +11536,19 @@ function DeepDiveTab({ initialSlug }) {
         </div>
 
         <h1 style={{fontSize:26, fontWeight:900, fontFamily:"Georgia,serif", lineHeight:1.25,
-          color: dark ? "#e8e0d0" : "#111", marginBottom:20}}>
+          color: dark ? "var(--ink)" : "var(--ink)", marginBottom:20}}>
           {selected.title}
         </h1>
 
-        <div style={{fontSize:15, lineHeight:1.85, color: dark ? "#c8c0b0" : "#333", fontFamily:"Georgia,serif"}}>
+        <div style={{fontSize:15, lineHeight:1.85, color: dark ? "#c8c0b0" : "var(--muted)", fontFamily:"Georgia,serif"}}>
           {paragraphs.map((p, i) => (
             <p key={i} style={{marginBottom:18}}>{p}</p>
           ))}
         </div>
 
         {selected.charity && (
-          <div style={{marginTop:24, paddingTop:16, borderTop: dark ? "1px solid #2e343a" : "1px solid #ebebeb",
-            fontSize:12, color: dark ? "#9aa3ad" : "#888", fontStyle:"italic"}}>
+          <div style={{marginTop:24, paddingTop:16, borderTop: dark ? "1px solid var(--border)" : "1px solid #ebebeb",
+            fontSize:12, color: dark ? "var(--muted)" : "var(--muted)", fontStyle:"italic"}}>
             🤝 Support this team: {selected.charity}
           </div>
         )}
@@ -11431,10 +11560,10 @@ function DeepDiveTab({ initialSlug }) {
   return (
     <div style={{padding:"16px 0"}}>
       <div style={{marginBottom:16}}>
-        <h2 style={{fontSize:18, fontWeight:900, fontFamily:"Georgia,serif", color: dark ? "#e8e0d0" : "#111", marginBottom:4}}>
+        <h2 style={{fontSize:18, fontWeight:900, fontFamily:"Georgia,serif", color: dark ? "var(--ink)" : "var(--ink)", marginBottom:4}}>
           🔍 Deep Dive Archive
         </h2>
-        <p style={{fontSize:12, color: dark ? "#9aa3ad" : "#888"}}>
+        <p style={{fontSize:12, color: dark ? "var(--muted)" : "var(--muted)"}}>
           Full-length stories from the Sunday newsletter — {essaysWithSlugs.length} essays and counting.
         </p>
       </div>
@@ -11444,9 +11573,9 @@ function DeepDiveTab({ initialSlug }) {
           <button key={t} onClick={() => setFilterTeam(t)}
             style={{
               flexShrink:0, padding:"6px 12px", fontSize:11, fontWeight:700,
-              border: filterTeam===t ? "1px solid #c8201c" : (dark ? "1px solid #2e343a" : "1px solid #ddd"),
-              background: filterTeam===t ? "#c8201c" : (dark ? "#1a1c1f" : "#fff"),
-              color: filterTeam===t ? "#fff" : (dark ? "#9aa3ad" : "#555"),
+              border: filterTeam===t ? "1px solid var(--accent-red)" : (dark ? "1px solid var(--border)" : "1px solid #ddd"),
+              background: filterTeam===t ? "var(--accent-red)" : (dark ? "var(--bg-content)" : "#fff"),
+              color: filterTeam===t ? "#fff" : (dark ? "var(--muted)" : "var(--muted)"),
               borderRadius:14, cursor:"pointer", whiteSpace:"nowrap",
             }}>
             {t}
@@ -11456,13 +11585,13 @@ function DeepDiveTab({ initialSlug }) {
 
       <div style={{display:"flex", flexDirection:"column", gap:10}}>
         {filtered.map((d, i) => {
-          const color = TEAM_COLORS_DD[d.team] || "#c8201c";
+          const color = TEAM_COLORS_DD[d.team] || "var(--accent-red)";
           const wordCount = d.body.split(/\s+/).length;
           return (
             <button key={i} onClick={() => setSelectedSlug(d.slug)}
               style={{
-                textAlign:"left", background: dark ? "#1e2124" : "#fff",
-                border: dark ? "1px solid #2e343a" : "1px solid #ebebeb",
+                textAlign:"left", background: dark ? "var(--bg-card)" : "#fff",
+                border: dark ? "1px solid var(--border)" : "1px solid #ebebeb",
                 borderLeft:`3px solid ${color}`, borderRadius:4, padding:"14px 16px",
                 cursor:"pointer",
               }}>
@@ -11470,7 +11599,7 @@ function DeepDiveTab({ initialSlug }) {
                 color, marginBottom:6}}>
                 {d.team} &nbsp;·&nbsp; {d.year}
               </div>
-              <div style={{fontSize:15, fontWeight:700, color: dark ? "#e8e0d0" : "#111", fontFamily:"Georgia,serif",
+              <div style={{fontSize:15, fontWeight:700, color: dark ? "var(--ink)" : "var(--ink)", fontFamily:"Georgia,serif",
                 lineHeight:1.35, marginBottom:6}}>
                 {d.title}
               </div>
@@ -11551,7 +11680,7 @@ function GloryDaysTab({ myTeams }) {
             paddingBottom:8, borderBottom:"2px solid #1f1f1f"}}>
             <span style={{fontSize:18}}>{SPORT_META[sp].icon}</span>
             <span style={{fontFamily:"'Georgia',serif", fontSize:11, fontWeight:900,
-              letterSpacing:"0.2em", color:"#666", textTransform:"uppercase"}}>{SPORT_META[sp].label}</span>
+              letterSpacing:"0.2em", color:"var(--muted)", textTransform:"uppercase"}}>{SPORT_META[sp].label}</span>
             <span style={{fontSize:10, fontWeight:700, color:"#f0b429",
               background:"rgba(240,180,41,0.1)", border:"1px solid rgba(240,180,41,0.2)",
               padding:"2px 8px"}}>{spTotal} title{spTotal!==1?"s":""}</span>
@@ -11570,10 +11699,10 @@ function GloryDaysTab({ myTeams }) {
                 <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:8}}>
                   <span style={{fontSize:14}}>{champs[0].emoji}</span>
                   <span style={{fontFamily:"'Georgia',serif", fontSize:12, fontWeight:900,
-                    letterSpacing:"0.1em", color: isFav?"#f0b429":"#e8e0d0",
+                    letterSpacing:"0.1em", color: isFav?"#f0b429":"var(--ink)",
                     textTransform:"uppercase"}}>{team}</span>
                   {isFav && <span style={{fontSize:9, color:"#f0b429"}}>⭐</span>}
-                  <span style={{fontSize:10, color:"#555", marginLeft:2}}>
+                  <span style={{fontSize:10, color:"var(--muted)", marginLeft:2}}>
                     {champs.length} title{champs.length!==1?"s":""}
                   </span>
                 </div>
@@ -11585,19 +11714,19 @@ function GloryDaysTab({ myTeams }) {
                         style={{
                           display:"flex", alignItems:"center", gap:5,
                           padding:"6px 10px",
-                          background: c.iconic ? "rgba(200,32,28,0.08)" : "#111",
-                          border: `1px solid ${c.iconic ? "#c8201c44" : "#222"}`,
+                          background: c.iconic ? "rgba(200,32,28,0.08)" : "var(--ink)",
+                          border: `1px solid ${c.iconic ? "var(--accent-red)44" : "var(--border)"}`,
                           borderLeft: `3px solid ${c.color}`,
-                          color:"#ccc", cursor:"pointer", fontSize:12,
+                          color:"var(--muted)", cursor:"pointer", fontSize:12,
                           fontFamily:"'Georgia',serif", fontWeight:700,
                           transition:"all 0.12s",
                           position:"relative",
                         }}
                         onMouseEnter={e => { e.currentTarget.style.borderColor="#f0b429"; e.currentTarget.style.color="#f0b429"; e.currentTarget.style.transform="translateY(-1px)"; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor=c.iconic?"#c8201c44":"#222"; e.currentTarget.style.color="#ccc"; e.currentTarget.style.transform="none"; }}>
+                        onMouseLeave={e => { e.currentTarget.style.borderColor=c.iconic?"var(--accent-red)44":"var(--border)"; e.currentTarget.style.color="var(--muted)"; e.currentTarget.style.transform="none"; }}>
                         <span style={{fontWeight:900, fontSize:13}}>{c.year}</span>
-                        <span style={{fontSize:9, color:"#555"}}>{c.opponent}</span>
-                        {c.iconic && <span style={{fontSize:9, color:"#f0b429", position:"absolute", top:-5, right:-4, background:"#141618", padding:"0 2px"}}>★</span>}
+                        <span style={{fontSize:9, color:"var(--muted)"}}>{c.opponent}</span>
+                        {c.iconic && <span style={{fontSize:9, color:"#f0b429", position:"absolute", top:-5, right:-4, background:"var(--bg-page)", padding:"0 2px"}}>★</span>}
                       </button>
                     );
                   })}
@@ -11622,14 +11751,14 @@ function GloryDaysTab({ myTeams }) {
     return Object.keys(byDecade).sort((a,b) => a-b).map(dec => (
       <div key={dec} style={{marginBottom:28}}>
         <div style={{fontFamily:"'Georgia',serif", fontSize:24, fontWeight:900,
-          color:"#333", marginBottom:10}}>{dec}s</div>
+          color:"var(--muted)", marginBottom:10}}>{dec}s</div>
         <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(160px,1fr))", gap:8}}>
           {byDecade[dec].sort((a,b) => a.year-b.year).map(c => {
             const idx = NY_CHAMPIONSHIPS.indexOf(c);
             return (
               <div key={c.year} onClick={() => setSpotlight(idx)}
                 style={{
-                  background:"#111", border:"1px solid #1f1f1f",
+                  background:"var(--ink)", border:"1px solid #1f1f1f",
                   borderLeft:`3px solid ${c.color}`,
                   padding:"12px 14px", cursor:"pointer",
                   transition:"all 0.15s", position:"relative",
@@ -11641,8 +11770,8 @@ function GloryDaysTab({ myTeams }) {
                   color:"#f0b429", lineHeight:1, marginBottom:4}}>{c.year}</div>
                 <div style={{fontFamily:"'Georgia',serif", fontSize:11, fontWeight:700,
                   textTransform:"uppercase", letterSpacing:"0.08em",
-                  color:"#e8e0d0", marginBottom:2}}>{c.team}</div>
-                <div style={{fontSize:10, color:"#555", letterSpacing:"0.08em"}}>{c.title}</div>
+                  color:"var(--ink)", marginBottom:2}}>{c.team}</div>
+                <div style={{fontSize:10, color:"var(--muted)", letterSpacing:"0.08em"}}>{c.title}</div>
               </div>
             );
           })}
@@ -11657,40 +11786,40 @@ function GloryDaysTab({ myTeams }) {
   return (
     <div>
       {/* ── HERO ── */}
-      <div style={{textAlign:"center", padding:"24px 0 20px", borderBottom:"1px solid #2e343a",
+      <div style={{textAlign:"center", padding:"24px 0 20px", borderBottom:"1px solid var(--border)",
         marginBottom:0, background:"linear-gradient(180deg, rgba(200,32,28,0.06) 0%, transparent 100%)"}}>
         <div style={{fontSize:9, fontWeight:900, color:"#f0b429", letterSpacing:"0.3em",
           marginBottom:8, fontFamily:"'Georgia',serif"}}>🏆 NEW YORK · NEW YORK</div>
         <h2 style={{fontFamily:"'Georgia',serif", fontSize:32, fontWeight:900,
-          color:"#e8e0d0", margin:"0 0 4px", letterSpacing:"0.02em"}}>
+          color:"var(--ink)", margin:"0 0 4px", letterSpacing:"0.02em"}}>
           Glory <em style={{color:"#f0b429", fontStyle:"italic"}}>Days</em>
         </h2>
-        <div style={{fontSize:10, color:"#666", letterSpacing:"0.18em",
+        <div style={{fontSize:10, color:"var(--muted)", letterSpacing:"0.18em",
           textTransform:"uppercase", marginBottom:16}}>NY Sports Championships — The Complete Record</div>
         <div style={{display:"inline-flex", alignItems:"center", gap:12,
-          background:"#111", border:"1px solid #1f1f1f", padding:"8px 20px"}}>
+          background:"var(--ink)", border:"1px solid #1f1f1f", padding:"8px 20px"}}>
           <span style={{fontFamily:"'Georgia',serif", fontSize:32, fontWeight:900,
             color:"#f0b429", lineHeight:1}}>{NY_CHAMPIONSHIPS.length}</span>
           <span style={{fontSize:9, fontWeight:700, letterSpacing:"0.15em",
-            color:"#555", textAlign:"left", lineHeight:1.5, textTransform:"uppercase"}}>
+            color:"var(--muted)", textAlign:"left", lineHeight:1.5, textTransform:"uppercase"}}>
             Major<br/>Championships
           </span>
         </div>
       </div>
 
       {/* ── BANNER STRIP ── */}
-      <div style={{display:"flex", overflowX:"auto", borderBottom:"1px solid #2e343a",
-        scrollbarWidth:"none", background:"#141618"}}>
+      <div style={{display:"flex", overflowX:"auto", borderBottom:"1px solid var(--border)",
+        scrollbarWidth:"none", background:"var(--bg-page)"}}>
         {bannerItems.map((c, i) => (
           <div key={i} onClick={() => setSpotlight(NY_CHAMPIONSHIPS.indexOf(c))}
-            style={{flexShrink:0, padding:"8px 14px", borderRight:"1px solid #2e343a",
+            style={{flexShrink:0, padding:"8px 14px", borderRight:"1px solid var(--border)",
               cursor:"pointer", textAlign:"center", minWidth:64, transition:"background 0.1s"}}
-            onMouseEnter={e => e.currentTarget.style.background="#161616"}
+            onMouseEnter={e => e.currentTarget.style.background="var(--bg-content)"}
             onMouseLeave={e => e.currentTarget.style.background="transparent"}>
             <span style={{display:"block", fontFamily:"'Georgia',serif", fontSize:14,
               fontWeight:900, color:"#f0b429"}}>{c.year}</span>
             <span style={{display:"block", fontSize:8, fontWeight:700,
-              letterSpacing:"0.08em", color:"#555", textTransform:"uppercase",
+              letterSpacing:"0.08em", color:"var(--muted)", textTransform:"uppercase",
               whiteSpace:"nowrap"}}>
               {c.team.replace(" (Baseball)","").replace(" (NFL)","").replace(" (ABA)","")}
             </span>
@@ -11700,10 +11829,10 @@ function GloryDaysTab({ myTeams }) {
 
       {/* ── CONTROLS ── */}
       <div style={{display:"flex", gap:6, flexWrap:"wrap", padding:"12px 16px",
-        borderBottom:"1px solid #2e343a", alignItems:"center",
-        position:"sticky", top:0, zIndex:50, background:"#111"}}>
+        borderBottom:"1px solid var(--border)", alignItems:"center",
+        position:"sticky", top:0, zIndex:50, background:"var(--ink)"}}>
 
-        <span style={{fontSize:9, fontWeight:900, color:"#444", letterSpacing:"0.18em",
+        <span style={{fontSize:9, fontWeight:900, color:"var(--muted)", letterSpacing:"0.18em",
           textTransform:"uppercase"}}>VIEW:</span>
         {["team","decade"].map(v => (
           <button key={v} onClick={() => setView(v)}
@@ -11712,7 +11841,7 @@ function GloryDaysTab({ myTeams }) {
           </button>
         ))}
 
-        <span style={{fontSize:9, fontWeight:900, color:"#444", letterSpacing:"0.18em",
+        <span style={{fontSize:9, fontWeight:900, color:"var(--muted)", letterSpacing:"0.18em",
           textTransform:"uppercase", marginLeft:8}}>SPORT:</span>
         {["ALL","MLB","NBA","NHL","NFL","WNBA","SOCCER"].map(s => (
           <button key={s} onClick={() => setSport(s)}
@@ -11721,7 +11850,7 @@ function GloryDaysTab({ myTeams }) {
           </button>
         ))}
 
-        <span style={{marginLeft:"auto", fontSize:10, color:"#444", fontWeight:700,
+        <span style={{marginLeft:"auto", fontSize:10, color:"var(--muted)", fontWeight:700,
           letterSpacing:"0.1em"}}>{total} title{total!==1?"s":""}</span>
 
         <button onClick={openRandom}
@@ -11744,7 +11873,7 @@ function GloryDaysTab({ myTeams }) {
           style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.88)",
             zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center",
             padding:"20px"}}>
-          <div style={{background:"#111", border:"1px solid #2a2a2a",
+          <div style={{background:"var(--ink)", border:"1px solid var(--border)",
             maxWidth:520, width:"100%", position:"relative",
             animation:"none"}}
             onClick={e => e.stopPropagation()}>
@@ -11752,12 +11881,12 @@ function GloryDaysTab({ myTeams }) {
             {/* Close */}
             <button onClick={() => setSpotlight(null)}
               style={{position:"absolute", top:10, right:10, background:"transparent",
-                border:"1px solid #2a2a2a", color:"#666", width:28, height:28,
+                border:"1px solid var(--border)", color:"var(--muted)", width:28, height:28,
                 cursor:"pointer", fontSize:12, display:"flex",
                 alignItems:"center", justifyContent:"center"}}>✕</button>
 
             {/* Header */}
-            <div style={{padding:"18px 22px 14px", borderBottom:"1px solid #2e343a",
+            <div style={{padding:"18px 22px 14px", borderBottom:"1px solid var(--border)",
               display:"flex", gap:14, alignItems:"flex-start"}}>
               <span style={{fontSize:44, lineHeight:1, flexShrink:0}}>🏆</span>
               <div>
@@ -11765,9 +11894,9 @@ function GloryDaysTab({ myTeams }) {
                   color:"#f0b429", lineHeight:1}}>{sp.year}</div>
                 <div style={{fontFamily:"'Georgia',serif", fontSize:16, fontWeight:900,
                   letterSpacing:"0.08em", textTransform:"uppercase",
-                  color:"#e8e0d0", marginBottom:2}}>{sp.team}</div>
+                  color:"var(--ink)", marginBottom:2}}>{sp.team}</div>
                 <div style={{fontSize:10, fontWeight:700, letterSpacing:"0.15em",
-                  color:"#c8201c", textTransform:"uppercase"}}>
+                  color:"var(--accent-red)", textTransform:"uppercase"}}>
                   {sp.title} · {sp.opponent}
                 </div>
               </div>
@@ -11776,27 +11905,27 @@ function GloryDaysTab({ myTeams }) {
             {/* Body */}
             <div style={{padding:"16px 22px 18px"}}>
               <p style={{fontFamily:"'Georgia',serif", fontSize:15, lineHeight:1.65,
-                color:"#e8e0d0", fontStyle:"italic", marginBottom:12}}>{sp.moment}</p>
+                color:"var(--ink)", fontStyle:"italic", marginBottom:12}}>{sp.moment}</p>
               <p style={{fontSize:12, lineHeight:1.65, color:"#777",
                 marginBottom:14}}>{sp.fact}</p>
               <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
                 <a href={sp.wiki} target="_blank" rel="noopener"
                   style={{fontSize:10, fontWeight:700, letterSpacing:"0.12em",
                     textTransform:"uppercase", padding:"5px 12px",
-                    border:"1px solid #2a2a2a", color:"#888",
+                    border:"1px solid var(--border)", color:"var(--muted)",
                     textDecoration:"none", transition:"all 0.15s"}}
                   onMouseEnter={e=>{e.currentTarget.style.borderColor="#f0b429";e.currentTarget.style.color="#f0b429";}}
-                  onMouseLeave={e=>{e.currentTarget.style.borderColor="#2a2a2a";e.currentTarget.style.color="#888";}}>
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border)";e.currentTarget.style.color="var(--muted)";}}>
                   📖 WIKIPEDIA
                 </a>
                 <a href={`https://www.google.com/search?q=${encodeURIComponent(sp.year+' '+sp.team+' '+sp.title)}`}
                   target="_blank" rel="noopener"
                   style={{fontSize:10, fontWeight:700, letterSpacing:"0.12em",
                     textTransform:"uppercase", padding:"5px 12px",
-                    border:"1px solid #2a2a2a", color:"#888",
+                    border:"1px solid var(--border)", color:"var(--muted)",
                     textDecoration:"none", transition:"all 0.15s"}}
                   onMouseEnter={e=>{e.currentTarget.style.borderColor="#f0b429";e.currentTarget.style.color="#f0b429";}}
-                  onMouseLeave={e=>{e.currentTarget.style.borderColor="#2a2a2a";e.currentTarget.style.color="#888";}}>
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor="var(--border)";e.currentTarget.style.color="var(--muted)";}}>
                   🔍 GOOGLE
                 </a>
               </div>
@@ -11804,7 +11933,7 @@ function GloryDaysTab({ myTeams }) {
 
             {/* Nav */}
             <div style={{display:"flex", justifyContent:"space-between", padding:"10px 22px",
-              borderTop:"1px solid #2e343a"}}>
+              borderTop:"1px solid var(--border)"}}>
               <button onClick={() => navSpotlight(-1)}
                 style={{...btnStyle, fontSize:10}}>← PREV</button>
               <button onClick={openRandom}
@@ -11824,12 +11953,12 @@ const btnStyle = {
   fontFamily:"'Georgia',serif", fontSize:9, fontWeight:700,
   letterSpacing:"0.12em", textTransform:"uppercase",
   padding:"5px 10px", background:"transparent",
-  border:"1px solid #2a2a2a", color:"#777", cursor:"pointer",
+  border:"1px solid var(--border)", color:"#777", cursor:"pointer",
   transition:"all 0.12s",
 };
 
 const activeBtnStyle = {
-  background:"#c8201c", borderColor:"#c8201c", color:"#fff",
+  background:"var(--accent-red)", borderColor:"var(--accent-red)", color:"#fff",
 };
 
 
@@ -11962,37 +12091,37 @@ function LastNightScores({ myTeams }) {
   };
 
   return (
-    <div style={{background:"#111", border:"1px solid #2e343a",
-      borderTop:"2px solid #2a2a2a", marginBottom:8}}>
+    <div style={{background:"var(--ink)", border:"1px solid var(--border)",
+      borderTop:"2px solid var(--border)", marginBottom:8}}>
       <div style={{display:"flex", alignItems:"center", gap:8,
-        padding:"8px 12px", borderBottom:"1px solid #2e343a", background:"#1a1c1f"}}>
+        padding:"8px 12px", borderBottom:"1px solid var(--border)", background:"var(--bg-content)"}}>
         <span style={{fontSize:15}}>🌙</span>
         <span style={{fontFamily:"'Georgia',serif", fontSize:9, fontWeight:900,
-          letterSpacing:"0.22em", color:"#888", textTransform:"uppercase"}}>
+          letterSpacing:"0.22em", color:"var(--muted)", textTransform:"uppercase"}}>
           Last Night's NY Scores
         </span>
-        {date && <span style={{fontSize:9, color:"#444"}}>{date}</span>}
-        <span style={{marginLeft:"auto", fontSize:9, color:"#444"}}>
+        {date && <span style={{fontSize:9, color:"var(--muted)"}}>{date}</span>}
+        <span style={{marginLeft:"auto", fontSize:9, color:"var(--muted)"}}>
           {loading ? "Loading…" : `${games.length} game${games.length!==1?"s":""}`}
         </span>
       </div>
 
       <div>
         {loading ? (
-          <div style={{padding:"16px", textAlign:"center", fontSize:10, color:"#555"}}>
+          <div style={{padding:"16px", textAlign:"center", fontSize:10, color:"var(--muted)"}}>
             LOADING SCORES…
           </div>
         ) : games.length === 0 ? (
           <div style={{padding:"16px", textAlign:"center", fontSize:11,
-            color:"#555", fontStyle:"italic"}}>No NY games played yesterday.</div>
+            color:"var(--muted)", fontStyle:"italic"}}>No NY games played yesterday.</div>
         ) : games.map((g, i) => {
           const isOpen = expanded === g.id;
           const cols   = g.homeLinescores.length;
           return (
             <div key={g.id} style={{
-              borderBottom:"1px solid #2e343a",
+              borderBottom:"1px solid var(--border)",
               borderLeft: g.myTeam ? "3px solid #f0b429" : "3px solid transparent",
-              background: g.myTeam ? "rgba(240,180,41,0.04)" : i%2===0?"#111":"#1a1c1f",
+              background: g.myTeam ? "rgba(240,180,41,0.04)" : i%2===0?"var(--ink)":"var(--bg-content)",
             }}>
               {/* Score row */}
               <div onClick={() => setExpanded(prev => prev===g.id ? null : g.id)}
@@ -12003,7 +12132,7 @@ function LastNightScores({ myTeams }) {
 
                 <span style={{fontFamily:"'Georgia',serif", fontSize:9, fontWeight:900,
                   padding:"2px 5px", flexShrink:0, minWidth:26, textAlign:"center",
-                  background: SPORT_COLORS[g.sport]||"#333", color:"#fff"}}>
+                  background: SPORT_COLORS[g.sport]||"var(--muted)", color:"#fff"}}>
                   {g.emoji}
                 </span>
 
@@ -12014,11 +12143,11 @@ function LastNightScores({ myTeams }) {
                       marginBottom: ri===0 ? 2 : 0}}>
                       <span style={{fontFamily:"'Georgia',serif", fontSize:12,
                         fontWeight: row.win?900:500,
-                        color: row.win?"#e8e0d0":"#666",
+                        color: row.win?"var(--ink)":"var(--muted)",
                         flex:1, overflow:"hidden", textOverflow:"ellipsis",
                         whiteSpace:"nowrap"}}>{row.name}</span>
                       <span style={{fontFamily:"'Georgia',serif", fontSize:15,
-                        fontWeight:900, color: row.win?"#e8e0d0":"#555",
+                        fontWeight:900, color: row.win?"var(--ink)":"var(--muted)",
                         minWidth:28, textAlign:"right", flexShrink:0}}>
                         {row.score}
                       </span>
@@ -12027,10 +12156,10 @@ function LastNightScores({ myTeams }) {
                 </div>
 
                 <div style={{flexShrink:0, textAlign:"right", minWidth:36}}>
-                  <div style={{fontSize:8, color:"#555", fontWeight:700,
+                  <div style={{fontSize:8, color:"var(--muted)", fontWeight:700,
                     letterSpacing:"0.06em"}}>FINAL</div>
                   {g.myTeam && <div style={{fontSize:9, color:"#f0b429"}}>⭐</div>}
-                  <div style={{fontSize:10, color:"#444", marginTop:2}}>
+                  <div style={{fontSize:10, color:"var(--muted)", marginTop:2}}>
                     {isOpen ? "▲" : "▼"}
                   </div>
                 </div>
@@ -12039,24 +12168,24 @@ function LastNightScores({ myTeams }) {
               {/* Inline linescore */}
               {isOpen && (
                 <div style={{padding:"10px 12px 12px",
-                  borderTop:"1px solid #2e343a", background:"#141618"}}>
+                  borderTop:"1px solid var(--border)", background:"var(--bg-page)"}}>
                   {cols > 0 && (
                     <div style={{overflowX:"auto", marginBottom:10}}>
                       <table style={{borderCollapse:"collapse", fontSize:10,
                         fontFamily:"'Georgia',serif", width:"100%"}}>
                         <thead>
                           <tr>
-                            <td style={{padding:"2px 8px 4px", color:"#555",
+                            <td style={{padding:"2px 8px 4px", color:"var(--muted)",
                               fontWeight:700, minWidth:80}}>TEAM</td>
                             {g.homeLinescores.map((_, ci) => (
                               <td key={ci} style={{padding:"2px 4px 4px",
-                                textAlign:"center", color:"#555",
+                                textAlign:"center", color:"var(--muted)",
                                 fontWeight:700, minWidth:22}}>
                                 {periodLabel(g.sport, ci)}
                               </td>
                             ))}
                             <td style={{padding:"2px 8px 4px", textAlign:"center",
-                              color:"#e8e0d0", fontWeight:900}}>F</td>
+                              color:"var(--ink)", fontWeight:900}}>F</td>
                           </tr>
                         </thead>
                         <tbody>
@@ -12066,16 +12195,16 @@ function LastNightScores({ myTeams }) {
                           ].map((row,ri) => (
                             <tr key={ri} style={{background:ri%2===0?"transparent":"rgba(255,255,255,0.02)"}}>
                               <td style={{padding:"3px 8px", fontWeight:row.w?900:500,
-                                color:row.w?"#e8e0d0":"#777",
+                                color:row.w?"var(--ink)":"#777",
                                 overflow:"hidden", textOverflow:"ellipsis",
                                 whiteSpace:"nowrap", maxWidth:80}}>{row.n}</td>
                               {row.ls.map((s,si) => (
                                 <td key={si} style={{padding:"3px 4px",
-                                  textAlign:"center", color:"#aaa"}}>{s??"-"}</td>
+                                  textAlign:"center", color:"var(--muted)"}}>{s??"-"}</td>
                               ))}
                               <td style={{padding:"3px 8px", textAlign:"center",
                                 fontWeight:900, fontSize:13,
-                                color:row.w?"#e8e0d0":"#555"}}>{row.t}</td>
+                                color:row.w?"var(--ink)":"var(--muted)"}}>{row.t}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -12083,15 +12212,15 @@ function LastNightScores({ myTeams }) {
                     </div>
                   )}
                   {g.note && (
-                    <div style={{fontSize:10, color:"#666", fontStyle:"italic",
+                    <div style={{fontSize:10, color:"var(--muted)", fontStyle:"italic",
                       marginBottom:8}}>{g.note}</div>
                   )}
                   <a href={g.boxUrl} target="_blank" rel="noopener noreferrer"
                     style={{fontSize:10, fontWeight:700, letterSpacing:"0.08em",
-                      padding:"4px 12px", border:"1px solid #2a2a2a",
-                      color:"#888", textDecoration:"none", display:"inline-block"}}
+                      padding:"4px 12px", border:"1px solid var(--border)",
+                      color:"var(--muted)", textDecoration:"none", display:"inline-block"}}
                     onMouseEnter={e=>{e.currentTarget.style.color="#f0b429";e.currentTarget.style.borderColor="#f0b429";}}
-                    onMouseLeave={e=>{e.currentTarget.style.color="#888";e.currentTarget.style.borderColor="#2a2a2a";}}>
+                    onMouseLeave={e=>{e.currentTarget.style.color="var(--muted)";e.currentTarget.style.borderColor="var(--border)";}}>
                     📊 FULL BOX SCORE ON ESPN →
                   </a>
                 </div>
@@ -12114,9 +12243,6 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
   const [showLastNight, setShowLastNight] = useState(() => {
     try { return localStorage.getItem("nsd_show_lastnight") === "1"; } catch(e) { return false; }
   });
-  const [onboardDone, setOnboardDone] = useState(() => {
-    try { return !!localStorage.getItem("nsd_onboarded"); } catch(e) { return false; }
-  });
 
   function togglePlayoff() {
     const next = !showPlayoff;
@@ -12133,10 +12259,7 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
     setShowLastNight(next);
     try { localStorage.setItem("nsd_show_lastnight", next ? "1" : "0"); } catch(e) {}
   }
-  function dismissOnboard() {
-    setOnboardDone(true);
-    try { localStorage.setItem("nsd_onboarded","1"); } catch(e) {}
-  }
+
 
   // ── CHAMPIONSHIP BANNER MODE ─────────────────────────────────────────────
   // "breaking"  = big celebratory banner (use through ~June 27, 2026)
@@ -12174,7 +12297,7 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
 
       {CHAMPIONSHIP_BANNER_MODE === "badge" && (
         <div style={{
-          background:"#1a1c1f", border:"1px solid #f0b429", borderRadius:4,
+          background:"var(--bg-content)", border:"1px solid #f0b429", borderRadius:4,
           padding:"8px 14px", marginBottom:12,
           display:"flex", alignItems:"center", justifyContent:"center", gap:8,
         }}>
@@ -12183,24 +12306,16 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
             textTransform:"uppercase", color:"#f0b429", fontFamily:"'Georgia',serif"}}>
             2026 NBA Champions
           </span>
-          <span style={{fontSize:10, color:"#9aa3ad"}}>·</span>
-          <span style={{fontSize:10, color:"#9aa3ad", fontStyle:"italic"}}>
+          <span style={{fontSize:10, color:"var(--muted)"}}>·</span>
+          <span style={{fontSize:10, color:"var(--muted)", fontStyle:"italic"}}>
             Knicks — first title since 1973
           </span>
         </div>
       )}
 
-      {/* Onboard */}
-      {!onboardDone && (
-        <OnboardBanner
-          onDismiss={dismissOnboard}
-          onAction={(tab) => { dismissOnboard(); setActiveTab(tab); }}
-        />
-      )}
-
       {/* Toggle bar */}
       <div style={{display:"flex", gap:6, marginBottom:8, flexWrap:"wrap", alignItems:"center"}}>
-        <span style={{fontSize:8, fontWeight:900, color:"#444", letterSpacing:"0.2em",
+        <span style={{fontSize:8, fontWeight:900, color:"var(--muted)", letterSpacing:"0.2em",
           textTransform:"uppercase", fontFamily:"'Georgia',serif"}}>SHOW:</span>
         {[
           { label:"🗽 Playoff Picture",      on:showPlayoff,   toggle:togglePlayoff   },
@@ -12210,9 +12325,9 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
           <button key={label} onClick={toggle} style={{
             fontFamily:"'Georgia',serif", fontSize:10, fontWeight:700,
             letterSpacing:"0.06em", padding:"4px 12px",
-            background: on ? "#c8201c" : "transparent",
-            border: `1px solid ${on ? "#c8201c" : "#2a2a2a"}`,
-            color: on ? "#fff" : "#555",
+            background: on ? "var(--accent-red)" : "transparent",
+            border: `1px solid ${on ? "var(--accent-red)" : "var(--border)"}`,
+            color: on ? "#fff" : "var(--muted)",
             cursor:"pointer", transition:"all 0.15s",
           }}>
             {label} {on ? "▲" : "▼"}
@@ -12233,53 +12348,6 @@ function HomepageWidgets({ myTeams, setActiveTab }) {
           <div style={{flex:"2 1 300px"}}><EnhancedOTD /></div>
         </div>
       )}
-    </div>
-  );
-}
-
-// ─── ONBOARDING BANNER ────────────────────────────────────────────────────
-function OnboardBanner({ onDismiss, onAction }) {
-  return (
-    <div style={{
-      background:"linear-gradient(135deg,#0d1a0d 0%,#141618 60%)",
-      border:"1px solid #1a3a1a", borderLeft:"3px solid #22c55e",
-      padding:"12px 16px", display:"flex", gap:12, alignItems:"flex-start",
-      position:"relative", marginBottom:8,
-    }}>
-      <span style={{fontSize:20, flexShrink:0, marginTop:2}}>🗽</span>
-      <div style={{flex:1}}>
-        <div style={{fontFamily:"'Georgia',serif", fontSize:12, fontWeight:900,
-          color:"#22c55e", marginBottom:4, textTransform:"uppercase",
-          letterSpacing:"0.08em"}}>More Than Scores</div>
-        <div style={{fontSize:11, color:"#aaa", lineHeight:1.5, marginBottom:8}}>
-          Trivia, forgotten heroes, weekly debates, and deep-dive essays on the moments that made NY sports what it is. All free. Take a look around 👇
-        </div>
-        <div style={{display:"flex", gap:6, flexWrap:"wrap"}}>
-          {[
-            { label:"🧠 Play Trivia", tab:"PLAYROOM" },
-            { label:"🏅 Forgotten Hero", tab:"FORGOTTEN" },
-            { label:"⚔️ This Week's Debate", tab:"POLLS" },
-            { label:"📖 Deep Dive Essays", tab:"DEEPDIVE" },
-            { label:"🏆 Glory Days", tab:"GLORY" },
-          ].map(({label,tab}) => (
-            <button key={tab} onClick={() => onAction(tab)} style={{
-              fontSize:10, fontWeight:700, padding:"4px 10px",
-              background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.3)",
-              color:"#22c55e", cursor:"pointer",
-              fontFamily:"'Georgia',serif",
-            }}>{label}</button>
-          ))}
-          <button onClick={onDismiss} style={{
-            fontSize:10, fontWeight:700, padding:"4px 10px",
-            background:"transparent", border:"1px solid #333",
-            color:"#666", cursor:"pointer", fontFamily:"'Georgia',serif",
-          }}>Got it →</button>
-        </div>
-      </div>
-      <button onClick={onDismiss} style={{
-        position:"absolute", top:8, right:8, background:"transparent",
-        border:"none", color:"#444", cursor:"pointer", fontSize:14,
-      }}>✕</button>
     </div>
   );
 }
@@ -12311,38 +12379,38 @@ function LegendsCorner({ myTeams }) {
 
   return (
     <div style={{
-      background:"#111", borderTop:"2px solid #c8201c",
-      border:`1px solid ${isFav?"#f0b42944":"#2e343a"}`,
-      borderLeft: isFav ? "3px solid #f0b429" : "1px solid #2e343a",
+      background:"var(--ink)", borderTop:"2px solid var(--accent-red)",
+      border:`1px solid ${isFav?"#f0b42944":"var(--border)"}`,
+      borderLeft: isFav ? "3px solid #f0b429" : "1px solid var(--border)",
       padding:"12px 14px", height:"100%",
       opacity:fading?0:1, transition:"opacity 0.18s",
     }}>
       <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:10}}>
         <span style={{fontSize:13}}>⚡</span>
         <span style={{fontFamily:"'Georgia',serif", fontSize:8, fontWeight:900,
-          letterSpacing:"0.22em", color:"#c8201c", textTransform:"uppercase"}}>
+          letterSpacing:"0.22em", color:"var(--accent-red)", textTransform:"uppercase"}}>
           NY Legends Corner
         </span>
         <button onClick={() => goTo((idx+1) % DAILY_PLAYERS.length)}
           style={{marginLeft:"auto", fontSize:9, fontWeight:700, letterSpacing:"0.08em",
-            padding:"2px 8px", background:"transparent", border:"1px solid #2a2a2a",
-            color:"#555", cursor:"pointer", fontFamily:"'Georgia',serif"}}
-          onMouseEnter={e=>{e.currentTarget.style.color="#e8e0d0";}}
-          onMouseLeave={e=>{e.currentTarget.style.color="#555";}}>
+            padding:"2px 8px", background:"transparent", border:"1px solid var(--border)",
+            color:"var(--muted)", cursor:"pointer", fontFamily:"'Georgia',serif"}}
+          onMouseEnter={e=>{e.currentTarget.style.color="var(--ink)";}}
+          onMouseLeave={e=>{e.currentTarget.style.color="var(--muted)";}}>
           ↻ NEXT
         </button>
       </div>
       <div style={{display:"flex", gap:10, alignItems:"flex-start", marginBottom:8}}>
-        <div style={{width:44, height:44, flexShrink:0, background:"#161616",
-          border:"1px solid #2a2a2a", display:"flex", alignItems:"center",
+        <div style={{width:44, height:44, flexShrink:0, background:"var(--bg-content)",
+          border:"1px solid var(--border)", display:"flex", alignItems:"center",
           justifyContent:"center", fontSize:24}}>{legend.emoji}</div>
         <div style={{flex:1, minWidth:0}}>
           <div style={{fontFamily:"'Georgia',serif", fontSize:15, fontWeight:900,
-            color:"#e8e0d0", lineHeight:1.1, marginBottom:2}}>
+            color:"var(--ink)", lineHeight:1.1, marginBottom:2}}>
             {legend.name}{isFav && <span style={{color:"#f0b429", fontSize:11, marginLeft:5}}>⭐</span>}
           </div>
           <div style={{fontFamily:"'Georgia',serif", fontSize:8, fontWeight:700,
-            letterSpacing:"0.12em", color:"#c8201c", textTransform:"uppercase",
+            letterSpacing:"0.12em", color:"var(--accent-red)", textTransform:"uppercase",
             marginBottom:5}}>{legend.team} · {legend.pos} · {legend.era}</div>
           <div style={{fontSize:11, color:"#999", lineHeight:1.5,
             display:"-webkit-box", WebkitLineClamp:3, WebkitBoxOrient:"vertical",
@@ -12350,26 +12418,26 @@ function LegendsCorner({ myTeams }) {
         </div>
       </div>
       <div style={{fontFamily:"'Georgia',serif", fontSize:10, fontWeight:600,
-        color:"#f0b429", paddingTop:8, borderTop:"1px solid #2e343a",
+        color:"#f0b429", paddingTop:8, borderTop:"1px solid var(--border)",
         marginBottom:8}}>{legend.stats}</div>
       <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
         <div style={{display:"flex", gap:4}}>
           {DAILY_PLAYERS.slice(dotStart, dotStart+8).map((_, i) => (
             <div key={i} onClick={() => goTo(dotStart+i)}
               style={{width:5, height:5, borderRadius:"50%", cursor:"pointer",
-                background:(dotStart+i)===idx?"#c8201c":"#2a2a2a"}} />
+                background:(dotStart+i)===idx?"var(--accent-red)":"var(--border)"}} />
           ))}
         </div>
         <div style={{display:"flex", gap:8, alignItems:"center"}}>
-          <span style={{fontSize:9, color:"#444", fontFamily:"'Georgia',serif"}}>
+          <span style={{fontSize:9, color:"var(--muted)", fontFamily:"'Georgia',serif"}}>
             {idx+1}/{DAILY_PLAYERS.length}
           </span>
           <a href={legend.wiki} target="_blank" rel="noopener"
             style={{fontSize:9, fontWeight:700, letterSpacing:"0.1em",
-              padding:"2px 8px", border:"1px solid #2a2a2a", color:"#555",
+              padding:"2px 8px", border:"1px solid var(--border)", color:"var(--muted)",
               textDecoration:"none", fontFamily:"'Georgia',serif"}}
             onMouseEnter={e=>{e.currentTarget.style.color="#f0b429";e.currentTarget.style.borderColor="#f0b429";}}
-            onMouseLeave={e=>{e.currentTarget.style.color="#555";e.currentTarget.style.borderColor="#2a2a2a";}}>
+            onMouseLeave={e=>{e.currentTarget.style.color="var(--muted)";e.currentTarget.style.borderColor="var(--border)";}}>
             📖 WIKI
           </a>
         </div>
@@ -12399,9 +12467,9 @@ function EnhancedOTD() {
     setSpotlight(todayEvents[Math.floor(Math.random()*todayEvents.length)]);
   }
   return (
-    <div style={{background:"#111", border:"1px solid #2e343a", borderLeft:"3px solid #f0b429"}}>
+    <div style={{background:"var(--ink)", border:"1px solid var(--border)", borderLeft:"3px solid #f0b429"}}>
       <div style={{display:"flex", alignItems:"center", gap:10, padding:"8px 12px",
-        borderBottom:"1px solid #2e343a", background:"rgba(240,180,41,0.04)"}}>
+        borderBottom:"1px solid var(--border)", background:"rgba(240,180,41,0.04)"}}>
         <div style={{background:"#f0b429", color:"#000", padding:"3px 8px",
           textAlign:"center", flexShrink:0, minWidth:44}}>
           <span style={{fontFamily:"'Georgia',serif", fontSize:8, fontWeight:900,
@@ -12415,7 +12483,7 @@ function EnhancedOTD() {
           <div style={{fontFamily:"'Georgia',serif", fontSize:8, fontWeight:900,
             letterSpacing:"0.22em", color:"#f0b429", textTransform:"uppercase",
             marginBottom:1}}>On This Date in NY Sports</div>
-          <div style={{fontSize:10, color:"#666"}}>
+          <div style={{fontSize:10, color:"var(--muted)"}}>
             {todayEvents.length > 0
               ? `${todayEvents.length} moment${todayEvents.length!==1?"s":""}`
               : "No moments recorded today"}
@@ -12432,8 +12500,8 @@ function EnhancedOTD() {
       {shown.length > 0 ? shown.map((e,i) => (
         <div key={i} onClick={() => setSpotlight(e)}
           style={{display:"flex", gap:10, alignItems:"flex-start",
-            padding:"9px 12px", borderBottom:"1px solid #2e343a",
-            borderLeft: i===0 ? `3px solid ${TEAM_COLORS[e.team]||"#c8201c"}` : "none",
+            padding:"9px 12px", borderBottom:"1px solid var(--border)",
+            borderLeft: i===0 ? `3px solid ${TEAM_COLORS[e.team]||"var(--accent-red)"}` : "none",
             background: i===0 ? "rgba(240,180,41,0.03)" : "transparent",
             cursor:"pointer", transition:"background 0.1s"}}
           onMouseEnter={ev=>ev.currentTarget.style.background="rgba(240,180,41,0.05)"}
@@ -12442,29 +12510,29 @@ function EnhancedOTD() {
             color:"#f0b429", lineHeight:1, minWidth:36, flexShrink:0}}>{e.year}</div>
           <div style={{flex:1, minWidth:0}}>
             <div style={{fontFamily:"'Georgia',serif", fontSize:8, fontWeight:800,
-              letterSpacing:"0.15em", color:"#c8201c", textTransform:"uppercase",
+              letterSpacing:"0.15em", color:"var(--accent-red)", textTransform:"uppercase",
               marginBottom:1}}>{e.team}</div>
-            <div style={{fontSize:12, fontWeight:600, color:"#e8e0d0",
+            <div style={{fontSize:12, fontWeight:600, color:"var(--ink)",
               lineHeight:1.3, marginBottom:2}}>{e.headline}</div>
-            <div style={{fontSize:10, color:"#888", lineHeight:1.4,
+            <div style={{fontSize:10, color:"var(--muted)", lineHeight:1.4,
               overflow:"hidden", display:"-webkit-box",
               WebkitLineClamp:2, WebkitBoxOrient:"vertical"}}>{e.desc}</div>
           </div>
           {i===0 && <span style={{fontSize:16, flexShrink:0, opacity:0.7}}>⭐</span>}
         </div>
       )) : (
-        <div style={{padding:"16px 12px", textAlign:"center", fontSize:11, color:"#555",
+        <div style={{padding:"16px 12px", textAlign:"center", fontSize:11, color:"var(--muted)",
           fontStyle:"italic"}}>No NY sports moments recorded for today.</div>
       )}
       {todayEvents.length > 3 && (
         <button onClick={() => setShowAll(s=>!s)}
           style={{width:"100%", padding:"7px", background:"transparent",
-            border:"none", borderTop:"1px solid #2e343a",
+            border:"none", borderTop:"1px solid var(--border)",
             fontFamily:"'Georgia',serif", fontSize:9, fontWeight:700,
             letterSpacing:"0.12em", textTransform:"uppercase",
-            color:"#555", cursor:"pointer"}}
-          onMouseEnter={e=>{e.currentTarget.style.background="#161616";e.currentTarget.style.color="#e8e0d0";}}
-          onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color="#555";}}>
+            color:"var(--muted)", cursor:"pointer"}}
+          onMouseEnter={e=>{e.currentTarget.style.background="var(--bg-content)";e.currentTarget.style.color="var(--ink)";}}
+          onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color="var(--muted)";}}>
           {showAll ? "▲ SHOW LESS" : `▼ SHOW ALL ${todayEvents.length} MOMENTS`}
         </button>
       )}
@@ -12473,23 +12541,23 @@ function EnhancedOTD() {
           style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.85)",
             zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:20}}>
           <div onClick={e=>e.stopPropagation()}
-            style={{background:"#111", border:"1px solid #2a2a2a",
+            style={{background:"var(--ink)", border:"1px solid var(--border)",
               maxWidth:480, width:"100%", padding:"20px 22px", position:"relative"}}>
             <button onClick={() => setSpotlight(null)}
               style={{position:"absolute", top:8, right:8, background:"transparent",
-                border:"none", color:"#555", cursor:"pointer", fontSize:16}}>✕</button>
+                border:"none", color:"var(--muted)", cursor:"pointer", fontSize:16}}>✕</button>
             <div style={{fontFamily:"'Georgia',serif", fontSize:48, fontWeight:900,
               color:"#f0b429", lineHeight:1, marginBottom:4}}>{spotlight.year}</div>
             <div style={{fontFamily:"'Georgia',serif", fontSize:8, fontWeight:800,
-              letterSpacing:"0.2em", color:"#c8201c", textTransform:"uppercase",
+              letterSpacing:"0.2em", color:"var(--accent-red)", textTransform:"uppercase",
               marginBottom:8}}>{spotlight.team}</div>
-            <div style={{fontSize:15, fontWeight:700, color:"#e8e0d0", lineHeight:1.4,
+            <div style={{fontSize:15, fontWeight:700, color:"var(--ink)", lineHeight:1.4,
               marginBottom:8, fontFamily:"'Georgia',serif"}}>{spotlight.headline}</div>
-            <p style={{fontSize:12, color:"#aaa", lineHeight:1.6, marginBottom:12}}>{spotlight.desc}</p>
+            <p style={{fontSize:12, color:"var(--muted)", lineHeight:1.6, marginBottom:12}}>{spotlight.desc}</p>
             <a href={`https://www.google.com/search?q=${encodeURIComponent(spotlight.year+" "+spotlight.team+" "+spotlight.headline)}`}
               target="_blank" rel="noopener"
               style={{fontSize:10, fontWeight:700, letterSpacing:"0.1em", padding:"4px 12px",
-                border:"1px solid #2a2a2a", color:"#888", textDecoration:"none"}}>
+                border:"1px solid var(--border)", color:"var(--muted)", textDecoration:"none"}}>
               🔍 GOOGLE THIS MOMENT
             </a>
           </div>
@@ -12722,7 +12790,7 @@ function NYPlayoffWidget({ myTeams }) {
       : t.wcGb !== null && t.wcGb > 0
         ? `${Number.isInteger(t.wcGb) ? t.wcGb : t.wcGb.toFixed(1)} out`
         : "—";
-    const gbColor = t.inPO ? "#22c55e" : "#c8201c";
+    const gbColor = t.inPO ? "#22c55e" : "var(--accent-red)";
 
     return (
       <div style={{display:"flex", alignItems:"center", gap:7, padding:"5px 8px",
@@ -12730,20 +12798,20 @@ function NYPlayoffWidget({ myTeams }) {
         borderLeft:t.isMy?"2px solid #f0b429":"2px solid transparent"}}>
         {showSeed && (
           <span style={{fontFamily:"'Georgia',serif", fontSize:10, fontWeight:900,
-            color:"#444", minWidth:14, textAlign:"center"}}>
+            color:"var(--muted)", minWidth:14, textAlign:"center"}}>
             {t.seed < 99 ? t.seed : "—"}
           </span>
         )}
         {t.isMy && <span style={{fontSize:9, color:"#f0b429", flexShrink:0}}>★</span>}
         <span style={{fontFamily:"'Georgia',serif", fontSize:12,
           fontWeight:t.isNY?900:700,
-          color:t.inPO?"#22c55e":t.isNY?"#e8e0d0":"#888",
+          color:t.inPO?"#22c55e":t.isNY?"var(--ink)":"var(--muted)",
           flex:1, letterSpacing:"0.03em"}}>
           {AMBIGUOUS_NICKNAMES.has(t.name.split(" ").slice(-1)[0])
             ? (t.abbrev || t.name)
             : t.name.split(" ").slice(-1)[0]}
         </span>
-        <span style={{fontFamily:"'Georgia',serif", fontSize:10, color:"#555",
+        <span style={{fontFamily:"'Georgia',serif", fontSize:10, color:"var(--muted)",
           minWidth:46, textAlign:"right"}}>{rec}</span>
         <span style={{fontFamily:"'Georgia',serif", fontSize:10, fontWeight:700,
           minWidth:50, textAlign:"right", color:gbColor}}>
@@ -12754,37 +12822,37 @@ function NYPlayoffWidget({ myTeams }) {
   }
 
   return (
-    <div style={{background:"#111", border:"1px solid #2e343a",
-      borderTop:"2px solid #c8201c", marginBottom:8}}>
+    <div style={{background:"var(--ink)", border:"1px solid var(--border)",
+      borderTop:"2px solid var(--accent-red)", marginBottom:8}}>
       {/* Header */}
       <div style={{display:"flex", alignItems:"center", gap:8, padding:"7px 12px",
-        borderBottom:"1px solid #2e343a"}}>
+        borderBottom:"1px solid var(--border)"}}>
         <div style={{width:6, height:6, borderRadius:"50%", background:"#22c55e",
           animation:"pulse 2s infinite", flexShrink:0}} />
         <span style={{fontFamily:"'Georgia',serif", fontSize:8, fontWeight:900,
-          letterSpacing:"0.22em", color:"#c8201c", textTransform:"uppercase"}}>
+          letterSpacing:"0.22em", color:"var(--accent-red)", textTransform:"uppercase"}}>
           🗽 NY Playoff Picture
         </span>
-        <span style={{marginLeft:"auto", fontSize:9, color:"#444"}}>
+        <span style={{marginLeft:"auto", fontSize:9, color:"var(--muted)"}}>
           {lastUpdated
             ? `Updated ${lastUpdated.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}`
             : loading ? "Loading live data…" : ""}
         </span>
         <button onClick={fetchAll}
-          style={{fontSize:9, color:"#444", background:"transparent",
-            border:"1px solid #2a2a2a", padding:"2px 6px", cursor:"pointer",
+          style={{fontSize:9, color:"var(--muted)", background:"transparent",
+            border:"1px solid var(--border)", padding:"2px 6px", cursor:"pointer",
             fontFamily:"'Georgia',serif", fontWeight:700}}>↺</button>
       </div>
 
       {/* Sport tabs */}
-      <div style={{display:"flex", borderBottom:"1px solid #2e343a", background:"#1a1c1f"}}>
+      <div style={{display:"flex", borderBottom:"1px solid var(--border)", background:"var(--bg-content)"}}>
         {SPORTS.map(s => (
           <button key={s.key} onClick={() => setSport(s.key)}
             style={{fontFamily:"'Georgia',serif", fontSize:10, fontWeight:700,
               letterSpacing:"0.06em", padding:"5px 13px",
               background:"transparent", border:"none", cursor:"pointer",
-              color:sport===s.key?"#e8e0d0":"#555",
-              borderBottom:sport===s.key?"2px solid #c8201c":"2px solid transparent",
+              color:sport===s.key?"var(--ink)":"var(--muted)",
+              borderBottom:sport===s.key?"2px solid var(--accent-red)":"2px solid transparent",
               transition:"all 0.15s"}}>
             {s.label}
           </button>
@@ -12795,14 +12863,14 @@ function NYPlayoffWidget({ myTeams }) {
       <div style={{padding:"6px 4px"}}>
         {loading && !teams.length ? (
           <div style={{padding:"14px", textAlign:"center", fontSize:10,
-            color:"#555", letterSpacing:"0.1em"}}>LOADING LIVE DATA…</div>
+            color:"var(--muted)", letterSpacing:"0.1em"}}>LOADING LIVE DATA…</div>
         ) : (
           <>
             {nyTeams.length > 0 && (
               <>
                 <div style={{fontFamily:"'Georgia',serif", fontSize:8, fontWeight:900,
-                  letterSpacing:"0.2em", color:"#444", textTransform:"uppercase",
-                  padding:"5px 8px 3px", borderBottom:"1px solid #2e343a", marginBottom:2}}>
+                  letterSpacing:"0.2em", color:"var(--muted)", textTransform:"uppercase",
+                  padding:"5px 8px 3px", borderBottom:"1px solid var(--border)", marginBottom:2}}>
                   🗽 NY TEAMS
                 </div>
                 {nyTeams.map((t,i) => <RecRow key={i} t={t} showSeed={false} />)}
@@ -12811,9 +12879,9 @@ function NYPlayoffWidget({ myTeams }) {
             {topRest.length > 0 && (
               <>
                 <div style={{fontFamily:"'Georgia',serif", fontSize:8, fontWeight:900,
-                  letterSpacing:"0.2em", color:"#333", textTransform:"uppercase",
-                  padding:"6px 8px 3px", borderTop:"1px solid #2e343a",
-                  borderBottom:"1px solid #2e343a", marginTop:3, marginBottom:2}}>
+                  letterSpacing:"0.2em", color:"var(--muted)", textTransform:"uppercase",
+                  padding:"6px 8px 3px", borderTop:"1px solid var(--border)",
+                  borderBottom:"1px solid var(--border)", marginTop:3, marginBottom:2}}>
                   PLAYOFF PICTURE — TOP {topRest.length}
                 </div>
                 {topRest.map((t,i) => <RecRow key={i} t={t} showSeed={true} />)}
@@ -12821,7 +12889,7 @@ function NYPlayoffWidget({ myTeams }) {
             )}
             {!nyTeams.length && !topRest.length && (
               <div style={{padding:"12px", textAlign:"center", fontSize:10,
-                color:"#555", fontStyle:"italic"}}>No standings data available.</div>
+                color:"var(--muted)", fontStyle:"italic"}}>No standings data available.</div>
             )}
           </>
         )}
@@ -12829,12 +12897,12 @@ function NYPlayoffWidget({ myTeams }) {
 
       {/* Legend */}
       <div style={{display:"flex", gap:12, padding:"5px 12px",
-        borderTop:"1px solid #2e343a", background:"#1a1c1f", flexWrap:"wrap"}}>
-        {[{color:"#22c55e",label:"In"},{color:"#c8201c",label:"Out"},{color:"#f0b429",label:"My Teams ★"}]
+        borderTop:"1px solid var(--border)", background:"var(--bg-content)", flexWrap:"wrap"}}>
+        {[{color:"#22c55e",label:"In"},{color:"var(--accent-red)",label:"Out"},{color:"#f0b429",label:"My Teams ★"}]
           .map(({color,label}) => (
             <div key={label} style={{display:"flex", alignItems:"center", gap:4}}>
               <div style={{width:5, height:5, borderRadius:"50%", background:color}} />
-              <span style={{fontSize:9, color:"#555"}}>{label}</span>
+              <span style={{fontSize:9, color:"var(--muted)"}}>{label}</span>
             </div>
           ))}
       </div>
@@ -12892,12 +12960,12 @@ function DigestSignup() {
 
   if (status === "success") {
     return (
-      <div style={{background:"#0d2a1a", borderTop:"2px solid #22c55e",
+      <div style={{background:"var(--success-bg)", borderTop:"2px solid #22c55e",
         borderBottom:"1px solid #1a3a1a", padding:"20px 24px", textAlign:"center"}}>
         <div style={{fontSize:24, marginBottom:8}}>🗽</div>
         <div style={{fontFamily:"'Georgia',serif", fontSize:16, fontWeight:900,
           color:"#22c55e", marginBottom:6}}>{message}</div>
-        <div style={{fontSize:12, color:"#aaa"}}>
+        <div style={{fontSize:12, color:"var(--muted)"}}>
           Your first digest arrives tomorrow at 7am ET.
         </div>
       </div>
@@ -12905,27 +12973,27 @@ function DigestSignup() {
   }
 
   return (
-    <div style={{background:"#1a1c1f", borderTop:"2px solid #c8201c",
-      borderBottom:"1px solid #2e343a", padding:"20px 24px"}}>
+    <div style={{background:"var(--bg-content)", borderTop:"2px solid var(--accent-red)",
+      borderBottom:"1px solid var(--border)", padding:"20px 24px"}}>
 
       {/* Header row — always visible */}
       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between",
         flexWrap:"wrap", gap:10, marginBottom: expanded ? 16 : 0}}>
         <div>
           <div style={{fontFamily:"'Georgia',serif", fontSize:13, fontWeight:900,
-            color:"#e8e0d0", marginBottom:2}}>
+            color:"var(--ink)", marginBottom:2}}>
             🗽 Get the NY Sports Daily Morning Digest
           </div>
-          <div style={{fontSize:11, color:"#666"}}>
-            Last night's scores · Top headlines · Glory moment · 7am ET · Free always
+          <div style={{fontSize:11, color:"var(--muted)"}}>
+            Last night's scores · Top headlines · Daily trivia · On This Date · Sunday Deep Dive essay · 7am ET · Free always
           </div>
         </div>
         <button onClick={() => setExpanded(e => !e)}
           style={{fontFamily:"'Georgia',serif", fontSize:10, fontWeight:900,
             letterSpacing:"0.1em", padding:"7px 18px",
-            background: expanded ? "transparent" : "#c8201c",
-            border: `1px solid ${expanded ? "#444" : "#c8201c"}`,
-            color: expanded ? "#666" : "#fff",
+            background: expanded ? "transparent" : "var(--accent-red)",
+            border: `1px solid ${expanded ? "var(--muted)" : "var(--accent-red)"}`,
+            color: expanded ? "var(--muted)" : "#fff",
             cursor:"pointer", transition:"all 0.15s", flexShrink:0}}>
           {expanded ? "CANCEL" : "SUBSCRIBE FREE →"}
         </button>
@@ -12942,8 +13010,8 @@ function DigestSignup() {
               value={name}
               onChange={e => setName(e.target.value)}
               style={{flex:"1 1 160px", padding:"8px 12px",
-                background:"#111", border:"1px solid #2a2a2a",
-                color:"#e8e0d0", fontSize:12, fontFamily:"'Georgia',serif",
+                background:"var(--ink)", border:"1px solid var(--border)",
+                color:"var(--ink)", fontSize:12, fontFamily:"'Georgia',serif",
                 outline:"none"}}
             />
             <input
@@ -12953,15 +13021,15 @@ function DigestSignup() {
               onChange={e => setEmail(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleSubmit()}
               style={{flex:"2 1 200px", padding:"8px 12px",
-                background:"#111", border:"1px solid #2a2a2a",
-                color:"#e8e0d0", fontSize:12, fontFamily:"'Georgia',serif",
+                background:"var(--ink)", border:"1px solid var(--border)",
+                color:"var(--ink)", fontSize:12, fontFamily:"'Georgia',serif",
                 outline:"none"}}
             />
           </div>
 
           {/* Team picker */}
           <div style={{marginBottom:14}}>
-            <div style={{fontSize:9, fontWeight:900, color:"#555",
+            <div style={{fontSize:9, fontWeight:900, color:"var(--muted)",
               letterSpacing:"0.18em", textTransform:"uppercase",
               marginBottom:8}}>
               Pick your teams (optional — leave blank for all NY):
@@ -12974,9 +13042,9 @@ function DigestSignup() {
                     style={{fontFamily:"'Georgia',serif", fontSize:10,
                       fontWeight:700, letterSpacing:"0.06em",
                       padding:"4px 10px",
-                      background: on ? "#c8201c" : "transparent",
-                      border: `1px solid ${on ? "#c8201c" : "#2a2a2a"}`,
-                      color: on ? "#fff" : "#666",
+                      background: on ? "var(--accent-red)" : "transparent",
+                      border: `1px solid ${on ? "var(--accent-red)" : "var(--border)"}`,
+                      color: on ? "#fff" : "var(--muted)",
                       cursor:"pointer", transition:"all 0.12s"}}>
                     {team}
                   </button>
@@ -12995,12 +13063,12 @@ function DigestSignup() {
             <button onClick={handleSubmit} disabled={status === "loading"}
               style={{fontFamily:"'Georgia',serif", fontSize:11, fontWeight:900,
                 letterSpacing:"0.1em", padding:"9px 24px",
-                background: status === "loading" ? "#555" : "#c8201c",
+                background: status === "loading" ? "var(--muted)" : "var(--accent-red)",
                 border:"none", color:"#fff", cursor:"pointer",
                 transition:"all 0.15s", boxShadow:"0 2px 0 #8a0000"}}>
               {status === "loading" ? "SUBSCRIBING…" : "GET MY DIGEST →"}
             </button>
-            <span style={{fontSize:10, color:"#444"}}>
+            <span style={{fontSize:10, color:"var(--muted)"}}>
               No ads. No spam. Unsubscribe anytime.
             </span>
           </div>
@@ -13013,10 +13081,10 @@ function DigestSignup() {
 
 const styles = {
   root: {
-    background: "#141618",
+    background: "var(--bg-page)",
     minHeight: "100vh",
     fontFamily: "'Georgia', 'Times New Roman', serif",
-    color: "#f0ece4",
+    color: "var(--ink)",
     position: "relative",
     overflow: "hidden",
   },
@@ -13028,8 +13096,8 @@ const styles = {
 
   // MASTHEAD
   masthead: {
-    background: "#1a1c1f",
-    borderBottom: "3px solid #c8201c",
+    background: "var(--bg-content)",
+    borderBottom: "3px solid var(--accent-red)",
     padding: "16px 20px 0",
     position: "sticky", top: 0, zIndex: 500,
   },
@@ -13037,20 +13105,20 @@ const styles = {
     display: "flex", justifyContent: "space-between", alignItems: "center",
     marginBottom: 8,
     fontSize: 9, letterSpacing: "0.15em",
-    color: "#9aa3ad", fontFamily: "'Georgia', serif",
+    color: "var(--muted)", fontFamily: "'Georgia', serif",
   },
 
   // MASTHEAD
   masthead: {
-    background: "#1a1c1f",
-    borderBottom: "4px double #c8201c",
+    background: "var(--bg-content)",
+    borderBottom: "4px double var(--accent-red)",
     padding: "16px 20px 0",
     position: "sticky", top: 0, zIndex: 500,
   },
   mastheadTop: {
     display: "flex", justifyContent: "space-between", alignItems: "center",
     marginBottom: 8, fontSize: 9, letterSpacing: "0.15em",
-    color: "#888", fontFamily: "'Georgia', serif",
+    color: "var(--muted)", fontFamily: "'Georgia', serif",
   },
   mastheadKicker: {},
   mastheadMain: {
@@ -13058,25 +13126,25 @@ const styles = {
     padding: "8px 0",
   },
   mastheadLines: { flex: 1, display: "flex", flexDirection: "column", gap: 4 },
-  mastheadLineBar: { height: 2, background: "#c8201c" },
-  mastheadRule: { height: 1, background: "#2e343a", position: "relative", zIndex: 1 },
+  mastheadLineBar: { height: 2, background: "var(--accent-red)" },
+  mastheadRule: { height: 1, background: "var(--border)", position: "relative", zIndex: 1 },
   mastheadTitle: {
     textAlign: "center", margin: 0, lineHeight: 0.9,
     fontSize: "clamp(32px, 8vw, 72px)",
     fontFamily: "'Georgia', 'Times New Roman', serif",
     fontWeight: 900, letterSpacing: "-0.02em",
-    color: "#e8e0d0", textTransform: "uppercase",
-    textShadow: "3px 3px 0 #c8201c",
+    color: "var(--ink)", textTransform: "uppercase",
+    textShadow: "3px 3px 0 var(--accent-red)",
   },
-  mastheadTitleRed: { color: "#c8201c" },
-  mastheadTitleThin: { fontWeight: 300, color: "#aaa" },
+  mastheadTitleRed: { color: "var(--accent-red)" },
+  mastheadTitleThin: { fontWeight: 300, color: "var(--muted)" },
   mastheadBottom: {
     display: "flex", justifyContent: "center", alignItems: "center",
-    gap: 12, padding: "8px 0", borderTop: "1px solid #2e343a",
+    gap: 12, padding: "8px 0", borderTop: "1px solid var(--border)",
     fontSize: 10, letterSpacing: "0.1em",
   },
-  mastheadTag: { color: "#e8e0d0" },
-  mastheadSep: { color: "#c8201c", fontSize: 8 },
+  mastheadTag: { color: "var(--ink)" },
+  mastheadSep: { color: "var(--accent-red)", fontSize: 8 },
 
   // PENNANT STRIPE
   pennantStripe: {
@@ -13087,11 +13155,11 @@ const styles = {
   // SITE SEARCH
   searchBar: {
     position: "relative", padding: "6px 16px 10px",
-    borderTop: "1px solid #2e343a",
+    borderTop: "1px solid var(--border)",
   },
   searchInput: {
-    width: "100%", background: "#1e2124",
-    border: "1px solid #2e343a", color: "#d4cec6",
+    width: "100%", background: "var(--bg-card)",
+    border: "1px solid var(--border)", color: "var(--ink)",
     padding: "7px 34px 7px 12px", fontSize: 11,
     fontFamily: "'Georgia', serif",
     outline: "none", boxSizing: "border-box",
@@ -13099,46 +13167,46 @@ const styles = {
   },
   searchClear: {
     position: "absolute", right: 22, top: "50%", transform: "translateY(-50%)",
-    background: "none", border: "none", color: "#666",
+    background: "none", border: "none", color: "var(--muted)",
     cursor: "pointer", fontSize: 12, padding: "4px",
   },
   searchDropdown: {
     position: "relative", left: "auto", right: "auto", zIndex: 1001,
-    background: "#1a1c1f", border: "1px solid #c8201c",
+    background: "var(--bg-content)", border: "1px solid var(--accent-red)",
     borderTop: "none", maxHeight: 380, overflowY: "auto",
     boxShadow: "0 8px 24px rgba(0,0,0,0.9)",
   },
   searchResult: {
     display: "flex", gap: 10, width: "100%", padding: "10px 14px",
     background: "transparent", border: "none", cursor: "pointer",
-    textAlign: "left", borderBottom: "1px solid #2e343a",
+    textAlign: "left", borderBottom: "1px solid var(--border)",
     transition: "background 0.1s",
   },
   searchResultIcon: { fontSize: 18, flexShrink: 0, paddingTop: 2 },
   searchResultBody: { flex: 1, display: "flex", flexDirection: "column", gap: 2 },
   searchResultTop: { display: "flex", justifyContent: "space-between", alignItems: "center" },
   searchResultType: { fontSize: 8, fontWeight: 900, letterSpacing: "0.12em" },
-  searchResultTab: { fontSize: 8, color: "#555", letterSpacing: "0.08em" },
-  searchResultTitle: { fontSize: 12, fontWeight: 900, color: "#e8e0d0", fontFamily: "'Georgia', serif" },
-  searchResultSub: { fontSize: 10, color: "#888" },
-  searchResultHighlight: { fontSize: 10, color: "#666", fontStyle: "italic" },
-  searchNoResult: { padding: "14px 16px", fontSize: 11, color: "#555", fontStyle: "italic" },
-  searchFooter: { padding: "6px 14px", fontSize: 9, color: "#9aa3ad", letterSpacing: "0.08em", borderTop: "1px solid #2e343a" },
+  searchResultTab: { fontSize: 8, color: "var(--muted)", letterSpacing: "0.08em" },
+  searchResultTitle: { fontSize: 12, fontWeight: 900, color: "var(--ink)", fontFamily: "'Georgia', serif" },
+  searchResultSub: { fontSize: 10, color: "var(--muted)" },
+  searchResultHighlight: { fontSize: 10, color: "var(--muted)", fontStyle: "italic" },
+  searchNoResult: { padding: "14px 16px", fontSize: 11, color: "var(--muted)", fontStyle: "italic" },
+  searchFooter: { padding: "6px 14px", fontSize: 9, color: "var(--muted)", letterSpacing: "0.08em", borderTop: "1px solid var(--border)" },
 
 
   // BUY ME A COFFEE
   bmcBtn: {
     display: "inline-block", marginTop: 14,
     background: "transparent",
-    border: "1px solid #555",
-    color: "#ccc", fontSize: 11,
+    border: "1px solid var(--muted)",
+    color: "var(--muted)", fontSize: 11,
     fontWeight: 700, letterSpacing: "0.1em",
     padding: "8px 20px",
     fontFamily: "'Georgia', serif", textDecoration: "none",
     transition: "all 0.15s",
   },
   bmcSub: {
-    margin: "8px 0 0", fontSize: 9, color: "#444", letterSpacing: "0.06em",
+    margin: "8px 0 0", fontSize: 9, color: "var(--muted)", letterSpacing: "0.06em",
   },
 
   // SCORES + NEWS LAYOUT
@@ -13148,27 +13216,27 @@ const styles = {
   scoresCol: { flex: "1 1 55%", minWidth: 260 },
   newsSidebar: {
     flex: "1 1 240px", minWidth: 220,
-    borderLeft: "1px solid #2e343a", paddingLeft: 16,
+    borderLeft: "1px solid var(--border)", paddingLeft: 16,
   },
   newsSidebarHeader: {
-    fontSize: 9, fontWeight: 900, letterSpacing: "0.2em", color: "#c8201c",
-    borderBottom: "1px solid #222", paddingBottom: 8, marginBottom: 10,
+    fontSize: 9, fontWeight: 900, letterSpacing: "0.2em", color: "var(--accent-red)",
+    borderBottom: "1px solid var(--border)", paddingBottom: 8, marginBottom: 10,
   },
-  newsSidebarLoading: { fontSize: 10, color: "#444", margin: 0 },
+  newsSidebarLoading: { fontSize: 10, color: "var(--muted)", margin: 0 },
   newsSidebarItem: {
     display: "block", textDecoration: "none", color: "inherit",
-    borderBottom: "1px solid #2e343a", paddingBottom: 10, marginBottom: 10,
+    borderBottom: "1px solid var(--border)", paddingBottom: 10, marginBottom: 10,
   },
   newsSidebarSource: {
-    fontSize: 8, color: "#9aa3ad", letterSpacing: "0.08em", fontWeight: 900,
+    fontSize: 8, color: "var(--muted)", letterSpacing: "0.08em", fontWeight: 900,
     textTransform: "uppercase", display: "block", marginBottom: 3,
   },
   newsSidebarTitle: {
     margin: 0, fontSize: 12, fontWeight: 700, lineHeight: 1.4,
-    color: "#bbb", fontFamily: "'Georgia', serif",
+    color: "var(--muted)", fontFamily: "'Georgia', serif",
   },
   newsSidebarMore: {
-    background: "transparent", border: "none", color: "#c8201c",
+    background: "transparent", border: "none", color: "var(--accent-red)",
     fontSize: 9, fontWeight: 900, letterSpacing: "0.15em",
     cursor: "pointer", padding: 0, marginTop: 4,
   },
@@ -13176,25 +13244,25 @@ const styles = {
   // DATE STRIP
   dateStrip: {
     display: "flex", overflowX: "auto", gap: 1,
-    background: "#1a1c1f", padding: "0",
-    borderBottom: "2px solid #c8201c",
+    background: "var(--bg-content)", padding: "0",
+    borderBottom: "2px solid var(--accent-red)",
     position: "relative", zIndex: 1,
     scrollbarWidth: "none",
   },
   dateBtn: {
     flex: "0 0 auto", padding: "10px 16px",
     background: "transparent", border: "none",
-    color: "#9aa3ad", cursor: "pointer",
+    color: "var(--muted)", cursor: "pointer",
     fontSize: 10, letterSpacing: "0.12em",
     fontFamily: "'Georgia', serif", fontWeight: 700,
     transition: "all 0.15s", whiteSpace: "nowrap",
   },
-  dateBtnActive: { background: "#c8201c", color: "#fff" },
+  dateBtnActive: { background: "var(--accent-red)", color: "#fff" },
   dateBtnLabel: {},
 
   // TICKER
   ticker: {
-    background: "#c8201c",
+    background: "var(--accent-red)",
     height: 32, position: "relative", zIndex: 1,
     width: "100%", display: "flex", overflow: "hidden",
   },
@@ -13203,7 +13271,7 @@ const styles = {
     width: "100%", overflow: "hidden",
   },
   tickerBug: {
-    background: "#1a1c1f", color: "#fff",
+    background: "var(--bg-content)", color: "#fff",
     padding: "0 12px", height: 32,
     display: "flex", alignItems: "center",
     fontSize: 10, fontWeight: 900, letterSpacing: "0.1em",
@@ -13228,7 +13296,7 @@ const styles = {
 
   // TABS
   tabNav: {
-    display: "flex", borderBottom: "1px solid #2e343a",
+    display: "flex", borderBottom: "1px solid var(--border)",
     marginBottom: 0, marginTop: 8,
     overflowX: "auto", scrollbarWidth: "none",
     WebkitOverflowScrolling: "touch",
@@ -13236,7 +13304,7 @@ const styles = {
   },
   tabBtn: {
     padding: "10px 16px", border: "none", background: "transparent",
-    color: "#9aa3ad", cursor: "pointer", fontSize: 11,
+    color: "var(--muted)", cursor: "pointer", fontSize: 11,
     fontWeight: 900, letterSpacing: "0.1em",
     fontFamily: "'Georgia', serif",
     transition: "color 0.15s, border-color 0.15s",
@@ -13245,7 +13313,7 @@ const styles = {
     marginBottom: -2,
   },
   tabBtnActive: {
-    color: "#e8e0d0", borderBottom: "2px solid #c8201c",
+    color: "var(--ink)", borderBottom: "2px solid var(--accent-red)",
   },
 
   // FILTER BAR
@@ -13253,26 +13321,26 @@ const styles = {
     display: "flex", justifyContent: "space-between", alignItems: "center",
     flexWrap: "wrap", gap: 6, marginBottom: 16,
     padding: "10px 14px",
-    background: "#1a1c1f",
-    border: "1px solid #2e343a",
+    background: "var(--bg-content)",
+    border: "1px solid var(--border)",
     borderTop: "none",
     marginTop: 0,
   },
   filterGroup: { display: "flex", flexWrap: "wrap", gap: 4 },
   filterBtn: {
-    padding: "4px 12px", border: "1px solid #2e343a", background: "transparent",
-    color: "#9aa3ad", cursor: "pointer", fontSize: 10, letterSpacing: "0.1em",
+    padding: "4px 12px", border: "1px solid var(--border)", background: "transparent",
+    color: "var(--muted)", cursor: "pointer", fontSize: 10, letterSpacing: "0.1em",
     fontFamily: "'Georgia', serif", fontWeight: 700, transition: "all 0.12s",
     borderRadius: 0,
   },
-  filterBtnActive: { background: "#c8201c", border: "1px solid #c8201c", color: "#fff" },
+  filterBtnActive: { background: "var(--accent-red)", border: "1px solid var(--accent-red)", color: "#fff" },
   nyToggle: {
-    padding: "4px 14px", border: "1px solid #2e343a", background: "transparent",
-    color: "#9aa3ad", cursor: "pointer", fontSize: 10, letterSpacing: "0.1em",
+    padding: "4px 14px", border: "1px solid var(--border)", background: "transparent",
+    color: "var(--muted)", cursor: "pointer", fontSize: 10, letterSpacing: "0.1em",
     fontFamily: "'Georgia', serif", fontWeight: 700, transition: "all 0.12s",
   },
-  nyToggleActive: { background: "#0d2a1a", border: "1px solid #22c55e", color: "#22c55e" },
-  myTeamsActive:  { background: "#1a1600", border: "1px solid #f0b429", color: "#f0b429" },
+  nyToggleActive: { background: "var(--success-bg)", border: "1px solid #22c55e", color: "#22c55e" },
+  myTeamsActive:  { background: "var(--gold-active-bg)", border: "1px solid #f0b429", color: "#f0b429" },
 
   // SCORES GRID
   scoresGrid: {
@@ -13281,80 +13349,80 @@ const styles = {
     gap: 8,
   },
   scoreCard: {
-    background: "#1e2124", border: "1px solid #2e343a",
+    background: "var(--bg-card)", border: "1px solid var(--border)",
     padding: "12px 14px", position: "relative",
     transition: "border-color 0.15s, box-shadow 0.15s, transform 0.12s",
   },
   scoreCardNY: {
-    border: "1px solid #c8201c33",
-    borderLeft: "3px solid #c8201c",
+    border: "1px solid var(--accent-red)33",
+    borderLeft: "3px solid var(--accent-red)",
     background: "#1e1416",
     boxShadow: "0 2px 8px rgba(200,32,28,0.08)",
   },
   nyBadge: {
     position: "absolute", top: 0, right: 0,
-    background: "#c8201c", color: "#fff",
+    background: "var(--accent-red)", color: "#fff",
     fontSize: 8, fontWeight: 900, padding: "2px 5px",
     letterSpacing: "0.1em",
   },
   scoreCardSport: {
-    fontSize: 8, letterSpacing: "0.22em", color: "#9aa3ad",
+    fontSize: 8, letterSpacing: "0.22em", color: "var(--muted)",
     fontWeight: 900, marginBottom: 8, textTransform: "uppercase",
   },
   scoreTeams: { display: "flex", flexDirection: "column", gap: 8 },
   teamRow: { display: "flex", alignItems: "center", gap: 8 },
   teamLogo: { width: 24, height: 24, objectFit: "contain" },
-  teamName: { flex: 1, fontSize: 12, fontWeight: 700, letterSpacing: "0.02em", color: "#e8e0d0" },
-  teamScore: { fontSize: 22, fontWeight: 900, fontFamily: "'Georgia', serif", minWidth: 32, textAlign: "right", color: "#e8e0d0" },
-  scoreAt: { fontSize: 10, color: "#888", textAlign: "center", margin: "2px 0" },
-  scoreStatus: { marginTop: 10, fontSize: 10, color: "#9aa3ad", letterSpacing: "0.05em" },
+  teamName: { flex: 1, fontSize: 12, fontWeight: 700, letterSpacing: "0.02em", color: "var(--ink)" },
+  teamScore: { fontSize: 22, fontWeight: 900, fontFamily: "'Georgia', serif", minWidth: 32, textAlign: "right", color: "var(--ink)" },
+  scoreAt: { fontSize: 10, color: "var(--muted)", textAlign: "center", margin: "2px 0" },
+  scoreStatus: { marginTop: 10, fontSize: 10, color: "var(--muted)", letterSpacing: "0.05em" },
   scoreStatusLive: { color: "#4ade80" },
   livePulse: {
     display: "inline-block", marginRight: 4, color: "#4ade80",
     animation: "pulse 1s ease-in-out infinite",
   },
-  scoreVenue: { marginTop: 4, fontSize: 9, color: "#888" },
+  scoreVenue: { marginTop: 4, fontSize: 9, color: "var(--muted)" },
 
   // NEWS
   newsGrid: { display:"flex", flexDirection:"column" },
   newsFeatured: {
     display: "block", textDecoration: "none", color: "inherit",
-    background: "#1e2124", border: "1px solid #2e2e2e",
+    background: "var(--bg-card)", border: "1px solid #2e2e2e",
     padding: "20px", borderRadius: 3,
     transition: "border-color 0.15s, box-shadow 0.15s, transform 0.12s",
     cursor: "pointer",
     boxShadow: "0 1px 3px rgba(0,0,0,0.5)",
   },
   newsFeaturedSource: {
-    fontSize: 10, letterSpacing: "0.18em", color: "#c8201c",
+    fontSize: 10, letterSpacing: "0.18em", color: "var(--accent-red)",
     fontWeight: 900, marginBottom: 8, textTransform: "uppercase",
   },
   newsFeaturedTitle: {
     margin: "0 0 10px", fontSize: "clamp(16px, 2.5vw, 21px)",
     fontWeight: 900, lineHeight: 1.25, letterSpacing: "-0.01em",
-    color: "#ffffff", fontFamily: "'Georgia', serif",
+    color: "var(--bg-card)", fontFamily: "'Georgia', serif",
   },
   newsFeaturedDesc: {
-    margin: "0 0 12px", fontSize: 13, lineHeight: 1.65, color: "#aaa",
+    margin: "0 0 12px", fontSize: 13, lineHeight: 1.65, color: "var(--muted)",
     fontFamily: "'Georgia', serif",
   },
   newsReadMore: {
-    fontSize: 10, color: "#c8201c", fontWeight: 900, letterSpacing: "0.12em",
+    fontSize: 10, color: "var(--accent-red)", fontWeight: 900, letterSpacing: "0.12em",
   },
   newsDivider: {
     display: "flex", alignItems: "center", gap: 12,
-    margin: "24px 0 16px", borderTop: "2px solid #222", paddingTop: 12,
+    margin: "24px 0 16px", borderTop: "2px solid var(--border)", paddingTop: 12,
   },
-  newsDividerText: { fontSize: 10, color: "#666", letterSpacing: "0.2em", fontWeight: 900 },
+  newsDividerText: { fontSize: 10, color: "var(--muted)", letterSpacing: "0.2em", fontWeight: 900 },
   newsSmall: {
     display: "block", textDecoration: "none", color: "inherit",
-    padding: "12px 14px", borderBottom: "1px solid #222",
+    padding: "12px 14px", borderBottom: "1px solid var(--border)",
     transition: "background 0.12s", cursor: "pointer",
   },
-  newsSmallAlt: { background: "#0f0f0f" },
+  newsSmallAlt: { background: "var(--bg-content)" },
   newsSmallMeta: { display: "flex", gap: 8, marginBottom: 5, alignItems: "center", flexWrap: "wrap" },
-  newsSmallSource: { fontSize: 9, letterSpacing: "0.12em", color: "#666", fontWeight: 900, textTransform: "uppercase" },
-  newsSmallDate: { fontSize: 9, color: "#555", marginLeft: "auto" },
+  newsSmallSource: { fontSize: 9, letterSpacing: "0.12em", color: "var(--muted)", fontWeight: 900, textTransform: "uppercase" },
+  newsSmallDate: { fontSize: 9, color: "var(--muted)", marginLeft: "auto" },
   newsSmallTitle: {
     margin: 0, fontSize: 14, fontWeight: 700, lineHeight: 1.45, color: "#e8e8e8",
     fontFamily: "'Georgia', serif",
@@ -13367,35 +13435,35 @@ const styles = {
   },
   loadingDots: { display: "flex", gap: 8 },
   dot: {
-    width: 8, height: 8, background: "#c8201c", borderRadius: "50%",
+    width: 8, height: 8, background: "var(--accent-red)", borderRadius: "50%",
     animation: "bounce 0.8s ease-in-out infinite",
   },
   loadingText: {
-    margin: 0, fontSize: 11, letterSpacing: "0.2em", color: "#555", fontWeight: 900,
+    margin: 0, fontSize: 11, letterSpacing: "0.2em", color: "var(--muted)", fontWeight: 900,
   },
   empty: {
     display: "flex", flexDirection: "column", alignItems: "center",
     padding: "60px 20px", gap: 12,
   },
   emptyIcon: { fontSize: 32, opacity: 0.4 },
-  emptyText: { margin: 0, fontSize: 11, letterSpacing: "0.2em", color: "#555", fontWeight: 900 },
+  emptyText: { margin: 0, fontSize: 11, letterSpacing: "0.2em", color: "var(--muted)", fontWeight: 900 },
 
   // FOOTER
   footer: {
     padding: "20px 20px 30px", textAlign: "center", position: "relative", zIndex: 1,
   },
-  footerRule: { height: 1, background: "#2e343a", marginBottom: 16 },
-  footerText: { margin: "0 0 6px", fontSize: 9, color: "#9aa3ad", letterSpacing: "0.15em" },
-  footerSub: { margin: 0, fontSize: 9, color: "#444", letterSpacing: "0.1em" },
+  footerRule: { height: 1, background: "var(--border)", marginBottom: 16 },
+  footerText: { margin: "0 0 6px", fontSize: 9, color: "var(--muted)", letterSpacing: "0.15em" },
+  footerSub: { margin: 0, fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em" },
 
   // SPIN WHEEL
   spinRoot: { paddingTop: 8, display: "flex", flexDirection: "column", gap: 20 },
-  spinHeader: { textAlign: "center", borderBottom: "2px solid #2a2a2a", paddingBottom: 14 },
+  spinHeader: { textAlign: "center", borderBottom: "2px solid var(--border)", paddingBottom: 14 },
   spinTitle: {
     margin: "0 0 6px", fontSize: 18, fontWeight: 900, letterSpacing: "0.15em",
-    color: "#e8e0d0", fontFamily: "'Georgia', serif",
+    color: "var(--ink)", fontFamily: "'Georgia', serif",
   },
-  spinSub: { margin: 0, fontSize: 9, color: "#c8201c", letterSpacing: "0.2em", fontWeight: 700 },
+  spinSub: { margin: 0, fontSize: 9, color: "var(--accent-red)", letterSpacing: "0.2em", fontWeight: 700 },
   spinLayout: {
     display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap", justifyContent: "center",
   },
@@ -13404,19 +13472,19 @@ const styles = {
   },
   spinPointerWrap: { height: 24, display: "flex", justifyContent: "center", alignItems: "flex-end" },
   spinPointer: {
-    fontSize: 22, color: "#c8201c", lineHeight: 1,
-    filter: "drop-shadow(0 0 6px #c8201c)",
+    fontSize: 22, color: "var(--accent-red)", lineHeight: 1,
+    filter: "drop-shadow(0 0 6px var(--accent-red))",
     animation: "pointerPulse 2s ease-in-out infinite",
   },
   spinCanvas: { display: "block", borderRadius: "50%", cursor: "pointer" },
   spinBtn: {
-    background: "#c8201c", border: "none", color: "#fff",
+    background: "var(--accent-red)", border: "none", color: "#fff",
     padding: "12px 36px", cursor: "pointer",
     fontSize: 13, fontWeight: 900, letterSpacing: "0.2em",
     fontFamily: "'Georgia', serif", transition: "all 0.2s",
     boxShadow: "0 4px 0 #8a0000",
   },
-  spinBtnDisabled: { background: "#444", boxShadow: "none", cursor: "not-allowed" },
+  spinBtnDisabled: { background: "var(--muted)", boxShadow: "none", cursor: "not-allowed" },
   spinResultCol: {
     flex: 1, minWidth: 260, maxWidth: 420,
     display: "flex", flexDirection: "column",
@@ -13424,21 +13492,21 @@ const styles = {
   spinPrompt: {
     display: "flex", flexDirection: "column", alignItems: "center",
     gap: 12, padding: "40px 20px", textAlign: "center",
-    border: "1px dashed #2a2a2a",
+    border: "1px dashed var(--border)",
   },
   spinPromptIcon: { fontSize: 40 },
   spinPromptText: {
     margin: 0, fontSize: 13, fontWeight: 900, letterSpacing: "0.1em",
-    color: "#666", fontFamily: "'Georgia', serif",
+    color: "var(--muted)", fontFamily: "'Georgia', serif",
   },
-  spinPromptSub: { margin: 0, fontSize: 11, color: "#444" },
+  spinPromptSub: { margin: 0, fontSize: 11, color: "var(--muted)" },
   spinWaiting: {
     display: "flex", flexDirection: "column", alignItems: "center",
     gap: 12, padding: "60px 20px",
   },
   spinWaitingDots: { display: "flex", gap: 8 },
   spinFactCard: {
-    border: "1px solid #2a2a2a", overflow: "hidden",
+    border: "1px solid var(--border)", overflow: "hidden",
     animation: "fadeIn 0.4s ease forwards",
   },
   spinTeamBanner: {
@@ -13452,41 +13520,41 @@ const styles = {
   },
   spinFactLoading: {
     display: "flex", flexDirection: "column", alignItems: "center",
-    gap: 12, padding: "40px 20px", background: "#161616",
+    gap: 12, padding: "40px 20px", background: "var(--bg-content)",
   },
-  spinFactBody: { background: "#161616", padding: "18px 20px", display: "flex", flexDirection: "column", gap: 12 },
+  spinFactBody: { background: "var(--bg-content)", padding: "18px 20px", display: "flex", flexDirection: "column", gap: 12 },
   spinFactMeta: { display: "flex", alignItems: "center", gap: 10 },
   spinCatBadge: {
     fontSize: 9, fontWeight: 900, letterSpacing: "0.15em",
     color: "#fff", padding: "3px 10px",
   },
-  spinEra: { fontSize: 10, color: "#666", letterSpacing: "0.05em" },
+  spinEra: { fontSize: 10, color: "var(--muted)", letterSpacing: "0.05em" },
   spinTeaser: {
     margin: 0, fontSize: "clamp(15px, 3vw, 20px)",
-    fontWeight: 900, lineHeight: 1.3, color: "#e8e0d0",
+    fontWeight: 900, lineHeight: 1.3, color: "var(--ink)",
     fontFamily: "'Georgia', serif", fontStyle: "italic",
-    borderLeft: "3px solid #c8201c", paddingLeft: 14,
+    borderLeft: "3px solid var(--accent-red)", paddingLeft: 14,
   },
   spinFactText: {
-    margin: 0, fontSize: 14, lineHeight: 1.7, color: "#aaa",
+    margin: 0, fontSize: 14, lineHeight: 1.7, color: "var(--muted)",
     fontFamily: "'Georgia', serif",
   },
   spinFootnote: {
-    textAlign: "center", fontSize: 9, color: "#444", letterSpacing: "0.1em",
-    borderTop: "1px solid #2e343a", paddingTop: 12,
+    textAlign: "center", fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em",
+    borderTop: "1px solid var(--border)", paddingTop: 12,
   },
 
   // TRADING CARD STYLE PLAYER SPOTLIGHT
   tcardWrap: { cursor:"pointer", userSelect:"none", width:200 },
   tcardOuter: {
     padding:3, borderRadius:2,
-    background:"#14181F",
+    background:"var(--bg-content)",
     boxShadow:"0 2px 12px rgba(0,0,0,0.5)",
   },
   tcardInner: {
-    background:"#14181F", borderRadius:2,
+    background:"var(--bg-content)", borderRadius:2,
     padding:"10px 12px 12px",
-    border:"1px solid #2E3542",
+    border:"1px solid var(--bg-content)",
   },
   tcardTopBar: {
     display:"flex", justifyContent:"space-between", alignItems:"center",
@@ -13497,14 +13565,14 @@ const styles = {
     letterSpacing:"0.2em", fontFamily:"'IBM Plex Mono', monospace",
   },
   tcardYear: {
-    fontSize:7, color:"#5B6472", letterSpacing:"0.1em", fontWeight:500,
+    fontSize:7, color:"var(--muted)", letterSpacing:"0.1em", fontWeight:500,
     fontFamily:"'IBM Plex Mono', monospace",
   },
   tcardPhotoFrame: {
     position:"relative", height:110, marginBottom:6,
     borderRadius:1, overflow:"hidden",
-    border:"1px solid #2E3542",
-    background:"#0d1016",
+    border:"1px solid var(--bg-content)",
+    background:"var(--bg-content)",
     display:"flex", alignItems:"center", justifyContent:"center",
   },
   tcardPhoto: {
@@ -13513,7 +13581,7 @@ const styles = {
   tcardPhotoFallback: {
     width:"100%", height:"100%",
     display:"flex", alignItems:"center", justifyContent:"center",
-    background:"#0d1016",
+    background:"var(--bg-content)",
   },
   tcardJerseyNum: {
     position:"absolute", bottom:4, right:6,
@@ -13523,21 +13591,21 @@ const styles = {
     lineHeight:1,
   },
   tcardNamePlate: {
-    background:"#14181F", padding:"6px 0 8px",
+    background:"var(--bg-content)", padding:"6px 0 8px",
     borderTop:"1px dashed #4a3d2e",
     borderBottom:"1px dashed #4a3d2e",
   },
   tcardName: {
-    fontSize:15, fontWeight:700, color:"#F2EDE1",
+    fontSize:15, fontWeight:700, color:"var(--ink)",
     fontFamily:"'Oswald',sans-serif", lineHeight:1.1, marginBottom:3,
   },
   tcardTeamRow: { display:"flex", alignItems:"center", gap:6, flexWrap:"wrap" },
   tcardTeamBadge: {
     fontSize:8, fontWeight:600, padding:"2px 6px",
-    color:"#14181F", letterSpacing:"0.08em", background:"#C97A2B",
+    color:"var(--bg-content)", letterSpacing:"0.08em", background:"#C97A2B",
     fontFamily:"'IBM Plex Mono', monospace",
   },
-  tcardPos: { fontSize:9, color:"#8A93A6", fontWeight:500, fontFamily:"'IBM Plex Mono', monospace" },
+  tcardPos: { fontSize:9, color:"var(--muted)", fontWeight:500, fontFamily:"'IBM Plex Mono', monospace" },
   tcardActiveDot: { fontSize:8, color:"#3F7A4E", fontWeight:600, fontFamily:"'IBM Plex Mono', monospace" },
   tcardStatsLine: { paddingTop:8 },
   tcardEraLabel: {
@@ -13546,16 +13614,16 @@ const styles = {
     fontFamily:"'IBM Plex Mono', monospace", textTransform:"uppercase",
   },
   tcardStats: {
-    display:"block", fontSize:10.5, color:"#8A93A6", lineHeight:1.6,
+    display:"block", fontSize:10.5, color:"var(--muted)", lineHeight:1.6,
     fontFamily:"'PT Serif', Georgia, serif",
   },
   tcardFlipHint: {
-    fontSize:8, color:"#5B6472", fontStyle:"italic",
+    fontSize:8, color:"var(--muted)", fontStyle:"italic",
     marginTop:8, textAlign:"right", fontFamily:"'IBM Plex Mono', monospace",
   },
   tcardBackBody: { display:"flex", flexDirection:"column", gap:12, minHeight:160 },
   tcardFact: {
-    margin:0, fontSize:12, color:"#8A93A6", lineHeight:1.7,
+    margin:0, fontSize:12, color:"var(--muted)", lineHeight:1.7,
     fontFamily:"'PT Serif', Georgia, serif",
   },
   tcardBackStats: {
@@ -13566,8 +13634,8 @@ const styles = {
   tcardBackStatItem: {
     flex:1, display:"flex", flexDirection:"column", gap:2, alignItems:"center",
   },
-  tcardBackStatLabel: { fontSize:7, color:"#5B6472", letterSpacing:"0.15em", fontWeight:600, fontFamily:"'IBM Plex Mono', monospace" },
-  tcardBackStatVal: { fontSize:11, color:"#F2EDE1", fontWeight:700, fontFamily:"'Oswald', sans-serif" },
+  tcardBackStatLabel: { fontSize:7, color:"var(--muted)", letterSpacing:"0.15em", fontWeight:600, fontFamily:"'IBM Plex Mono', monospace" },
+  tcardBackStatVal: { fontSize:11, color:"var(--ink)", fontWeight:700, fontFamily:"'Oswald', sans-serif" },
   tcardScoutingLink: {
     display:"block", fontSize:11, color:"#C97A2B", fontWeight:600,
     textDecoration:"none", fontFamily:"'IBM Plex Mono', monospace",
@@ -13575,47 +13643,47 @@ const styles = {
     textAlign:"center",
   },
   tcardLinks: { display:"flex", gap:10, flexWrap:"wrap" },
-  tcardLink: { fontSize:10, color:"#8A93A6", fontWeight:600, textDecoration:"none", fontFamily:"'IBM Plex Mono', monospace" },
+  tcardLink: { fontSize:10, color:"var(--muted)", fontWeight:600, textDecoration:"none", fontFamily:"'IBM Plex Mono', monospace" },
 
   // PLAYER SPOTLIGHT (old)
   spotlightWrap: { cursor:"pointer", userSelect:"none" },
   spotlightCard: {
-    background:"#161616", border:"1px solid #2a2a2a",
-    borderLeft:"3px solid #c8201c", padding:"12px 14px",
+    background:"var(--bg-content)", border:"1px solid var(--border)",
+    borderLeft:"3px solid var(--accent-red)", padding:"12px 14px",
     height:"100%", boxSizing:"border-box",
   },
   spotlightFront: { display:"flex", flexDirection:"column", gap:4 },
   spotlightBack: { display:"flex", flexDirection:"column", gap:8 },
   spotlightHeader: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 },
-  spotlightBadge: { fontSize:8, fontWeight:900, color:"#c8201c", letterSpacing:"0.15em" },
-  spotlightTap: { fontSize:8, color:"#444", fontStyle:"italic" },
+  spotlightBadge: { fontSize:8, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.15em" },
+  spotlightTap: { fontSize:8, color:"var(--muted)", fontStyle:"italic" },
   spotlightEmoji: { fontSize:28, lineHeight:1 },
-  spotlightName: { fontSize:16, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", lineHeight:1.2 },
+  spotlightName: { fontSize:16, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif", lineHeight:1.2 },
   spotlightMeta: { display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" },
-  spotlightTeam: { fontSize:10, color:"#c8201c", fontWeight:900 },
-  spotlightPos: { fontSize:9, color:"#666" },
+  spotlightTeam: { fontSize:10, color:"var(--accent-red)", fontWeight:900 },
+  spotlightPos: { fontSize:9, color:"var(--muted)" },
   spotlightActive: { fontSize:9, color:"#4ade80", fontWeight:900 },
-  spotlightEra: { fontSize:9, color:"#555", letterSpacing:"0.05em" },
-  spotlightStats: { fontSize:10, color:"#aaa", lineHeight:1.5 },
-  spotlightFact: { fontSize:11, color:"#aaa", lineHeight:1.6, fontFamily:"'Georgia',serif", margin:0 },
+  spotlightEra: { fontSize:9, color:"var(--muted)", letterSpacing:"0.05em" },
+  spotlightStats: { fontSize:10, color:"var(--muted)", lineHeight:1.5 },
+  spotlightFact: { fontSize:11, color:"var(--muted)", lineHeight:1.6, fontFamily:"'Georgia',serif", margin:0 },
   spotlightLinks: { display:"flex", gap:10, flexWrap:"wrap" },
-  spotlightLink: { fontSize:10, color:"#c8201c", fontWeight:700, textDecoration:"none" },
+  spotlightLink: { fontSize:10, color:"var(--accent-red)", fontWeight:700, textDecoration:"none" },
 
   // QUOTE OF THE DAY
   quoteBar: {
     display:"flex", gap:10, alignItems:"flex-start",
-    background:"transparent", borderLeft:"2px solid #333",
+    background:"transparent", borderLeft:"2px solid var(--muted)",
     padding:"8px 12px", marginBottom:12,
   },
-  quoteIcon: { fontSize:14, flexShrink:0, marginTop:2, color:"#555" },
+  quoteIcon: { fontSize:14, flexShrink:0, marginTop:2, color:"var(--muted)" },
   quoteBody: { flex:1 },
   quoteText: {
     margin:"0 0 3px", fontSize:11, fontStyle:"italic",
-    color:"#ccc", lineHeight:1.5, fontFamily:"'Georgia',serif",
+    color:"var(--muted)", lineHeight:1.5, fontFamily:"'Georgia',serif",
   },
-  quoteAuthor: { margin:0, fontSize:9, color:"#666", letterSpacing:"0.05em" },
-  quoteTeam: { color:"#c8201c", fontWeight:700 },
-  quoteLinkSmall: { fontSize:8, color:"#555", fontWeight:700, textDecoration:"none", letterSpacing:"0.05em" },
+  quoteAuthor: { margin:0, fontSize:9, color:"var(--muted)", letterSpacing:"0.05em" },
+  quoteTeam: { color:"var(--accent-red)", fontWeight:700 },
+  quoteLinkSmall: { fontSize:8, color:"var(--muted)", fontWeight:700, textDecoration:"none", letterSpacing:"0.05em" },
 
   // STATS
   statsRoot: { paddingTop:8 },
@@ -13623,55 +13691,55 @@ const styles = {
     display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(280px,1fr))",
     gap:16, marginTop:8,
   },
-  statsCat: { border:"1px solid #2a2a2a", overflow:"hidden" },
+  statsCat: { border:"1px solid var(--border)", overflow:"hidden" },
   statsCatHeader: {
     display:"flex", justifyContent:"space-between", alignItems:"center",
-    background:"#2e343a", padding:"8px 12px",
-    borderBottom:"1px solid #2a2a2a",
+    background:"var(--border)", padding:"8px 12px",
+    borderBottom:"1px solid var(--border)",
   },
-  statsCatName: { fontSize:10, fontWeight:900, letterSpacing:"0.15em", color:"#e8e0d0" },
-  statsCatAbbrev: { fontSize:9, color:"#c8201c", fontWeight:900, letterSpacing:"0.1em" },
+  statsCatName: { fontSize:10, fontWeight:900, letterSpacing:"0.15em", color:"var(--ink)" },
+  statsCatAbbrev: { fontSize:9, color:"var(--accent-red)", fontWeight:900, letterSpacing:"0.1em" },
   statsRow: {
     display:"flex", alignItems:"center", gap:8,
     padding:"7px 10px", textDecoration:"none", color:"inherit",
-    borderTop:"1px solid #111", transition:"background 0.1s",
+    borderTop:"1px solid var(--ink)", transition:"background 0.1s",
   },
-  statsRowAlt: { background:"#0f0f0f" },
-  statsRowNY: { borderLeft:"2px solid #c8201c", background:"#161616" },
-  statsRank: { fontSize:10, color:"#888", minWidth:16, textAlign:"center", fontWeight:900 },
+  statsRowAlt: { background:"var(--bg-content)" },
+  statsRowNY: { borderLeft:"2px solid var(--accent-red)", background:"var(--bg-content)" },
+  statsRank: { fontSize:10, color:"var(--muted)", minWidth:16, textAlign:"center", fontWeight:900 },
   statsHeadshot: { width:24, height:24, borderRadius:"50%", objectFit:"cover", flexShrink:0 },
   statsPlayerInfo: { flex:1, display:"flex", flexDirection:"column", gap:1 },
-  statsName: { fontSize:12, color:"#aaa", fontWeight:700 },
-  statsTeam: { fontSize:9, color:"#888", letterSpacing:"0.04em" },
-  statsValue: { fontSize:14, fontWeight:900, color:"#888", fontFamily:"'Georgia',serif", minWidth:40, textAlign:"right" },
-  statsNYBadge: { fontSize:7, background:"#c8201c", color:"#fff", padding:"1px 4px", fontWeight:900, letterSpacing:"0.05em" },
+  statsName: { fontSize:12, color:"var(--muted)", fontWeight:700 },
+  statsTeam: { fontSize:9, color:"var(--muted)", letterSpacing:"0.04em" },
+  statsValue: { fontSize:14, fontWeight:900, color:"var(--muted)", fontFamily:"'Georgia',serif", minWidth:40, textAlign:"right" },
+  statsNYBadge: { fontSize:7, background:"var(--accent-red)", color:"#fff", padding:"1px 4px", fontWeight:900, letterSpacing:"0.05em" },
   statsDeepDive: {
     display:"flex", alignItems:"center", gap:14,
     marginTop:20, padding:"12px 16px",
-    background:"#161616", border:"1px solid #2a2a2a",
+    background:"var(--bg-content)", border:"1px solid var(--border)",
   },
-  statsDeepDiveLabel: { fontSize:9, color:"#888", fontWeight:900, letterSpacing:"0.15em" },
+  statsDeepDiveLabel: { fontSize:9, color:"var(--muted)", fontWeight:900, letterSpacing:"0.15em" },
   statsDeepDiveLink: {
-    fontSize:10, color:"#c8201c", fontWeight:900, letterSpacing:"0.1em",
+    fontSize:10, color:"var(--accent-red)", fontWeight:900, letterSpacing:"0.1em",
     textDecoration:"none",
   },
 
   // STATS REFERENCE
   statsRoot: { paddingTop:8 },
   statsLeagueHeader: {
-    padding:"14px 16px", background:"#161616",
+    padding:"14px 16px", background:"var(--bg-content)",
     marginBottom:16, display:"flex", alignItems:"center",
   },
-  statsLeagueTitle: { fontSize:16, fontWeight:900, color:"#e8e0d0", letterSpacing:"0.1em", fontFamily:"'Georgia',serif" },
-  statsLeagueDesc: { margin:"4px 0 0", fontSize:11, color:"#888" },
-  statsNYTeams: { margin:"4px 0 0", fontSize:10, color:"#c8201c", fontWeight:700, letterSpacing:"0.05em" },
+  statsLeagueTitle: { fontSize:16, fontWeight:900, color:"var(--ink)", letterSpacing:"0.1em", fontFamily:"'Georgia',serif" },
+  statsLeagueDesc: { margin:"4px 0 0", fontSize:11, color:"var(--muted)" },
+  statsNYTeams: { margin:"4px 0 0", fontSize:10, color:"var(--accent-red)", fontWeight:700, letterSpacing:"0.05em" },
   statsRefGrid: {
     display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(220px,1fr))",
     gap:8, marginBottom:20,
   },
   statsRefCard: {
     display:"flex", alignItems:"center", gap:10,
-    background:"#161616", border:"1px solid #2a2a2a",
+    background:"var(--bg-content)", border:"1px solid var(--border)",
     padding:"12px 14px", textDecoration:"none",
     transition:"border-color 0.15s", cursor:"pointer",
   },
@@ -13681,163 +13749,163 @@ const styles = {
     letterSpacing:"0.05em", flexShrink:0,
   },
   statsRefBody: { flex:1, display:"flex", flexDirection:"column", gap:2 },
-  statsRefName: { fontSize:12, fontWeight:700, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  statsRefDesc: { fontSize:9, color:"#888", letterSpacing:"0.04em" },
-  statsRefArrow: { fontSize:14, color:"#c8201c", fontWeight:900 },
-  statsNYSection: { borderTop:"1px solid #2a2a2a", paddingTop:16 },
-  statsNYHeader: { fontSize:9, fontWeight:900, color:"#c8201c", letterSpacing:"0.2em", marginBottom:10 },
+  statsRefName: { fontSize:12, fontWeight:700, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  statsRefDesc: { fontSize:9, color:"var(--muted)", letterSpacing:"0.04em" },
+  statsRefArrow: { fontSize:14, color:"var(--accent-red)", fontWeight:900 },
+  statsNYSection: { borderTop:"1px solid var(--border)", paddingTop:16 },
+  statsNYHeader: { fontSize:9, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.2em", marginBottom:10 },
   statsNYCards: { display:"flex", flexWrap:"wrap", gap:8 },
   statsNYCard: {
-    padding:"8px 16px", border:"1px solid #333", background:"#2e343a",
-    color:"#aaa", fontSize:10, fontWeight:900, letterSpacing:"0.1em",
+    padding:"8px 16px", border:"1px solid var(--muted)", background:"var(--border)",
+    color:"var(--muted)", fontSize:10, fontWeight:900, letterSpacing:"0.1em",
     textDecoration:"none", fontFamily:"'Georgia',serif",
   },
   stdRoot: { paddingTop: 8 },
-  stdHeader: { borderBottom: "2px solid #2a2a2a", paddingBottom: 12, marginBottom: 16 },
-  stdTitle: { margin:"0 0 4px", fontSize:14, fontWeight:900, letterSpacing:"0.15em", color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  stdSub: { margin:0, fontSize:9, color:"#c8201c", letterSpacing:"0.2em", fontWeight:700 },
+  stdHeader: { borderBottom: "2px solid var(--border)", paddingBottom: 12, marginBottom: 16 },
+  stdTitle: { margin:"0 0 4px", fontSize:14, fontWeight:900, letterSpacing:"0.15em", color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  stdSub: { margin:0, fontSize:9, color:"var(--accent-red)", letterSpacing:"0.2em", fontWeight:700 },
   stdGroups: { display:"flex", flexDirection:"column", gap:20, marginTop:16 },
   stdGroup: {},
-  stdDivisionHeader: { fontSize:9, fontWeight:900, letterSpacing:"0.18em", color:"#888", marginBottom:8 },
-  stdTable: { border:"1px solid #2a2a2a", overflow:"hidden" },
+  stdDivisionHeader: { fontSize:9, fontWeight:900, letterSpacing:"0.18em", color:"var(--muted)", marginBottom:8 },
+  stdTable: { border:"1px solid var(--border)", overflow:"hidden" },
   stdRowHeader: {
     display:"grid", gridTemplateColumns:"1fr 40px 40px 60px 50px",
-    background:"#2e343a", padding:"6px 10px",
-    fontSize:8, fontWeight:900, letterSpacing:"0.15em", color:"#555",
+    background:"var(--border)", padding:"6px 10px",
+    fontSize:8, fontWeight:900, letterSpacing:"0.15em", color:"var(--muted)",
   },
   stdRow: {
     display:"grid", gridTemplateColumns:"1fr 40px 40px 60px 50px",
     padding:"8px 10px", alignItems:"center",
-    borderTop:"1px solid #2e343a",
+    borderTop:"1px solid var(--border)",
   },
-  stdRowAlt: { background:"#0f0f0f" },
-  stdRowNY: { borderLeft:"3px solid #c8201c", background:"#161616" },
+  stdRowAlt: { background:"var(--bg-content)" },
+  stdRowNY: { borderLeft:"3px solid var(--accent-red)", background:"var(--bg-content)" },
   stdColTeam: { display:"flex", alignItems:"center", gap:6, fontSize:11 },
-  stdColStat: { fontSize:11, color:"#aaa", textAlign:"center" },
+  stdColStat: { fontSize:11, color:"var(--muted)", textAlign:"center" },
   stdLogo: { width:18, height:18, objectFit:"contain", flexShrink:0 },
-  stdTeamName: { fontSize:11, color:"#888" },
-  stdNYBadge: { fontSize:7, background:"#c8201c", color:"#fff", padding:"1px 4px", fontWeight:900, letterSpacing:"0.05em", marginLeft:4 },
+  stdTeamName: { fontSize:11, color:"var(--muted)" },
+  stdNYBadge: { fontSize:7, background:"var(--accent-red)", color:"#fff", padding:"1px 4px", fontWeight:900, letterSpacing:"0.05em", marginLeft:4 },
 
   // SCHEDULE
   schRoot: { paddingTop:8 },
   schList: { display:"flex", flexDirection:"column", gap:2 },
   schDateHeader: {
-    fontSize:9, fontWeight:900, letterSpacing:"0.18em", color:"#c8201c",
-    background:"#161616", padding:"6px 12px", marginTop:16, marginBottom:4,
-    borderLeft:"3px solid #c8201c",
+    fontSize:9, fontWeight:900, letterSpacing:"0.18em", color:"var(--accent-red)",
+    background:"var(--bg-content)", padding:"6px 12px", marginTop:16, marginBottom:4,
+    borderLeft:"3px solid var(--accent-red)",
   },
   schRow: {
     display:"flex", alignItems:"center", gap:10,
-    background:"#111", border:"1px solid #2e343a",
+    background:"var(--ink)", border:"1px solid var(--border)",
     padding:"10px 12px", flexWrap:"wrap",
   },
   schTeamBadge: { display:"flex", flexDirection:"column", alignItems:"center", gap:2, minWidth:54, flexShrink:0 },
   schSport: { fontSize:14 },
-  schTeamLabel: { fontSize:8, fontWeight:900, color:"#c8201c", letterSpacing:"0.08em" },
+  schTeamLabel: { fontSize:8, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.08em" },
   schMatchup: { flex:1, display:"flex", flexDirection:"column", gap:4, minWidth:140 },
   schTeamLine: { display:"flex", alignItems:"center", gap:6 },
-  schTeamName: { fontSize:12, fontWeight:700, color:"#ccc" },
-  schAt: { fontSize:8, color:"#888", paddingLeft:24 },
+  schTeamName: { fontSize:12, fontWeight:700, color:"var(--muted)" },
+  schAt: { fontSize:8, color:"var(--muted)", paddingLeft:24 },
   schRight: { display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4, minWidth:80 },
-  schTime: { fontSize:11, fontWeight:900, color:"#e8e0d0", letterSpacing:"0.03em" },
-  schVenue: { fontSize:8, color:"#888", textAlign:"right" },
+  schTime: { fontSize:11, fontWeight:900, color:"var(--ink)", letterSpacing:"0.03em" },
+  schVenue: { fontSize:8, color:"var(--muted)", textAlign:"right" },
 
   gameInfoBar: {
     display:"flex", gap:12, flexWrap:"wrap", padding:"6px 10px",
-    background:"#111", fontSize:9, color:"#888", marginBottom:8,
-    borderBottom:"1px solid #2e343a",
+    background:"var(--ink)", fontSize:9, color:"var(--muted)", marginBottom:8,
+    borderBottom:"1px solid var(--border)",
   },
-  scoringSummary: { marginBottom: 12, border:"1px solid #2a2a2a", overflow:"hidden" },
-  scoringHeader: { fontSize:8, fontWeight:900, letterSpacing:"0.15em", color:"#c8201c", background:"#2e343a", padding:"5px 10px" },
-  scoringPlay: { display:"flex", gap:8, padding:"6px 10px", alignItems:"flex-start", fontSize:10, borderTop:"1px solid #2e343a" },
+  scoringSummary: { marginBottom: 12, border:"1px solid var(--border)", overflow:"hidden" },
+  scoringHeader: { fontSize:8, fontWeight:900, letterSpacing:"0.15em", color:"var(--accent-red)", background:"var(--border)", padding:"5px 10px" },
+  scoringPlay: { display:"flex", gap:8, padding:"6px 10px", alignItems:"flex-start", fontSize:10, borderTop:"1px solid var(--border)" },
   scoringLeft: { display:"flex", flexDirection:"column", gap:2, minWidth:70, flexShrink:0 },
-  scoringPeriod: { color:"#666", fontSize:9, letterSpacing:"0.05em" },
-  scoringTeamBadge: { color:"#c8201c", fontWeight:900, fontSize:9, letterSpacing:"0.05em" },
+  scoringPeriod: { color:"var(--muted)", fontSize:9, letterSpacing:"0.05em" },
+  scoringTeamBadge: { color:"var(--accent-red)", fontWeight:900, fontSize:9, letterSpacing:"0.05em" },
   scoringMiddle: { flex:1, display:"flex", flexDirection:"column", gap:2 },
-  scoringAthletes: { color:"#e8e0d0", fontWeight:700, fontSize:10 },
-  scoringText: { color:"#aaa", fontSize:10, lineHeight:1.4 },
-  scoringScore: { color:"#e8e0d0", fontWeight:900, fontSize:11, minWidth:35, textAlign:"right", flexShrink:0, fontFamily:"'Georgia',serif" },
+  scoringAthletes: { color:"var(--ink)", fontWeight:700, fontSize:10 },
+  scoringText: { color:"var(--muted)", fontSize:10, lineHeight:1.4 },
+  scoringScore: { color:"var(--ink)", fontWeight:900, fontSize:11, minWidth:35, textAlign:"right", flexShrink:0, fontFamily:"'Georgia',serif" },
 
   // BOX SCORE
   boxScoreBtn: {
-    marginTop:8, background:"transparent", border:"1px solid #333",
-    color:"#666", fontSize:9, fontWeight:900, letterSpacing:"0.1em",
+    marginTop:8, background:"transparent", border:"1px solid var(--muted)",
+    color:"var(--muted)", fontSize:9, fontWeight:900, letterSpacing:"0.1em",
     padding:"4px 10px", cursor:"pointer", width:"100%",
     fontFamily:"'Georgia',serif", transition:"all 0.15s",
   },
   boxScorePanel: {
-    marginTop:8, borderTop:"1px solid #2a2a2a", paddingTop:8,
+    marginTop:8, borderTop:"1px solid var(--border)", paddingTop:8,
   },
   boxScoreLoading: { display:"flex", justifyContent:"center", padding:"16px 0" },
-  boxScoreEmpty: { fontSize:10, color:"#444", textAlign:"center", margin:"10px 0" },
+  boxScoreEmpty: { fontSize:10, color:"var(--muted)", textAlign:"center", margin:"10px 0" },
   lineScoreWrap: { overflowX:"auto", marginBottom:12 },
   lineScoreTable: { width:"100%", borderCollapse:"collapse", fontSize:10 },
-  lsThTeam: { textAlign:"left", padding:"4px 6px", color:"#666", fontWeight:900, fontSize:8, letterSpacing:"0.1em", background:"#2e343a" },
-  lsTh: { textAlign:"center", padding:"4px 6px", color:"#666", fontWeight:900, fontSize:8, letterSpacing:"0.1em", background:"#2e343a" },
-  lsTdTeam: { padding:"4px 6px", color:"#aaa", fontSize:10, fontWeight:700, whiteSpace:"nowrap" },
-  lsTd: { textAlign:"center", padding:"4px 6px", color:"#888", fontSize:10 },
+  lsThTeam: { textAlign:"left", padding:"4px 6px", color:"var(--muted)", fontWeight:900, fontSize:8, letterSpacing:"0.1em", background:"var(--border)" },
+  lsTh: { textAlign:"center", padding:"4px 6px", color:"var(--muted)", fontWeight:900, fontSize:8, letterSpacing:"0.1em", background:"var(--border)" },
+  lsTdTeam: { padding:"4px 6px", color:"var(--muted)", fontSize:10, fontWeight:700, whiteSpace:"nowrap" },
+  lsTd: { textAlign:"center", padding:"4px 6px", color:"var(--muted)", fontSize:10 },
   playerStatsSection: { marginBottom:12 },
   playerStatsTeamHeader: {
-    fontSize:9, fontWeight:900, letterSpacing:"0.15em", color:"#c8201c",
-    padding:"4px 0", marginBottom:6, borderBottom:"1px solid #2a2a2a",
+    fontSize:9, fontWeight:900, letterSpacing:"0.15em", color:"var(--accent-red)",
+    padding:"4px 0", marginBottom:6, borderBottom:"1px solid var(--border)",
   },
   statGroupWrap: { marginBottom:10 },
   statGroupName: { fontSize:8, color:"#999", letterSpacing:"0.15em", fontWeight:900, marginBottom:4 },
   statTableWrap: { overflowX:"auto" },
   statTable: { width:"100%", borderCollapse:"collapse", fontSize:10, minWidth:300 },
-  statThPlayer: { textAlign:"left", padding:"3px 6px", color:"#555", fontWeight:900, fontSize:8, background:"#2e343a", cursor:"pointer", whiteSpace:"nowrap" },
-  statTh: { textAlign:"center", padding:"3px 6px", color:"#555", fontWeight:900, fontSize:8, background:"#2e343a", cursor:"pointer", whiteSpace:"nowrap" },
-  statTdPlayer: { padding:"3px 6px", color:"#bbb", fontSize:10, whiteSpace:"nowrap" },
-  statTd: { textAlign:"center", padding:"3px 6px", color:"#888", fontSize:10 },
+  statThPlayer: { textAlign:"left", padding:"3px 6px", color:"var(--muted)", fontWeight:900, fontSize:8, background:"var(--border)", cursor:"pointer", whiteSpace:"nowrap" },
+  statTh: { textAlign:"center", padding:"3px 6px", color:"var(--muted)", fontWeight:900, fontSize:8, background:"var(--border)", cursor:"pointer", whiteSpace:"nowrap" },
+  statTdPlayer: { padding:"3px 6px", color:"var(--muted)", fontSize:10, whiteSpace:"nowrap" },
+  statTd: { textAlign:"center", padding:"3px 6px", color:"var(--muted)", fontSize:10 },
 
   // STADIUM HISTORY
   stadiumGrid: { display:"flex", flexDirection:"column", gap:12 },
   stadiumCard: {
-    display:"flex", gap:14, background:"#161616",
-    border:"1px solid #2a2a2a", padding:"14px 16px",
-    borderLeft:"3px solid #c8201c",
+    display:"flex", gap:14, background:"var(--bg-content)",
+    border:"1px solid var(--border)", padding:"14px 16px",
+    borderLeft:"3px solid var(--accent-red)",
   },
   stadiumEmoji: { fontSize:28, flexShrink:0, paddingTop:4 },
   stadiumBody: { flex:1 },
-  stadiumName: { fontSize:15, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", marginBottom:4 },
+  stadiumName: { fontSize:15, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif", marginBottom:4 },
   stadiumMeta: { display:"flex", gap:10, flexWrap:"wrap", marginBottom:4 },
-  stadiumTeam: { fontSize:10, color:"#c8201c", fontWeight:900, letterSpacing:"0.05em" },
-  stadiumYears: { fontSize:10, color:"#888" },
-  stadiumCap: { fontSize:10, color:"#666" },
-  stadiumLocation: { fontSize:10, color:"#888", marginBottom:6 },
-  stadiumNote: { margin:"0 0 8px", fontSize:12, color:"#aaa", lineHeight:1.6, fontFamily:"'Georgia',serif" },
+  stadiumTeam: { fontSize:10, color:"var(--accent-red)", fontWeight:900, letterSpacing:"0.05em" },
+  stadiumYears: { fontSize:10, color:"var(--muted)" },
+  stadiumCap: { fontSize:10, color:"var(--muted)" },
+  stadiumLocation: { fontSize:10, color:"var(--muted)", marginBottom:6 },
+  stadiumNote: { margin:"0 0 8px", fontSize:12, color:"var(--muted)", lineHeight:1.6, fontFamily:"'Georgia',serif" },
 
   // HISTORY
   histRoot: { paddingTop:8 },
-  histList: { border:"1px solid #2a2a2a", overflow:"hidden" },
+  histList: { border:"1px solid var(--border)", overflow:"hidden" },
   histListHeader: {
-    background:"#2e343a", padding:"12px 14px",
-    borderBottom:"1px solid #2a2a2a",
+    background:"var(--border)", padding:"12px 14px",
+    borderBottom:"1px solid var(--border)",
     display:"flex", flexWrap:"wrap", gap:10, alignItems:"center",
   },
   histListTitle: {
     fontSize:12, fontWeight:900, letterSpacing:"0.08em",
-    color:"#e8e0d0", fontFamily:"'Georgia',serif", flex:1,
+    color:"var(--ink)", fontFamily:"'Georgia',serif", flex:1,
   },
   histRow: {
     display:"flex", alignItems:"center", gap:12,
-    padding:"10px 14px", borderTop:"1px solid #111",
+    padding:"10px 14px", borderTop:"1px solid var(--ink)",
   },
-  histRowAlt: { background:"#0f0f0f" },
+  histRowAlt: { background:"var(--bg-content)" },
   histRowFirst: { background:"#1a1500", borderLeft:"3px solid #FFD700" },
   histRank: {
     fontSize:13, fontWeight:900, minWidth:28, textAlign:"center",
-    color:"#555", fontFamily:"'Georgia',serif",
+    color:"var(--muted)", fontFamily:"'Georgia',serif",
   },
   histRankFirst:  { color:"#FFD700" },
-  histRankSecond: { color:"#aaa"    },
+  histRankSecond: { color:"var(--muted)"    },
   histRankThird:  { color:"#cd7f32" },
   histInfo: { flex:1, display:"flex", flexDirection:"column", gap:2 },
-  histName: { fontSize:13, fontWeight:700, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  histYears: { fontSize:9, color:"#555", letterSpacing:"0.04em" },
+  histName: { fontSize:13, fontWeight:700, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  histYears: { fontSize:9, color:"var(--muted)", letterSpacing:"0.04em" },
   histLinks: { display:"flex", gap:8, marginTop:4 },
   histLink: {
-    fontSize:9, color:"#c8201c", textDecoration:"none",
+    fontSize:9, color:"var(--accent-red)", textDecoration:"none",
     fontWeight:700, letterSpacing:"0.05em",
   },
 
@@ -13845,160 +13913,160 @@ const styles = {
   droughtRow: { display:"flex", alignItems:"center", gap:12, padding:"10px 12px", flexWrap:"wrap" },
   droughtTeam: { display:"flex", alignItems:"center", gap:8, minWidth:140, flexShrink:0 },
   droughtEmoji: { fontSize:18 },
-  droughtTeamName: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  droughtSport: { fontSize:9, color:"#666" },
-  droughtBar: { flex:1, height:8, background:"#2e343a", borderRadius:4, overflow:"hidden", minWidth:60 },
+  droughtTeamName: { fontSize:13, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  droughtSport: { fontSize:9, color:"var(--muted)" },
+  droughtBar: { flex:1, height:8, background:"var(--border)", borderRadius:4, overflow:"hidden", minWidth:60 },
   droughtFill: { height:"100%", borderRadius:4, transition:"width 0.5s" },
   droughtRight: { display:"flex", flexDirection:"column", alignItems:"flex-end", minWidth:120 },
-  droughtYear: { fontSize:11, fontWeight:900, color:"#aaa" },
-  droughtNote: { fontSize:9, color:"#666" },
+  droughtYear: { fontSize:11, fontWeight:900, color:"var(--muted)" },
+  droughtNote: { fontSize:9, color:"var(--muted)" },
 
   // RIVALS
-  rivalRow: { display:"flex", alignItems:"center", gap:12, padding:"12px 14px", flexWrap:"wrap", borderTop:"1px solid #2e343a" },
+  rivalRow: { display:"flex", alignItems:"center", gap:12, padding:"12px 14px", flexWrap:"wrap", borderTop:"1px solid var(--border)" },
   rivalTeams: { display:"flex", alignItems:"center", gap:8, minWidth:200, flexShrink:0 },
-  rivalTeam: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  rivalVs: { fontSize:10, color:"#c8201c", fontWeight:900 },
-  rivalSport: { fontSize:9, color:"#555", marginLeft:4 },
+  rivalTeam: { fontSize:13, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  rivalVs: { fontSize:10, color:"var(--accent-red)", fontWeight:900 },
+  rivalSport: { fontSize:9, color:"var(--muted)", marginLeft:4 },
   rivalInfo: { flex:1, display:"flex", flexDirection:"column", gap:2 },
-  rivalStat: { fontSize:11, fontWeight:700, color:"#aaa" },
-  rivalNote: { fontSize:10, color:"#666" },
+  rivalStat: { fontSize:11, fontWeight:700, color:"var(--muted)" },
+  rivalNote: { fontSize:10, color:"var(--muted)" },
 
   // TEAM LINKS
   teamLinkCard: {
-    background:"#161616", border:"1px solid #2a2a2a",
+    background:"var(--bg-content)", border:"1px solid var(--border)",
     padding:"14px", display:"flex", flexDirection:"column", gap:10,
   },
   teamLinkHeader: { display:"flex", alignItems:"center", gap:8 },
   teamLinkEmoji: { fontSize:20 },
-  teamLinkName: { fontSize:14, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", flex:1 },
-  teamLinkLeague: { fontSize:9, color:"#666", letterSpacing:"0.1em" },
+  teamLinkName: { fontSize:14, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif", flex:1 },
+  teamLinkLeague: { fontSize:9, color:"var(--muted)", letterSpacing:"0.1em" },
   teamLinkBtns: { display:"flex", flexDirection:"column", gap:4 },
   teamLinkBtn: {
-    display:"block", padding:"6px 10px", background:"#2e343a",
-    border:"1px solid #2a2a2a", color:"#aaa", textDecoration:"none",
+    display:"block", padding:"6px 10px", background:"var(--border)",
+    border:"1px solid var(--border)", color:"var(--muted)", textDecoration:"none",
     fontSize:10, fontWeight:700, letterSpacing:"0.05em",
     transition:"border-color 0.15s",
   },
 
   // RECAP TAB
-  recapScoreRow: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderTop:"1px solid #2e343a", flexWrap:"wrap", gap:8 },
+  recapScoreRow: { display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 14px", borderTop:"1px solid var(--border)", flexWrap:"wrap", gap:8 },
   recapTeams: { display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" },
-  recapSport: { fontSize:9, color:"#666", fontWeight:900, letterSpacing:"0.1em" },
-  recapAway: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  recapScore: { fontSize:14, fontWeight:900, color:"#c8201c", fontFamily:"'Georgia',serif" },
-  recapHome: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  recapStatus: { fontSize:10, color:"#888" },
+  recapSport: { fontSize:9, color:"var(--muted)", fontWeight:900, letterSpacing:"0.1em" },
+  recapAway: { fontSize:13, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  recapScore: { fontSize:14, fontWeight:900, color:"var(--accent-red)", fontFamily:"'Georgia',serif" },
+  recapHome: { fontSize:13, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  recapStatus: { fontSize:10, color:"var(--muted)" },
   ytTeamGrid: { display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(200px, 1fr))", gap:8 },
-  ytTeamCard: { display:"flex", alignItems:"center", gap:12, padding:"12px 14px", textDecoration:"none", border:"1px solid #2a2a2a" },
+  ytTeamCard: { display:"flex", alignItems:"center", gap:12, padding:"12px 14px", textDecoration:"none", border:"1px solid var(--border)" },
   ytEmoji: { fontSize:24, flexShrink:0 },
   ytInfo: { flex:1, display:"flex", flexDirection:"column", gap:2 },
-  ytTeamName: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  ytSubtext: { fontSize:9, color:"#888" },
+  ytTeamName: { fontSize:13, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  ytSubtext: { fontSize:9, color:"var(--muted)" },
 
   // ICONIC EVENTS
-  iconicRow: { display:"flex", gap:14, padding:"11px 14px", borderTop:"1px solid #2e343a", alignItems:"flex-start" },
+  iconicRow: { display:"flex", gap:14, padding:"11px 14px", borderTop:"1px solid var(--border)", alignItems:"flex-start" },
   iconicIcon: { fontSize:18, flexShrink:0, width:26, textAlign:"center", paddingTop:1 },
-  iconicYear: { fontSize:15, fontWeight:900, color:"#c8201c", fontFamily:"'Georgia',serif", flexShrink:0, width:52 },
+  iconicYear: { fontSize:15, fontWeight:900, color:"var(--accent-red)", fontFamily:"'Georgia',serif", flexShrink:0, width:52 },
   iconicInfo: { flex:1, display:"flex", flexDirection:"column", gap:3 },
-  iconicTitle: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  iconicDesc: { fontSize:11, color:"#aaa", lineHeight:1.6 },
+  iconicTitle: { fontSize:13, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  iconicDesc: { fontSize:11, color:"var(--muted)", lineHeight:1.6 },
 
   // TODAY IN NY SPORTS
-  todayCard: { display:"flex", gap:14, padding:"14px 16px", borderTop:"1px solid #2e343a" },
+  todayCard: { display:"flex", gap:14, padding:"14px 16px", borderTop:"1px solid var(--border)" },
   todayEmoji: { fontSize:28, flexShrink:0, paddingTop:2 },
   todayBody: { flex:1 },
   todayHeader: { display:"flex", gap:10, alignItems:"center", marginBottom:4 },
-  todayYear: { fontSize:16, fontWeight:900, color:"#c8201c", fontFamily:"'Georgia',serif" },
-  todayTeam: { fontSize:10, color:"#888", fontWeight:700, letterSpacing:"0.08em" },
-  todayTitle: { fontSize:14, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", marginBottom:6 },
-  todayDesc: { margin:"0 0 8px", fontSize:11, color:"#aaa", lineHeight:1.6 },
+  todayYear: { fontSize:16, fontWeight:900, color:"var(--accent-red)", fontFamily:"'Georgia',serif" },
+  todayTeam: { fontSize:10, color:"var(--muted)", fontWeight:700, letterSpacing:"0.08em" },
+  todayTitle: { fontSize:14, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif", marginBottom:6 },
+  todayDesc: { margin:"0 0 8px", fontSize:11, color:"var(--muted)", lineHeight:1.6 },
 
   // POLLS
-  pollCard: { background:"#161616", border:"1px solid #2a2a2a", padding:"16px" },
-  pollQuestion: { fontSize:14, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif", marginBottom:12 },
+  pollCard: { background:"var(--bg-content)", border:"1px solid var(--border)", padding:"16px" },
+  pollQuestion: { fontSize:14, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif", marginBottom:12 },
   pollOptions: { display:"flex", flexDirection:"column", gap:6 },
   pollOptionWrap: { position:"relative" },
   pollOption: {
     display:"flex", alignItems:"center", width:"100%", padding:"8px 12px",
-    background:"#2e343a", border:"1px solid #333", color:"#e8e0d0",
+    background:"var(--border)", border:"1px solid var(--muted)", color:"var(--ink)",
     fontSize:11, fontWeight:700, textAlign:"left", position:"relative", overflow:"hidden",
     transition:"border-color 0.15s",
   },
-  pollOptionVoted: { border:"1px solid #c8201c", color:"#fff" },
-  pollOptionDisabled: { color:"#888" },
+  pollOptionVoted: { border:"1px solid var(--accent-red)", color:"#fff" },
+  pollOptionDisabled: { color:"var(--muted)" },
   pollBar: { position:"absolute", left:0, top:0, bottom:0, opacity:0.2, transition:"width 0.4s" },
   pollOptionText: { position:"relative", zIndex:1, flex:1 },
-  pollPct: { position:"relative", zIndex:1, fontSize:12, fontWeight:900, color:"#c8201c" },
-  pollMeta: { marginTop:8, fontSize:9, color:"#555", letterSpacing:"0.08em" },
+  pollPct: { position:"relative", zIndex:1, fontSize:12, fontWeight:900, color:"var(--accent-red)" },
+  pollMeta: { marginTop:8, fontSize:9, color:"var(--muted)", letterSpacing:"0.08em" },
 
   // HALL OF FAME
-  hofRow: { display:"flex", gap:14, padding:"12px 14px", borderTop:"1px solid #2e343a" },
+  hofRow: { display:"flex", gap:14, padding:"12px 14px", borderTop:"1px solid var(--border)" },
   hofEmoji: { fontSize:22, flexShrink:0, paddingTop:2 },
   hofInfo: { flex:1 },
   hofHeader: { display:"flex", alignItems:"center", gap:10, flexWrap:"wrap", marginBottom:4 },
-  hofName: { fontSize:14, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  hofPos: { fontSize:10, color:"#c8201c", fontWeight:900 },
-  hofYear: { fontSize:10, color:"#888" },
-  hofNote: { margin:"0 0 6px", fontSize:11, color:"#aaa" },
+  hofName: { fontSize:14, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  hofPos: { fontSize:10, color:"var(--accent-red)", fontWeight:900 },
+  hofYear: { fontSize:10, color:"var(--muted)" },
+  hofNote: { margin:"0 0 6px", fontSize:11, color:"var(--muted)" },
 
   // MISERY INDEX
-  miseryCard: { background:"#161616", border:"1px solid #2a2a2a", padding:"14px 16px", marginBottom:12 },
+  miseryCard: { background:"var(--bg-content)", border:"1px solid var(--border)", padding:"14px 16px", marginBottom:12 },
   miseryHeader: { display:"flex", alignItems:"center", gap:12, marginBottom:8 },
-  miseryRank: { fontSize:20, fontWeight:900, color:"#666", fontFamily:"'Georgia',serif", minWidth:28 },
+  miseryRank: { fontSize:20, fontWeight:900, color:"var(--muted)", fontFamily:"'Georgia',serif", minWidth:28 },
   miseryEmoji: { fontSize:28, flexShrink:0 },
   miseryTeamInfo: { flex:1 },
-  miseryTeamName: { display:"block", fontSize:16, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  miseryTitle: { display:"block", fontSize:9, color:"#c8201c", fontWeight:900, letterSpacing:"0.1em" },
-  miseryScoreBox: { minWidth:80, position:"relative", height:20, background:"#2e343a", flexShrink:0 },
+  miseryTeamName: { display:"block", fontSize:16, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  miseryTitle: { display:"block", fontSize:9, color:"var(--accent-red)", fontWeight:900, letterSpacing:"0.1em" },
+  miseryScoreBox: { minWidth:80, position:"relative", height:20, background:"var(--border)", flexShrink:0 },
   miseryScoreFill: { position:"absolute", left:0, top:0, bottom:0, transition:"width 0.5s" },
   miseryScore: { position:"absolute", right:6, top:"50%", transform:"translateY(-50%)", fontSize:12, fontWeight:900, color:"#fff" },
   miseryMeta: { display:"flex", gap:16, marginBottom:8 },
   miseryLowlights: { display:"flex", flexDirection:"column", gap:4, marginBottom:8 },
-  miseryLow: { fontSize:11, color:"#aaa", paddingLeft:4 },
-  miseryBright: { fontSize:11, color:"#4ade80", fontStyle:"italic", paddingTop:8, borderTop:"1px solid #2e343a" },
+  miseryLow: { fontSize:11, color:"var(--muted)", paddingLeft:4 },
+  miseryBright: { fontSize:11, color:"#4ade80", fontStyle:"italic", paddingTop:8, borderTop:"1px solid var(--border)" },
 
   // RADIO
-  radioRow: { display:"flex", alignItems:"center", gap:12, padding:"10px 14px", textDecoration:"none", borderTop:"1px solid #2e343a" },
+  radioRow: { display:"flex", alignItems:"center", gap:12, padding:"10px 14px", textDecoration:"none", borderTop:"1px solid var(--border)" },
   
   // BEAT WRITERS / FAN COMMUNITIES / NY SITES
-  beatWriterRow: { display:"flex", alignItems:"center", gap:12, padding:"10px 14px", textDecoration:"none", borderTop:"1px solid #2e343a" },
+  beatWriterRow: { display:"flex", alignItems:"center", gap:12, padding:"10px 14px", textDecoration:"none", borderTop:"1px solid var(--border)" },
   beatWriterIcon: { fontSize:22, flexShrink:0, width:30, textAlign:"center" },
   beatWriterInfo: { flex:1, display:"flex", flexDirection:"column", gap:3 },
   beatWriterTopLine: { display:"flex", gap:10, alignItems:"baseline" },
-  beatWriterName: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  beatWriterHandle: { fontSize:10, color:"#888" },
+  beatWriterName: { fontSize:13, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  beatWriterHandle: { fontSize:10, color:"var(--muted)" },
   beatWriterMeta: { display:"flex", gap:10, alignItems:"center", flexWrap:"wrap" },
-  beatWriterOutlet: { fontSize:10, color:"#c8201c", fontWeight:900, letterSpacing:"0.05em" },
-  beatWriterTeams: { fontSize:9, color:"#666" },
-  beatWriterDesc: { fontSize:10, color:"#888", fontStyle:"italic" },
-  beatWriterArrow: { fontSize:14, color:"#c8201c", fontWeight:900, flexShrink:0 },
+  beatWriterOutlet: { fontSize:10, color:"var(--accent-red)", fontWeight:900, letterSpacing:"0.05em" },
+  beatWriterTeams: { fontSize:9, color:"var(--muted)" },
+  beatWriterDesc: { fontSize:10, color:"var(--muted)", fontStyle:"italic" },
+  beatWriterArrow: { fontSize:14, color:"var(--accent-red)", fontWeight:900, flexShrink:0 },
   radioIcon: { fontSize:20, flexShrink:0 },
   radioInfo: { flex:1, display:"flex", flexDirection:"column", gap:2 },
-  radioName: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  radioTeams: { fontSize:9, color:"#c8201c", fontWeight:900, letterSpacing:"0.08em" },
-  radioDesc: { fontSize:10, color:"#888" },
-  radioArrow: { fontSize:14, color:"#c8201c", fontWeight:900, flexShrink:0 },
+  radioName: { fontSize:13, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  radioTeams: { fontSize:9, color:"var(--accent-red)", fontWeight:900, letterSpacing:"0.08em" },
+  radioDesc: { fontSize:10, color:"var(--muted)" },
+  radioArrow: { fontSize:14, color:"var(--accent-red)", fontWeight:900, flexShrink:0 },
 
   // SHOP
-  shopRow: { display:"flex", alignItems:"center", gap:12, padding:"12px 14px", textDecoration:"none", borderTop:"1px solid #2e343a" },
+  shopRow: { display:"flex", alignItems:"center", gap:12, padding:"12px 14px", textDecoration:"none", borderTop:"1px solid var(--border)" },
   shopEmoji: { fontSize:22, flexShrink:0 },
   shopInfo: { flex:1, display:"flex", flexDirection:"column", gap:2 },
-  shopTitle: { fontSize:13, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  shopAuthor: { fontSize:10, color:"#888", fontStyle:"italic" },
-  shopDesc: { fontSize:10, color:"#666" },
-  shopBtn: { fontSize:10, fontWeight:900, color:"#c8201c", letterSpacing:"0.05em", flexShrink:0, whiteSpace:"nowrap" },
+  shopTitle: { fontSize:13, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  shopAuthor: { fontSize:10, color:"var(--muted)", fontStyle:"italic" },
+  shopDesc: { fontSize:10, color:"var(--muted)" },
+  shopBtn: { fontSize:10, fontWeight:900, color:"var(--accent-red)", letterSpacing:"0.05em", flexShrink:0, whiteSpace:"nowrap" },
 
   // BIOS
-  bioRow: { display:"flex", gap:14, padding:"14px", borderTop:"1px solid #2e343a" },
+  bioRow: { display:"flex", gap:14, padding:"14px", borderTop:"1px solid var(--border)" },
   bioEmoji: { fontSize:26, flexShrink:0, paddingTop:2 },
   bioInfo: { flex:1 },
   bioHeader: { display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", marginBottom:6 },
-  bioName: { fontSize:15, fontWeight:900, color:"#e8e0d0", fontFamily:"'Georgia',serif" },
-  bioTeam: { fontSize:10, color:"#c8201c", fontWeight:900, letterSpacing:"0.05em" },
-  bioYears: { fontSize:9, color:"#666" },
-  bioRole: { fontSize:9, color:"#888", letterSpacing:"0.08em", fontWeight:700 },
-  bioBio: { margin:"0 0 6px", fontSize:12, color:"#aaa", lineHeight:1.6, fontFamily:"'Georgia',serif" },
-  bioStats: { fontSize:10, color:"#888", marginBottom:6, letterSpacing:"0.03em" },
+  bioName: { fontSize:15, fontWeight:900, color:"var(--ink)", fontFamily:"'Georgia',serif" },
+  bioTeam: { fontSize:10, color:"var(--accent-red)", fontWeight:900, letterSpacing:"0.05em" },
+  bioYears: { fontSize:9, color:"var(--muted)" },
+  bioRole: { fontSize:9, color:"var(--muted)", letterSpacing:"0.08em", fontWeight:700 },
+  bioBio: { margin:"0 0 6px", fontSize:12, color:"var(--muted)", lineHeight:1.6, fontFamily:"'Georgia',serif" },
+  bioStats: { fontSize:10, color:"var(--muted)", marginBottom:6, letterSpacing:"0.03em" },
   bioLinks: { display:"flex", gap:12, flexWrap:"wrap" },
 
   // SEARCH LINKS
@@ -14007,16 +14075,16 @@ const styles = {
   },
   searchLinkGoogle: {
     display: "inline-flex", alignItems: "center", gap: 5,
-    padding: "5px 12px", border: "1px solid #333",
-    background: "#2e343a", color: "#aaa",
+    padding: "5px 12px", border: "1px solid var(--muted)",
+    background: "var(--border)", color: "var(--muted)",
     fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
     textDecoration: "none", transition: "all 0.15s",
     fontFamily: "'Georgia', serif",
   },
   searchLinkWiki: {
     display: "inline-flex", alignItems: "center", gap: 5,
-    padding: "5px 12px", border: "1px solid #333",
-    background: "#2e343a", color: "#aaa",
+    padding: "5px 12px", border: "1px solid var(--muted)",
+    background: "var(--border)", color: "var(--muted)",
     fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
     textDecoration: "none", transition: "all 0.15s",
     fontFamily: "'Georgia', serif",
@@ -14028,17 +14096,17 @@ const styles = {
   triviaSection: { display: "flex", flexDirection: "column", gap: 16 },
   triviaSectionHeader: {
     display: "flex", alignItems: "center", gap: 12,
-    borderBottom: "2px solid #2a2a2a", paddingBottom: 12,
+    borderBottom: "2px solid var(--border)", paddingBottom: 12,
   },
   triviaSectionIcon: { fontSize: 24 },
   triviaSectionTitle: {
     margin: 0, fontSize: 14, fontWeight: 900, letterSpacing: "0.15em",
-    color: "#e8e0d0", fontFamily: "'Georgia', serif",
+    color: "var(--ink)", fontFamily: "'Georgia', serif",
   },
-  triviaSectionSub: { margin: "2px 0 0", fontSize: 9, color: "#c8201c", letterSpacing: "0.2em", fontWeight: 700 },
+  triviaSectionSub: { margin: "2px 0 0", fontSize: 9, color: "var(--accent-red)", letterSpacing: "0.2em", fontWeight: 700 },
   refreshBtn: {
-    marginLeft: "auto", background: "transparent", border: "1px solid #444",
-    color: "#888", cursor: "pointer", padding: "6px 12px",
+    marginLeft: "auto", background: "transparent", border: "1px solid var(--muted)",
+    color: "var(--muted)", cursor: "pointer", padding: "6px 12px",
     fontSize: 11, letterSpacing: "0.1em", fontFamily: "'Georgia', serif",
     transition: "all 0.15s",
   },
@@ -14046,12 +14114,12 @@ const styles = {
   // MOMENTS
   momentsList: { display: "flex", flexDirection: "column", gap: 12 },
   momentCard: {
-    display: "flex", gap: 0, background: "#161616",
-    border: "1px solid #2a2a2a", overflow: "hidden",
+    display: "flex", gap: 0, background: "var(--bg-content)",
+    border: "1px solid var(--border)", overflow: "hidden",
     animation: "fadeIn 0.4s ease forwards", opacity: 0,
   },
   momentYear: {
-    background: "#c8201c", color: "#fff", padding: "16px 12px",
+    background: "var(--accent-red)", color: "#fff", padding: "16px 12px",
     fontSize: 13, fontWeight: 900, letterSpacing: "0.05em",
     writingMode: "vertical-rl", textOrientation: "mixed",
     display: "flex", alignItems: "center", justifyContent: "center",
@@ -14059,66 +14127,66 @@ const styles = {
   },
   momentBody: { padding: "14px 16px", flex: 1 },
   momentMeta: { display: "flex", gap: 10, alignItems: "center", marginBottom: 6 },
-  momentTeam: { fontSize: 10, color: "#c8201c", fontWeight: 900, letterSpacing: "0.1em" },
-  momentSport: { fontSize: 9, color: "#666", letterSpacing: "0.05em" },
+  momentTeam: { fontSize: 10, color: "var(--accent-red)", fontWeight: 900, letterSpacing: "0.1em" },
+  momentSport: { fontSize: 9, color: "var(--muted)", letterSpacing: "0.05em" },
   momentHeadline: {
     margin: "0 0 6px", fontSize: 15, fontWeight: 900, lineHeight: 1.3,
-    color: "#e8e0d0", fontFamily: "'Georgia', serif",
+    color: "var(--ink)", fontFamily: "'Georgia', serif",
   },
-  momentDetail: { margin: 0, fontSize: 12, color: "#888", lineHeight: 1.6 },
+  momentDetail: { margin: 0, fontSize: 12, color: "var(--muted)", lineHeight: 1.6 },
 
   // TRIVIA DIVIDER
   triviaDivider: {
     display: "flex", alignItems: "center", gap: 12,
   },
-  triviaDividerLine: { flex: 1, height: 1, background: "#2a2a2a" },
-  triviaDividerText: { fontSize: 10, color: "#555", letterSpacing: "0.2em", fontWeight: 900, whiteSpace: "nowrap" },
+  triviaDividerLine: { flex: 1, height: 1, background: "var(--border)" },
+  triviaDividerText: { fontSize: 10, color: "var(--muted)", letterSpacing: "0.2em", fontWeight: 900, whiteSpace: "nowrap" },
 
   // TRIVIA CARD
-  triviaCard: { background: "#161616", border: "1px solid #2a2a2a", padding: "20px" },
+  triviaCard: { background: "var(--bg-content)", border: "1px solid var(--border)", padding: "20px" },
   triviaTeamTag: {
     display: "flex", gap: 8, alignItems: "center",
-    fontSize: 10, color: "#c8201c", fontWeight: 900, letterSpacing: "0.1em",
+    fontSize: 10, color: "var(--accent-red)", fontWeight: 900, letterSpacing: "0.1em",
     marginBottom: 12,
   },
-  triviaEra: { color: "#555", fontWeight: 400 },
+  triviaEra: { color: "var(--muted)", fontWeight: 400 },
   triviaQuestion: {
     margin: "0 0 20px", fontSize: "clamp(15px, 3vw, 19px)",
-    fontWeight: 700, lineHeight: 1.4, color: "#e8e0d0",
+    fontWeight: 700, lineHeight: 1.4, color: "var(--ink)",
     fontFamily: "'Georgia', serif",
   },
   triviaOptions: { display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 },
   triviaOption: {
     display: "flex", alignItems: "center", gap: 12,
-    padding: "12px 16px", background: "#2e343a",
-    border: "1px solid #333", cursor: "pointer",
-    fontSize: 13, color: "#ccc", textAlign: "left",
+    padding: "12px 16px", background: "var(--border)",
+    border: "1px solid var(--muted)", cursor: "pointer",
+    fontSize: 13, color: "var(--muted)", textAlign: "left",
     transition: "all 0.15s", fontFamily: "'Georgia', serif",
   },
-  triviaOptionCorrect: { background: "#0d2a1a", border: "1px solid #2d8a50", color: "#4ade80" },
-  triviaOptionWrong:   { background: "#1a0d0d", border: "1px solid #662222", color: "#666", opacity: 0.6 },
+  triviaOptionCorrect: { background: "var(--success-bg)", border: "1px solid #2d8a50", color: "#4ade80" },
+  triviaOptionWrong:   { background: "var(--alert-bg)", border: "1px solid #662222", color: "var(--muted)", opacity: 0.6 },
   triviaOptionLetter: {
-    fontWeight: 900, color: "#c8201c", fontSize: 12, minWidth: 16, letterSpacing: "0.05em",
+    fontWeight: 900, color: "var(--accent-red)", fontSize: 12, minWidth: 16, letterSpacing: "0.05em",
   },
   triviaCheck: { marginLeft: "auto", color: "#4ade80", fontWeight: 900 },
   triviaResult: {
-    padding: "16px", border: "1px solid #333", marginTop: 8,
+    padding: "16px", border: "1px solid var(--muted)", marginTop: 8,
   },
-  triviaResultCorrect: { background: "#0d2a1a", borderColor: "#2d8a50" },
-  triviaResultWrong:   { background: "#1a0d0d", borderColor: "#662222" },
+  triviaResultCorrect: { background: "var(--success-bg)", borderColor: "#2d8a50" },
+  triviaResultWrong:   { background: "var(--alert-bg)", borderColor: "#662222" },
   triviaResultLabel: {
     margin: "0 0 8px", fontSize: 14, fontWeight: 900, letterSpacing: "0.1em",
   },
-  triviaExplanation: { margin: "0 0 14px", fontSize: 13, color: "#aaa", lineHeight: 1.6 },
+  triviaExplanation: { margin: "0 0 14px", fontSize: 13, color: "var(--muted)", lineHeight: 1.6 },
   nextBtn: {
-    background: "#c8201c", border: "none", color: "#fff",
+    background: "var(--accent-red)", border: "none", color: "#fff",
     padding: "8px 20px", cursor: "pointer",
     fontSize: 11, fontWeight: 900, letterSpacing: "0.15em",
     fontFamily: "'Georgia', serif", transition: "opacity 0.15s",
   },
-  triviaEmpty: { padding: "30px 0", textAlign: "center", color: "#555", fontSize: 12 },
+  triviaEmpty: { padding: "30px 0", textAlign: "center", color: "var(--muted)", fontSize: 12 },
   retryBtn: {
-    background: "transparent", border: "1px solid #444", color: "#888",
+    background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)",
     padding: "8px 20px", cursor: "pointer", fontSize: 11, letterSpacing: "0.1em",
   },
 
@@ -14126,61 +14194,61 @@ const styles = {
   tvRoot: { paddingTop: 8, display: "flex", flexDirection: "column", gap: 20 },
   tvDateBanner: {
     display: "flex", alignItems: "center", gap: 14,
-    background: "#161616", border: "1px solid #c8201c",
+    background: "var(--bg-content)", border: "1px solid var(--accent-red)",
     padding: "14px 18px",
   },
   tvDateIcon: { fontSize: 28 },
   tvDateTitle: {
     fontSize: 16, fontWeight: 900, letterSpacing: "0.15em",
-    color: "#e8e0d0", fontFamily: "'Georgia', serif",
+    color: "var(--ink)", fontFamily: "'Georgia', serif",
   },
-  tvDateSub: { fontSize: 9, color: "#c8201c", letterSpacing: "0.15em", fontWeight: 700, marginTop: 3 },
+  tvDateSub: { fontSize: 9, color: "var(--accent-red)", letterSpacing: "0.15em", fontWeight: 700, marginTop: 3 },
   tvSection: { display: "flex", flexDirection: "column", gap: 2 },
   tvSectionHeader: {
-    background: "#2e343a", borderLeft: "3px solid #c8201c",
+    background: "var(--border)", borderLeft: "3px solid var(--accent-red)",
     padding: "6px 12px", marginBottom: 6,
   },
   tvSectionHeaderText: {
-    fontSize: 10, fontWeight: 900, letterSpacing: "0.18em", color: "#c8201c",
+    fontSize: 10, fontWeight: 900, letterSpacing: "0.18em", color: "var(--accent-red)",
   },
   tvRow: {
     display: "flex", gap: 12, alignItems: "center",
-    background: "#111", border: "1px solid #1e1e1e",
+    background: "var(--ink)", border: "1px solid #1e1e1e",
     padding: "12px 14px", flexWrap: "wrap",
     transition: "border-color 0.15s",
   },
   tvRowFeatured: {
-    background: "#161616", border: "1px solid #2a2a2a",
-    borderLeft: "3px solid #c8201c",
+    background: "var(--bg-content)", border: "1px solid var(--border)",
+    borderLeft: "3px solid var(--accent-red)",
   },
   tvTimeCol: {
     display: "flex", flexDirection: "column", alignItems: "center",
     gap: 4, minWidth: 70, flexShrink: 0,
   },
   tvTime: {
-    fontSize: 11, fontWeight: 900, color: "#e8e0d0",
+    fontSize: 11, fontWeight: 900, color: "var(--ink)",
     letterSpacing: "0.03em", textAlign: "center", lineHeight: 1.3,
   },
   tvLiveBadge: {
     display: "flex", alignItems: "center", gap: 4,
-    background: "#0d2a1a", border: "1px solid #2d8a50",
+    background: "var(--success-bg)", border: "1px solid #2d8a50",
     color: "#4ade80", padding: "3px 8px",
     fontSize: 10, fontWeight: 900, letterSpacing: "0.08em",
   },
   tvLiveDot: { fontSize: 8, animation: "pulse 1s ease-in-out infinite" },
   tvFinalBadge: {
-    fontSize: 10, fontWeight: 900, color: "#666", letterSpacing: "0.1em",
+    fontSize: 10, fontWeight: 900, color: "var(--muted)", letterSpacing: "0.1em",
   },
   tvSportBadge: {
-    fontSize: 9, color: "#555", letterSpacing: "0.05em",
+    fontSize: 9, color: "var(--muted)", letterSpacing: "0.05em",
   },
   tvMatchup: { flex: 1, display: "flex", flexDirection: "column", gap: 4, minWidth: 160 },
   tvTeamLine: { display: "flex", alignItems: "center", gap: 8 },
   tvLogo: { width: 22, height: 22, objectFit: "contain", flexShrink: 0 },
-  tvTeamName: { fontSize: 13, fontWeight: 700, color: "#e8e0d0", flex: 1 },
-  tvScore: { fontSize: 16, fontWeight: 900, color: "#e8e0d0", fontFamily: "'Georgia', serif", minWidth: 24, textAlign: "right" },
-  tvAt: { fontSize: 9, color: "#444", paddingLeft: 30, letterSpacing: "0.05em" },
-  tvVenue: { fontSize: 9, color: "#444", marginTop: 2, paddingLeft: 30 },
+  tvTeamName: { fontSize: 13, fontWeight: 700, color: "var(--ink)", flex: 1 },
+  tvScore: { fontSize: 16, fontWeight: 900, color: "var(--ink)", fontFamily: "'Georgia', serif", minWidth: 24, textAlign: "right" },
+  tvAt: { fontSize: 9, color: "var(--muted)", paddingLeft: 30, letterSpacing: "0.05em" },
+  tvVenue: { fontSize: 9, color: "var(--muted)", marginTop: 2, paddingLeft: 30 },
   tvChannels: {
     display: "flex", flexWrap: "wrap", gap: 6,
     justifyContent: "flex-end", minWidth: 80,
@@ -14191,46 +14259,46 @@ const styles = {
     fontFamily: "'Georgia', serif",
   },
   tvNoChannel: {
-    fontSize: 9, color: "#444", letterSpacing: "0.08em",
+    fontSize: 9, color: "var(--muted)", letterSpacing: "0.08em",
     fontStyle: "italic",
   },
   tvFootnote: {
-    fontSize: 9, color: "#444", letterSpacing: "0.05em",
-    textAlign: "center", paddingTop: 8, borderTop: "1px solid #2e343a",
+    fontSize: 9, color: "var(--muted)", letterSpacing: "0.05em",
+    textAlign: "center", paddingTop: 8, borderTop: "1px solid var(--border)",
   },
 
   // CROSSWORD
   xwRoot: { paddingTop: 8 },
   xwHeader: {
     display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-    borderBottom: "2px solid #2a2a2a", paddingBottom: 12, marginBottom: 14, flexWrap: "wrap", gap: 10,
+    borderBottom: "2px solid var(--border)", paddingBottom: 12, marginBottom: 14, flexWrap: "wrap", gap: 10,
   },
   xwTitle: {
     margin: "0 0 4px", fontSize: 14, fontWeight: 900, letterSpacing: "0.15em",
-    color: "#e8e0d0", fontFamily: "'Georgia', serif",
+    color: "var(--ink)", fontFamily: "'Georgia', serif",
   },
-  xwDate: { margin: 0, fontSize: 9, color: "#c8201c", letterSpacing: "0.15em", fontWeight: 700 },
+  xwDate: { margin: 0, fontSize: 9, color: "var(--accent-red)", letterSpacing: "0.15em", fontWeight: 700 },
   xwActions: { display: "flex", gap: 8 },
   xwBtn: {
-    background: "transparent", border: "1px solid #555", color: "#aaa",
+    background: "transparent", border: "1px solid var(--muted)", color: "var(--muted)",
     padding: "6px 14px", cursor: "pointer", fontSize: 10,
     letterSpacing: "0.12em", fontFamily: "'Georgia', serif", fontWeight: 700,
     transition: "all 0.15s",
   },
-  xwBtnReveal: { borderColor: "#c8201c", color: "#c8201c" },
+  xwBtnReveal: { borderColor: "var(--accent-red)", color: "var(--accent-red)" },
   xwComplete: {
-    background: "#0d2a1a", border: "1px solid #2d8a50", color: "#4ade80",
+    background: "var(--success-bg)", border: "1px solid #2d8a50", color: "#4ade80",
     padding: "10px 16px", marginBottom: 12, fontSize: 13, fontWeight: 700,
     letterSpacing: "0.05em", textAlign: "center",
   },
   xwActiveClueBanner: {
     display: "flex", alignItems: "center", gap: 10,
-    background: "#2e343a", border: "1px solid #c8201c",
+    background: "var(--border)", border: "1px solid var(--accent-red)",
     padding: "8px 14px", marginBottom: 14,
   },
-  xwActiveClueNum: { color: "#c8201c", fontWeight: 900, fontSize: 12, minWidth: 28, letterSpacing: "0.05em" },
-  xwActiveClueText: { flex: 1, fontSize: 13, color: "#e8e0d0", fontFamily: "'Georgia', serif" },
-  xwActiveClueDir: { fontSize: 9, color: "#555", letterSpacing: "0.15em" },
+  xwActiveClueNum: { color: "var(--accent-red)", fontWeight: 900, fontSize: 12, minWidth: 28, letterSpacing: "0.05em" },
+  xwActiveClueText: { flex: 1, fontSize: 13, color: "var(--ink)", fontFamily: "'Georgia', serif" },
+  xwActiveClueDir: { fontSize: 9, color: "var(--muted)", letterSpacing: "0.15em" },
   xwLayout: {
     display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap",
   },
@@ -14239,27 +14307,27 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "repeat(15, clamp(20px, 5.5vw, 32px))",
     gridTemplateRows: "repeat(15, clamp(20px, 5.5vw, 32px))",
-    gap: 2, background: "#1a1c1f",
-    border: "2px solid #c8201c", padding: 2,
+    gap: 2, background: "var(--bg-content)",
+    border: "2px solid var(--accent-red)", padding: 2,
     margin: "0 auto",
   },
   xwCell: {
     width: "clamp(20px, 5.5vw, 32px)",
     height: "clamp(20px, 5.5vw, 32px)",
     position: "relative",
-    cursor: "pointer", border: "1px solid #ccc",
+    cursor: "pointer", border: "1px solid var(--muted)",
     display: "flex", alignItems: "center", justifyContent: "center",
   },
-  xwCellBlack: { background: "#111", border: "1px solid #111", cursor: "default" },
+  xwCellBlack: { background: "var(--ink)", border: "1px solid var(--ink)", cursor: "default" },
   xwCellNum: {
     position: "absolute", top: 1, left: 2,
-    fontSize: "clamp(5px, 1.5vw, 7px)", fontWeight: 900, color: "#333", lineHeight: 1, zIndex: 1,
+    fontSize: "clamp(5px, 1.5vw, 7px)", fontWeight: 900, color: "var(--muted)", lineHeight: 1, zIndex: 1,
     pointerEvents: "none",
   },
   xwInput: {
     width: "100%", height: "100%", border: "none", background: "transparent",
     textAlign: "center", fontSize: "clamp(10px, 3vw, 15px)", fontWeight: 900,
-    fontFamily: "'Georgia', serif", color: "#111",
+    fontFamily: "'Georgia', serif", color: "var(--ink)",
     cursor: "pointer", outline: "none", textTransform: "uppercase",
     padding: 0, zIndex: 2,
   },
@@ -14268,19 +14336,19 @@ const styles = {
   },
   xwClueCol: { flex: 1, minWidth: 120 },
   xwClueHeader: {
-    fontSize: 10, fontWeight: 900, letterSpacing: "0.2em", color: "#c8201c",
-    borderBottom: "1px solid #333", paddingBottom: 6, marginBottom: 8,
+    fontSize: 10, fontWeight: 900, letterSpacing: "0.2em", color: "var(--accent-red)",
+    borderBottom: "1px solid var(--muted)", paddingBottom: 6, marginBottom: 8,
   },
   xwClueItem: {
     display: "flex", gap: 6, padding: "4px 6px", cursor: "pointer",
     marginBottom: 2, transition: "background 0.1s",
   },
-  xwClueItemActive: { background: "#2e343a", borderLeft: "2px solid #c8201c" },
+  xwClueItemActive: { background: "var(--border)", borderLeft: "2px solid var(--accent-red)" },
   xwClueNum: {
-    fontSize: 10, fontWeight: 900, color: "#c8201c", minWidth: 20,
+    fontSize: 10, fontWeight: 900, color: "var(--accent-red)", minWidth: 20,
     letterSpacing: "0.05em", flexShrink: 0,
   },
-  xwClueText: { fontSize: 11, color: "#aaa", lineHeight: 1.4, fontFamily: "'Georgia', serif" },
+  xwClueText: { fontSize: 11, color: "var(--muted)", lineHeight: 1.4, fontFamily: "'Georgia', serif" },
 };
 
 // ─── INJECT KEYFRAMES ──────────────────────────────────────────────────────
@@ -14306,7 +14374,7 @@ styleTag.textContent = `
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  ::-webkit-scrollbar { height: 4px; background: #2e343a; }
-  ::-webkit-scrollbar-thumb { background: #c8201c; }
+  ::-webkit-scrollbar { height: 4px; background: var(--border); }
+  ::-webkit-scrollbar-thumb { background: var(--accent-red); }
 `;
 document.head.appendChild(styleTag);
