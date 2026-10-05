@@ -1648,7 +1648,14 @@ async function getMLBStandings() {
           }
           const isFirst = isDiv1;
 
+          const winsN   = parseInt(rec.wins) || (rec.leagueRecord && parseInt(rec.leagueRecord.wins)) || 0;
+          const lossesN = parseInt(rec.losses) || (rec.leagueRecord && parseInt(rec.leagueRecord.losses)) || 0;
+
           results[NY_IDS[teamId]] = {
+            wins:     winsN,
+            losses:   lossesN,
+            record:   winsN + '\u2013' + lossesN,
+            rankText: rank ? (rank + suffix + ' in ' + divName) : '',
             streak:   streakBadge,
             runDiff:  runDiffStr,
             standing: gbStr,
@@ -1731,6 +1738,490 @@ async function getRosterMoves() {
   }
 
   return results; // { Mets: [...strings], Yankees: [...strings] } — empty arrays if nothing found/failed
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEAM STATUS STRIP — season-aware status boxes (MLB / NHL / NFL / NBA)
+//
+// Replaces the old hardcoded Yankees+Mets regular-season strip. For each
+// subscriber it shows ONLY teams that are active right now:
+//   MLB  regular season  -> record, streak, division standing, run diff
+//   MLB  postseason      -> series label, series score, next game
+//   MLB  eliminated/out  -> hidden (no more frozen stats)
+//   NHL  in season       -> W-L-OTL, points, streak, division, goal diff  (api-web.nhle.com)
+//   NFL / NBA in season  -> record, streak, standing, point diff          (ESPN team endpoint)
+//   anything pre-season (0 games played) or out of its calendar window -> hidden
+//
+// Every fetch is wrapped: any failure returns nothing for that team, never
+// throws, never blocks the send. Free public endpoints only.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const TEAM_REGISTRY = {
+  Yankees:   { sport:'MLB', mlbId:147, mlbLeague:'AL', accent:'#003087' },
+  Mets:      { sport:'MLB', mlbId:121, mlbLeague:'NL', accent:'#002D72' },
+  Jets:      { sport:'NFL', espnSport:'football',   espnLeague:'nfl', espnId:20, accent:'#125740' },
+  Giants:    { sport:'NFL', espnSport:'football',   espnLeague:'nfl', espnId:19, accent:'#0B2265' },
+  Islanders: { sport:'NHL', nhlAbbrev:'NYI', accent:'#00539B' },
+  Rangers:   { sport:'NHL', nhlAbbrev:'NYR', accent:'#0038A8' },
+  Devils:    { sport:'NHL', nhlAbbrev:'NJD', accent:'#CE1126' },
+  Knicks:    { sport:'NBA', espnSport:'basketball', espnLeague:'nba', espnId:18, accent:'#006BB6' },
+  Nets:      { sport:'NBA', espnSport:'basketball', espnLeague:'nba', espnId:17, accent:'#222222' },
+};
+
+const STRIP_SPORT_PRIORITY = { NFL:1, NHL:2, NBA:3, MLB:4 }; // playoffs always sort first (0)
+const STRIP_MAX_BOXES = 4;
+const STRIP_EN = '\u2013';
+const STRIP_DOT = ' \u00B7 ';
+
+// ── small helpers ────────────────────────────────────────────────────────────
+function stripEsc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function stripOrdinal(n) {
+  n = parseInt(n, 10);
+  if (!n) return '';
+  const v = n % 100;
+  if (v >= 11 && v <= 13) return n + 'th';
+  return n + (n % 10 === 1 ? 'st' : n % 10 === 2 ? 'nd' : n % 10 === 3 ? 'rd' : 'th');
+}
+function stripSigned(n) {
+  n = Number(n) || 0;
+  return (n > 0 ? '+' : '') + n;
+}
+function etParts(d) {
+  const f = new Intl.DateTimeFormat('en-US', { timeZone:'America/New_York', year:'numeric', month:'2-digit', day:'2-digit' });
+  const p = {};
+  f.formatToParts(d).forEach(function(x) { p[x.type] = x.value; });
+  return { y: parseInt(p.year, 10), m: parseInt(p.month, 10), d: parseInt(p.day, 10) };
+}
+function etDateStr(d) {
+  const p = etParts(d);
+  return p.y + '-' + String(p.m).padStart(2, '0') + '-' + String(p.d).padStart(2, '0');
+}
+// true if "now" (ET) falls inside [startMD .. endMD], both [month, day]; handles year wrap.
+function inSeasonWindow(now, startMD, endMD) {
+  const p = etParts(now);
+  const v = p.m * 100 + p.d;
+  const s = startMD[0] * 100 + startMD[1];
+  const e = endMD[0] * 100 + endMD[1];
+  return s <= e ? (v >= s && v <= e) : (v >= s || v <= e);
+}
+async function stripFetchJSON(url, ms) {
+  const controller = new AbortController();
+  const timeout = setTimeout(function() { controller.abort(); }, ms || 5000);
+  try {
+    const r = await fetch(url, {
+      signal: controller.signal,
+      headers: { 'Accept': 'application/json', 'User-Agent': 'NYSportsDaily/1.0 (+https://nysportsdaily.com)' },
+    });
+    clearTimeout(timeout);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) {
+    clearTimeout(timeout);
+    return null;
+  }
+}
+// "W3" / ("W",3) / ("OT",2) -> "W3 🔥" etc. Returns '' if unusable.
+function stripStreak(code, count) {
+  if (code == null || code === '') return '';
+  const m = String(code).match(/^([A-Za-z]+)(\d+)?$/);
+  if (!m) return '';
+  let letters = m[1].toUpperCase();
+  const num = m[2] ? parseInt(m[2], 10) : parseInt(count, 10);
+  if (!letters || !num) return '';
+  if (letters === 'OT') letters = 'OTL';
+  let badge = letters + num;
+  if (letters === 'W' && num >= 3) badge += ' \uD83D\uDD25';
+  else if ((letters === 'L' || letters === 'OTL') && num >= 3) badge += ' \u2744\uFE0F';
+  return badge;
+}
+// Map a subscriber's team string ("Yankees", "NY Jets", "new york islanders") to a registry key.
+function resolveTeamKey(str) {
+  const lower = String(str || '').toLowerCase().trim();
+  if (!lower) return null;
+  const keys = Object.keys(TEAM_REGISTRY);
+  for (let i = 0; i < keys.length; i++) if (keys[i].toLowerCase() === lower) return keys[i];
+  for (let i = 0; i < keys.length; i++) if (lower.indexOf(keys[i].toLowerCase()) !== -1) return keys[i];
+  return null;
+}
+
+// ── MLB: postseason state ────────────────────────────────────────────────────
+const MLB_POST_TYPES = ['F', 'D', 'L', 'W'];
+const MLB_DEFAULT_SERIES_LEN = { F:3, D:5, L:7, W:7 };
+
+function mlbSeriesLabel(gameType, league) {
+  if (gameType === 'F') return league + ' Wild Card';
+  if (gameType === 'D') return league + 'DS';
+  if (gameType === 'L') return league + 'CS';
+  if (gameType === 'W') return 'World Series';
+  return 'Postseason';
+}
+function mlbWhen(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const wk = d.toLocaleDateString('en-US', { weekday:'short', timeZone:'America/New_York' });
+  const tm = d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', timeZone:'America/New_York' });
+  return wk + ' ' + tm + ' ET';
+}
+function mlbSide(g, teamId) {
+  const home = g && g.teams && g.teams.home;
+  const away = g && g.teams && g.teams.away;
+  if (home && home.team && home.team.id === teamId) return { me: home, opp: away };
+  if (away && away.team && away.team.id === teamId) return { me: away, opp: home };
+  return null;
+}
+function mlbOppId(g, teamId) {
+  const s = mlbSide(g, teamId);
+  return s && s.opp && s.opp.team ? s.opp.team.id : null;
+}
+function mlbOppNick(g, teamId) {
+  const s = mlbSide(g, teamId);
+  const t = s && s.opp && s.opp.team;
+  if (!t) return 'Opponent';
+  if (t.teamName) return t.teamName;
+  const parts = String(t.name || '').split(' ');
+  return parts[parts.length - 1] || 'Opponent';
+}
+function mlbWon(g, teamId) {
+  const s = mlbSide(g, teamId);
+  if (!s) return null;
+  if (typeof s.me.isWinner === 'boolean') return s.me.isWinner;
+  const a = Number(s.me.score), b = Number(s.opp.score);
+  if (isFinite(a) && isFinite(b) && a !== b) return a > b;
+  return null;
+}
+function mlbGameState(g) {
+  return (g && g.status && g.status.abstractGameState) || '';
+}
+
+// Pure classifier — given a team's games in the lookback/lookahead window, decide its phase.
+// Series W-L is counted from the games themselves (not seriesStatus), so it does not
+// depend on how MLB's seriesStatus object orders its wins/losses.
+function classifyMLBTeam(teamId, league, games, nowMs) {
+  const mine = (games || []).filter(function(g) { return mlbSide(g, teamId); });
+  const t = function(g) { return Date.parse(g.gameDate); };
+
+  const reg = mine.filter(function(g) { return g.gameType === 'R'; });
+  if (reg.some(function(g) { return t(g) >= nowMs - 6 * 3600 * 1000; })) return { phase:'regular' };
+
+  const post = mine.filter(function(g) { return MLB_POST_TYPES.indexOf(g.gameType) !== -1; })
+                   .sort(function(a, b) { return t(a) - t(b); });
+  if (post.length === 0) return { phase:'out' };
+
+  const played   = post.filter(function(g) { const s = mlbGameState(g); return s === 'Final' || s === 'Live'; });
+  const upcoming = post.filter(function(g) { return mlbGameState(g) === 'Preview' && t(g) >= nowMs - 3 * 3600 * 1000; });
+  const lastGame = played.length ? played[played.length - 1] : null;
+  let nextGame   = upcoming.length ? upcoming[0] : null;
+
+  const keyOf = function(g) { return g.gameType + '|' + mlbOppId(g, teamId); };
+  let focus = lastGame || nextGame;
+  if (!focus) return { phase:'out' };
+
+  const tally = function(f) {
+    const sg = post.filter(function(g) { return keyOf(g) === keyOf(f); });
+    const finals = sg.filter(function(g) { return mlbGameState(g) === 'Final'; });
+    const wins   = finals.filter(function(g) { return mlbWon(g, teamId) === true; }).length;
+    const losses = finals.filter(function(g) { return mlbWon(g, teamId) === false; }).length;
+    const len    = (sg[0] && Number(sg[0].gamesInSeries)) || MLB_DEFAULT_SERIES_LEN[f.gameType] || 5;
+    return { sg:sg, wins:wins, losses:losses, len:len, need:Math.ceil(len / 2) };
+  };
+
+  let s = tally(focus);
+  const over = s.wins >= s.need || s.losses >= s.need;
+
+  if (over && s.losses >= s.need) return { phase:'out' };              // eliminated
+
+  if (over && s.wins >= s.need) {                                      // won the series
+    if (nextGame && keyOf(nextGame) !== keyOf(focus)) {                // next round already scheduled
+      focus = nextGame;
+      s = tally(focus);
+    } else {
+      return { phase:'advanced', label:mlbSeriesLabel(focus.gameType, league), gameType:focus.gameType,
+               wins:s.wins, losses:s.losses };
+    }
+  }
+
+  // Series in progress (or just starting)
+  const nextInSeries = upcoming.filter(function(g) { return keyOf(g) === keyOf(focus); })[0] || null;
+  return {
+    phase: 'playoffs',
+    label: mlbSeriesLabel(focus.gameType, league),
+    gameType: focus.gameType,
+    wins: s.wins, losses: s.losses,
+    oppNick: mlbOppNick(focus, teamId),
+    nextWhen: nextInSeries ? mlbWhen(nextInSeries.gameDate) : '',
+    nextNum: nextInSeries && nextInSeries.seriesGameNumber ? nextInSeries.seriesGameNumber : null,
+  };
+}
+
+async function getMLBPostseasonState(now) {
+  const out = {};
+  try {
+    const ids = Object.keys(TEAM_REGISTRY).filter(function(n) { return TEAM_REGISTRY[n].sport === 'MLB'; });
+    const start = new Date(now.getTime() - 12 * 86400000);
+    const end   = new Date(now.getTime() + 10 * 86400000);
+    const url = 'https://statsapi.mlb.com/api/v1/schedule?sportId=1'
+      + '&teamId=' + ids.map(function(n) { return TEAM_REGISTRY[n].mlbId; }).join(',')
+      + '&startDate=' + etDateStr(start) + '&endDate=' + etDateStr(end)
+      + '&gameType=R,F,D,L,W&hydrate=team';
+    const data = await stripFetchJSON(url, 6000);
+    if (!data || !Array.isArray(data.dates)) return out;       // unknown -> caller falls back to calendar
+    const games = [];
+    data.dates.forEach(function(d) { (d.games || []).forEach(function(g) { games.push(g); }); });
+    ids.forEach(function(nick) {
+      const reg = TEAM_REGISTRY[nick];
+      out[nick] = classifyMLBTeam(reg.mlbId, reg.mlbLeague, games, now.getTime());
+    });
+  } catch (e) {}
+  return out;
+}
+
+// ── entry builders (one per team box) ────────────────────────────────────────
+// Entry: { team, sport, accent, priority, tag, headline, lines:[{text, color}] }
+function mlbPlayoffEntry(nick, st, reg) {
+  const R = TEAM_REGISTRY[nick];
+  const lines = [];
+  let headline;
+  if (st.phase === 'advanced') {
+    headline = st.gameType === 'W' ? 'World Series champions!' : ('Won the ' + st.label + ' ' + st.wins + STRIP_EN + st.losses);
+    if (st.gameType !== 'W') lines.push({ text:'Next round to be set' });
+  } else {
+    if (st.wins === 0 && st.losses === 0) headline = 'Series opens vs. ' + st.oppNick;
+    else if (st.wins > st.losses)         headline = nick + ' lead ' + st.wins + STRIP_EN + st.losses;
+    else if (st.losses > st.wins)         headline = st.oppNick + ' lead ' + st.losses + STRIP_EN + st.wins;
+    else                                  headline = 'Series tied ' + st.wins + STRIP_EN + st.losses;
+    if (st.nextWhen) lines.push({ text:'Next: ' + (st.nextNum ? 'Game ' + st.nextNum + STRIP_DOT : '') + st.nextWhen });
+  }
+  if (reg && reg.record) {
+    lines.push({ text:'Regular season: ' + reg.record + (reg.rankText ? STRIP_DOT + reg.rankText : '') });
+  }
+  return { team:nick, sport:'MLB', accent:R.accent, priority:0, tag:st.label, headline:headline, lines:lines };
+}
+function mlbRegularEntry(nick, reg) {
+  const R = TEAM_REGISTRY[nick];
+  if (!reg || !(reg.wins + reg.losses > 0)) return null;
+  const lines = [];
+  if (reg.standing) lines.push({ text:reg.standing });
+  if (reg.runDiff)  lines.push({ text:reg.runDiff, color: reg.runDiff.charAt(0) === '+' ? '#16a34a' : '#c8201c', bold:true });
+  return { team:nick, sport:'MLB', accent:R.accent, priority:STRIP_SPORT_PRIORITY.MLB,
+           tag: reg.streak || '', headline: reg.record, lines:lines };
+}
+function buildMLBEntry(nick, st, reg, now) {
+  const phase = st ? st.phase : (inSeasonWindow(now, [3, 15], [10, 1]) ? 'regular' : 'out');
+  if (phase === 'regular')  return mlbRegularEntry(nick, reg);
+  if (phase === 'playoffs' || phase === 'advanced') return mlbPlayoffEntry(nick, st, reg);
+  return null;
+}
+
+// ── NHL (official free API) ──────────────────────────────────────────────────
+function nhlSeasonId(now) {
+  const p = etParts(now);
+  const startYear = p.m >= 9 ? p.y : p.y - 1;
+  return String(startYear) + String(startYear + 1);
+}
+function nhlEntryFromRow(nick, row) {
+  const R = TEAM_REGISTRY[nick];
+  const gp = Number(row.gamesPlayed) || 0;
+  if (!gp) return null;
+  const w = Number(row.wins) || 0, l = Number(row.losses) || 0, otl = Number(row.otLosses) || 0;
+  const pts = Number(row.points) || 0;
+  const lines = [];
+  const divSeq = parseInt(row.divisionSequence, 10) || 0;
+  const wcSeq  = parseInt(row.wildcardSequence, 10) || 0;
+  if (divSeq && row.divisionName) {
+    let st = stripOrdinal(divSeq) + ' in ' + row.divisionName;
+    if (divSeq > 3 && wcSeq >= 1 && wcSeq <= 2) st += STRIP_DOT + 'WC' + wcSeq;
+    lines.push({ text:st });
+  }
+  if (row.goalDifferential != null) {
+    const gd = Number(row.goalDifferential) || 0;
+    lines.push({ text: stripSigned(gd) + ' goal diff', color: gd >= 0 ? '#16a34a' : '#c8201c', bold:true });
+  }
+  return {
+    team:nick, sport:'NHL', accent:R.accent, priority:STRIP_SPORT_PRIORITY.NHL,
+    tag: stripStreak(row.streakCode, row.streakCount),
+    headline: w + STRIP_EN + l + STRIP_EN + otl + STRIP_DOT + pts + ' pts',
+    lines: lines,
+  };
+}
+async function getNHLStatuses(nicks, now) {
+  const out = {};
+  try {
+    if (!nicks.length) return out;
+    if (!inSeasonWindow(now, [10, 1], [4, 20])) return out;
+    const data = await stripFetchJSON('https://api-web.nhle.com/v1/standings/now', 6000);
+    const rows = data && Array.isArray(data.standings) ? data.standings : [];
+    if (!rows.length) return out;
+    const expected = nhlSeasonId(now);
+    nicks.forEach(function(nick) {
+      try {
+        const abbr = TEAM_REGISTRY[nick].nhlAbbrev;
+        const row = rows.find(function(r) { return r.teamAbbrev && r.teamAbbrev.default === abbr; });
+        if (!row) return;
+        if (row.seasonId && String(row.seasonId) !== expected) return;   // stale prior-season data
+        const entry = nhlEntryFromRow(nick, row);
+        if (entry) out[nick] = entry;
+      } catch (e) {}
+    });
+  } catch (e) {}
+  return out;
+}
+
+// ── NFL / NBA (ESPN team endpoint) ───────────────────────────────────────────
+// Defensive: ESPN stat names vary, so look up several candidates and omit any
+// line we cannot support. A wrong-team response (bad id) is rejected by name.
+function espnEntryFromTeam(nick, data) {
+  const R = TEAM_REGISTRY[nick];
+  const team = data && data.team;
+  if (!team) return null;
+  if (String(team.displayName || team.name || '').toLowerCase().indexOf(nick.toLowerCase()) === -1) return null;
+
+  const items = (team.record && Array.isArray(team.record.items)) ? team.record.items : [];
+  const total = items.find(function(i) { return i.type === 'total'; }) || items[0];
+  if (!total) return null;
+
+  const stats = {};
+  (total.stats || []).forEach(function(s) { if (s && s.name) stats[s.name] = s; });
+  const val = function(n) { return stats[n] && stats[n].value != null ? Number(stats[n].value) : NaN; };
+
+  let w = val('wins'), l = val('losses'), t = val('ties');
+  if (!isFinite(w) || !isFinite(l)) {
+    const parts = String(total.summary || '').split('-').map(Number);
+    if (parts.length >= 2 && isFinite(parts[0]) && isFinite(parts[1])) { w = parts[0]; l = parts[1]; t = parts[2] || 0; }
+  }
+  if (!isFinite(w) || !isFinite(l)) return null;
+  const gp = w + l + (isFinite(t) ? t : 0);
+  if (!gp) return null;                                   // 0 games played -> pre-season, hide
+
+  const recordText = total.summary ? String(total.summary).replace(/-/g, STRIP_EN)
+                                   : (w + STRIP_EN + l + (t ? STRIP_EN + t : ''));
+
+  // streak
+  let streak = '';
+  if (stats.streak) {
+    const dv = String(stats.streak.displayValue || '');
+    if (/^[WL]\d+$/i.test(dv)) streak = stripStreak(dv);
+    else {
+      const v = Number(stats.streak.value);
+      if (isFinite(v) && v !== 0) streak = stripStreak((v > 0 ? 'W' : 'L') + Math.abs(v));
+    }
+  }
+
+  // point differential
+  let diff = NaN;
+  if (R.sport === 'NFL') {
+    diff = val('pointDifferential');
+    if (!isFinite(diff)) diff = val('differential');
+  }
+  if (!isFinite(diff)) {
+    const pf = val('pointsFor'), pa = val('pointsAgainst');
+    if (isFinite(pf) && isFinite(pa)) diff = pf - pa;
+  }
+
+  const lines = [];
+  if (team.standingSummary) lines.push({ text:String(team.standingSummary) });
+  if (isFinite(diff)) lines.push({ text: stripSigned(Math.round(diff)) + ' pt diff', color: diff >= 0 ? '#16a34a' : '#c8201c', bold:true });
+
+  return { team:nick, sport:R.sport, accent:R.accent, priority:STRIP_SPORT_PRIORITY[R.sport],
+           tag:streak, headline:recordText, lines:lines };
+}
+async function getESPNStatuses(nicks, now) {
+  const out = {};
+  try {
+    await Promise.all(nicks.map(async function(nick) {
+      try {
+        const R = TEAM_REGISTRY[nick];
+        const window = R.sport === 'NFL' ? [[9, 14], [1, 12]] : [[10, 15], [4, 20]];
+        if (!inSeasonWindow(now, window[0], window[1])) return;
+        const data = await stripFetchJSON('https://site.api.espn.com/apis/site/v2/sports/'
+          + R.espnSport + '/' + R.espnLeague + '/teams/' + R.espnId, 6000);
+        const entry = espnEntryFromTeam(nick, data);
+        if (entry) out[nick] = entry;
+      } catch (e) {}
+    }));
+  } catch (e) {}
+  return out;
+}
+
+// ── orchestration ────────────────────────────────────────────────────────────
+// Fetches everything ONCE per run (shared by all subscribers). Returns { [nick]: entry }.
+async function getTeamStatuses() {
+  const out = {};
+  try {
+    const now = new Date();
+    const of = function(k) { return Object.keys(TEAM_REGISTRY).filter(function(n) { return TEAM_REGISTRY[n].sport === k; }); };
+    const res = await Promise.all([
+      getMLBPostseasonState(now),
+      getMLBStandings(),
+      getNHLStatuses(of('NHL'), now),
+      getESPNStatuses(of('NFL'), now),
+      getESPNStatuses(of('NBA'), now),
+    ]);
+    const mlbState = res[0] || {}, mlbStand = res[1] || {};
+    Object.assign(out, res[2], res[3], res[4]);
+    of('MLB').forEach(function(nick) {
+      try {
+        const entry = buildMLBEntry(nick, mlbState[nick], mlbStand[nick], now);
+        if (entry) out[nick] = entry;
+      } catch (e) {}
+    });
+  } catch (e) {}
+  return out;
+}
+
+// Pick which boxes a given subscriber sees: their own teams, active only,
+// playoff teams first, then NFL/NHL/NBA/MLB, capped. No teams selected -> top active teams.
+function selectStripEntries(teamStatus, subTeams) {
+  const all = teamStatus || {};
+  let keys = [];
+  if (subTeams && subTeams.length) {
+    subTeams.forEach(function(s) {
+      const k = resolveTeamKey(s);
+      if (k && all[k] && keys.indexOf(k) === -1) keys.push(k);
+    });
+  } else {
+    keys = Object.keys(all);
+  }
+  const order = {};
+  keys.forEach(function(k, i) { order[k] = i; });
+  keys.sort(function(a, b) { return (all[a].priority - all[b].priority) || (order[a] - order[b]); });
+  return keys.slice(0, STRIP_MAX_BOXES).map(function(k) { return all[k]; });
+}
+
+// ── rendering (email-safe: tables + inline styles only, no flex) ─────────────
+function renderStripCell(e, rosterMoves, side, topBorder) {
+  const label = '<div style="font-size:9px;font-weight:900;color:' + e.accent + ';letter-spacing:0.15em;text-transform:uppercase;margin-bottom:5px">'
+    + stripEsc(e.team)
+    + (e.tag ? ' <span style="color:#c8201c;letter-spacing:0.05em">&middot; ' + stripEsc(e.tag) + '</span>' : '')
+    + '</div>';
+  const headline = '<div style="font-size:16px;font-weight:900;color:#111;line-height:1.25;font-family:Georgia,serif">' + stripEsc(e.headline) + '</div>';
+  const lines = (e.lines || []).map(function(ln) {
+    return '<div style="font-size:11px;line-height:1.5;margin-top:3px;color:' + (ln.color || '#666') + ';font-weight:' + (ln.bold ? '700' : '400') + '">' + stripEsc(ln.text) + '</div>';
+  }).join('');
+  const moves = (rosterMoves && rosterMoves[e.team]) || [];
+  const movesHtml = moves.length > 0
+    ? '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e0e0e0">'
+      + moves.slice(0, 2).map(function(m) { return '<div style="font-size:10px;color:#666;line-height:1.6;margin-bottom:6px">' + m + '</div>'; }).join('')
+      + '</div>'
+    : '';
+  const pad = (side === 'right' ? 'padding:8px 0 10px 12px' : 'padding:8px 12px 10px 0')
+    + (topBorder ? ';border-top:1px solid #e6e6e6' : '');
+  return '<td width="50%" valign="top" style="' + pad + '">' + label + headline + lines + movesHtml + '</td>';
+}
+function buildStandingsStrip(entries, rosterMoves) {
+  if (!entries || !entries.length) return '';
+  let rows = '';
+  for (let i = 0; i < entries.length; i += 2) {
+    const border = i > 0;
+    const left  = renderStripCell(entries[i], rosterMoves, 'left', border);
+    const right = entries[i + 1] ? renderStripCell(entries[i + 1], rosterMoves, 'right', border)
+                                 : '<td width="50%" style="' + (border ? 'border-top:1px solid #e6e6e6' : '') + '">&nbsp;</td>';
+    rows += '<tr>' + left + right + '</tr>';
+  }
+  return '<div style="padding:10px 28px;border-bottom:1px solid #ebebeb;background:#f8f8f8">'
+    + '<table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation">' + rows + '</table></div>';
 }
 
 
@@ -2843,7 +3334,7 @@ function getTodayTrivia() {
 
 
 // ── Email builder ─────────────────────────────────────────────────────────────
-function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, mlbStandings, yesterdayTrivia, nugget, saturdayPoll, trophyEntry, rosterMoves) {
+function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, teamStatus, yesterdayTrivia, nugget, saturdayPoll, trophyEntry, rosterMoves) {
   const firstName = subscriber.name ? subscriber.name.split(' ')[0] : 'NY Sports Fan';
   const teams     = (subscriber.teams && subscriber.teams.length > 0)
                     ? subscriber.teams.join(' &nbsp;&middot;&nbsp; ')
@@ -2853,35 +3344,9 @@ function buildEmail(subscriber, scores, todayGames, headlines, glory, trivia, ot
   });
 
   // ── NY STANDINGS STRIP ───────────────────────────────────────────────────────
-  const teamsToShow = ['Yankees', 'Mets'].filter(function(t) {
-    return mlbStandings && mlbStandings[t];
-  });
-  const standingsStrip = teamsToShow.length > 0
-    ? '<div style="padding:16px 28px;border-bottom:1px solid #ebebeb;background:#f8f8f8;display:flex;gap:0;flex-wrap:wrap">'
-      + teamsToShow.map(function(team) {
-          const s = mlbStandings[team];
-          const accentColor = team === 'Yankees' ? '#003087' : '#002D72';
-          const rdColor = (s.runDiff && s.runDiff.startsWith('+')) ? '#22c55e' : '#c8201c';
-          const moves = (rosterMoves && rosterMoves[team]) || [];
-          const movesHtml = moves.length > 0
-            ? '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #e0e0e0">'
-              + moves.slice(0, 2).map(function(m) {
-                  return '<div style="font-size:10px;color:#666;line-height:1.6;margin-bottom:6px">' + m + '</div>';
-                }).join('')
-              + '</div>'
-            : '';
-          return '<div style="flex:1;min-width:220px;padding:4px 16px">'
-            + '<div style="font-size:9px;font-weight:900;color:' + accentColor + ';letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px">' + team + '</div>'
-            + '<div style="display:flex;flex-direction:column;gap:4px">'
-            + (s.streak   ? '<div style="font-size:15px;font-weight:900;color:#111">' + s.streak + '</div>' : '')
-            + (s.standing ? '<div style="font-size:11px;color:#666;line-height:1.5">' + s.standing + '</div>' : '')
-            + (s.runDiff  ? '<div style="font-size:11px;font-weight:700;color:' + rdColor + '">' + s.runDiff + ' run diff</div>' : '')
-            + '</div>'
-            + movesHtml
-            + '</div>';
-        }).join('')
-      + '</div>'
-    : '';
+  // Season-aware: shows this subscriber's own teams that are active right now
+  // (MLB regular season / postseason, NHL, NFL, NBA). See TEAM STATUS STRIP block.
+  const standingsStrip = buildStandingsStrip(selectStripEntries(teamStatus, subscriber.teams), rosterMoves);
 
     // ── SCORES ──────────────────────────────────────────────────────────────────
   const scoresHtml = scores.length > 0
@@ -3202,6 +3667,24 @@ function buildSubject(scores, todayGames) {
 // ── Main handler ──────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   try {
+    // ── PREVIEW MODE (read-only) ──────────────────────────────────────────────
+    // /api/send-digest?preview=standings&teams=Yankees,Islanders,Jets[&format=html]
+    // Fetches live data and shows exactly what the standings strip would look
+    // like. Never emails anyone and never touches the "already sent" guard.
+    if (req.query && req.query.preview === 'standings') {
+      const status  = await getTeamStatuses();
+      const wanted  = req.query.teams ? String(req.query.teams).split(',').map(function(x) { return x.trim(); }).filter(Boolean) : [];
+      const entries = selectStripEntries(status, wanted);
+      const html    = buildStandingsStrip(entries, {});
+      res.setHeader('Cache-Control', 'no-store');
+      if (req.query.format === 'html') {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.status(200).send('<!doctype html><meta charset="utf-8"><body style="margin:0;background:#fff;max-width:600px;font-family:Georgia,serif">'
+          + (html || '<p style="padding:20px;color:#888">No active teams to show right now for those teams.</p>') + '</body>');
+      }
+      return res.status(200).json({ ok:true, preview:true, requested:wanted, shown:entries.map(function(e) { return e.team; }), entries:entries, allActive:Object.keys(status) });
+    }
+
     // Idempotency guard — if today's digest already went out, don't send again.
     if (await wasDigestAlreadySentToday()) {
       console.log('Digest already sent today — skipping.');
@@ -3223,7 +3706,7 @@ export default async function handler(req, res) {
 
     // Fetch MLB pitching/series details (Mets + Yankees only, silent failsafe)
     const mlbDetails = await getMLBGameDetails([]);
-    const mlbStandings = await getMLBStandings();
+    const teamStatus = await getTeamStatuses();
     const rosterMoves = await getRosterMoves();
 
     // Weekly day nugget
@@ -3274,7 +3757,7 @@ export default async function handler(req, res) {
             )
           : allTodayGames;
 
-        const html    = buildEmail(sub, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, mlbStandings, yesterdayTrivia, nugget, saturdayPoll, trophyEntry, rosterMoves);
+        const html    = buildEmail(sub, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, teamStatus, yesterdayTrivia, nugget, saturdayPoll, trophyEntry, rosterMoves);
         const subject = buildSubject(scores, todayGames);
 
         // Fix unsubscribe URL with actual email
