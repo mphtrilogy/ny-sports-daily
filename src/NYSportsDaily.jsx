@@ -1836,32 +1836,32 @@ export default function NYSportsDaily() {
     {/* ── MOBILE HAMBURGER DRAWER ── */}
     {isMobile && drawerOpen && (
       <div onClick={() => setDrawerOpen(false)}
-        style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.75)",
-          zIndex:2000, display:"flex"}}>
+        style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.93)",
+          zIndex:2000, display:"flex", isolation:"isolate"}}>
         <div onClick={e => e.stopPropagation()}
-          style={{width:260, maxWidth:"80vw", background:"var(--bg-content)",
-            borderRight:"2px solid var(--accent-red)", height:"100%",
+          style={{width:260, maxWidth:"80vw", background:"#1a1c1f",
+            borderRight:"2px solid #c8201c", height:"100%",
             overflowY:"auto", display:"flex", flexDirection:"column",
-            WebkitOverflowScrolling:"touch"}}>
+            WebkitOverflowScrolling:"touch", position:"relative", zIndex:1}}>
 
           {/* Header */}
           <div style={{display:"flex", alignItems:"center",
             justifyContent:"space-between", padding:"14px 16px",
-            borderBottom:"1px solid var(--border)", flexShrink:0}}>
+            borderBottom:"1px solid #2e343a", flexShrink:0}}>
             <span style={{fontFamily:"'Georgia',serif", fontSize:14,
-              fontWeight:900, color:"var(--ink)"}}>
-              NY <span style={{color:"var(--accent-red)"}}>SPORTS</span>
-              <span style={{fontWeight:300, color:"var(--muted)"}}> DAILY</span>
+              fontWeight:900, color:"#e8e0d0"}}>
+              NY <span style={{color:"#c8201c"}}>SPORTS</span>
+              <span style={{fontWeight:300, color:"#888"}}> DAILY</span>
             </span>
             <button onClick={() => setDrawerOpen(false)}
-              style={{background:"none", border:"none", color:"var(--muted)",
+              style={{background:"none", border:"none", color:"#888",
                 fontSize:20, cursor:"pointer", padding:"2px 6px"}}>✕</button>
           </div>
 
           {/* Main nav */}
-          <div style={{borderBottom:"1px solid var(--border)"}}>
+          <div style={{borderBottom:"1px solid #2e343a"}}>
             <div style={{padding:"8px 16px 4px", fontSize:8, fontWeight:900,
-              color:"var(--muted)", letterSpacing:"0.22em"}}>MAIN</div>
+              color:"#888", letterSpacing:"0.22em"}}>MAIN</div>
             {[
               {tab:"SCORES",    icon:"📊"},
               {tab:"TV",        icon:"📺"},
@@ -1878,8 +1878,8 @@ export default function NYSportsDaily() {
                   padding:"10px 16px",
                   background: activeTab===tab ? "#1a0a0a" : "transparent",
                   border:"none",
-                  borderLeft: activeTab===tab ? "3px solid var(--accent-red)" : "3px solid transparent",
-                  color: activeTab===tab ? "var(--ink)" : "var(--muted)",
+                  borderLeft: activeTab===tab ? "3px solid #c8201c" : "3px solid transparent",
+                  color: activeTab===tab ? "#e8e0d0" : "#888",
                   cursor:"pointer", fontSize:12, fontWeight:700,
                   letterSpacing:"0.05em", textAlign:"left",
                   fontFamily:"'Georgia',serif"}}>
@@ -1890,9 +1890,9 @@ export default function NYSportsDaily() {
           </div>
 
           {/* Explore nav */}
-          <div style={{borderBottom:"1px solid var(--border)", flex:1}}>
+          <div style={{borderBottom:"1px solid #2e343a", flex:1}}>
             <div style={{padding:"8px 16px 4px", fontSize:8, fontWeight:900,
-              color:"var(--muted)", letterSpacing:"0.22em"}}>EXPLORE</div>
+              color:"#888", letterSpacing:"0.22em"}}>EXPLORE</div>
             {[
               {tab:"GLORY",     icon:"🏆", gold:true},
               {tab:"DEEPDIVE",  icon:"🔍", gold:true},
@@ -1912,12 +1912,12 @@ export default function NYSportsDaily() {
                 onClick={() => { setActiveTab(tab); setDrawerOpen(false); }}
                 style={{display:"flex", alignItems:"center", gap:12, width:"100%",
                   padding:"9px 16px",
-                  background: activeTab===tab ? "var(--gold-active-bg)" : "transparent",
+                  background: activeTab===tab ? "#1a1600" : "transparent",
                   border:"none",
                   borderLeft: activeTab===tab
-                    ? `3px solid ${gold ? "#f0b429" : "var(--accent-red)"}`
+                    ? `3px solid ${gold ? "#f0b429" : "#c8201c"}`
                     : "3px solid transparent",
-                  color: gold ? "#f0b429" : activeTab===tab ? "var(--ink)" : "#777",
+                  color: gold ? "#f0b429" : activeTab===tab ? "#e8e0d0" : "#777",
                   cursor:"pointer", fontSize:11, fontWeight:700,
                   letterSpacing:"0.05em", textAlign:"left",
                   fontFamily:"'Georgia',serif"}}>
@@ -1928,18 +1928,18 @@ export default function NYSportsDaily() {
           </div>
 
           {/* Footer */}
-          <div style={{padding:"14px 16px", borderTop:"1px solid var(--border)", flexShrink:0}}>
+          <div style={{padding:"14px 16px", borderTop:"1px solid #2e343a", flexShrink:0}}>
             <div style={{display:"flex", gap:14, marginBottom:8, flexWrap:"wrap"}}>
               <a href="https://www.instagram.com/nysportsdaily_com/" target="_blank"
                 rel="noopener noreferrer"
-                style={{fontSize:10, color:"var(--muted)", textDecoration:"none",
+                style={{fontSize:10, color:"#888", textDecoration:"none",
                   fontWeight:700, letterSpacing:"0.06em"}}>📸 @nysportsdaily_com</a>
               <a href="https://buymeacoffee.com/mhughes65v" target="_blank"
                 rel="noopener noreferrer"
-                style={{fontSize:10, color:"var(--muted)", textDecoration:"none",
+                style={{fontSize:10, color:"#888", textDecoration:"none",
                   fontWeight:700, letterSpacing:"0.06em"}}>💿 Buy me a record</a>
             </div>
-            <div style={{fontSize:8, color:"var(--muted)", letterSpacing:"0.1em"}}>
+            <div style={{fontSize:8, color:"#888", letterSpacing:"0.1em"}}>
               EST. 2026 · ALL NEW YORK · ALL THE TIME
             </div>
           </div>
