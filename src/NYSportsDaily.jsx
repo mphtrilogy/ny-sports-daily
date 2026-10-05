@@ -3157,13 +3157,16 @@ function dateLabel(date) {
 
 function LookAhead({ schedule, darkMode }) {
   const today = new Date(); today.setHours(0,0,0,0);
+  // Start at TOMORROW: today's games already live in the scores section above,
+  // so Look Ahead should never repeat them.
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
   const farOut = new Date(today); farOut.setDate(farOut.getDate() + 14); // sane outer bound only
 
   // De-dupe: fetchNYSchedule returns one entry per NY team, so a Rangers-Islanders
   // game would otherwise appear twice. Key on date+matchup to collapse that.
   const seen = new Set();
   const allUpcoming = (schedule || []).filter(g => {
-    if (!g.date || g.date < today || g.date > farOut) return false;
+    if (!g.date || g.date < tomorrow || g.date > farOut) return false;
     const key = `${g.date.toDateString()}|${g.homeTeam}|${g.awayTeam}`;
     if (seen.has(key)) return false;
     seen.add(key);
@@ -3176,8 +3179,10 @@ function LookAhead({ schedule, darkMode }) {
   // keeps this short (a handful of games) instead of a long multi-day list.
   const nextDateKey = allUpcoming[0].date.toDateString();
   const upcoming = allUpcoming.filter(g => g.date.toDateString() === nextDateKey);
-  const headerLabel = upcoming[0].date.toLocaleDateString("en-US",
+  const dayText = upcoming[0].date.toLocaleDateString("en-US",
     { weekday:"long", month:"long", day:"numeric", timeZone:"America/New_York" });
+  const isTomorrow = upcoming[0].date.toDateString() === tomorrow.toDateString();
+  const headerLabel = isTomorrow ? `Tomorrow — ${dayText}` : dayText;
 
   return (
     <div style={{marginBottom:16}}>
