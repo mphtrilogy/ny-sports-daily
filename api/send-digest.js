@@ -1,7 +1,11 @@
 // api/send-digest.js
 // Vercel Cron: runs daily at 12:00 UTC = 8am ET
 
-export const config = { maxDuration: 60 };
+// 60s was the function's own ceiling AND exactly what the Oct 6 504 hit.
+// Raised as a second line of defense alongside the timeout/caching fixes
+// below — harmless if the hosting plan caps lower (Vercel just clamps to
+// plan max), meaningful headroom if it doesn't.
+export const config = { maxDuration: 300 };
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -122,6 +126,23 @@ async function getWeather(lat, lon) {
 }
 
 // ── Subscribers ───────────────────────────────────────────────────────────────
+// ── Timeout-safe fetch ───────────────────────────────────────────────────────
+// Every outbound call in this file must go through this. A bare fetch() has
+// no timeout in Node — if ESPN/Google/etc. stalls instead of erroring, the
+// request hangs until Vercel kills the whole function at 60s, which silently
+// fails EVERY subscriber's email, not just a slow data source. (Root cause of
+// the Oct 6 504: getYesterdayScores and getTeamHeadlines had untimed fetches,
+// called once per subscriber.)
+async function fetchWithTimeout(url, opts, ms) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms || 5000);
+  try {
+    return await fetch(url, { ...(opts || {}), signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function getSubscribers() {
   const r = await fetch(
     SUPABASE_URL + '/rest/v1/ny_subscribers?active=eq.true&confirmed=eq.true&select=*',
@@ -132,7 +153,10 @@ async function getSubscribers() {
 }
 
 // ── Yesterday's scores ────────────────────────────────────────────────────────
-async function getYesterdayScores(teams) {
+// Fetches yesterday's games ONCE for the whole run (unfiltered — same shape
+// as getTodaysGames([])). Every subscriber filters this one result by their
+// own teams instead of re-fetching all 5 leagues from scratch.
+async function getAllYesterdayScores() {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   const y = yesterday.getFullYear();
@@ -151,9 +175,10 @@ async function getYesterdayScores(teams) {
   const allGames = [];
   await Promise.all(CONFIGS.map(async cfg => {
     try {
-      const r = await fetch(
+      const r = await fetchWithTimeout(
         'https://site.api.espn.com/apis/site/v2/sports/' + cfg.sport + '/' + cfg.league
-        + '/scoreboard?dates=' + dateStr
+        + '/scoreboard?dates=' + dateStr,
+        null, 6000
       );
       if (!r.ok) return;
       const json = await r.json();
@@ -185,6 +210,11 @@ async function getYesterdayScores(teams) {
     } catch(e) { console.error('Scores error:', e); }
   }));
 
+  return allGames;
+}
+
+// Per-subscriber filter over the shared result — no network call.
+function filterYesterdayScores(allGames, teams) {
   if (!teams || teams.length === 0) return allGames;
   return allGames.filter(g =>
     teams.some(t =>
@@ -2397,25 +2427,26 @@ function parseRssItems(xml, team, source) {
   return results;
 }
 
-async function getTeamHeadlines(teams) {
-  const headlines = [];
-  const toFetch = (teams && teams.length > 0) ? teams : ['Yankees','Mets','Knicks'];
+// Fetches headlines ONCE per unique team across ALL subscribers combined
+// (not once per subscriber). `allTeams` is the de-duplicated union of every
+// subscriber's team list, computed once before the subscriber loop starts.
+// Returns { [team]: story[] }; getTeamHeadlines (below) assembles each
+// subscriber's view from this with zero further network calls.
+async function getHeadlinesCache(allTeams) {
+  const toFetch = (allTeams && allTeams.length > 0) ? allTeams : ['Yankees','Mets','Knicks'];
 
-  // Direct RSS feeds for quality NY sports coverage
   // Note: amNY blocks direct RSS fetches (403) — surfaced via Google News instead
   const DIRECT_FEEDS = [
     { url:'https://nypost.com/sports/feed/',   source:'New York Post' },
     { url:'https://sny.tv/rss/articles',       source:'SNY' },
   ];
 
-  // Fetch direct feeds in parallel — grab all stories then match to teams
   const directStories = [];
   await Promise.all(DIRECT_FEEDS.map(async feed => {
     try {
-      const r = await fetch(feed.url);
+      const r = await fetchWithTimeout(feed.url, null, 6000);
       if (!r.ok) return;
       const xml = await r.text();
-      // Match stories to subscriber's teams
       toFetch.forEach(team => {
         const teamLower = team.toLowerCase();
         const items = xml.match(/<item>([\s\S]*?)<\/item>/g) || [];
@@ -2433,12 +2464,13 @@ async function getTeamHeadlines(teams) {
     } catch(e) { console.error('Direct feed error:', feed.source, e); }
   }));
 
-  // Google News for each team (fallback + supplement)
+  const headlines = [];
   await Promise.all(toFetch.map(async team => {
     try {
       const query = encodeURIComponent('New York ' + team + ' sports');
-      const r = await fetch(
-        'https://news.google.com/rss/search?q=' + query + '&hl=en-US&gl=US&ceid=US:en'
+      const r = await fetchWithTimeout(
+        'https://news.google.com/rss/search?q=' + query + '&hl=en-US&gl=US&ceid=US:en',
+        null, 6000
       );
       if (!r.ok) return;
       const xml = await r.text();
@@ -2447,8 +2479,6 @@ async function getTeamHeadlines(teams) {
     } catch(e) { console.error('Headlines error:', e); }
   }));
 
-  // Merge: direct stories first (higher quality), then Google News
-  // Dedupe by title
   const seen = new Set();
   const merged = [...directStories, ...headlines].filter(s => {
     const key = s.title.toLowerCase().slice(0,60);
@@ -2456,14 +2486,23 @@ async function getTeamHeadlines(teams) {
     seen.add(key); return true;
   });
 
-  // Cap at 2 stories per team
   const byTeam = {};
   merged.forEach(s => {
     if (!byTeam[s.team]) byTeam[s.team] = [];
     if (byTeam[s.team].length < 2) byTeam[s.team].push(s);
   });
+  return byTeam;
+}
 
-  return Object.values(byTeam).flat();
+// Cheap, no-network per-subscriber assembly from the shared cache.
+function getTeamHeadlines(headlinesCache, teams) {
+  const toFetch = (teams && teams.length > 0) ? teams : ['Yankees','Mets','Knicks'];
+  const out = [];
+  toFetch.forEach(team => {
+    const stories = (headlinesCache && headlinesCache[team]) || [];
+    stories.forEach(s => out.push(s));
+  });
+  return out;
 }
 
 // ── On This Date ─────────────────────────────────────────────────────────────
@@ -3701,13 +3740,23 @@ export default async function handler(req, res) {
     await saveTodayTrivia(trivia);
     const yesterdayTrivia = await getYesterdayTrivia();
 
-    // Fetch today's games once (shared across all subscribers)
-    const allTodayGames = await getTodaysGames([]);
+    // Union of every subscriber's teams, computed once, used to size the
+    // shared headlines fetch below (one Google News call per UNIQUE team
+    // across all subscribers, not one per subscriber-team pairing).
+    const allSubTeams = [...new Set(subscribers.flatMap(s => s.teams || []))];
 
-    // Fetch MLB pitching/series details (Mets + Yankees only, silent failsafe)
-    const mlbDetails = await getMLBGameDetails([]);
-    const teamStatus = await getTeamStatuses();
-    const rosterMoves = await getRosterMoves();
+    // Everything here is shared across all subscribers and fetched exactly
+    // ONCE per run, in parallel. This replaced per-subscriber re-fetching of
+    // the same data (the actual cause of the Oct 6 504 timeout) with cheap
+    // in-memory lookups inside the subscriber loop below.
+    const [allTodayGames, allYesterdayGames, mlbDetails, teamStatus, rosterMoves, headlinesCache] = await Promise.all([
+      getTodaysGames([]),
+      getAllYesterdayScores(),
+      getMLBGameDetails([]),
+      getTeamStatuses(),
+      getRosterMoves(),
+      getHeadlinesCache(allSubTeams),
+    ]);
 
     // Weekly day nugget
     const today       = new Date();
@@ -3736,68 +3785,70 @@ export default async function handler(req, res) {
 
     let sent = 0, errors = 0;
 
-    for (let i = 0; i < subscribers.length; i++) {
-      const sub = subscribers[i];
-      try {
-        // Fetch subscriber-specific data in parallel
-        const [scores, headlines] = await Promise.all([
-          getYesterdayScores(sub.teams),
-          getTeamHeadlines(sub.teams),
-        ]);
+    // Per-subscriber work is now just local filtering/lookups (no network)
+    // plus one Resend send and one Supabase update — so subscribers are
+    // processed in small concurrent batches rather than strictly one at a
+    // time. Batching (not full unlimited parallelism) keeps a courtesy gap
+    // for Resend's rate limits while still cutting total wall-clock time
+    // roughly BATCH_SIZE-fold versus the old fully-sequential loop.
+    const BATCH_SIZE = 4;
 
-        // Filter today's games to this subscriber's teams
-        const todayGames = (sub.teams && sub.teams.length > 0)
-          ? allTodayGames.filter(g =>
-              sub.teams.some(t =>
-                (g.homeName||'').toLowerCase().includes(t.toLowerCase()) ||
-                (g.awayName||'').toLowerCase().includes(t.toLowerCase()) ||
-                (g.homeFull||'').toLowerCase().includes(t.toLowerCase()) ||
-                (g.awayFull||'').toLowerCase().includes(t.toLowerCase())
-              )
+    async function sendToSubscriber(sub) {
+      const scores    = filterYesterdayScores(allYesterdayGames, sub.teams);
+      const headlines = getTeamHeadlines(headlinesCache, sub.teams);
+
+      const todayGames = (sub.teams && sub.teams.length > 0)
+        ? allTodayGames.filter(g =>
+            sub.teams.some(t =>
+              (g.homeName||'').toLowerCase().includes(t.toLowerCase()) ||
+              (g.awayName||'').toLowerCase().includes(t.toLowerCase()) ||
+              (g.homeFull||'').toLowerCase().includes(t.toLowerCase()) ||
+              (g.awayFull||'').toLowerCase().includes(t.toLowerCase())
             )
-          : allTodayGames;
+          )
+        : allTodayGames;
 
-        const html    = buildEmail(sub, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, teamStatus, yesterdayTrivia, nugget, saturdayPoll, trophyEntry, rosterMoves);
-        const subject = buildSubject(scores, todayGames);
+      const html    = buildEmail(sub, scores, todayGames, headlines, glory, trivia, otd, mlbDetails, teamStatus, yesterdayTrivia, nugget, saturdayPoll, trophyEntry, rosterMoves);
+      const subject = buildSubject(scores, todayGames);
+      const finalHtml = html.replace('{{EMAIL}}', encodeURIComponent(sub.email));
 
-        // Fix unsubscribe URL with actual email
-        const finalHtml = html.replace('{{EMAIL}}', encodeURIComponent(sub.email));
+      await fetchWithTimeout('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': 'Bearer ' + RESEND_KEY,
+        },
+        body: JSON.stringify({
+          from:    'NY Sports Daily <digest@nysportsdaily.com>',
+          to:      [sub.email],
+          subject: subject,
+          html:    finalHtml,
+        }),
+      }, 10000);
 
-        await fetch('https://api.resend.com/emails', {
-          method: 'POST',
+      await fetchWithTimeout(
+        SUPABASE_URL + '/rest/v1/ny_subscribers?email=eq.' + encodeURIComponent(sub.email),
+        {
+          method: 'PATCH',
           headers: {
             'Content-Type':  'application/json',
-            'Authorization': 'Bearer ' + RESEND_KEY,
+            'apikey':        SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
           },
-          body: JSON.stringify({
-            from:    'NY Sports Daily <digest@nysportsdaily.com>',
-            to:      [sub.email],
-            subject: subject,
-            html:    finalHtml,
-          }),
-        });
+          body: JSON.stringify({ last_sent: new Date().toISOString() }),
+        },
+        8000
+      );
+    }
 
-        // Update last_sent
-        await fetch(
-          SUPABASE_URL + '/rest/v1/ny_subscribers?email=eq.' + encodeURIComponent(sub.email),
-          {
-            method: 'PATCH',
-            headers: {
-              'Content-Type':  'application/json',
-              'apikey':        SUPABASE_KEY,
-              'Authorization': 'Bearer ' + SUPABASE_KEY,
-            },
-            body: JSON.stringify({ last_sent: new Date().toISOString() }),
-          }
-        );
-
-        sent++;
-        await new Promise(r => setTimeout(r, 300));
-
-      } catch(e) {
-        console.error('Failed for ' + sub.email + ':', e);
-        errors++;
-      }
+    for (let i = 0; i < subscribers.length; i += BATCH_SIZE) {
+      const batch = subscribers.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(batch.map(sub => sendToSubscriber(sub)));
+      results.forEach((r, idx) => {
+        if (r.status === 'fulfilled') { sent++; }
+        else { errors++; console.error('Failed for ' + batch[idx].email + ':', r.reason); }
+      });
+      if (i + BATCH_SIZE < subscribers.length) await new Promise(r => setTimeout(r, 300));
     }
 
     console.log('Done. Sent: ' + sent + ', Errors: ' + errors);
