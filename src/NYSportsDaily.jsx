@@ -15,8 +15,8 @@ const MY_TEAMS_NAME_MAP = {
   "new york knicks":"Knicks","brooklyn nets":"Nets",
   "new york rangers":"Rangers","new york islanders":"Islanders","new jersey devils":"Devils",
   "new york jets":"Jets","new york giants":"Giants",
-  "new york liberty":"Liberty","nycfc":"NYCFC",
-  "new york red bulls":"RedBulls","gotham fc":"Gotham",
+  "new york liberty":"Liberty","nycfc":"NYCFC","new york city fc":"NYCFC",
+  "new york red bulls":"RedBulls","red bull new york":"RedBulls","gotham fc":"Gotham",
   // Short names
   "yankees":"Yankees","mets":"Mets","knicks":"Knicks","nets":"Nets",
   "rangers":"Rangers","islanders":"Islanders","devils":"Devils",
@@ -73,16 +73,16 @@ const NY_TEAMS = {
   MLB:  [{ name: "Yankees", espnId: "10", color: "#003087" }, { name: "Mets",   espnId: "21", color: "#002D72" }],
   NBA:  [{ name: "Knicks",  espnId: "18", color: "#006BB6" }, { name: "Nets",   espnId: "17", color: "#000000" }],
   NHL:  [{ name: "Rangers", espnId: "13", color: "#0038A8" }, { name: "Islanders", espnId: "12", color: "#00539B" }, { name: "NJ Devils", espnId: "11", color: "#CE1126" }],
-  MLS:  [{ name: "NYCFC",   espnId: "18479", color: "#6CACE4" }, { name: "Red Bulls", espnId: "399", color: "#ED1C2E" }],
+  MLS:  [{ name: "NYCFC",   espnId: "17606", color: "#6CACE4" }, { name: "Red Bulls", espnId: "190", color: "#ED1C2E" }],
   WNBA: [{ name: "Liberty", espnId: "9",    color: "#6ECEB2" }],
-  NWSL: [{ name: "Gotham FC", espnId: "1163", color: "#0A0A2E" }],
+  NWSL: [{ name: "Gotham FC", espnId: "15364", color: "#0A0A2E" }],
 };
 
 const ALL_TEAM_IDS = Object.values(NY_TEAMS).flat().map(t => String(t.espnId));
 const NY_EXACT_NAMES = [
   "new york yankees","new york mets","new york jets","new york giants",
   "new york knicks","brooklyn nets","new york rangers","new york islanders",
-  "new jersey devils","new york liberty","nycfc","new york red bulls","nj/ny gotham fc","gotham fc"
+  "new jersey devils","new york liberty","nycfc","new york city fc","new york red bulls","red bull new york","nj/ny gotham fc","gotham fc"
 ];
 
 const SPORT_ENDPOINTS = [
@@ -92,7 +92,7 @@ const SPORT_ENDPOINTS = [
   { sport: "hockey",   league: "nhl",       label: "NHL"  },
   { sport: "soccer",   league: "usa.1",     label: "MLS"  },
   { sport: "basketball", league: "wnba",   label: "WNBA" },
-  { sport: "soccer",     league: "nwsl",   label: "NWSL" },
+  { sport: "soccer",     league: "usa.nwsl",   label: "NWSL" },
 ];
 
 // ─── ESPN NEWS TEAMS ──────────────────────────────────────────────────────
@@ -108,9 +108,9 @@ const NY_TEAM_NEWS = [
   { sport:"hockey",     league:"nhl",  id:"12",    name:"Islanders", espnSlug:"nyi" },
   { sport:"hockey",     league:"nhl",  id:"11",    name:"Devils",    espnSlug:"njd" },
   { sport:"basketball", league:"wnba", id:"9",     name:"Liberty",   espnSlug:"ny"  },
-  { sport:"soccer",     league:"usa.1",id:"18479", name:"NYCFC",     espnSlug:"nyc" },
-  { sport:"soccer",     league:"nwsl", id:"1163",  name:"Gotham FC", espnSlug:"nj"  },
-  { sport:"soccer",     league:"usa.1",id:"399",   name:"Red Bulls", espnSlug:"rbny"},
+  { sport:"soccer",     league:"usa.1",id:"17606", name:"NYCFC",     espnSlug:"nyc" },
+  { sport:"soccer",     league:"usa.nwsl", id:"15364",  name:"Gotham FC", espnSlug:"nj"  },
+  { sport:"soccer",     league:"usa.1",id:"190",   name:"Red Bulls", espnSlug:"rbny"},
 ];
 
 const NY_EXTRA_NEWS = [];
@@ -271,7 +271,7 @@ const STANDINGS_ENDPOINTS = [
   { sport:"basketball",  league:"nba",  label:"NBA",  division:"Atlantic", teams:["Knicks","Nets"] },
   { sport:"hockey",      league:"nhl",  label:"NHL",  division:"Metro",   teams:["Rangers","Islanders","Devils"] },
   { sport:"basketball",  league:"wnba", label:"WNBA", division:"East",    teams:["Liberty"] },
-  { sport:"soccer",      league:"nwsl", label:"NWSL", division:"East",    teams:["Gotham"] },
+  { sport:"soccer",      league:"usa.nwsl", label:"NWSL", division:"East",    teams:["Gotham"] },
   { sport:"soccer",      league:"usa.1",label:"MLS",  division:"East",    teams:["NYCFC","Red Bulls"] },
 ];
 
@@ -333,8 +333,9 @@ async function fetchNYSchedule() {
     { name:"Islanders", sport:"hockey",     league:"nhl",        id:"12" },
     { name:"NJ Devils", sport:"hockey",     league:"nhl",        id:"11" },
     { name:"Liberty",   sport:"basketball", league:"wnba",       id:"9"  },
-    { name:"Gotham FC", sport:"soccer",     league:"nwsl",       id:"1163" },
-    { name:"NYCFC",     sport:"soccer",     league:"usa.1",      id:"18479" },
+    { name:"Gotham FC", sport:"soccer",     league:"usa.nwsl",       id:"15364" },
+    { name:"NYCFC",     sport:"soccer",     league:"usa.1",      id:"17606" },
+    { name:"Red Bulls", sport:"soccer",     league:"usa.1",      id:"190" },
   ];
   const results = [];
   await Promise.all(NY_TEAM_ESPN.map(async ({ name, sport, league, id }) => {
@@ -923,13 +924,13 @@ const STATS_ENDPOINTS = [
     { name:"Points",       slug:"points",        abbrev:"PPG" },
     { name:"Rebounds",     slug:"rebounds",      abbrev:"RPG" },
   ]},
-  { sport:"soccer",     league:"nwsl", label:"NWSL", stats:[
+  { sport:"soccer",     league:"usa.nwsl", label:"NWSL", stats:[
     { name:"Goals",        slug:"goals",         abbrev:"G"   },
     { name:"Assists",      slug:"assists",       abbrev:"A"   },
   ]},
 ];
 
-const NY_TEAM_NAMES = ["yankees","mets","jets","giants","knicks","nets","rangers","islanders","devils","liberty","gotham","nycfc","red bulls","new york","new jersey"];
+const NY_TEAM_NAMES = ["yankees","mets","jets","giants","knicks","nets","rangers","islanders","devils","liberty","gotham","nycfc","new york city fc","red bulls","red bull new york","new york","new jersey"];
 
 async function fetchLeagueLeaders(sport, league) {
   const year = new Date().getFullYear();
@@ -1257,7 +1258,7 @@ export default function NYSportsDaily() {
   const NY_TEAM_FILTER = [
     "new york yankees", "new york mets", "new york jets", "new york giants",
     "new york knicks", "brooklyn nets", "new york rangers", "new york islanders",
-    "new jersey devils", "new york liberty", "nycfc", "new york red bulls",
+    "new jersey devils", "new york liberty", "nycfc", "new york city fc", "new york red bulls", "red bull new york",
     "nj/ny gotham", "gotham fc"
   ];
 
@@ -2072,7 +2073,7 @@ const SPORT_LEAGUE_MAP = {
   NHL:  { sport:"hockey",     league:"nhl"   },
   WNBA: { sport:"basketball", league:"wnba"  },
   MLS:  { sport:"soccer",     league:"usa.1" },
-  NWSL: { sport:"soccer",     league:"nwsl"  },
+  NWSL: { sport:"soccer",     league:"usa.nwsl"  },
 };
 
 // ─── MY TEAMS MODAL ─────────────────────────────────────────────────────────
@@ -7711,7 +7712,7 @@ function ScheduleTab({ schedule, loading }) {
     grouped[key].push(g);
   });
 
-  const SPORT_ICONS_SCH = { nfl:"🏈", mlb:"⚾", nba:"🏀", nhl:"🏒", wnba:"🏀", "usa.1":"⚽", nwsl:"⚽" };
+  const SPORT_ICONS_SCH = { nfl:"🏈", mlb:"⚾", nba:"🏀", nhl:"🏒", wnba:"🏀", "usa.1":"⚽", "usa.nwsl":"⚽", nwsl:"⚽" };
 
   return (
     <div style={styles.schRoot}>
