@@ -1990,7 +1990,11 @@ async function getMLBPostseasonState(now) {
   const out = {};
   try {
     const ids = Object.keys(TEAM_REGISTRY).filter(function(n) { return TEAM_REGISTRY[n].sport === 'MLB'; });
-    const start = new Date(now.getTime() - 12 * 86400000);
+    // Lookback must span the ENTIRE postseason, not just a recent series — otherwise a
+    // team swept/eliminated early (Game 1 falls outside the window as days pass) looks
+    // like its series is still in progress instead of over. 35 days safely covers Wild
+    // Card through World Series even when checked from the tail end of that run.
+    const start = new Date(now.getTime() - 35 * 86400000);
     const end   = new Date(now.getTime() + 10 * 86400000);
     const url = 'https://statsapi.mlb.com/api/v1/schedule?sportId=1'
       + '&teamId=' + ids.map(function(n) { return TEAM_REGISTRY[n].mlbId; }).join(',')
