@@ -1917,7 +1917,7 @@ function inSeasonWindow(now, startMD, endMD) {
   const e = endMD[0] * 100 + endMD[1];
   return s <= e ? (v >= s && v <= e) : (v >= s || v <= e);
 }
-async function stripFetchJSON(url, ms) {
+async function stripFetchJSONOnce(url, ms) {
   const controller = new AbortController();
   const timeout = setTimeout(function() { controller.abort(); }, ms || 5000);
   try {
@@ -1932,6 +1932,15 @@ async function stripFetchJSON(url, ms) {
     clearTimeout(timeout);
     return null;
   }
+}
+// One retry after a short delay before giving up — a single slow/flaky response
+// from a free public endpoint (ESPN in particular) would otherwise silently drop
+// that team's whole status box for the day, with nothing in the logs to show why.
+async function stripFetchJSON(url, ms) {
+  const first = await stripFetchJSONOnce(url, ms);
+  if (first != null) return first;
+  await new Promise(function(resolve) { setTimeout(resolve, 400); });
+  return await stripFetchJSONOnce(url, ms);
 }
 // "W3" / ("W",3) / ("OT",2) -> "W3 🔥" etc. Returns '' if unusable.
 function stripStreak(code, count) {
