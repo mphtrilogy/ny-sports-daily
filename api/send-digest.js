@@ -1917,13 +1917,16 @@ function inSeasonWindow(now, startMD, endMD) {
   const e = endMD[0] * 100 + endMD[1];
   return s <= e ? (v >= s && v <= e) : (v >= s || v <= e);
 }
-async function stripFetchJSONOnce(url, ms) {
+async function stripFetchJSONOnce(url, ms, extraHeaders) {
   const controller = new AbortController();
   const timeout = setTimeout(function() { controller.abort(); }, ms || 5000);
   try {
     const r = await fetch(url, {
       signal: controller.signal,
-      headers: { 'Accept': 'application/json', 'User-Agent': 'NYSportsDaily/1.0 (+https://nysportsdaily.com)' },
+      headers: Object.assign(
+        { 'Accept': 'application/json', 'User-Agent': 'NYSportsDaily/1.0 (+https://nysportsdaily.com)' },
+        extraHeaders || {}
+      ),
     });
     clearTimeout(timeout);
     if (!r.ok) return null;
@@ -1934,13 +1937,27 @@ async function stripFetchJSONOnce(url, ms) {
   }
 }
 // One retry after a short delay before giving up — a single slow/flaky response
-// from a free public endpoint (ESPN in particular) would otherwise silently drop
-// that team's whole status box for the day, with nothing in the logs to show why.
+// from a free public endpoint would otherwise silently drop that team's whole
+// status box for the day, with nothing in the logs to show why.
+//
+// ESPN's undocumented site.api.espn.com endpoints specifically appear to be
+// blocking requests from our own identifying User-Agent when they come from a
+// cloud/datacenter IP like Vercel's — confirmed live: the production preview
+// route (/api/send-digest?preview=standings) returns NHL teams (api-web.nhle.com,
+// a different host) but NEVER any NFL/NBA team, every single time, retry or not.
+// The same request succeeds immediately from a normal browser-like client. So on
+// retry we drop our own UA string and present as an ordinary browser request
+// instead, which is what ESPN's endpoint actually expects from the outside.
 async function stripFetchJSON(url, ms) {
   const first = await stripFetchJSONOnce(url, ms);
   if (first != null) return first;
   await new Promise(function(resolve) { setTimeout(resolve, 400); });
-  return await stripFetchJSONOnce(url, ms);
+  return await stripFetchJSONOnce(url, ms, {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Referer': 'https://www.espn.com/',
+    'Origin': 'https://www.espn.com',
+  });
 }
 // "W3" / ("W",3) / ("OT",2) -> "W3 🔥" etc. Returns '' if unusable.
 function stripStreak(code, count) {
