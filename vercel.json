@@ -2,6 +2,9 @@
   "functions": {
     "api/news.js": {
       "maxDuration": 15
+    },
+    "api/send-digest.js": {
+      "maxDuration": 60
     }
   },
   "crons": [
