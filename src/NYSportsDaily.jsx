@@ -1417,20 +1417,26 @@ export default function NYSportsDaily() {
       <main style={{...styles.main, paddingBottom: isMobile ? 80 : 40}}>
 
         {/* TAB NAV — Primary (desktop only) */}
-        {!isMobile && <div style={{...styles.tabNav, position:"relative"}}>
-          {["SCORES","TV","STANDINGS","SCHEDULE","RECAP","NEWS","RADIO","SHOP"].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}),
-                ...(tab==="SHOP" ? {color:"var(--accent-red)"} : {})}}>
-              {tab === "SHOP" ? "🛒 SHOP" : tab}
+        {!isMobile && <div style={{position:"relative"}}>
+          <div style={styles.tabNav}>
+            {["SCORES","TV","STANDINGS","SCHEDULE","RECAP","NEWS","RADIO","SHOP"].map(tab => (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                style={{...styles.tabBtn, ...(activeTab===tab ? styles.tabBtnActive : {}),
+                  ...(tab==="SHOP" ? {color:"var(--accent-red)"} : {})}}>
+                {tab === "SHOP" ? "🛒 SHOP" : tab}
+              </button>
+            ))}
+            {/* ── MORE DROPDOWN (desktop) — replaces the old 13-button secondary row ── */}
+            <button onClick={() => setMoreMenuOpen(o => !o)}
+              style={{...styles.tabBtn, marginLeft:"auto", color:"#f0b429", fontWeight:900,
+                display:"flex", alignItems:"center", gap:4}}>
+              MORE {moreMenuOpen ? "▲" : "▼"}
             </button>
-          ))}
-          {/* ── MORE DROPDOWN (desktop) — replaces the old 13-button secondary row ── */}
-          <button onClick={() => setMoreMenuOpen(o => !o)}
-            style={{...styles.tabBtn, marginLeft:"auto", color:"#f0b429", fontWeight:900,
-              display:"flex", alignItems:"center", gap:4}}>
-            MORE {moreMenuOpen ? "▲" : "▼"}
-          </button>
+          </div>
+          {/* Dropdown lives OUTSIDE the scrolling tabNav strip — that div has overflowX:"auto",
+              which forces overflowY to clip too, so a panel positioned inside it would be
+              invisible even while open. This outer wrapper has no overflow set, so the panel
+              (top:100% of this wrapper) renders normally below the nav bar. */}
           {moreMenuOpen && (
             <>
               {/* click-outside catcher */}
