@@ -1376,7 +1376,7 @@ export default function NYSportsDaily() {
           {/* Search results dropdown — absolutely positioned under the search bar */}
           {searchOpen && searchQuery.length > 1 && (
             <div style={{position:"absolute", left:16, right:16, top:"100%", zIndex:1001}}>
-              <SiteSearch query={searchQuery} onSelect={(tab) => { setActiveTab(tab); setSearchQuery(""); setSearchOpen(false); }} />
+              <SiteSearch query={searchQuery} onSelect={(tab, slug) => { setActiveTab(tab); if (slug) setDeepDiveSlug(slug); setSearchQuery(""); setSearchOpen(false); }} />
             </div>
           )}
         </div>
@@ -4233,6 +4233,20 @@ function SiteSearch({ query, onSelect }) {
     });
   });
 
+  // Search Deep Dive essays — published ones only, so searching never spoils
+  // a future week's essay before it's actually gone out in the newsletter.
+  ALL_DEEP_DIVES_SITE.filter(d => isDeepDivePublished(d)).forEach(d => {
+    const text = `${d.title} ${d.team} ${d.year} ${d.category || ""} deep dive essay`.toLowerCase();
+    if (text.includes(q)) results.push({
+      type: "DEEP DIVE", icon: "🔍",
+      title: d.title,
+      sub: `${d.category ? d.category + " · " : ""}${d.team} · ${d.year}`,
+      tab: "DEEPDIVE",
+      slug: ddSlugify(d.title),
+      highlight: (d.body || "").slice(0, 80),
+    });
+  });
+
   // Search ALL_POLLS
   ALL_POLLS.forEach(p => {
     const text = `${p.question} ${p.options.join(" ")}`.toLowerCase();
@@ -4630,12 +4644,13 @@ function SiteSearch({ query, onSelect }) {
     "WALK-UP SONG":      "#a855f7",
     "FAN COMMUNITY":     "#f97316",
     "SHOP":              "#22c55e",
+    "DEEP DIVE":         "#f0b429",
   };
 
   return (
     <div style={styles.searchDropdown}>
       {limited.map((r, i) => (
-        <button key={i} onMouseDown={() => onSelect(r.tab)} style={styles.searchResult}>
+        <button key={i} onMouseDown={() => onSelect(r.tab, r.slug)} style={styles.searchResult}>
           <span style={styles.searchResultIcon}>{r.icon}</span>
           <div style={styles.searchResultBody}>
             <div style={styles.searchResultTop}>
