@@ -2117,9 +2117,20 @@ async function getMLBPostseasonState(now) {
     const ids = Object.keys(TEAM_REGISTRY).filter(function(n) { return TEAM_REGISTRY[n].sport === 'MLB'; });
     // Lookback must span the ENTIRE postseason, not just a recent series — otherwise a
     // team swept/eliminated early (Game 1 falls outside the window as days pass) looks
-    // like its series is still in progress instead of over. 35 days safely covers Wild
-    // Card through World Series even when checked from the tail end of that run.
-    const start = new Date(now.getTime() - 35 * 86400000);
+    // like its series is still in progress instead of over. A plain "35 days ago" slider
+    // still breaks this: a team swept 3-0 in the ALDS in early October has Game 1 fall
+    // out of a sliding 35-day window well before Games 2-3 do, so for a stretch of weeks
+    // afterward (e.g. checked in November) the digest sees only the tail of that series
+    // and reports it as still in progress, not over. Anchor the start to a fixed date
+    // (Sept 20 of the current season) whenever that's earlier than the sliding window —
+    // during the regular season the sliding window still wins (keeping today's games in
+    // view), but from October on, the fixed anchor takes over and the full postseason —
+    // including Game 1 of any short series — stays in view no matter how long after the
+    // fact this runs.
+    const seasonYear   = etParts(now).y;
+    const seasonAnchor = new Date(Date.UTC(seasonYear, 8, 20)); // Sept 20
+    const slidingStart = new Date(now.getTime() - 35 * 86400000);
+    const start = seasonAnchor < slidingStart ? seasonAnchor : slidingStart;
     const end   = new Date(now.getTime() + 10 * 86400000);
     const url = 'https://statsapi.mlb.com/api/v1/schedule?sportId=1'
       + '&teamId=' + ids.map(function(n) { return TEAM_REGISTRY[n].mlbId; }).join(',')
