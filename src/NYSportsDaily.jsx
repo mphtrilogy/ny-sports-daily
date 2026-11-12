@@ -2952,7 +2952,7 @@ const CHANNEL_STYLES = {
   "PRIME":   { bg: "#00a8e1", text: "#fff",    label: "PRIME"   },
   "APPLE":   { bg: "var(--muted)",    text: "#fff",    label: "APPLE TV"},
   "MAX":     { bg: "#001f5e", text: "#fff",    label: "MAX"     },
-  "DEFAULT": { bg: "var(--muted)",    text: "var(--muted)",    label: null       },
+  "DEFAULT": { bg: "var(--muted)",    text: "#fff",    label: null       },
 };
 
 function getChannelStyle(name) {
